@@ -8,6 +8,7 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [exaggeration, setExaggeration] = useState(10);
+  const [waterLevel, setWaterLevel] = useState(53);
 
   useEffect(() => {
     loadGeoTiff('/data/aral_region.tif')
@@ -21,7 +22,7 @@ const Index = () => {
       {/* 3D Viewer */}
       <div className="absolute inset-0">
         {terrain && (
-          <TerrainViewer terrain={terrain} exaggeration={exaggeration} />
+          <TerrainViewer terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} />
         )}
         {!terrain && !loading && error && (
           <div className="flex items-center justify-center h-full">
@@ -48,6 +49,8 @@ const Index = () => {
           terrain={terrain}
           exaggeration={exaggeration}
           onExaggerationChange={setExaggeration}
+          waterLevel={waterLevel}
+          onWaterLevelChange={setWaterLevel}
           loading={loading}
         />
       </div>

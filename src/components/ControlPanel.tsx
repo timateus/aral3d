@@ -5,10 +5,12 @@ interface ControlPanelProps {
   terrain: TerrainData | null;
   exaggeration: number;
   onExaggerationChange: (val: number) => void;
+  waterLevel: number;
+  onWaterLevelChange: (val: number) => void;
   loading: boolean;
 }
 
-const ControlPanel = ({ terrain, exaggeration, onExaggerationChange, loading }: ControlPanelProps) => {
+const ControlPanel = ({ terrain, exaggeration, onExaggerationChange, waterLevel, onWaterLevelChange, loading }: ControlPanelProps) => {
   return (
     <div className="glass-panel p-4 space-y-4 w-72">
       <h2 className="text-sm font-semibold text-foreground tracking-wide uppercase">
@@ -33,6 +35,20 @@ const ControlPanel = ({ terrain, exaggeration, onExaggerationChange, loading }: 
               onValueChange={(v) => onExaggerationChange(v[0])}
               min={1}
               max={30}
+              step={1}
+              className="w-full"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs text-muted-foreground font-mono">
+              Water Level: {waterLevel} m
+            </label>
+            <Slider
+              value={[waterLevel]}
+              onValueChange={(v) => onWaterLevelChange(v[0])}
+              min={Math.floor(terrain.minElevation)}
+              max={Math.ceil(terrain.maxElevation)}
               step={1}
               className="w-full"
             />

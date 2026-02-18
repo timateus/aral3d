@@ -7,9 +7,10 @@ import { TerrainData } from '@/lib/geotiff-loader';
 interface TerrainViewerProps {
   terrain: TerrainData;
   exaggeration: number;
+  waterLevel: number;
 }
 
-const TerrainViewer = ({ terrain, exaggeration }: TerrainViewerProps) => {
+const TerrainViewer = ({ terrain, exaggeration, waterLevel }: TerrainViewerProps) => {
   return (
     <Canvas
       camera={{ position: [8, 6, 8], fov: 50, near: 0.1, far: 1000 }}
@@ -23,7 +24,7 @@ const TerrainViewer = ({ terrain, exaggeration }: TerrainViewerProps) => {
       <directionalLight position={[5, 10, 5]} intensity={1.2} castShadow />
       <directionalLight position={[-3, 5, -3]} intensity={0.4} color="#8ec8e8" />
 
-      <TerrainMesh terrain={terrain} exaggeration={exaggeration} />
+      <TerrainMesh terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} />
       <GeoFeatures terrain={terrain} exaggeration={exaggeration} />
 
       <OrbitControls
