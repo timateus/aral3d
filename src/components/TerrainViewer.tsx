@@ -21,7 +21,7 @@ function CameraAnimator({ started }: { started: boolean }) {
   const animating = useRef(false);
   const hasStarted = useRef(false);
 
-  const start = new THREE.Vector3(14, 12, 14);
+  const start = new THREE.Vector3(18, 16, 18);
   const end = new THREE.Vector3(0, 10, 12);
   const startTarget = new THREE.Vector3(0, 0, 0);
   const endTarget = new THREE.Vector3(0, 0, -1);
@@ -57,7 +57,7 @@ function CameraAnimator({ started }: { started: boolean }) {
 const TerrainViewer = ({ terrain, exaggeration, waterLevel, showBorders, showRivers, started }: TerrainViewerProps) => {
   return (
     <Canvas
-      camera={{ position: [14, 12, 14], fov: 50, near: 0.1, far: 1000 }}
+      camera={{ position: [18, 16, 18], fov: 50, near: 0.1, far: 1000 }}
       className="w-full h-full"
       gl={{ antialias: true, toneMapping: 3 }}
     >
