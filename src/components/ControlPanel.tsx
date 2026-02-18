@@ -32,7 +32,7 @@ const ControlPanel = ({ terrain, exaggeration, onExaggerationChange, loading }: 
               value={[exaggeration]}
               onValueChange={(v) => onExaggerationChange(v[0])}
               min={1}
-              max={500}
+              max={30}
               step={1}
               className="w-full"
             />
