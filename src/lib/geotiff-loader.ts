@@ -1,5 +1,12 @@
 import { fromArrayBuffer } from 'geotiff';
 
+export interface GeoBounds {
+  minLon: number;
+  maxLon: number;
+  minLat: number;
+  maxLat: number;
+}
+
 export interface TerrainData {
   width: number;
   height: number;
@@ -7,6 +14,7 @@ export interface TerrainData {
   minElevation: number;
   maxElevation: number;
   noDataValue: number | null;
+  bounds: GeoBounds | null;
 }
 
 export async function loadGeoTiff(url: string): Promise<TerrainData> {
@@ -49,9 +57,30 @@ export async function loadGeoTiff(url: string): Promise<TerrainData> {
     if (val > maxElevation) maxElevation = val;
   }
 
-  console.log('Terrain loaded:', { width, height, minElevation, maxElevation, noDataValue });
+  // Extract geographic bounds from tiepoint + pixel scale
+  let bounds: GeoBounds | null = null;
+  try {
+    const tiepoint = fileDirectory.ModelTiepoint as number[] | undefined;
+    const pixelScale = fileDirectory.ModelPixelScale as number[] | undefined;
+    if (tiepoint && pixelScale) {
+      const originX = tiepoint[3]; // lon of top-left
+      const originY = tiepoint[4]; // lat of top-left
+      const scaleXGeo = pixelScale[0];
+      const scaleYGeo = pixelScale[1];
+      bounds = {
+        minLon: originX,
+        maxLon: originX + fullWidth * scaleXGeo,
+        maxLat: originY,
+        minLat: originY - fullHeight * scaleYGeo,
+      };
+    }
+  } catch (e) {
+    console.warn('Could not extract geo bounds:', e);
+  }
 
-  return { width, height, elevations, minElevation, maxElevation, noDataValue };
+  console.log('Terrain loaded:', { width, height, minElevation, maxElevation, noDataValue, bounds });
+
+  return { width, height, elevations, minElevation, maxElevation, noDataValue, bounds };
 }
 
 export function getElevationColor(normalized: number): [number, number, number] {

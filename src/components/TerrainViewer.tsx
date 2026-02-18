@@ -1,6 +1,7 @@
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, GizmoHelper, GizmoViewport } from '@react-three/drei';
 import TerrainMesh from './TerrainMesh';
+import GeoFeatures from './GeoFeatures';
 import { TerrainData } from '@/lib/geotiff-loader';
 
 interface TerrainViewerProps {
@@ -23,6 +24,7 @@ const TerrainViewer = ({ terrain, exaggeration }: TerrainViewerProps) => {
       <directionalLight position={[-3, 5, -3]} intensity={0.4} color="#8ec8e8" />
 
       <TerrainMesh terrain={terrain} exaggeration={exaggeration} />
+      <GeoFeatures terrain={terrain} exaggeration={exaggeration} />
 
       <OrbitControls
         enableDamping
