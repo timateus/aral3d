@@ -7,10 +7,10 @@ const Index = () => {
   const [terrain, setTerrain] = useState<TerrainData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [exaggeration, setExaggeration] = useState(3);
+  const [exaggeration, setExaggeration] = useState(50);
 
   useEffect(() => {
-    loadGeoTiff('/data/aral_top_left.tif')
+    loadGeoTiff('/data/aral_region.tif')
       .then(setTerrain)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -38,7 +38,7 @@ const Index = () => {
           DEM Terrain Viewer
         </h1>
         <p className="text-xs text-muted-foreground font-mono">
-          aral_top_left.tif
+          aral_region_30m.tif
         </p>
       </div>
 

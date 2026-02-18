@@ -31,9 +31,9 @@ const ControlPanel = ({ terrain, exaggeration, onExaggerationChange, loading }: 
             <Slider
               value={[exaggeration]}
               onValueChange={(v) => onExaggerationChange(v[0])}
-              min={0.5}
-              max={10}
-              step={0.5}
+              min={1}
+              max={500}
+              step={1}
               className="w-full"
             />
           </div>
