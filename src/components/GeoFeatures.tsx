@@ -17,7 +17,7 @@ interface GeoJSONFeature {
   type: string;
   geometry: {
     type: string;
-    coordinates: number[][];
+    coordinates: number[][] | number[][][] | number[][][][];
   };
   properties: Record<string, unknown>;
 }
@@ -81,12 +81,18 @@ const GeoFeatures = ({ terrain, exaggeration }: GeoFeaturesProps) => {
   const meshHeight = 10 * (h / w);
 
   const [geoJsonData, setGeoJsonData] = useState<GeoJSONCollection | null>(null);
+  const [countriesData, setCountriesData] = useState<GeoJSONCollection | null>(null);
 
   useEffect(() => {
     fetch('/data/AmuRivers.geojson')
       .then((r) => r.json())
       .then((data) => setGeoJsonData(data))
       .catch((err) => console.warn('Failed to load river GeoJSON:', err));
+
+    fetch('/data/countries.geojson')
+      .then((r) => r.json())
+      .then((data) => setCountriesData(data))
+      .catch((err) => console.warn('Failed to load countries GeoJSON:', err));
   }, []);
 
   const cityMarkers = useMemo(() => {
@@ -106,11 +112,12 @@ const GeoFeatures = ({ terrain, exaggeration }: GeoFeaturesProps) => {
 
     for (const feature of geoJsonData.features) {
       if (feature.geometry.type !== 'LineString') continue;
-      const coords = feature.geometry.coordinates;
+      const coords = feature.geometry.coordinates as number[][];
       const points: [number, number, number][] = [];
 
       for (const coord of coords) {
-        const [lon, lat] = coord;
+        const lon = coord[0] as number;
+        const lat = coord[1] as number;
         const pos = geoToMeshPos(lat, lon, bounds, terrain, exaggeration, meshWidth, meshHeight);
         if (pos) {
           points.push([pos[0], pos[1] + 0.03, pos[2]]);
@@ -125,10 +132,64 @@ const GeoFeatures = ({ terrain, exaggeration }: GeoFeaturesProps) => {
     return segments;
   }, [terrain, exaggeration, bounds, meshWidth, meshHeight, geoJsonData]);
 
+  const BORDER_COUNTRIES = ['Uzbekistan', 'Kazakhstan', 'Turkmenistan', 'Kyrgyzstan', 'Tajikistan'];
+
+  const borderLines = useMemo(() => {
+    if (!bounds || !countriesData) return [];
+
+    const segments: [number, number, number][][] = [];
+
+    for (const feature of countriesData.features) {
+      const name = feature.properties?.name as string;
+      if (!BORDER_COUNTRIES.includes(name)) continue;
+
+      const geomType = feature.geometry.type;
+      let rings: number[][][] = [];
+
+      if (geomType === 'Polygon') {
+        rings = feature.geometry.coordinates as number[][][];
+      } else if (geomType === 'MultiPolygon') {
+        const polys = feature.geometry.coordinates as number[][][][];
+        for (const poly of polys) {
+          rings.push(...poly);
+        }
+      }
+
+      for (const ring of rings) {
+        const points: [number, number, number][] = [];
+        for (const coord of ring) {
+          const lon = coord[0];
+          const lat = coord[1];
+          const pos = geoToMeshPos(lat, lon, bounds, terrain, exaggeration, meshWidth, meshHeight);
+          if (pos) {
+            points.push([pos[0], pos[1] + 0.02, pos[2]]);
+          }
+        }
+        if (points.length >= 2) {
+          segments.push(points);
+        }
+      }
+    }
+
+    return segments;
+  }, [terrain, exaggeration, bounds, meshWidth, meshHeight, countriesData]);
+
   if (!bounds) return null;
 
   return (
     <group>
+      {/* Country borders */}
+      {borderLines.map((points, i) => (
+        <Line
+          key={`border-${i}`}
+          points={points}
+          color="#ffffff"
+          lineWidth={1}
+          transparent
+          opacity={0.3}
+        />
+      ))}
+
       {/* City markers */}
       {cityMarkers.map((city) => (
         <group key={city.name} position={city.pos}>
