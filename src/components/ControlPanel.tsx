@@ -48,7 +48,7 @@ const ControlPanel = ({ terrain, exaggeration, onExaggerationChange, waterLevel,
               value={[waterLevel]}
               onValueChange={(v) => onWaterLevelChange(v[0])}
               min={29}
-              max={50}
+              max={100}
               step={1}
               className="w-full"
             />

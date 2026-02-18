@@ -1,10 +1,14 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls, GizmoHelper, GizmoViewport } from '@react-three/drei';
 import TerrainMesh from './TerrainMesh';
 import GeoFeatures from './GeoFeatures';
 import { TerrainData } from '@/lib/geotiff-loader';
 import * as THREE from 'three';
+
+export interface TerrainViewerHandle {
+  screenshot: () => void;
+}
 
 interface TerrainViewerProps {
   terrain: TerrainData;
@@ -54,12 +58,33 @@ function CameraAnimator({ started }: { started: boolean }) {
   return null;
 }
 
-const TerrainViewer = ({ terrain, exaggeration, waterLevel, showBorders, showRivers, started }: TerrainViewerProps) => {
+function ScreenshotHelper({ onReady }: { onReady: (fn: () => void) => void }) {
+  const { gl, scene, camera } = useThree();
+  useEffect(() => {
+    onReady(() => {
+      gl.render(scene, camera);
+      const dataUrl = gl.domElement.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.download = 'aral-sea-terrain.png';
+      link.href = dataUrl;
+      link.click();
+    });
+  }, [gl, scene, camera, onReady]);
+  return null;
+}
+
+const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, started }, ref) => {
+  const screenshotFn = useRef<(() => void) | null>(null);
+
+  useImperativeHandle(ref, () => ({
+    screenshot: () => screenshotFn.current?.(),
+  }));
+
   return (
     <Canvas
       camera={{ position: [18, 16, 18], fov: 50, near: 0.1, far: 1000 }}
       className="w-full h-full"
-      gl={{ antialias: true, toneMapping: 3 }}
+      gl={{ antialias: true, toneMapping: 3, preserveDrawingBuffer: true }}
     >
       <color attach="background" args={['#0d1117']} />
       <fog attach="fog" args={['#0d1117', 20, 50]} />
@@ -72,6 +97,7 @@ const TerrainViewer = ({ terrain, exaggeration, waterLevel, showBorders, showRiv
       <GeoFeatures terrain={terrain} exaggeration={exaggeration} showBorders={showBorders} showRivers={showRivers} />
 
       <CameraAnimator started={started} />
+      <ScreenshotHelper onReady={(fn) => { screenshotFn.current = fn; }} />
 
       <OrbitControls
         enableDamping
@@ -88,6 +114,8 @@ const TerrainViewer = ({ terrain, exaggeration, waterLevel, showBorders, showRiv
       <gridHelper args={[20, 20, '#1a2332', '#1a2332']} position={[0, -0.01, 0]} />
     </Canvas>
   );
-};
+});
+
+TerrainViewer.displayName = 'TerrainViewer';
 
 export default TerrainViewer;
