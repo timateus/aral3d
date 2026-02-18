@@ -24,7 +24,15 @@ const TerrainMesh = ({ terrain, exaggeration }: TerrainMeshProps) => {
     const elevRange = maxElevation - minElevation || 1;
     const maxHeight = 10 * (exaggeration / 100);
 
+    // Water level thresholds: 29m for south, 39m for north, split around 45°N
+    const bounds = terrain.bounds;
+    const splitLat = 45.0;
+
     for (let j = 0; j < h; j++) {
+      // Latitude for this row (j=0 is top of image = max lat)
+      const lat = bounds ? bounds.maxLat - (j / (h - 1)) * (bounds.maxLat - bounds.minLat) : 0;
+      const waterLevel = lat > splitLat ? 39 : 29;
+
       for (let i = 0; i < w; i++) {
         const srcIdx = j * width + i;
         const vertIdx = j * w + i;
@@ -37,7 +45,10 @@ const TerrainMesh = ({ terrain, exaggeration }: TerrainMeshProps) => {
         const normalized = (elev - minElevation) / elevRange;
         positions.setZ(vertIdx, normalized * maxHeight);
 
-        const color = getElevationColor(normalized);
+        const isWater = elev <= waterLevel;
+        const color = isWater
+          ? [0.08, 0.25, 0.55] as [number, number, number]
+          : getElevationColor(normalized);
         colors[vertIdx * 3] = color[0];
         colors[vertIdx * 3 + 1] = color[1];
         colors[vertIdx * 3 + 2] = color[2];
