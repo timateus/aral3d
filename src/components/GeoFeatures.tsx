@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import * as THREE from 'three';
 import { Html, Line } from '@react-three/drei';
 import { TerrainData, GeoBounds } from '@/lib/geotiff-loader';
 
@@ -23,42 +22,87 @@ interface RiverPath {
 const CITIES: City[] = [
   { name: 'Nukus', lat: 42.462, lon: 59.603 },
   { name: 'Moynaq', lat: 43.773, lon: 58.690 },
-  { name: 'Aralsk', lat: 46.790, lon: 61.660 },
+  { name: 'Aral', lat: 46.790, lon: 61.660 },
   { name: 'Kungrad', lat: 43.005, lon: 58.690 },
-  { name: 'Turtkul', lat: 41.550, lon: 60.630 },
-  { name: 'Beruniy', lat: 41.690, lon: 60.750 },
   { name: 'Chimbay', lat: 42.930, lon: 59.770 },
   { name: 'Takhtakupir', lat: 43.015, lon: 59.826 },
-  { name: 'Kazalinsk', lat: 45.763, lon: 62.110 },
+  { name: 'Qazaly', lat: 45.763, lon: 62.110 },
 ];
 
+// More accurate river paths based on geographic data
+// Bounds: 57°E–63°E, 42°N–48°N
 const RIVERS: RiverPath[] = [
   {
     name: 'Amu Darya',
-    color: '#4488cc',
+    color: '#5b9bd5',
     coords: [
-      [41.50, 60.60], [41.55, 60.50], [41.65, 60.35], [41.80, 60.20],
-      [41.95, 60.05], [42.05, 59.90], [42.20, 59.80], [42.35, 59.70],
-      [42.46, 59.60], [42.55, 59.55], [42.70, 59.50], [42.85, 59.35],
-      [43.00, 59.20], [43.15, 59.05], [43.30, 58.95], [43.50, 58.85],
-      [43.65, 58.78], [43.77, 58.69],
+      // Enters map from south near Nukus area, flowing NW through delta to former Aral shore
+      [42.00, 60.65],
+      [42.05, 60.55],
+      [42.10, 60.40],
+      [42.18, 60.25],
+      [42.25, 60.10],
+      [42.30, 59.95],
+      [42.35, 59.80],
+      [42.40, 59.68],
+      [42.46, 59.60], // Nukus
+      [42.50, 59.55],
+      [42.55, 59.52],
+      [42.62, 59.50],
+      [42.70, 59.48],
+      [42.78, 59.42],
+      [42.85, 59.35],
+      [42.90, 59.28],
+      [42.95, 59.20],
+      [43.02, 59.12],
+      [43.10, 59.05],
+      [43.18, 58.98],
+      [43.25, 58.92],
+      [43.32, 58.88],
+      [43.40, 58.84],
+      [43.48, 58.80],
+      [43.55, 58.76],
+      [43.62, 58.73],
+      [43.70, 58.70],
+      [43.77, 58.69], // Moynaq - former Aral shore
+      [43.85, 58.68],
+      [43.95, 58.70],
+      [44.05, 58.75],
+      [44.15, 58.82],
+      [44.25, 58.90], // Into former Aral Sea bed
     ],
   },
   {
     name: 'Syr Darya',
-    color: '#5599dd',
+    color: '#5b9bd5',
     coords: [
-      [44.50, 63.50], [44.80, 63.20], [45.10, 62.90],
-      [45.40, 62.60], [45.76, 62.11], [46.00, 61.90],
-      [46.30, 61.75], [46.60, 61.70], [46.79, 61.66],
-    ],
-  },
-  {
-    name: 'Qizilkum Canal',
-    color: '#66aacc',
-    coords: [
-      [42.46, 59.60], [42.60, 59.90], [42.75, 60.10],
-      [42.85, 60.35], [42.93, 59.77],
+      // Enters from east, flows west through Qazaly toward Aral (city) and into northern Aral Sea
+      [43.80, 63.00], // enters map from east
+      [43.90, 62.85],
+      [44.05, 62.65],
+      [44.18, 62.50],
+      [44.30, 62.38],
+      [44.45, 62.28],
+      [44.60, 62.20],
+      [44.80, 62.15],
+      [45.00, 62.12],
+      [45.20, 62.10],
+      [45.40, 62.10],
+      [45.60, 62.10],
+      [45.76, 62.11], // Qazaly
+      [45.90, 62.05],
+      [46.05, 61.95],
+      [46.15, 61.85],
+      [46.25, 61.78],
+      [46.35, 61.73],
+      [46.50, 61.70],
+      [46.60, 61.68],
+      [46.70, 61.66],
+      [46.79, 61.66], // Aral city
+      [46.85, 61.60],
+      [46.90, 61.50],
+      [46.92, 61.35],
+      [46.90, 61.20], // Into northern Aral Sea
     ],
   },
 ];
@@ -81,7 +125,6 @@ function geoToMeshPos(
   const x = (nx - 0.5) * meshWidth;
   const planeY = (ny - 0.5) * meshHeight;
 
-  // Get elevation at this pixel
   const pixelX = Math.floor(nx * (terrain.width - 1));
   const pixelY = Math.floor((1 - ny) * (terrain.height - 1));
   const idx = pixelY * terrain.width + pixelX;
@@ -94,7 +137,6 @@ function geoToMeshPos(
   const maxMeshHeight = 10 * (exaggeration / 100);
   const zHeight = normalized * maxMeshHeight;
 
-  // After rotation [-PI/2, 0, 0]: world = (x, z_plane, -y_plane)
   return [x, zHeight, -planeY];
 }
 
@@ -133,27 +175,23 @@ const GeoFeatures = ({ terrain, exaggeration }: GeoFeaturesProps) => {
 
   return (
     <group>
+      {/* City markers */}
       {cityMarkers.map((city) => (
         <group key={city.name} position={city.pos}>
           <mesh>
-            <sphereGeometry args={[0.06, 12, 12]} />
-            <meshStandardMaterial color="#ff4444" emissive="#ff2222" emissiveIntensity={0.5} />
+            <sphereGeometry args={[0.04, 10, 10]} />
+            <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.6} />
           </mesh>
-          <mesh position={[0, -0.08, 0]}>
-            <cylinderGeometry args={[0.012, 0.012, 0.15, 6]} />
-            <meshStandardMaterial color="#cc3333" />
-          </mesh>
-          <Html position={[0, 0.18, 0]} center distanceFactor={8} style={{ pointerEvents: 'none' }}>
+          <Html position={[0, 0.12, 0]} center distanceFactor={8} style={{ pointerEvents: 'none' }}>
             <div style={{
-              background: 'rgba(13, 17, 23, 0.85)',
-              color: '#e6edf3',
-              padding: '2px 8px',
-              borderRadius: '4px',
-              fontSize: '11px',
-              fontFamily: 'monospace',
-              fontWeight: 600,
+              color: 'rgba(255, 255, 255, 0.9)',
+              padding: '1px 4px',
+              fontSize: '9px',
+              fontFamily: "'Inter', system-ui, sans-serif",
+              fontWeight: 400,
+              letterSpacing: '0.5px',
               whiteSpace: 'nowrap',
-              border: '1px solid rgba(255,255,255,0.15)',
+              textShadow: '0 1px 4px rgba(0,0,0,0.8), 0 0px 2px rgba(0,0,0,0.6)',
             }}>
               {city.name}
             </div>
@@ -161,14 +199,15 @@ const GeoFeatures = ({ terrain, exaggeration }: GeoFeaturesProps) => {
         </group>
       ))}
 
+      {/* Rivers */}
       {riverLineData.map((river) => (
         <Line
           key={river.name}
           points={river.points}
           color={river.color}
-          lineWidth={2}
+          lineWidth={1.5}
           transparent
-          opacity={0.85}
+          opacity={0.7}
         />
       ))}
     </group>
