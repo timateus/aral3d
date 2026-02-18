@@ -7,9 +7,10 @@ import { TerrainData, getElevationColor } from '@/lib/geotiff-loader';
 interface TerrainMeshProps {
   terrain: TerrainData;
   exaggeration: number;
+  waterLevel: number;
 }
 
-const TerrainMesh = ({ terrain, exaggeration }: TerrainMeshProps) => {
+const TerrainMesh = ({ terrain, exaggeration, waterLevel }: TerrainMeshProps) => {
   const [hoverInfo, setHoverInfo] = useState<{ position: THREE.Vector3; elevation: number } | null>(null);
   const meshRef = useRef<THREE.Mesh>(null);
 
@@ -24,15 +25,7 @@ const TerrainMesh = ({ terrain, exaggeration }: TerrainMeshProps) => {
     const elevRange = maxElevation - minElevation || 1;
     const maxHeight = 10 * (exaggeration / 100);
 
-    // Water level thresholds: 29m for south, 39m for north, split around 45°N
-    const bounds = terrain.bounds;
-    const splitLat = 45.0;
-
     for (let j = 0; j < h; j++) {
-      // Latitude for this row (j=0 is top of image = max lat)
-      const lat = bounds ? bounds.maxLat - (j / (h - 1)) * (bounds.maxLat - bounds.minLat) : 0;
-      const waterLevel = lat > splitLat ? 39 : 29;
-
       for (let i = 0; i < w; i++) {
         const srcIdx = j * width + i;
         const vertIdx = j * w + i;
@@ -46,9 +39,18 @@ const TerrainMesh = ({ terrain, exaggeration }: TerrainMeshProps) => {
         positions.setZ(vertIdx, normalized * maxHeight);
 
         const isWater = elev <= waterLevel;
-        const color = isWater
-          ? [0.08, 0.25, 0.55] as [number, number, number]
-          : getElevationColor(normalized);
+        let color: [number, number, number];
+        if (isWater) {
+          // Deeper water = darker blue
+          const waterDepth = Math.max(0, Math.min(1, (waterLevel - elev) / (waterLevel - minElevation || 1)));
+          color = [
+            0.04 + (1 - waterDepth) * 0.12,
+            0.12 + (1 - waterDepth) * 0.2,
+            0.35 + (1 - waterDepth) * 0.25,
+          ];
+        } else {
+          color = getElevationColor(normalized);
+        }
         colors[vertIdx * 3] = color[0];
         colors[vertIdx * 3 + 1] = color[1];
         colors[vertIdx * 3 + 2] = color[2];
@@ -67,7 +69,7 @@ const TerrainMesh = ({ terrain, exaggeration }: TerrainMeshProps) => {
     });
 
     return { geometry: geo, material: mat };
-  }, [terrain, exaggeration]);
+  }, [terrain, exaggeration, waterLevel]);
 
   const handlePointerMove = useCallback((e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation();
