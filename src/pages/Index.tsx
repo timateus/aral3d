@@ -4,7 +4,7 @@ import TerrainViewer, { TerrainViewerHandle } from '@/components/TerrainViewer';
 import ControlPanel from '@/components/ControlPanel';
 import Legend from '@/components/Legend';
 import IntroOverlay from '@/components/IntroOverlay';
-import { Camera } from 'lucide-react';
+import { Camera, Video } from 'lucide-react';
 
 const Index = () => {
   const [terrain, setTerrain] = useState<TerrainData | null>(null);
@@ -15,6 +15,7 @@ const Index = () => {
   const [showBorders, setShowBorders] = useState(true);
   const [showRivers, setShowRivers] = useState(true);
   const [started, setStarted] = useState(false);
+  const [recording, setRecording] = useState(false);
   const viewerRef = useRef<TerrainViewerHandle>(null);
   useEffect(() => {
     loadGeoTiff('/data/aral_region.tif')
@@ -36,6 +37,9 @@ const Index = () => {
             showBorders={showBorders}
             showRivers={showRivers}
             started={started}
+            recording={recording}
+            onWaterLevelChange={setWaterLevel}
+            onRecordingDone={() => setRecording(false)}
           />
         )}
         {!terrain && !loading && error && (
@@ -87,6 +91,14 @@ const Index = () => {
           >
             <Camera className="w-3.5 h-3.5" />
             Save Screenshot
+          </button>
+          <button
+            onClick={() => { if (!recording) setRecording(true); }}
+            disabled={recording}
+            className="glass-panel p-2.5 w-72 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
+          >
+            <Video className="w-3.5 h-3.5" />
+            {recording ? 'Recording…' : 'Make a Video'}
           </button>
         </div>
       )}
