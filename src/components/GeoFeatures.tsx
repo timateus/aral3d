@@ -5,6 +5,8 @@ import { TerrainData, GeoBounds } from '@/lib/geotiff-loader';
 interface GeoFeaturesProps {
   terrain: TerrainData;
   exaggeration: number;
+  showBorders: boolean;
+  showRivers: boolean;
 }
 
 interface City {
@@ -73,7 +75,7 @@ function geoToMeshPos(
   return [x, zHeight, -planeY];
 }
 
-const GeoFeatures = ({ terrain, exaggeration }: GeoFeaturesProps) => {
+const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers }: GeoFeaturesProps) => {
   const bounds = terrain.bounds;
   const w = terrain.width;
   const h = terrain.height;
@@ -181,7 +183,7 @@ const GeoFeatures = ({ terrain, exaggeration }: GeoFeaturesProps) => {
   return (
     <group>
       {/* Country borders */}
-      {borderLines.map((points, i) => (
+      {showBorders && borderLines.map((points, i) => (
         <Line
           key={`border-${i}`}
           points={points}
@@ -217,7 +219,7 @@ const GeoFeatures = ({ terrain, exaggeration }: GeoFeaturesProps) => {
       ))}
 
       {/* Rivers from GeoJSON */}
-      {riverLines.map((seg, i) => (
+      {showRivers && riverLines.map((seg, i) => (
         <Line
           key={`river-${i}`}
           points={seg.points}

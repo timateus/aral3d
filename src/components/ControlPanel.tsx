@@ -71,11 +71,6 @@ const ControlPanel = ({ terrain, exaggeration, onExaggerationChange, waterLevel,
         </>
       )}
 
-      <div className="pt-2 border-t border-border text-xs text-muted-foreground space-y-1">
-        <p>🖱️ Left drag: rotate</p>
-        <p>🖱️ Right drag: pan</p>
-        <p>🖱️ Scroll: zoom</p>
-      </div>
     </div>
   );
 };
