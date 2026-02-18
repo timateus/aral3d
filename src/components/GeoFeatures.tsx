@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Html, Line } from '@react-three/drei';
 import { TerrainData, GeoBounds } from '@/lib/geotiff-loader';
 
@@ -13,10 +13,18 @@ interface City {
   lon: number;
 }
 
-interface RiverPath {
-  name: string;
-  color: string;
-  coords: [number, number][]; // [lat, lon]
+interface GeoJSONFeature {
+  type: string;
+  geometry: {
+    type: string;
+    coordinates: number[][];
+  };
+  properties: Record<string, unknown>;
+}
+
+interface GeoJSONCollection {
+  type: string;
+  features: GeoJSONFeature[];
 }
 
 const CITIES: City[] = [
@@ -27,84 +35,6 @@ const CITIES: City[] = [
   { name: 'Chimbay', lat: 42.930, lon: 59.770 },
   { name: 'Takhtakupir', lat: 43.015, lon: 59.826 },
   { name: 'Qazaly', lat: 45.763, lon: 62.110 },
-];
-
-// More accurate river paths based on geographic data
-// Bounds: 57°E–63°E, 42°N–48°N
-const RIVERS: RiverPath[] = [
-  {
-    name: 'Amu Darya',
-    color: '#5b9bd5',
-    coords: [
-      // Enters map from south near Nukus area, flowing NW through delta to former Aral shore
-      [42.00, 60.65],
-      [42.05, 60.55],
-      [42.10, 60.40],
-      [42.18, 60.25],
-      [42.25, 60.10],
-      [42.30, 59.95],
-      [42.35, 59.80],
-      [42.40, 59.68],
-      [42.46, 59.60], // Nukus
-      [42.50, 59.55],
-      [42.55, 59.52],
-      [42.62, 59.50],
-      [42.70, 59.48],
-      [42.78, 59.42],
-      [42.85, 59.35],
-      [42.90, 59.28],
-      [42.95, 59.20],
-      [43.02, 59.12],
-      [43.10, 59.05],
-      [43.18, 58.98],
-      [43.25, 58.92],
-      [43.32, 58.88],
-      [43.40, 58.84],
-      [43.48, 58.80],
-      [43.55, 58.76],
-      [43.62, 58.73],
-      [43.70, 58.70],
-      [43.77, 58.69], // Moynaq - former Aral shore
-      [43.85, 58.68],
-      [43.95, 58.70],
-      [44.05, 58.75],
-      [44.15, 58.82],
-      [44.25, 58.90], // Into former Aral Sea bed
-    ],
-  },
-  {
-    name: 'Syr Darya',
-    color: '#5b9bd5',
-    coords: [
-      // Enters from east, flows west through Qazaly toward Aral (city) and into northern Aral Sea
-      [43.80, 63.00], // enters map from east
-      [43.90, 62.85],
-      [44.05, 62.65],
-      [44.18, 62.50],
-      [44.30, 62.38],
-      [44.45, 62.28],
-      [44.60, 62.20],
-      [44.80, 62.15],
-      [45.00, 62.12],
-      [45.20, 62.10],
-      [45.40, 62.10],
-      [45.60, 62.10],
-      [45.76, 62.11], // Qazaly
-      [45.90, 62.05],
-      [46.05, 61.95],
-      [46.15, 61.85],
-      [46.25, 61.78],
-      [46.35, 61.73],
-      [46.50, 61.70],
-      [46.60, 61.68],
-      [46.70, 61.66],
-      [46.79, 61.66], // Aral city
-      [46.85, 61.60],
-      [46.90, 61.50],
-      [46.92, 61.35],
-      [46.90, 61.20], // Into northern Aral Sea
-    ],
-  },
 ];
 
 function geoToMeshPos(
@@ -147,6 +77,15 @@ const GeoFeatures = ({ terrain, exaggeration }: GeoFeaturesProps) => {
   const meshWidth = 10;
   const meshHeight = 10 * (h / w);
 
+  const [geoJsonData, setGeoJsonData] = useState<GeoJSONCollection | null>(null);
+
+  useEffect(() => {
+    fetch('/data/AmuRivers.geojson')
+      .then((r) => r.json())
+      .then((data) => setGeoJsonData(data))
+      .catch((err) => console.warn('Failed to load river GeoJSON:', err));
+  }, []);
+
   const cityMarkers = useMemo(() => {
     if (!bounds) return [];
     return CITIES.map((city) => {
@@ -156,20 +95,32 @@ const GeoFeatures = ({ terrain, exaggeration }: GeoFeaturesProps) => {
     }).filter(Boolean) as (City & { pos: [number, number, number] })[];
   }, [terrain, exaggeration, bounds, meshWidth, meshHeight, w, h]);
 
-  const riverLineData = useMemo(() => {
-    if (!bounds) return [];
-    return RIVERS.map((river) => {
+  const riverLines = useMemo(() => {
+    if (!bounds || !geoJsonData) return [];
+
+    // Group features into continuous river segments
+    const segments: [number, number, number][][] = [];
+
+    for (const feature of geoJsonData.features) {
+      if (feature.geometry.type !== 'LineString') continue;
+      const coords = feature.geometry.coordinates;
       const points: [number, number, number][] = [];
-      for (const [lat, lon] of river.coords) {
+
+      for (const coord of coords) {
+        const [lon, lat] = coord;
         const pos = geoToMeshPos(lat, lon, bounds, terrain, exaggeration, meshWidth, meshHeight);
         if (pos) {
           points.push([pos[0], pos[1] + 0.03, pos[2]]);
         }
       }
-      if (points.length < 2) return null;
-      return { name: river.name, points, color: river.color };
-    }).filter(Boolean) as { name: string; points: [number, number, number][]; color: string }[];
-  }, [terrain, exaggeration, bounds, meshWidth, meshHeight, w, h]);
+
+      if (points.length >= 2) {
+        segments.push(points);
+      }
+    }
+
+    return segments;
+  }, [terrain, exaggeration, bounds, meshWidth, meshHeight, geoJsonData]);
 
   if (!bounds) return null;
 
@@ -199,12 +150,12 @@ const GeoFeatures = ({ terrain, exaggeration }: GeoFeaturesProps) => {
         </group>
       ))}
 
-      {/* Rivers */}
-      {riverLineData.map((river) => (
+      {/* Rivers from GeoJSON */}
+      {riverLines.map((points, i) => (
         <Line
-          key={river.name}
-          points={river.points}
-          color={river.color}
+          key={`river-${i}`}
+          points={points}
+          color="#5b9bd5"
           lineWidth={1.5}
           transparent
           opacity={0.7}
