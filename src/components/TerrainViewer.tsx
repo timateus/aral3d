@@ -10,12 +10,16 @@ interface TerrainViewerProps {
   terrain: TerrainData;
   exaggeration: number;
   waterLevel: number;
+  showBorders: boolean;
+  showRivers: boolean;
+  started: boolean;
 }
 
-function CameraAnimator() {
+function CameraAnimator({ started }: { started: boolean }) {
   const { camera } = useThree();
   const progress = useRef(0);
-  const done = useRef(false);
+  const animating = useRef(false);
+  const hasStarted = useRef(false);
 
   const start = new THREE.Vector3(14, 12, 14);
   const end = new THREE.Vector3(0, 10, 12);
@@ -27,22 +31,30 @@ function CameraAnimator() {
     camera.lookAt(startTarget);
   }, []);
 
+  useEffect(() => {
+    if (started && !hasStarted.current) {
+      hasStarted.current = true;
+      animating.current = true;
+      progress.current = 0;
+    }
+  }, [started]);
+
   useFrame((_, delta) => {
-    if (done.current) return;
+    if (!animating.current) return;
     progress.current = Math.min(progress.current + delta * 0.15, 1);
-    const t = 1 - Math.pow(1 - progress.current, 3); // ease-out cubic
+    const t = 1 - Math.pow(1 - progress.current, 3);
 
     camera.position.lerpVectors(start, end, t);
     const target = new THREE.Vector3().lerpVectors(startTarget, endTarget, t);
     camera.lookAt(target);
 
-    if (progress.current >= 1) done.current = true;
+    if (progress.current >= 1) animating.current = false;
   });
 
   return null;
 }
 
-const TerrainViewer = ({ terrain, exaggeration, waterLevel }: TerrainViewerProps) => {
+const TerrainViewer = ({ terrain, exaggeration, waterLevel, showBorders, showRivers, started }: TerrainViewerProps) => {
   return (
     <Canvas
       camera={{ position: [14, 12, 14], fov: 50, near: 0.1, far: 1000 }}
@@ -57,9 +69,9 @@ const TerrainViewer = ({ terrain, exaggeration, waterLevel }: TerrainViewerProps
       <directionalLight position={[-3, 5, -3]} intensity={0.4} color="#8ec8e8" />
 
       <TerrainMesh terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} />
-      <GeoFeatures terrain={terrain} exaggeration={exaggeration} />
+      <GeoFeatures terrain={terrain} exaggeration={exaggeration} showBorders={showBorders} showRivers={showRivers} />
 
-      <CameraAnimator />
+      <CameraAnimator started={started} />
 
       <OrbitControls
         enableDamping
