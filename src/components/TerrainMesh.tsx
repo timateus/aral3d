@@ -11,12 +11,9 @@ const TerrainMesh = ({ terrain, exaggeration }: TerrainMeshProps) => {
   const { geometry, material } = useMemo(() => {
     const { width, height, elevations, minElevation, maxElevation, noDataValue } = terrain;
 
-    // Downsample if very large
-    const maxDim = 512;
-    const scaleX = width > maxDim ? Math.ceil(width / maxDim) : 1;
-    const scaleY = height > maxDim ? Math.ceil(height / maxDim) : 1;
-    const w = Math.floor(width / scaleX);
-    const h = Math.floor(height / scaleY);
+    // Data is already downsampled by the loader
+    const w = width;
+    const h = height;
 
     const geo = new THREE.PlaneGeometry(10, 10 * (h / w), w - 1, h - 1);
     const positions = geo.attributes.position;
@@ -28,7 +25,7 @@ const TerrainMesh = ({ terrain, exaggeration }: TerrainMeshProps) => {
 
     for (let j = 0; j < h; j++) {
       for (let i = 0; i < w; i++) {
-        const srcIdx = j * scaleY * width + i * scaleX;
+        const srcIdx = j * width + i;
         const vertIdx = j * w + i;
         let elev = elevations[srcIdx];
 

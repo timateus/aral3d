@@ -15,9 +15,21 @@ export async function loadGeoTiff(url: string): Promise<TerrainData> {
   const tiff = await fromArrayBuffer(arrayBuffer);
   const image = await tiff.getImage();
 
-  const width = image.getWidth();
-  const height = image.getHeight();
-  const rasters = await image.readRasters();
+  const fullWidth = image.getWidth();
+  const fullHeight = image.getHeight();
+
+  // Downsample large images during read to avoid memory issues
+  const maxDim = 512;
+  const scaleX = Math.max(1, Math.ceil(fullWidth / maxDim));
+  const scaleY = Math.max(1, Math.ceil(fullHeight / maxDim));
+  const width = Math.floor(fullWidth / scaleX);
+  const height = Math.floor(fullHeight / scaleY);
+
+  const rasters = await image.readRasters({
+    width,
+    height,
+    resampleMethod: 'nearest',
+  });
   const elevations = rasters[0] as Float32Array | Float64Array;
 
   // Get nodata value
@@ -36,6 +48,8 @@ export async function loadGeoTiff(url: string): Promise<TerrainData> {
     if (val < minElevation) minElevation = val;
     if (val > maxElevation) maxElevation = val;
   }
+
+  console.log('Terrain loaded:', { width, height, minElevation, maxElevation, noDataValue });
 
   return { width, height, elevations, minElevation, maxElevation, noDataValue };
 }
