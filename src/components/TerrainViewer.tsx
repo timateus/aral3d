@@ -8,6 +8,7 @@ import * as THREE from 'three';
 
 export interface TerrainViewerHandle {
   screenshot: () => void;
+  recordVideo: () => void;
 }
 
 interface TerrainViewerProps {
@@ -17,6 +18,9 @@ interface TerrainViewerProps {
   showBorders: boolean;
   showRivers: boolean;
   started: boolean;
+  onWaterLevelChange?: (level: number) => void;
+  recording?: boolean;
+  onRecordingDone?: () => void;
 }
 
 function CameraAnimator({ started }: { started: boolean }) {
@@ -73,11 +77,112 @@ function ScreenshotHelper({ onReady }: { onReady: (fn: () => void) => void }) {
   return null;
 }
 
-const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, started }, ref) => {
+function VideoAnimator({
+  recording,
+  onWaterLevelChange,
+  onDone,
+}: {
+  recording: boolean;
+  onWaterLevelChange: (level: number) => void;
+  onDone: () => void;
+}) {
+  const { camera, gl } = useThree();
+  const progress = useRef(0);
+  const mediaRecorder = useRef<MediaRecorder | null>(null);
+  const chunks = useRef<Blob[]>([]);
+  const active = useRef(false);
+
+  // Total animation: phase1 = camera flyover (0-0.5), phase2 = water level + rotate (0.5-1.0)
+  const totalDuration = 12; // seconds
+
+  const flyStart = new THREE.Vector3(18, 16, 18);
+  const flyEnd = new THREE.Vector3(0, 10, 12);
+  const flyTargetStart = new THREE.Vector3(0, 0, 0);
+  const flyTargetEnd = new THREE.Vector3(0, 0, -1);
+
+  useEffect(() => {
+    if (recording && !active.current) {
+      active.current = true;
+      progress.current = 0;
+      chunks.current = [];
+
+      // Reset camera
+      camera.position.copy(flyStart);
+      camera.lookAt(flyTargetStart);
+
+      // Start recording
+      const stream = gl.domElement.captureStream(30);
+      const recorder = new MediaRecorder(stream, {
+        mimeType: 'video/webm;codecs=vp9',
+        videoBitsPerSecond: 8_000_000,
+      });
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunks.current.push(e.data);
+      };
+      recorder.onstop = () => {
+        const blob = new Blob(chunks.current, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = 'aral-sea-flyover.webm';
+        link.href = url;
+        link.click();
+        URL.revokeObjectURL(url);
+        active.current = false;
+        onDone();
+      };
+      recorder.start();
+      mediaRecorder.current = recorder;
+    }
+  }, [recording]);
+
+  useFrame((_, delta) => {
+    if (!active.current) return;
+
+    progress.current += delta / totalDuration;
+    const p = Math.min(progress.current, 1);
+
+    if (p <= 0.5) {
+      // Phase 1: Camera flyover (0 -> 0.5 maps to 0 -> 1)
+      const t = p / 0.5;
+      const eased = 1 - Math.pow(1 - t, 3);
+      camera.position.lerpVectors(flyStart, flyEnd, eased);
+      const target = new THREE.Vector3().lerpVectors(flyTargetStart, flyTargetEnd, eased);
+      camera.lookAt(target);
+    } else {
+      // Phase 2: Water level 44 -> 29 + camera orbit
+      const t = (p - 0.5) / 0.5;
+      const eased = 1 - Math.pow(1 - t, 2);
+
+      // Water level interpolation
+      const wl = 44 - (44 - 29) * eased;
+      onWaterLevelChange(Math.round(wl));
+
+      // Gentle orbit around the terrain
+      const angle = t * Math.PI * 0.6;
+      const radius = 12;
+      const height = 10 - t * 2;
+      camera.position.set(
+        Math.sin(angle) * radius,
+        height,
+        Math.cos(angle) * radius
+      );
+      camera.lookAt(0, 0, -1);
+    }
+
+    if (p >= 1) {
+      mediaRecorder.current?.stop();
+    }
+  });
+
+  return null;
+}
+
+const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, started, onWaterLevelChange, recording, onRecordingDone }, ref) => {
   const screenshotFn = useRef<(() => void) | null>(null);
 
   useImperativeHandle(ref, () => ({
     screenshot: () => screenshotFn.current?.(),
+    recordVideo: () => {},
   }));
 
   return (
@@ -98,6 +203,13 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
 
       <CameraAnimator started={started} />
       <ScreenshotHelper onReady={(fn) => { screenshotFn.current = fn; }} />
+      {recording && onWaterLevelChange && onRecordingDone && (
+        <VideoAnimator
+          recording={recording}
+          onWaterLevelChange={onWaterLevelChange}
+          onDone={onRecordingDone}
+        />
+      )}
 
       <OrbitControls
         enableDamping
