@@ -107,12 +107,12 @@ const GeoFeatures = ({ terrain, exaggeration }: GeoFeaturesProps) => {
   const riverLines = useMemo(() => {
     if (!bounds || !geoJsonData) return [];
 
-    // Group features into continuous river segments
-    const segments: [number, number, number][][] = [];
+    const segments: { points: [number, number, number][]; width: number }[] = [];
 
     for (const feature of geoJsonData.features) {
       if (feature.geometry.type !== 'LineString') continue;
       const coords = feature.geometry.coordinates as number[][];
+      const sorder = (feature.properties?.sorder as number) || 1;
       const points: [number, number, number][] = [];
 
       for (const coord of coords) {
@@ -125,7 +125,9 @@ const GeoFeatures = ({ terrain, exaggeration }: GeoFeaturesProps) => {
       }
 
       if (points.length >= 2) {
-        segments.push(points);
+        // Scale line width by stream order
+        const lineWidth = Math.max(0.5, sorder * 0.4);
+        segments.push({ points, width: lineWidth });
       }
     }
 
@@ -215,12 +217,12 @@ const GeoFeatures = ({ terrain, exaggeration }: GeoFeaturesProps) => {
       ))}
 
       {/* Rivers from GeoJSON */}
-      {riverLines.map((points, i) => (
+      {riverLines.map((seg, i) => (
         <Line
           key={`river-${i}`}
-          points={points}
+          points={seg.points}
           color="#5b9bd5"
-          lineWidth={1.5}
+          lineWidth={seg.width}
           transparent
           opacity={0.7}
         />
