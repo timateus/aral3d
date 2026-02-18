@@ -132,7 +132,7 @@ const GeoFeatures = ({ terrain, exaggeration }: GeoFeaturesProps) => {
     return segments;
   }, [terrain, exaggeration, bounds, meshWidth, meshHeight, geoJsonData]);
 
-  const BORDER_COUNTRIES = ['Uzbekistan', 'Kazakhstan', 'Turkmenistan', 'Kyrgyzstan', 'Tajikistan'];
+  const BORDER_COUNTRIES = ['Uzbekistan'];
 
   const borderLines = useMemo(() => {
     if (!bounds || !countriesData) return [];
