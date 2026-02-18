@@ -23,8 +23,8 @@ const TerrainMesh = ({ terrain, exaggeration }: TerrainMeshProps) => {
     const colors = new Float32Array(positions.count * 3);
     const elevRange = maxElevation - minElevation || 1;
 
-    // Scale factor for elevation relative to plane size
-    const elevScale = (10 / w) * exaggeration * 0.5;
+    // Scale factor: make max elevation a visible fraction of plane width
+    const maxHeight = 3 * exaggeration;
 
     for (let j = 0; j < h; j++) {
       for (let i = 0; i < w; i++) {
@@ -38,7 +38,7 @@ const TerrainMesh = ({ terrain, exaggeration }: TerrainMeshProps) => {
 
         const normalized = (elev - minElevation) / elevRange;
         // Set Z (up) to elevation
-        positions.setZ(vertIdx, normalized * elevScale * elevRange);
+        positions.setZ(vertIdx, normalized * maxHeight);
 
         const color = getElevationColor(normalized);
         colors[vertIdx * 3] = color[0];
