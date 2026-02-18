@@ -47,7 +47,7 @@ const ControlPanel = ({ terrain, exaggeration, onExaggerationChange, waterLevel,
             <Slider
               value={[waterLevel]}
               onValueChange={(v) => onWaterLevelChange(v[0])}
-              min={Math.floor(terrain.minElevation)}
+              min={29}
               max={50}
               step={1}
               className="w-full"

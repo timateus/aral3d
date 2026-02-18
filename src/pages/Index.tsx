@@ -8,7 +8,7 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [exaggeration, setExaggeration] = useState(10);
-  const [waterLevel, setWaterLevel] = useState(53);
+  const [waterLevel, setWaterLevel] = useState(29);
 
   useEffect(() => {
     loadGeoTiff('/data/aral_region.tif')
