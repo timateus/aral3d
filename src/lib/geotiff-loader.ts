@@ -57,25 +57,34 @@ export async function loadGeoTiff(url: string): Promise<TerrainData> {
     if (val > maxElevation) maxElevation = val;
   }
 
-  // Extract geographic bounds from tiepoint + pixel scale
+  // Extract geographic bounds from image bbox or tiepoint + pixel scale
   let bounds: GeoBounds | null = null;
   try {
-    const tiepoint = fileDirectory.ModelTiepoint as number[] | undefined;
-    const pixelScale = fileDirectory.ModelPixelScale as number[] | undefined;
-    if (tiepoint && pixelScale) {
-      const originX = tiepoint[3]; // lon of top-left
-      const originY = tiepoint[4]; // lat of top-left
-      const scaleXGeo = pixelScale[0];
-      const scaleYGeo = pixelScale[1];
+    const bbox = image.getBoundingBox(); // [minX, minY, maxX, maxY]
+    if (bbox && bbox.length === 4) {
       bounds = {
-        minLon: originX,
-        maxLon: originX + fullWidth * scaleXGeo,
-        maxLat: originY,
-        minLat: originY - fullHeight * scaleYGeo,
+        minLon: bbox[0],
+        minLat: bbox[1],
+        maxLon: bbox[2],
+        maxLat: bbox[3],
       };
     }
   } catch (e) {
-    console.warn('Could not extract geo bounds:', e);
+    // Fallback: try tiepoint + pixel scale from raw file directory
+    try {
+      const tiepoint = (fileDirectory as any).ModelTiepoint;
+      const pixelScale = (fileDirectory as any).ModelPixelScale;
+      if (tiepoint && pixelScale) {
+        bounds = {
+          minLon: tiepoint[3],
+          maxLon: tiepoint[3] + fullWidth * pixelScale[0],
+          maxLat: tiepoint[4],
+          minLat: tiepoint[4] - fullHeight * pixelScale[1],
+        };
+      }
+    } catch (e2) {
+      console.warn('Could not extract geo bounds:', e2);
+    }
   }
 
   console.log('Terrain loaded:', { width, height, minElevation, maxElevation, noDataValue, bounds });
