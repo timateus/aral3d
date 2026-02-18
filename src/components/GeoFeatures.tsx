@@ -50,22 +50,25 @@ function geoToMeshPos(
   const nx = (lon - minLon) / (maxLon - minLon);
   const ny = (lat - minLat) / (maxLat - minLat);
 
-  if (nx < 0 || nx > 1 || ny < 0 || ny > 1) return null;
-
   const x = (nx - 0.5) * meshWidth;
   const planeY = (ny - 0.5) * meshHeight;
 
-  const pixelX = Math.floor(nx * (terrain.width - 1));
-  const pixelY = Math.floor((1 - ny) * (terrain.height - 1));
-  const idx = pixelY * terrain.width + pixelX;
-  let elev = terrain.elevations[idx] || terrain.minElevation;
-  if (terrain.noDataValue !== null && elev === terrain.noDataValue) {
-    elev = terrain.minElevation;
+  const inBounds = nx >= 0 && nx <= 1 && ny >= 0 && ny <= 1;
+  let zHeight = 0;
+
+  if (inBounds) {
+    const pixelX = Math.floor(nx * (terrain.width - 1));
+    const pixelY = Math.floor((1 - ny) * (terrain.height - 1));
+    const idx = pixelY * terrain.width + pixelX;
+    let elev = terrain.elevations[idx] || terrain.minElevation;
+    if (terrain.noDataValue !== null && elev === terrain.noDataValue) {
+      elev = terrain.minElevation;
+    }
+    const elevRange = terrain.maxElevation - terrain.minElevation || 1;
+    const normalized = (elev - terrain.minElevation) / elevRange;
+    const maxMeshHeight = 10 * (exaggeration / 100);
+    zHeight = normalized * maxMeshHeight;
   }
-  const elevRange = terrain.maxElevation - terrain.minElevation || 1;
-  const normalized = (elev - terrain.minElevation) / elevRange;
-  const maxMeshHeight = 10 * (exaggeration / 100);
-  const zHeight = normalized * maxMeshHeight;
 
   return [x, zHeight, -planeY];
 }
