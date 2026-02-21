@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { loadGeoTiff, TerrainData } from '@/lib/geotiff-loader';
+import { mergeTerrains } from '@/lib/terrain-merger';
 import TerrainViewer, { TerrainViewerHandle } from '@/components/TerrainViewer';
 import ControlPanel from '@/components/ControlPanel';
 import Legend from '@/components/Legend';
@@ -7,10 +8,14 @@ import TimelineSlider from '@/components/TimelineSlider';
 import IntroOverlay from '@/components/IntroOverlay';
 import { Camera, Video } from 'lucide-react';
 
+export type DataSource = 'regional' | 'seabed' | 'merged';
+
 const Index = () => {
-  const [terrain, setTerrain] = useState<TerrainData | null>(null);
+  const [baseTerrain, setBaseTerrain] = useState<TerrainData | null>(null);
+  const [seabedTerrain, setSeabedTerrain] = useState<TerrainData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dataSource, setDataSource] = useState<DataSource>('merged');
   const [exaggeration, setExaggeration] = useState(10);
   const [waterLevel, setWaterLevel] = useState(29);
   const [showBorders, setShowBorders] = useState(true);
@@ -22,12 +27,29 @@ const Index = () => {
   const [started, setStarted] = useState(false);
   const [recording, setRecording] = useState(false);
   const viewerRef = useRef<TerrainViewerHandle>(null);
+
   useEffect(() => {
-    loadGeoTiff('/data/aral_region.tif')
-      .then(setTerrain)
+    Promise.all([
+      loadGeoTiff('/data/aral_region.tif'),
+      loadGeoTiff('/data/aral_seabed.tif').catch((err) => {
+        console.warn('Seabed DEM failed to load:', err);
+        return null;
+      }),
+    ])
+      .then(([base, seabed]) => {
+        setBaseTerrain(base);
+        if (seabed) setSeabedTerrain(seabed);
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
+
+  const terrain = useMemo(() => {
+    if (!baseTerrain) return null;
+    if (dataSource === 'seabed' && seabedTerrain) return seabedTerrain;
+    if (dataSource === 'merged' && seabedTerrain) return mergeTerrains(baseTerrain, seabedTerrain);
+    return baseTerrain;
+  }, [baseTerrain, seabedTerrain, dataSource]);
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
@@ -87,6 +109,9 @@ const Index = () => {
             waterLevel={waterLevel}
             onWaterLevelChange={setWaterLevel}
             loading={loading}
+            dataSource={dataSource}
+            onDataSourceChange={setDataSource}
+            hasSeabed={!!seabedTerrain}
           />
           <Legend
             showBorders={showBorders}
