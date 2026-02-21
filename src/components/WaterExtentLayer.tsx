@@ -7,6 +7,7 @@ interface WaterExtentLayerProps {
   terrain: TerrainData;
   exaggeration: number;
   year: number;
+  interpolate?: boolean;
 }
 
 interface GeoJSONCollection {
@@ -57,7 +58,7 @@ function geoToMeshPos(
   return [x, zHeight, -planeY];
 }
 
-const WaterExtentLayer = ({ terrain, exaggeration, year }: WaterExtentLayerProps) => {
+const WaterExtentLayer = ({ terrain, exaggeration, year, interpolate = false }: WaterExtentLayerProps) => {
   const bounds = terrain.bounds;
   const w = terrain.width;
   const h = terrain.height;
@@ -116,10 +117,37 @@ const WaterExtentLayer = ({ terrain, exaggeration, year }: WaterExtentLayerProps
     return new THREE.Color().lerpColors(c1, c2, t).getStyle();
   }, [lowerYear, upperYear, t]);
 
-  // Show lower outlines fading out, upper fading in
+  // Interpolated outlines: lerp vertex positions between lower and upper
+  const interpolatedOutlines = useMemo(() => {
+    if (!interpolate || lowerYear === upperYear || lowerOutlines.length === 0 || upperOutlines.length === 0) return null;
+    const count = Math.min(lowerOutlines.length, upperOutlines.length);
+    const result: [number, number, number][][] = [];
+    for (let i = 0; i < count; i++) {
+      const lo = lowerOutlines[i];
+      const hi = upperOutlines[i];
+      // Resample both to the same point count
+      const targetLen = Math.max(lo.length, hi.length);
+      const loResampled = resampleRing(lo, targetLen);
+      const hiResampled = resampleRing(hi, targetLen);
+      const lerped: [number, number, number][] = [];
+      for (let j = 0; j < targetLen; j++) {
+        lerped.push([
+          loResampled[j][0] + (hiResampled[j][0] - loResampled[j][0]) * t,
+          loResampled[j][1] + (hiResampled[j][1] - loResampled[j][1]) * t,
+          loResampled[j][2] + (hiResampled[j][2] - loResampled[j][2]) * t,
+        ]);
+      }
+      result.push(lerped);
+    }
+    return result;
+  }, [interpolate, lowerYear, upperYear, lowerOutlines, upperOutlines, t]);
+
+  // Fallback: snap to nearest
   const showLower = t <= 0.5 || lowerYear === upperYear;
   const showUpper = t > 0.5 && lowerYear !== upperYear;
-  const activeOutlines = showUpper ? upperOutlines : lowerOutlines;
+  const snappedOutlines = showUpper ? upperOutlines : lowerOutlines;
+
+  const activeOutlines = interpolatedOutlines ?? snappedOutlines;
 
   if (!bounds) return null;
 
@@ -163,6 +191,47 @@ function extractPolygonOutlines(
     }
   }
   return segments;
+}
+
+/** Resample a polyline to exactly `count` evenly spaced points */
+function resampleRing(
+  ring: [number, number, number][],
+  count: number,
+): [number, number, number][] {
+  if (ring.length === count) return ring;
+  if (ring.length === 0 || count <= 0) return [];
+  if (count === 1) return [ring[0]];
+
+  // Compute cumulative arc lengths
+  const lengths: number[] = [0];
+  for (let i = 1; i < ring.length; i++) {
+    const dx = ring[i][0] - ring[i - 1][0];
+    const dy = ring[i][1] - ring[i - 1][1];
+    const dz = ring[i][2] - ring[i - 1][2];
+    lengths.push(lengths[i - 1] + Math.sqrt(dx * dx + dy * dy + dz * dz));
+  }
+  const totalLen = lengths[lengths.length - 1];
+  if (totalLen === 0) return Array(count).fill(ring[0]);
+
+  const result: [number, number, number][] = [];
+  for (let i = 0; i < count; i++) {
+    const targetDist = (i / (count - 1)) * totalLen;
+    // Find segment
+    let seg = 0;
+    for (seg = 0; seg < lengths.length - 1; seg++) {
+      if (lengths[seg + 1] >= targetDist) break;
+    }
+    const segLen = lengths[seg + 1] - lengths[seg];
+    const frac = segLen === 0 ? 0 : (targetDist - lengths[seg]) / segLen;
+    const a = ring[seg];
+    const b = ring[Math.min(seg + 1, ring.length - 1)];
+    result.push([
+      a[0] + (b[0] - a[0]) * frac,
+      a[1] + (b[1] - a[1]) * frac,
+      a[2] + (b[2] - a[2]) * frac,
+    ]);
+  }
+  return result;
 }
 
 export default WaterExtentLayer;
