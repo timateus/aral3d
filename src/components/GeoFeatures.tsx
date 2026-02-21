@@ -7,6 +7,8 @@ interface GeoFeaturesProps {
   exaggeration: number;
   showBorders: boolean;
   showRivers: boolean;
+  show13thBasin: boolean;
+  show19thBasin: boolean;
 }
 
 interface City {
@@ -75,7 +77,7 @@ function geoToMeshPos(
   return [x, zHeight, -planeY];
 }
 
-const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers }: GeoFeaturesProps) => {
+const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thBasin, show19thBasin }: GeoFeaturesProps) => {
   const bounds = terrain.bounds;
   const w = terrain.width;
   const h = terrain.height;
@@ -84,6 +86,8 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers }: GeoFeat
 
   const [geoJsonData, setGeoJsonData] = useState<GeoJSONCollection | null>(null);
   const [countriesData, setCountriesData] = useState<GeoJSONCollection | null>(null);
+  const [basin13Data, setBasin13Data] = useState<GeoJSONCollection | null>(null);
+  const [basin19Data, setBasin19Data] = useState<GeoJSONCollection | null>(null);
 
   useEffect(() => {
     fetch('/data/AmuRivers.geojson')
@@ -95,6 +99,16 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers }: GeoFeat
       .then((r) => r.json())
       .then((data) => setCountriesData(data))
       .catch((err) => console.warn('Failed to load countries GeoJSON:', err));
+
+    fetch('/data/13cent_basin.geojson')
+      .then((r) => r.json())
+      .then((data) => setBasin13Data(data))
+      .catch((err) => console.warn('Failed to load 13th century basin GeoJSON:', err));
+
+    fetch('/data/19cent_basin.geojson')
+      .then((r) => r.json())
+      .then((data) => setBasin19Data(data))
+      .catch((err) => console.warn('Failed to load 19th century basin GeoJSON:', err));
   }, []);
 
   const cityMarkers = useMemo(() => {
@@ -178,6 +192,16 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers }: GeoFeat
     return segments;
   }, [terrain, exaggeration, bounds, meshWidth, meshHeight, countriesData]);
 
+  const basinLines13 = useMemo(() => {
+    if (!bounds || !basin13Data) return [];
+    return extractMultiLineStrings(basin13Data, bounds, terrain, exaggeration, meshWidth, meshHeight);
+  }, [terrain, exaggeration, bounds, meshWidth, meshHeight, basin13Data]);
+
+  const basinLines19 = useMemo(() => {
+    if (!bounds || !basin19Data) return [];
+    return extractMultiLineStrings(basin19Data, bounds, terrain, exaggeration, meshWidth, meshHeight);
+  }, [terrain, exaggeration, bounds, meshWidth, meshHeight, basin19Data]);
+
   if (!bounds) return null;
 
   return (
@@ -191,6 +215,30 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers }: GeoFeat
           lineWidth={1}
           transparent
           opacity={0.3}
+        />
+      ))}
+
+      {/* 13th century basin */}
+      {show13thBasin && basinLines13.map((points, i) => (
+        <Line
+          key={`basin13-${i}`}
+          points={points}
+          color="#e8a838"
+          lineWidth={1.5}
+          transparent
+          opacity={0.7}
+        />
+      ))}
+
+      {/* 19th century basin */}
+      {show19thBasin && basinLines19.map((points, i) => (
+        <Line
+          key={`basin19-${i}`}
+          points={points}
+          color="#38e8a8"
+          lineWidth={1.5}
+          transparent
+          opacity={0.7}
         />
       ))}
 
@@ -232,5 +280,33 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers }: GeoFeat
     </group>
   );
 };
+
+function extractMultiLineStrings(
+  data: GeoJSONCollection,
+  bounds: GeoBounds,
+  terrain: TerrainData,
+  exaggeration: number,
+  meshWidth: number,
+  meshHeight: number,
+): [number, number, number][][] {
+  const segments: [number, number, number][][] = [];
+  for (const feature of data.features) {
+    let lines: number[][][] = [];
+    if (feature.geometry.type === 'LineString') {
+      lines = [feature.geometry.coordinates as number[][]];
+    } else if (feature.geometry.type === 'MultiLineString') {
+      lines = feature.geometry.coordinates as number[][][];
+    }
+    for (const line of lines) {
+      const points: [number, number, number][] = [];
+      for (const coord of line) {
+        const pos = geoToMeshPos(coord[1], coord[0], bounds, terrain, exaggeration, meshWidth, meshHeight);
+        if (pos) points.push([pos[0], pos[1] + 0.04, pos[2]]);
+      }
+      if (points.length >= 2) segments.push(points);
+    }
+  }
+  return segments;
+}
 
 export default GeoFeatures;
