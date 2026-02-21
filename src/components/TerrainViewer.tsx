@@ -1,6 +1,6 @@
 import { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
-import { OrbitControls, GizmoHelper, GizmoViewport, Text } from '@react-three/drei';
+import { OrbitControls, GizmoHelper, GizmoViewport, Html } from '@react-three/drei';
 import TerrainMesh from './TerrainMesh';
 import GeoFeatures from './GeoFeatures';
 import WaterExtentLayer from './WaterExtentLayer';
@@ -208,29 +208,21 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
       {showWaterExtent && <WaterExtentLayer terrain={terrain} exaggeration={exaggeration} year={waterExtentYear} />}
       {showWaterExtent && (
         <group position={[0, 6, -2]}>
-          <Text
-            fontSize={1.8}
-            color="#ffffff"
-            anchorX="center"
-            anchorY="middle"
-            font="https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfopgk.woff2"
-            outlineWidth={0.04}
-            outlineColor="#000000"
-          >
-            {waterExtentYear}
-          </Text>
-          <Text
-            position={[0, -1.4, 0]}
-            fontSize={0.6}
-            color="#8ec8e8"
-            anchorX="center"
-            anchorY="middle"
-            font="https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfopgk.woff2"
-            outlineWidth={0.02}
-            outlineColor="#000000"
-          >
-            {`Water Level: ${waterLevel} m`}
-          </Text>
+          <Html center distanceFactor={15} style={{ pointerEvents: 'none' }}>
+            <div style={{
+              textAlign: 'center',
+              color: '#ffffff',
+              textShadow: '0 2px 12px rgba(0,0,0,0.9), 0 0 4px rgba(0,0,0,0.7)',
+              fontFamily: "'Inter', system-ui, sans-serif",
+            }}>
+              <div style={{ fontSize: '72px', fontWeight: 700, lineHeight: 1 }}>
+                {waterExtentYear}
+              </div>
+              <div style={{ fontSize: '22px', fontWeight: 400, color: '#8ec8e8', marginTop: '4px' }}>
+                Water Level: {waterLevel} m
+              </div>
+            </div>
+          </Html>
         </group>
       )}
 
