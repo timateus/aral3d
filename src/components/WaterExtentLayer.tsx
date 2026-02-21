@@ -119,7 +119,8 @@ const WaterExtentLayer = ({ terrain, exaggeration, year, interpolate = false }: 
 
   // Interpolated outlines: lerp vertex positions between lower and upper
   const interpolatedOutlines = useMemo(() => {
-    if (!interpolate || lowerYear === upperYear || lowerOutlines.length === 0 || upperOutlines.length === 0) return null;
+    // At exact milestone years (t===0 or t===1), show original data without resampling distortion
+    if (!interpolate || lowerYear === upperYear || t === 0 || t === 1 || lowerOutlines.length === 0 || upperOutlines.length === 0) return null;
 
     // Match rings by centroid proximity
     const getCentroid = (ring: [number, number, number][]): [number, number, number] => {
