@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { Html, Line } from '@react-three/drei';
 import { TerrainData, GeoBounds } from '@/lib/geotiff-loader';
 
@@ -31,11 +31,10 @@ interface GeoJSONCollection {
   features: GeoJSONFeature[];
 }
 
-interface Canal {
+interface NamedLabel {
   name: string;
-  lat: number;
-  lon: number;
-  angle?: number; // rotation in degrees for label alignment
+  pos: [number, number, number];
+  color: string;
 }
 
 const CITIES: City[] = [
@@ -46,15 +45,6 @@ const CITIES: City[] = [
   { name: 'Chimbay', lat: 42.930, lon: 59.770 },
   { name: 'Takhtakupir', lat: 43.015, lon: 59.826 },
   { name: 'Qazaly', lat: 45.763, lon: 62.110 },
-];
-
-const CANALS: Canal[] = [
-  { name: 'Suenli Canal', lat: 42.55, lon: 59.45, angle: -20 },
-  { name: 'Qizketken Canal', lat: 43.15, lon: 58.95, angle: 30 },
-  { name: 'Kuvanish-Jarma Canal', lat: 42.85, lon: 59.15, angle: -10 },
-  { name: 'Tashsaka Canal', lat: 41.55, lon: 60.65, angle: -30 },
-  { name: 'Amu-Bukhara Canal', lat: 40.55, lon: 63.50, angle: -15 },
-  { name: 'Shavat Canal', lat: 41.70, lon: 60.45, angle: 10 },
 ];
 
 function geoToMeshPos(
@@ -136,14 +126,16 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
     }).filter(Boolean) as (City & { pos: [number, number, number] })[];
   }, [terrain, exaggeration, bounds, meshWidth, meshHeight, w, h]);
 
-  const canalMarkers = useMemo(() => {
-    if (!bounds) return [];
-    return CANALS.map((canal) => {
-      const pos = geoToMeshPos(canal.lat, canal.lon, bounds, terrain, exaggeration, meshWidth, meshHeight);
-      if (!pos) return null;
-      return { ...canal, pos: [pos[0], pos[1] + 0.08, pos[2]] as [number, number, number] };
-    }).filter(Boolean) as (Canal & { pos: [number, number, number] })[];
-  }, [terrain, exaggeration, bounds, meshWidth, meshHeight, w, h]);
+  const basinLabels13 = useMemo(() => {
+    if (!bounds || !basin13Data) return [];
+    return extractNamedLabels(basin13Data, bounds, terrain, exaggeration, meshWidth, meshHeight, '#e8a838');
+  }, [terrain, exaggeration, bounds, meshWidth, meshHeight, basin13Data]);
+
+  const basinLabels19 = useMemo(() => {
+    if (!bounds || !basin19Data) return [];
+    return extractNamedLabels(basin19Data, bounds, terrain, exaggeration, meshWidth, meshHeight, '#38e8a8');
+  }, [terrain, exaggeration, bounds, meshWidth, meshHeight, basin19Data]);
+
 
   const riverLines = useMemo(() => {
     if (!bounds || !geoJsonData) return [];
@@ -291,26 +283,14 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
         </group>
       ))}
 
-      {/* Canal labels */}
-      {showRivers && canalMarkers.map((canal) => (
-        <group key={canal.name} position={canal.pos}>
-          <Html center distanceFactor={8} style={{ pointerEvents: 'none' }}>
-            <div style={{
-              color: 'rgba(91, 155, 213, 0.95)',
-              padding: '1px 4px',
-              fontSize: '8px',
-              fontFamily: "'Inter', system-ui, sans-serif",
-              fontWeight: 500,
-              fontStyle: 'italic',
-              letterSpacing: '0.3px',
-              whiteSpace: 'nowrap',
-              textShadow: '0 1px 4px rgba(0,0,0,0.9), 0 0px 2px rgba(0,0,0,0.7)',
-              transform: `rotate(${canal.angle || 0}deg)`,
-            }}>
-              {canal.name}
-            </div>
-          </Html>
-        </group>
+      {/* Basin hover labels - 13th century */}
+      {show13thBasin && basinLabels13.map((label, i) => (
+        <HoverLabel key={`label13-${i}`} label={label} />
+      ))}
+
+      {/* Basin hover labels - 19th century */}
+      {show19thBasin && basinLabels19.map((label, i) => (
+        <HoverLabel key={`label19-${i}`} label={label} />
       ))}
 
       {/* Rivers from GeoJSON */}
@@ -355,5 +335,83 @@ function extractMultiLineStrings(
   }
   return segments;
 }
+
+function extractNamedLabels(
+  data: GeoJSONCollection,
+  bounds: GeoBounds,
+  terrain: TerrainData,
+  exaggeration: number,
+  meshWidth: number,
+  meshHeight: number,
+  color: string,
+): NamedLabel[] {
+  const labels: NamedLabel[] = [];
+  for (const feature of data.features) {
+    const name = feature.properties?.Name as string | null;
+    if (!name) continue;
+
+    // Collect all coordinates to find midpoint
+    let allCoords: number[][] = [];
+    if (feature.geometry.type === 'LineString') {
+      allCoords = feature.geometry.coordinates as number[][];
+    } else if (feature.geometry.type === 'MultiLineString') {
+      const lines = feature.geometry.coordinates as number[][][];
+      for (const line of lines) allCoords.push(...line);
+    }
+
+    if (allCoords.length === 0) continue;
+
+    // Use midpoint of all coordinates
+    const midIdx = Math.floor(allCoords.length / 2);
+    const midCoord = allCoords[midIdx];
+    const pos = geoToMeshPos(midCoord[1], midCoord[0], bounds, terrain, exaggeration, meshWidth, meshHeight);
+    if (pos) {
+      labels.push({ name, pos: [pos[0], pos[1] + 0.12, pos[2]], color });
+    }
+  }
+  return labels;
+}
+
+const HoverLabel = ({ label }: { label: NamedLabel }) => {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <group position={label.pos}>
+      {/* Invisible hover sphere */}
+      <mesh
+        onPointerOver={() => setHovered(true)}
+        onPointerOut={() => setHovered(false)}
+      >
+        <sphereGeometry args={[0.12, 8, 8]} />
+        <meshBasicMaterial transparent opacity={0} />
+      </mesh>
+      {/* Small dot always visible */}
+      <mesh>
+        <sphereGeometry args={[0.02, 6, 6]} />
+        <meshStandardMaterial color={label.color} emissive={label.color} emissiveIntensity={0.5} />
+      </mesh>
+      {/* Label on hover */}
+      {hovered && (
+        <Html position={[0, 0.1, 0]} center distanceFactor={8} style={{ pointerEvents: 'none' }}>
+          <div style={{
+            color: label.color,
+            padding: '2px 6px',
+            fontSize: '9px',
+            fontFamily: "'Inter', system-ui, sans-serif",
+            fontWeight: 500,
+            fontStyle: 'italic',
+            letterSpacing: '0.3px',
+            whiteSpace: 'nowrap',
+            background: 'rgba(0,0,0,0.7)',
+            borderRadius: '3px',
+            textShadow: '0 1px 3px rgba(0,0,0,0.9)',
+          }}>
+            {label.name}
+          </div>
+        </Html>
+      )}
+    </group>
+  );
+};
 
 export default GeoFeatures;
