@@ -31,7 +31,7 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel }: TerrainMeshProps) =>
         const vertIdx = j * w + i;
         let elev = elevations[srcIdx];
 
-        if ((noDataValue !== null && elev === noDataValue) || isNaN(elev)) {
+        if ((noDataValue !== null && elev === noDataValue) || isNaN(elev) || elev <= -9999) {
           elev = minElevation;
         }
 

@@ -52,7 +52,7 @@ export async function loadGeoTiff(url: string): Promise<TerrainData> {
   for (let i = 0; i < elevations.length; i++) {
     const val = elevations[i];
     if (noDataValue !== null && val === noDataValue) continue;
-    if (isNaN(val)) continue;
+    if (isNaN(val) || val <= -9999) continue;
     if (val < minElevation) minElevation = val;
     if (val > maxElevation) maxElevation = val;
   }
