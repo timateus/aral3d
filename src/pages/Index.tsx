@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { loadGeoTiff, TerrainData } from '@/lib/geotiff-loader';
 import { mergeTerrains } from '@/lib/terrain-merger';
 import TerrainViewer, { TerrainViewerHandle } from '@/components/TerrainViewer';
@@ -6,7 +6,9 @@ import ControlPanel from '@/components/ControlPanel';
 import Legend from '@/components/Legend';
 import TimelineSlider from '@/components/TimelineSlider';
 import IntroOverlay from '@/components/IntroOverlay';
+import ScenarioChat from '@/components/ScenarioChat';
 import { Camera, Video } from 'lucide-react';
+import type { ScenarioAction } from '@/types/scenario';
 
 export type DataSource = 'regional' | 'seabed' | 'merged';
 
@@ -26,7 +28,22 @@ const Index = () => {
   const [waterExtentYear, setWaterExtentYear] = useState(2012);
   const [started, setStarted] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [scenarioActions, setScenarioActions] = useState<ScenarioAction[]>([]);
   const viewerRef = useRef<TerrainViewerHandle>(null);
+
+  const handleScenarioActions = useCallback((actions: ScenarioAction[]) => {
+    // Handle water_level actions by updating the slider
+    for (const a of actions) {
+      if (a.type === 'water_level') {
+        setWaterLevel(a.value);
+      }
+    }
+    // Accumulate non-water-level actions
+    const visualActions = actions.filter((a) => a.type !== 'water_level');
+    if (visualActions.length > 0) {
+      setScenarioActions((prev) => [...prev, ...visualActions]);
+    }
+  }, []);
 
   useEffect(() => {
     Promise.all([
@@ -71,6 +88,7 @@ const Index = () => {
             recording={recording}
             onWaterLevelChange={setWaterLevel}
             onRecordingDone={() => setRecording(false)}
+            scenarioActions={scenarioActions}
           />
         )}
         {!terrain && !loading && error && (
@@ -85,6 +103,14 @@ const Index = () => {
       {/* Intro Overlay */}
       {!started && !loading && terrain && (
         <IntroOverlay onStart={() => setStarted(true)} />
+      )}
+
+      {/* Scenario Chat */}
+      {started && (
+        <ScenarioChat
+          onActions={handleScenarioActions}
+          onClear={() => setScenarioActions([])}
+        />
       )}
 
       {/* Header */}

@@ -4,7 +4,9 @@ import { OrbitControls, GizmoHelper, GizmoViewport, Html } from '@react-three/dr
 import TerrainMesh from './TerrainMesh';
 import GeoFeatures from './GeoFeatures';
 import WaterExtentLayer from './WaterExtentLayer';
+import ScenarioOverlay from './ScenarioOverlay';
 import { TerrainData } from '@/lib/geotiff-loader';
+import type { ScenarioAction } from '@/types/scenario';
 import * as THREE from 'three';
 
 export interface TerrainViewerHandle {
@@ -26,6 +28,7 @@ interface TerrainViewerProps {
   onWaterLevelChange?: (level: number) => void;
   recording?: boolean;
   onRecordingDone?: () => void;
+  scenarioActions?: ScenarioAction[];
 }
 
 function CameraAnimator({ started }: { started: boolean }) {
@@ -182,7 +185,7 @@ function VideoAnimator({
   return null;
 }
 
-const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, showWaterExtent, waterExtentYear, started, onWaterLevelChange, recording, onRecordingDone }, ref) => {
+const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, showWaterExtent, waterExtentYear, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions }, ref) => {
   const screenshotFn = useRef<(() => void) | null>(null);
 
   useImperativeHandle(ref, () => ({
@@ -206,6 +209,9 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
       <TerrainMesh terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} />
       <GeoFeatures terrain={terrain} exaggeration={exaggeration} showBorders={showBorders} showRivers={showRivers} show13thBasin={show13thBasin} show19thBasin={show19thBasin} />
       {showWaterExtent && <WaterExtentLayer terrain={terrain} exaggeration={exaggeration} year={waterExtentYear} />}
+      {scenarioActions && scenarioActions.length > 0 && (
+        <ScenarioOverlay actions={scenarioActions} terrain={terrain} exaggeration={exaggeration} />
+      )}
       {showWaterExtent && (
         <group position={[0, 6, -2]}>
           <Html center distanceFactor={15} style={{ pointerEvents: 'none' }}>

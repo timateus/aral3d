@@ -1,0 +1,4 @@
+project_id = "qztqzhfhouhvswogeigt"
+
+[functions.scenario-chat]
+verify_jwt = false
