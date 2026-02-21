@@ -9,6 +9,7 @@ interface GeoFeaturesProps {
   showRivers: boolean;
   show13thBasin: boolean;
   show19thBasin: boolean;
+  show21stBasin: boolean;
 }
 
 interface City {
@@ -83,7 +84,7 @@ function geoToMeshPos(
   return [x, zHeight, -planeY];
 }
 
-const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thBasin, show19thBasin }: GeoFeaturesProps) => {
+const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin }: GeoFeaturesProps) => {
   const bounds = terrain.bounds;
   const w = terrain.width;
   const h = terrain.height;
@@ -94,6 +95,7 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
   const [countriesData, setCountriesData] = useState<GeoJSONCollection | null>(null);
   const [basin13Data, setBasin13Data] = useState<GeoJSONCollection | null>(null);
   const [basin19Data, setBasin19Data] = useState<GeoJSONCollection | null>(null);
+  const [basin21Data, setBasin21Data] = useState<GeoJSONCollection | null>(null);
 
   useEffect(() => {
     fetch('/data/AmuRivers.geojson')
@@ -115,6 +117,11 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
       .then((r) => r.json())
       .then((data) => setBasin19Data(data))
       .catch((err) => console.warn('Failed to load 19th century basin GeoJSON:', err));
+
+    fetch('/data/21cent_basin.geojson')
+      .then((r) => r.json())
+      .then((data) => setBasin21Data(data))
+      .catch((err) => console.warn('Failed to load 21st century basin GeoJSON:', err));
   }, []);
 
   const cityMarkers = useMemo(() => {
@@ -136,6 +143,11 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
     return extractNamedLabels(basin19Data, bounds, terrain, exaggeration, meshWidth, meshHeight, '#38e8a8');
   }, [terrain, exaggeration, bounds, meshWidth, meshHeight, basin19Data]);
 
+
+  const basinLabels21 = useMemo(() => {
+    if (!bounds || !basin21Data) return [];
+    return extractNamedLabels(basin21Data, bounds, terrain, exaggeration, meshWidth, meshHeight, '#e84038');
+  }, [terrain, exaggeration, bounds, meshWidth, meshHeight, basin21Data]);
 
   const riverLines = useMemo(() => {
     if (!bounds || !geoJsonData) return [];
@@ -219,6 +231,11 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
     return extractMultiLineStrings(basin19Data, bounds, terrain, exaggeration, meshWidth, meshHeight);
   }, [terrain, exaggeration, bounds, meshWidth, meshHeight, basin19Data]);
 
+  const basinLines21 = useMemo(() => {
+    if (!bounds || !basin21Data) return [];
+    return extractMultiLineStrings(basin21Data, bounds, terrain, exaggeration, meshWidth, meshHeight);
+  }, [terrain, exaggeration, bounds, meshWidth, meshHeight, basin21Data]);
+
   if (!bounds) return null;
 
   return (
@@ -259,6 +276,18 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
         />
       ))}
 
+      {/* 21st century basin */}
+      {show21stBasin && basinLines21.map((points, i) => (
+        <Line
+          key={`basin21-${i}`}
+          points={points}
+          color="#e84038"
+          lineWidth={1.5}
+          transparent
+          opacity={0.7}
+        />
+      ))}
+
       {/* City markers */}
       {cityMarkers.map((city) => (
         <group key={city.name} position={city.pos}>
@@ -291,6 +320,11 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
       {/* Basin hover labels - 19th century */}
       {show19thBasin && basinLabels19.map((label, i) => (
         <HoverLabel key={`label19-${i}`} label={label} />
+      ))}
+
+      {/* Basin hover labels - 21st century */}
+      {show21stBasin && basinLabels21.map((label, i) => (
+        <HoverLabel key={`label21-${i}`} label={label} />
       ))}
 
       {/* Rivers from GeoJSON */}

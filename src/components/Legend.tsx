@@ -9,9 +9,11 @@ interface LegendProps {
   onToggle13thBasin: (val: boolean) => void;
   show19thBasin: boolean;
   onToggle19thBasin: (val: boolean) => void;
+  show21stBasin: boolean;
+  onToggle21stBasin: (val: boolean) => void;
 }
 
-const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin }: LegendProps) => {
+const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin, show21stBasin, onToggle21stBasin }: LegendProps) => {
   return (
     <div className="glass-panel p-3 space-y-2 w-72">
       <label className="flex items-center justify-between cursor-pointer">
@@ -44,6 +46,14 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
           19th Century Basin
         </span>
         <Switch className="scale-75" checked={show19thBasin} onCheckedChange={onToggle19thBasin} />
+      </label>
+
+      <label className="flex items-center justify-between cursor-pointer">
+        <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
+          <span className="inline-block w-3 h-0.5 rounded" style={{ background: '#e84038' }} />
+          21st Century Canals
+        </span>
+        <Switch className="scale-75" checked={show21stBasin} onCheckedChange={onToggle21stBasin} />
       </label>
     </div>
   );
