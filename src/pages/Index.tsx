@@ -3,6 +3,7 @@ import { loadGeoTiff, TerrainData } from '@/lib/geotiff-loader';
 import TerrainViewer, { TerrainViewerHandle } from '@/components/TerrainViewer';
 import ControlPanel from '@/components/ControlPanel';
 import Legend from '@/components/Legend';
+import TimelineSlider from '@/components/TimelineSlider';
 import IntroOverlay from '@/components/IntroOverlay';
 import { Camera, Video } from 'lucide-react';
 
@@ -16,6 +17,8 @@ const Index = () => {
   const [showRivers, setShowRivers] = useState(true);
   const [show13thBasin, setShow13thBasin] = useState(true);
   const [show19thBasin, setShow19thBasin] = useState(true);
+  const [showWaterExtent, setShowWaterExtent] = useState(false);
+  const [waterExtentYear, setWaterExtentYear] = useState(1974);
   const [started, setStarted] = useState(false);
   const [recording, setRecording] = useState(false);
   const viewerRef = useRef<TerrainViewerHandle>(null);
@@ -40,6 +43,8 @@ const Index = () => {
             showRivers={showRivers}
             show13thBasin={show13thBasin}
             show19thBasin={show19thBasin}
+            showWaterExtent={showWaterExtent}
+            waterExtentYear={waterExtentYear}
             started={started}
             recording={recording}
             onWaterLevelChange={setWaterLevel}
@@ -92,6 +97,12 @@ const Index = () => {
             onToggle13thBasin={setShow13thBasin}
             show19thBasin={show19thBasin}
             onToggle19thBasin={setShow19thBasin}
+          />
+          <TimelineSlider
+            year={waterExtentYear}
+            onYearChange={setWaterExtentYear}
+            visible={showWaterExtent}
+            onToggleVisible={setShowWaterExtent}
           />
           <button
             onClick={() => viewerRef.current?.screenshot()}
