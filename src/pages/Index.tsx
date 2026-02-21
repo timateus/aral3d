@@ -22,8 +22,8 @@ const Index = () => {
   const [showRivers, setShowRivers] = useState(true);
   const [show13thBasin, setShow13thBasin] = useState(true);
   const [show19thBasin, setShow19thBasin] = useState(true);
-  const [showWaterExtent, setShowWaterExtent] = useState(false);
-  const [waterExtentYear, setWaterExtentYear] = useState(1974);
+  const [showWaterExtent, setShowWaterExtent] = useState(true);
+  const [waterExtentYear, setWaterExtentYear] = useState(2012);
   const [started, setStarted] = useState(false);
   const [recording, setRecording] = useState(false);
   const viewerRef = useRef<TerrainViewerHandle>(null);
