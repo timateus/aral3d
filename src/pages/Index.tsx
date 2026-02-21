@@ -14,6 +14,8 @@ const Index = () => {
   const [waterLevel, setWaterLevel] = useState(29);
   const [showBorders, setShowBorders] = useState(true);
   const [showRivers, setShowRivers] = useState(true);
+  const [show13thBasin, setShow13thBasin] = useState(true);
+  const [show19thBasin, setShow19thBasin] = useState(true);
   const [started, setStarted] = useState(false);
   const [recording, setRecording] = useState(false);
   const viewerRef = useRef<TerrainViewerHandle>(null);
@@ -36,6 +38,8 @@ const Index = () => {
             waterLevel={waterLevel}
             showBorders={showBorders}
             showRivers={showRivers}
+            show13thBasin={show13thBasin}
+            show19thBasin={show19thBasin}
             started={started}
             recording={recording}
             onWaterLevelChange={setWaterLevel}
@@ -84,6 +88,10 @@ const Index = () => {
             onToggleBorders={setShowBorders}
             showRivers={showRivers}
             onToggleRivers={setShowRivers}
+            show13thBasin={show13thBasin}
+            onToggle13thBasin={setShow13thBasin}
+            show19thBasin={show19thBasin}
+            onToggle19thBasin={setShow19thBasin}
           />
           <button
             onClick={() => viewerRef.current?.screenshot()}
