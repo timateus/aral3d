@@ -3,6 +3,7 @@ import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls, GizmoHelper, GizmoViewport } from '@react-three/drei';
 import TerrainMesh from './TerrainMesh';
 import GeoFeatures from './GeoFeatures';
+import WaterExtentLayer from './WaterExtentLayer';
 import { TerrainData } from '@/lib/geotiff-loader';
 import * as THREE from 'three';
 
@@ -19,6 +20,8 @@ interface TerrainViewerProps {
   showRivers: boolean;
   show13thBasin: boolean;
   show19thBasin: boolean;
+  showWaterExtent: boolean;
+  waterExtentYear: number;
   started: boolean;
   onWaterLevelChange?: (level: number) => void;
   recording?: boolean;
@@ -179,7 +182,7 @@ function VideoAnimator({
   return null;
 }
 
-const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, started, onWaterLevelChange, recording, onRecordingDone }, ref) => {
+const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, showWaterExtent, waterExtentYear, started, onWaterLevelChange, recording, onRecordingDone }, ref) => {
   const screenshotFn = useRef<(() => void) | null>(null);
 
   useImperativeHandle(ref, () => ({
@@ -202,6 +205,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
 
       <TerrainMesh terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} />
       <GeoFeatures terrain={terrain} exaggeration={exaggeration} showBorders={showBorders} showRivers={showRivers} show13thBasin={show13thBasin} show19thBasin={show19thBasin} />
+      {showWaterExtent && <WaterExtentLayer terrain={terrain} exaggeration={exaggeration} year={waterExtentYear} />}
 
       <CameraAnimator started={started} />
       <ScreenshotHelper onReady={(fn) => { screenshotFn.current = fn; }} />
