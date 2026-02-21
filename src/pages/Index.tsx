@@ -24,6 +24,7 @@ const Index = () => {
   const [showRivers, setShowRivers] = useState(true);
   const [show13thBasin, setShow13thBasin] = useState(true);
   const [show19thBasin, setShow19thBasin] = useState(true);
+  const [show21stBasin, setShow21stBasin] = useState(true);
   const [showWaterExtent, setShowWaterExtent] = useState(true);
   const [waterExtentYear, setWaterExtentYear] = useState(2012);
   const [started, setStarted] = useState(false);
@@ -82,6 +83,7 @@ const Index = () => {
             showRivers={showRivers}
             show13thBasin={show13thBasin}
             show19thBasin={show19thBasin}
+            show21stBasin={show21stBasin}
             showWaterExtent={showWaterExtent}
             waterExtentYear={waterExtentYear}
             started={started}
@@ -148,6 +150,8 @@ const Index = () => {
             onToggle13thBasin={setShow13thBasin}
             show19thBasin={show19thBasin}
             onToggle19thBasin={setShow19thBasin}
+            show21stBasin={show21stBasin}
+            onToggle21stBasin={setShow21stBasin}
           />
           <TimelineSlider
             year={waterExtentYear}
