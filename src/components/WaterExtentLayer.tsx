@@ -120,26 +120,77 @@ const WaterExtentLayer = ({ terrain, exaggeration, year, interpolate = false }: 
   // Interpolated outlines: lerp vertex positions between lower and upper
   const interpolatedOutlines = useMemo(() => {
     if (!interpolate || lowerYear === upperYear || lowerOutlines.length === 0 || upperOutlines.length === 0) return null;
-    const count = Math.min(lowerOutlines.length, upperOutlines.length);
+
+    // Match rings by centroid proximity
+    const getCentroid = (ring: [number, number, number][]): [number, number, number] => {
+      let sx = 0, sy = 0, sz = 0;
+      for (const p of ring) { sx += p[0]; sy += p[1]; sz += p[2]; }
+      const n = ring.length;
+      return [sx / n, sy / n, sz / n];
+    };
+
+    const dist3 = (a: [number, number, number], b: [number, number, number]) =>
+      Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2);
+
+    // Sort both sets by centroid x then z for consistent ordering
+    const sortByCenter = (outlines: [number, number, number][][]) => {
+      const withCenter = outlines.map((ring) => ({ ring, center: getCentroid(ring) }));
+      withCenter.sort((a, b) => a.center[0] - b.center[0] || a.center[2] - b.center[2]);
+      return withCenter;
+    };
+
+    const loSorted = sortByCenter(lowerOutlines);
+    const hiSorted = sortByCenter(upperOutlines);
+
+    // Match each lower ring to closest upper ring
+    const usedHi = new Set<number>();
     const result: [number, number, number][][] = [];
-    for (let i = 0; i < count; i++) {
-      const lo = lowerOutlines[i];
-      const hi = upperOutlines[i];
-      // Resample both to the same point count
-      const targetLen = Math.max(lo.length, hi.length);
-      const loResampled = resampleRing(lo, targetLen);
-      const hiResampled = resampleRing(hi, targetLen);
+
+    for (const lo of loSorted) {
+      let bestIdx = -1, bestDist = Infinity;
+      for (let j = 0; j < hiSorted.length; j++) {
+        if (usedHi.has(j)) continue;
+        const d = dist3(lo.center, hiSorted[j].center);
+        if (d < bestDist) { bestDist = d; bestIdx = j; }
+      }
+      if (bestIdx === -1) continue;
+      usedHi.add(bestIdx);
+
+      const loRing = lo.ring;
+      let hiRing = hiSorted[bestIdx].ring;
+
+      // Normalize winding direction (ensure same sign of signed area in XZ plane)
+      const signedArea = (r: [number, number, number][]) => {
+        let a = 0;
+        for (let i = 0; i < r.length; i++) {
+          const j = (i + 1) % r.length;
+          a += r[i][0] * r[j][2] - r[j][0] * r[i][2];
+        }
+        return a;
+      };
+      if (Math.sign(signedArea(loRing)) !== Math.sign(signedArea(hiRing))) {
+        hiRing = [...hiRing].reverse();
+      }
+
+      // Resample to same point count
+      const targetLen = Math.max(loRing.length, hiRing.length);
+      const loResampled = resampleRing(loRing, targetLen);
+      const hiResampled = resampleRing(hiRing, targetLen);
+
+      // Find best rotation alignment for hiResampled
+      const aligned = alignRing(loResampled, hiResampled);
+
       const lerped: [number, number, number][] = [];
       for (let j = 0; j < targetLen; j++) {
         lerped.push([
-          loResampled[j][0] + (hiResampled[j][0] - loResampled[j][0]) * t,
-          loResampled[j][1] + (hiResampled[j][1] - loResampled[j][1]) * t,
-          loResampled[j][2] + (hiResampled[j][2] - loResampled[j][2]) * t,
+          loResampled[j][0] + (aligned[j][0] - loResampled[j][0]) * t,
+          loResampled[j][1] + (aligned[j][1] - loResampled[j][1]) * t,
+          loResampled[j][2] + (aligned[j][2] - loResampled[j][2]) * t,
         ]);
       }
       result.push(lerped);
     }
-    return result;
+    return result.length > 0 ? result : null;
   }, [interpolate, lowerYear, upperYear, lowerOutlines, upperOutlines, t]);
 
   // Fallback: snap to nearest
@@ -193,6 +244,39 @@ function extractPolygonOutlines(
   return segments;
 }
 
+/** Find the rotation of ringB that best aligns with ringA (minimize total distance) */
+function alignRing(
+  ringA: [number, number, number][],
+  ringB: [number, number, number][],
+): [number, number, number][] {
+  if (ringA.length !== ringB.length || ringA.length === 0) return ringB;
+  const n = ringA.length;
+  // Sample a subset of rotations for performance (every ~10% of ring length)
+  const step = Math.max(1, Math.floor(n / 20));
+  let bestOffset = 0;
+  let bestDist = Infinity;
+  for (let off = 0; off < n; off += step) {
+    let totalDist = 0;
+    // Sample a few points to estimate total distance
+    for (let s = 0; s < n; s += Math.max(1, Math.floor(n / 10))) {
+      const bIdx = (s + off) % n;
+      const dx = ringA[s][0] - ringB[bIdx][0];
+      const dz = ringA[s][2] - ringB[bIdx][2];
+      totalDist += dx * dx + dz * dz;
+    }
+    if (totalDist < bestDist) {
+      bestDist = totalDist;
+      bestOffset = off;
+    }
+  }
+  // Apply rotation
+  const result: [number, number, number][] = [];
+  for (let i = 0; i < n; i++) {
+    result.push(ringB[(i + bestOffset) % n]);
+  }
+  return result;
+}
+
 /** Resample a polyline to exactly `count` evenly spaced points */
 function resampleRing(
   ring: [number, number, number][],
@@ -202,7 +286,6 @@ function resampleRing(
   if (ring.length === 0 || count <= 0) return [];
   if (count === 1) return [ring[0]];
 
-  // Compute cumulative arc lengths
   const lengths: number[] = [0];
   for (let i = 1; i < ring.length; i++) {
     const dx = ring[i][0] - ring[i - 1][0];
@@ -216,7 +299,6 @@ function resampleRing(
   const result: [number, number, number][] = [];
   for (let i = 0; i < count; i++) {
     const targetDist = (i / (count - 1)) * totalLen;
-    // Find segment
     let seg = 0;
     for (seg = 0; seg < lengths.length - 1; seg++) {
       if (lengths[seg + 1] >= targetDist) break;
