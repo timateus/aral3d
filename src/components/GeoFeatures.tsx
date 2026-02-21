@@ -31,6 +31,13 @@ interface GeoJSONCollection {
   features: GeoJSONFeature[];
 }
 
+interface Canal {
+  name: string;
+  lat: number;
+  lon: number;
+  angle?: number; // rotation in degrees for label alignment
+}
+
 const CITIES: City[] = [
   { name: 'Nukus', lat: 42.462, lon: 59.603 },
   { name: 'Moynaq', lat: 43.773, lon: 58.690 },
@@ -39,6 +46,15 @@ const CITIES: City[] = [
   { name: 'Chimbay', lat: 42.930, lon: 59.770 },
   { name: 'Takhtakupir', lat: 43.015, lon: 59.826 },
   { name: 'Qazaly', lat: 45.763, lon: 62.110 },
+];
+
+const CANALS: Canal[] = [
+  { name: 'Suenli Canal', lat: 42.55, lon: 59.45, angle: -20 },
+  { name: 'Qizketken Canal', lat: 43.15, lon: 58.95, angle: 30 },
+  { name: 'Kuvanish-Jarma Canal', lat: 42.85, lon: 59.15, angle: -10 },
+  { name: 'Tashsaka Canal', lat: 41.55, lon: 60.65, angle: -30 },
+  { name: 'Amu-Bukhara Canal', lat: 40.55, lon: 63.50, angle: -15 },
+  { name: 'Shavat Canal', lat: 41.70, lon: 60.45, angle: 10 },
 ];
 
 function geoToMeshPos(
@@ -118,6 +134,15 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
       if (!pos) return null;
       return { ...city, pos: [pos[0], pos[1] + 0.15, pos[2]] as [number, number, number] };
     }).filter(Boolean) as (City & { pos: [number, number, number] })[];
+  }, [terrain, exaggeration, bounds, meshWidth, meshHeight, w, h]);
+
+  const canalMarkers = useMemo(() => {
+    if (!bounds) return [];
+    return CANALS.map((canal) => {
+      const pos = geoToMeshPos(canal.lat, canal.lon, bounds, terrain, exaggeration, meshWidth, meshHeight);
+      if (!pos) return null;
+      return { ...canal, pos: [pos[0], pos[1] + 0.08, pos[2]] as [number, number, number] };
+    }).filter(Boolean) as (Canal & { pos: [number, number, number] })[];
   }, [terrain, exaggeration, bounds, meshWidth, meshHeight, w, h]);
 
   const riverLines = useMemo(() => {
@@ -261,6 +286,28 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
               textShadow: '0 1px 4px rgba(0,0,0,0.8), 0 0px 2px rgba(0,0,0,0.6)',
             }}>
               {city.name}
+            </div>
+          </Html>
+        </group>
+      ))}
+
+      {/* Canal labels */}
+      {showRivers && canalMarkers.map((canal) => (
+        <group key={canal.name} position={canal.pos}>
+          <Html center distanceFactor={8} style={{ pointerEvents: 'none' }}>
+            <div style={{
+              color: 'rgba(91, 155, 213, 0.95)',
+              padding: '1px 4px',
+              fontSize: '8px',
+              fontFamily: "'Inter', system-ui, sans-serif",
+              fontWeight: 500,
+              fontStyle: 'italic',
+              letterSpacing: '0.3px',
+              whiteSpace: 'nowrap',
+              textShadow: '0 1px 4px rgba(0,0,0,0.9), 0 0px 2px rgba(0,0,0,0.7)',
+              transform: `rotate(${canal.angle || 0}deg)`,
+            }}>
+              {canal.name}
             </div>
           </Html>
         </group>
