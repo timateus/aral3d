@@ -26,6 +26,10 @@ interface YearData {
 
 const YEAR_DATA: YearData[] = [
   { year: 1974, file: '/data/Area_1974_AG.geojson', color: '#4fc3f7' },
+  { year: 1989, file: '/data/Area_1989_AG.geojson', color: '#29b6f6' },
+  { year: 1999, file: '/data/Area_1999_AG.geojson', color: '#ffa726' },
+  { year: 2004, file: '/data/Area_2004_AG.geojson', color: '#ff7043' },
+  { year: 2009, file: '/data/Area_2009_AG.geojson', color: '#f44336' },
   { year: 2015, file: '/data/Area_2015_AG.geojson', color: '#ef5350' },
 ];
 
