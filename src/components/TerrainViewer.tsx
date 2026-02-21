@@ -1,6 +1,6 @@
 import { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
-import { OrbitControls, GizmoHelper, GizmoViewport } from '@react-three/drei';
+import { OrbitControls, GizmoHelper, GizmoViewport, Text } from '@react-three/drei';
 import TerrainMesh from './TerrainMesh';
 import GeoFeatures from './GeoFeatures';
 import WaterExtentLayer from './WaterExtentLayer';
@@ -206,6 +206,33 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
       <TerrainMesh terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} />
       <GeoFeatures terrain={terrain} exaggeration={exaggeration} showBorders={showBorders} showRivers={showRivers} show13thBasin={show13thBasin} show19thBasin={show19thBasin} />
       {showWaterExtent && <WaterExtentLayer terrain={terrain} exaggeration={exaggeration} year={waterExtentYear} />}
+      {showWaterExtent && (
+        <group position={[0, 6, -2]}>
+          <Text
+            fontSize={1.8}
+            color="#ffffff"
+            anchorX="center"
+            anchorY="middle"
+            font="https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfopgk.woff2"
+            outlineWidth={0.04}
+            outlineColor="#000000"
+          >
+            {waterExtentYear}
+          </Text>
+          <Text
+            position={[0, -1.4, 0]}
+            fontSize={0.6}
+            color="#8ec8e8"
+            anchorX="center"
+            anchorY="middle"
+            font="https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfopgk.woff2"
+            outlineWidth={0.02}
+            outlineColor="#000000"
+          >
+            {`Water Level: ${waterLevel} m`}
+          </Text>
+        </group>
+      )}
 
       <CameraAnimator started={started} />
       <ScreenshotHelper onReady={(fn) => { screenshotFn.current = fn; }} />
