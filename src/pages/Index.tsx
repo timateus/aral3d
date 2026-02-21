@@ -27,6 +27,7 @@ const Index = () => {
   const [show21stBasin, setShow21stBasin] = useState(true);
   const [showWaterExtent, setShowWaterExtent] = useState(true);
   const [waterExtentYear, setWaterExtentYear] = useState(2012);
+  const [interpolateExtent, setInterpolateExtent] = useState(false);
   const [started, setStarted] = useState(false);
   const [recording, setRecording] = useState(false);
   const [scenarioActions, setScenarioActions] = useState<ScenarioAction[]>([]);
@@ -86,6 +87,7 @@ const Index = () => {
             show21stBasin={show21stBasin}
             showWaterExtent={showWaterExtent}
             waterExtentYear={waterExtentYear}
+            interpolateExtent={interpolateExtent}
             started={started}
             recording={recording}
             onWaterLevelChange={setWaterLevel}
@@ -158,6 +160,8 @@ const Index = () => {
             onYearChange={setWaterExtentYear}
             visible={showWaterExtent}
             onToggleVisible={setShowWaterExtent}
+            interpolate={interpolateExtent}
+            onToggleInterpolate={setInterpolateExtent}
           />
           <button
             onClick={() => viewerRef.current?.screenshot()}

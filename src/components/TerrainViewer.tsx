@@ -25,6 +25,7 @@ interface TerrainViewerProps {
   show21stBasin: boolean;
   showWaterExtent: boolean;
   waterExtentYear: number;
+  interpolateExtent?: boolean;
   started: boolean;
   onWaterLevelChange?: (level: number) => void;
   recording?: boolean;
@@ -186,7 +187,7 @@ function VideoAnimator({
   return null;
 }
 
-const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showWaterExtent, waterExtentYear, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions }, ref) => {
+const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showWaterExtent, waterExtentYear, interpolateExtent, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions }, ref) => {
   const screenshotFn = useRef<(() => void) | null>(null);
 
   useImperativeHandle(ref, () => ({
@@ -209,7 +210,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
 
       <TerrainMesh terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} />
       <GeoFeatures terrain={terrain} exaggeration={exaggeration} showBorders={showBorders} showRivers={showRivers} show13thBasin={show13thBasin} show19thBasin={show19thBasin} show21stBasin={show21stBasin} />
-      {showWaterExtent && <WaterExtentLayer terrain={terrain} exaggeration={exaggeration} year={waterExtentYear} />}
+      {showWaterExtent && <WaterExtentLayer terrain={terrain} exaggeration={exaggeration} year={waterExtentYear} interpolate={interpolateExtent} />}
       {scenarioActions && scenarioActions.length > 0 && (
         <ScenarioOverlay actions={scenarioActions} terrain={terrain} exaggeration={exaggeration} />
       )}
