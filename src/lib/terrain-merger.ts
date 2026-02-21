@@ -41,11 +41,12 @@ export function mergeTerrains(base: TerrainData, overlay: TerrainData): TerrainD
           const ovIdx = ovY * overlay.width + ovX;
           const ovVal = overlay.elevations[ovIdx];
 
-          // Only use overlay value if it's valid
-          if (
-            !(overlay.noDataValue !== null && ovVal === overlay.noDataValue) &&
-            !isNaN(ovVal)
-          ) {
+          // Only use overlay value if it's valid (skip nodata and -9999 sentinel)
+          const isNoData =
+            (overlay.noDataValue !== null && ovVal === overlay.noDataValue) ||
+            isNaN(ovVal) ||
+            ovVal <= -9999;
+          if (!isNoData) {
             const baseIdx = j * width + i;
             merged[baseIdx] = ovVal;
             if (ovVal < minElev) minElev = ovVal;
