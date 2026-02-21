@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Slider } from '@/components/ui/slider';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Play, Pause } from 'lucide-react';
 
 interface TimelineSliderProps {
@@ -8,14 +7,12 @@ interface TimelineSliderProps {
   onYearChange: (year: number) => void;
   visible: boolean;
   onToggleVisible: (val: boolean) => void;
-  interpolate?: boolean;
-  onToggleInterpolate?: (val: boolean) => void;
 }
 
 const MIN_YEAR = 1974;
 const MAX_YEAR = 2015;
 
-const TimelineSlider = ({ year, onYearChange, visible, onToggleVisible, interpolate, onToggleInterpolate }: TimelineSliderProps) => {
+const TimelineSlider = ({ year, onYearChange, visible, onToggleVisible }: TimelineSliderProps) => {
   const [playing, setPlaying] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -30,7 +27,6 @@ const TimelineSlider = ({ year, onYearChange, visible, onToggleVisible, interpol
   const play = useCallback(() => {
     if (!visible) onToggleVisible(true);
     setPlaying(true);
-    // Reset to start if at end
     if (year >= MAX_YEAR) onYearChange(MIN_YEAR);
   }, [year, visible, onToggleVisible, onYearChange]);
 
@@ -79,16 +75,6 @@ const TimelineSlider = ({ year, onYearChange, visible, onToggleVisible, interpol
         <span>{MIN_YEAR}</span>
         <span>{MAX_YEAR}</span>
       </div>
-      {onToggleInterpolate && (
-        <label className="flex items-center gap-2 cursor-pointer pt-1">
-          <Checkbox
-            checked={interpolate}
-            onCheckedChange={(v) => onToggleInterpolate(!!v)}
-            className="h-3.5 w-3.5"
-          />
-          <span className="text-[10px] text-muted-foreground">Interpolate boundaries</span>
-        </label>
-      )}
     </div>
   );
 };

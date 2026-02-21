@@ -7,6 +7,7 @@ import Legend from '@/components/Legend';
 import TimelineSlider from '@/components/TimelineSlider';
 import IntroOverlay from '@/components/IntroOverlay';
 import ScenarioChat from '@/components/ScenarioChat';
+import WaterVolumeDisplay from '@/components/WaterVolumeDisplay';
 import { Camera, Video } from 'lucide-react';
 import type { ScenarioAction } from '@/types/scenario';
 
@@ -27,7 +28,7 @@ const Index = () => {
   const [show21stBasin, setShow21stBasin] = useState(true);
   const [showWaterExtent, setShowWaterExtent] = useState(true);
   const [waterExtentYear, setWaterExtentYear] = useState(2012);
-  const [interpolateExtent, setInterpolateExtent] = useState(false);
+  
   const [started, setStarted] = useState(false);
   const [recording, setRecording] = useState(false);
   const [scenarioActions, setScenarioActions] = useState<ScenarioAction[]>([]);
@@ -87,7 +88,6 @@ const Index = () => {
             show21stBasin={show21stBasin}
             showWaterExtent={showWaterExtent}
             waterExtentYear={waterExtentYear}
-            interpolateExtent={interpolateExtent}
             started={started}
             recording={recording}
             onWaterLevelChange={setWaterLevel}
@@ -160,9 +160,15 @@ const Index = () => {
             onYearChange={setWaterExtentYear}
             visible={showWaterExtent}
             onToggleVisible={setShowWaterExtent}
-            interpolate={interpolateExtent}
-            onToggleInterpolate={setInterpolateExtent}
           />
+          {terrain && (
+            <WaterVolumeDisplay
+              terrain={terrain}
+              waterLevel={waterLevel}
+              waterExtentYear={waterExtentYear}
+              showWaterExtent={showWaterExtent}
+            />
+          )}
           <button
             onClick={() => viewerRef.current?.screenshot()}
             className="glass-panel p-2.5 w-72 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
