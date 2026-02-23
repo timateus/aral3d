@@ -17,6 +17,11 @@ export interface TerrainData {
   bounds: GeoBounds | null;
 }
 
+// Known bounds for GeoTIFFs that lack georeferencing metadata
+const KNOWN_BOUNDS: Record<string, GeoBounds> = {
+  '/data/watershed.tif': { minLon: 55.0, maxLon: 68.0, minLat: 35.0, maxLat: 48.0 },
+};
+
 export async function loadGeoTiff(url: string): Promise<TerrainData> {
   const response = await fetch(url);
   const arrayBuffer = await response.arrayBuffer();
@@ -120,20 +125,16 @@ export async function loadGeoTiff(url: string): Promise<TerrainData> {
     } catch (_) {}
   }
 
-  // Last resort: log all raw file directory fields for debugging
+  // Last resort: use known bounds table by URL path
   if (!bounds) {
-    try {
-      const fd = fileDirectory as any;
-      const actualKeys = fd.actualizedFields ? Object.keys(fd.actualizedFields) : [];
-      const deferredKeys = fd.deferredFields ? Object.keys(fd.deferredFields) : [];
-      console.warn('No bounds found. actualizedFields:', actualKeys, 'deferredFields:', deferredKeys);
-      // Try to iterate and log all actual field values
-      if (fd.actualizedFields) {
-        for (const key of actualKeys) {
-          console.log(`  field ${key}:`, fd.actualizedFields[key]);
-        }
-      }
-    } catch (_) {}
+    const path = new URL(url, window.location.origin).pathname;
+    const known = KNOWN_BOUNDS[path];
+    if (known) {
+      bounds = { ...known };
+      console.log('Using known bounds for', path, bounds);
+    } else {
+      console.warn('No bounds found for', path);
+    }
   }
 
   console.log('Terrain loaded:', { width, height, minElevation, maxElevation, noDataValue, bounds });
