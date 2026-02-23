@@ -292,8 +292,17 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
         />
       )}
 
+      {riverFlyover && onRiverFlyoverDone && (
+        <RiverFlyover
+          active={riverFlyover}
+          terrain={terrain}
+          exaggeration={exaggeration}
+          onDone={onRiverFlyoverDone}
+        />
+      )}
+
       <OrbitControls
-        enabled={!narrativeActive}
+        enabled={!narrativeActive && !riverFlyover}
         enableDamping
         dampingFactor={0.05}
         minDistance={2}
