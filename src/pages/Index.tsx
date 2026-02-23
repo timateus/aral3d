@@ -39,6 +39,7 @@ const Index = () => {
   
   const [started, setStarted] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [riverFlyover, setRiverFlyover] = useState(false);
   const [scenarioActions, setScenarioActions] = useState<ScenarioAction[]>([]);
   const [showDataPanel, setShowDataPanel] = useState(true);
   const [narrativeActive, setNarrativeActive] = useState(false);
