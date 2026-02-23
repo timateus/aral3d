@@ -8,7 +8,8 @@ import TimelineSlider from '@/components/TimelineSlider';
 import IntroOverlay from '@/components/IntroOverlay';
 import ScenarioChat from '@/components/ScenarioChat';
 import WaterVolumeDisplay from '@/components/WaterVolumeDisplay';
-import { Camera, Video } from 'lucide-react';
+import DataPanel from '@/components/DataPanel';
+import { Camera, Video, BarChart3 } from 'lucide-react';
 import type { ScenarioAction } from '@/types/scenario';
 
 export type DataSource = 'regional' | 'seabed' | 'merged';
@@ -32,6 +33,7 @@ const Index = () => {
   const [started, setStarted] = useState(false);
   const [recording, setRecording] = useState(false);
   const [scenarioActions, setScenarioActions] = useState<ScenarioAction[]>([]);
+  const [showDataPanel, setShowDataPanel] = useState(false);
   const viewerRef = useRef<TerrainViewerHandle>(null);
 
   const handleScenarioActions = useCallback((actions: ScenarioAction[]) => {
@@ -117,6 +119,13 @@ const Index = () => {
         />
       )}
 
+      {/* Data Panel */}
+      {started && showDataPanel && (
+        <div className="absolute bottom-4 left-4 z-10">
+          <DataPanel currentYear={waterExtentYear} onClose={() => setShowDataPanel(false)} />
+        </div>
+      )}
+
       {/* Header */}
       {started && (
         <div className="absolute top-4 left-4 z-10">
@@ -183,6 +192,13 @@ const Index = () => {
           >
             <Video className="w-3.5 h-3.5" />
             {recording ? 'Recording…' : 'Make a Video'}
+          </button>
+          <button
+            onClick={() => setShowDataPanel(v => !v)}
+            className="glass-panel p-2.5 w-72 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+          >
+            <BarChart3 className="w-3.5 h-3.5" />
+            {showDataPanel ? 'Hide Data Panel' : 'Show Data Panel'}
           </button>
         </div>
       )}
