@@ -152,13 +152,17 @@ const Index = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const terrain = useMemo(() => {
-    if (!baseTerrain) return null;
+  const { terrain, hideNoData } = useMemo(() => {
+    if (!baseTerrain) return { terrain: null, hideNoData: false };
     let result = baseTerrain;
     if (seabedTerrain) result = mergeTerrains(result, seabedTerrain);
     if (showKhorezm && khorezmTerrain) result = mergeExpandTerrains(result, khorezmTerrain);
-    return result;
-  }, [baseTerrain, seabedTerrain, khorezmTerrain, showKhorezm]);
+    if (showWatershed && watershedTerrain) {
+      result = mergeExpandTerrains(result, watershedTerrain, false);
+      return { terrain: result, hideNoData: true };
+    }
+    return { terrain: result, hideNoData: false };
+  }, [baseTerrain, seabedTerrain, khorezmTerrain, showKhorezm, watershedTerrain, showWatershed]);
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
