@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { loadGeoTiff, TerrainData } from '@/lib/geotiff-loader';
-import { mergeTerrains } from '@/lib/terrain-merger';
+import { mergeTerrains, mergeExpandTerrains } from '@/lib/terrain-merger';
 import TerrainViewer, { TerrainViewerHandle } from '@/components/TerrainViewer';
 import ControlPanel from '@/components/ControlPanel';
 import Legend from '@/components/Legend';
@@ -149,7 +149,7 @@ const Index = () => {
     if (!baseTerrain) return null;
     let result = baseTerrain;
     if (seabedTerrain) result = mergeTerrains(result, seabedTerrain);
-    if (showKhorezm && khorezmTerrain) result = mergeTerrains(result, khorezmTerrain);
+    if (showKhorezm && khorezmTerrain) result = mergeExpandTerrains(result, khorezmTerrain);
     return result;
   }, [baseTerrain, seabedTerrain, khorezmTerrain, showKhorezm]);
 
