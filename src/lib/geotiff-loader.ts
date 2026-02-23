@@ -132,19 +132,22 @@ export async function loadGeoTiff(url: string): Promise<TerrainData> {
 }
 
 export function getElevationColor(normalized: number): [number, number, number] {
-  // Land-only hypsometric tinting: green → brown → white (no blue)
-  if (normalized < 0.25) {
-    // Lowlands green
-    return lerpColor([0.15, 0.4, 0.3], [0.3, 0.55, 0.2], normalized / 0.25);
-  } else if (normalized < 0.5) {
-    // Mid elevation
-    return lerpColor([0.3, 0.55, 0.2], [0.6, 0.45, 0.2], (normalized - 0.25) / 0.25);
-  } else if (normalized < 0.75) {
-    // High elevation brown/gray
-    return lerpColor([0.6, 0.45, 0.2], [0.7, 0.65, 0.6], (normalized - 0.5) / 0.25);
+  // Hypsometric tinting: sandy lowlands → ochre → warm brown mountains → snow peaks
+  if (normalized < 0.2) {
+    // Lowlands – pale sandy / tan
+    return lerpColor([0.76, 0.7, 0.5], [0.82, 0.74, 0.45], normalized / 0.2);
+  } else if (normalized < 0.45) {
+    // Mid-low – ochre / warm yellow-brown
+    return lerpColor([0.82, 0.74, 0.45], [0.7, 0.55, 0.3], (normalized - 0.2) / 0.25);
+  } else if (normalized < 0.7) {
+    // Mid-high – warm brown to cool brown-gray
+    return lerpColor([0.7, 0.55, 0.3], [0.55, 0.45, 0.38], (normalized - 0.45) / 0.25);
+  } else if (normalized < 0.88) {
+    // Mountains – slate gray-purple
+    return lerpColor([0.55, 0.45, 0.38], [0.6, 0.58, 0.62], (normalized - 0.7) / 0.18);
   } else {
-    // Peaks - snow
-    return lerpColor([0.7, 0.65, 0.6], [0.95, 0.95, 0.97], (normalized - 0.75) / 0.25);
+    // Peaks – snow
+    return lerpColor([0.6, 0.58, 0.62], [0.95, 0.95, 0.97], (normalized - 0.88) / 0.12);
   }
 }
 
