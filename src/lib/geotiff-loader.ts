@@ -60,36 +60,67 @@ export async function loadGeoTiff(url: string): Promise<TerrainData> {
   // Extract geographic bounds from image bbox or tiepoint + pixel scale
   let bounds: GeoBounds | null = null;
 
-  // Try tiepoint + pixel scale first (more reliable for many GeoTIFFs)
+  // Debug: log all file directory keys for troubleshooting
+  console.log('GeoTIFF fileDirectory keys:', Object.keys(fileDirectory));
+  console.log('GeoTIFF ModelTiepoint:', (fileDirectory as any).ModelTiepoint);
+  console.log('GeoTIFF ModelPixelScale:', (fileDirectory as any).ModelPixelScale);
+  console.log('GeoTIFF ModelTransformation:', (fileDirectory as any).ModelTransformation);
+  
   try {
-    const tiepoint = (fileDirectory as any).ModelTiepoint;
-    const pixelScale = (fileDirectory as any).ModelPixelScale;
-    if (tiepoint && pixelScale && pixelScale[0] > 0 && pixelScale[1] > 0) {
+    const bbox = image.getBoundingBox();
+    console.log('GeoTIFF getBoundingBox:', bbox);
+    if (bbox && bbox.length === 4 && (bbox[2] - bbox[0]) > 0 && (bbox[3] - bbox[1]) > 0) {
       bounds = {
-        minLon: tiepoint[3],
-        maxLon: tiepoint[3] + fullWidth * pixelScale[0],
-        maxLat: tiepoint[4],
-        minLat: tiepoint[4] - fullHeight * pixelScale[1],
+        minLon: bbox[0],
+        minLat: bbox[1],
+        maxLon: bbox[2],
+        maxLat: bbox[3],
       };
     }
-  } catch (e2) {
-    // ignore
+  } catch (e) {
+    console.warn('getBoundingBox failed:', e);
   }
 
-  // Fallback to getBoundingBox if tiepoint didn't work
+  // Try tiepoint + pixel scale if bbox didn't work
   if (!bounds) {
     try {
-      const bbox = image.getBoundingBox();
-      if (bbox && bbox.length === 4 && (bbox[2] - bbox[0]) > 0 && (bbox[3] - bbox[1]) > 0) {
+      const tiepoint = (fileDirectory as any).ModelTiepoint;
+      const pixelScale = (fileDirectory as any).ModelPixelScale;
+      if (tiepoint && pixelScale && pixelScale[0] > 0 && pixelScale[1] > 0) {
         bounds = {
-          minLon: bbox[0],
-          minLat: bbox[1],
-          maxLon: bbox[2],
-          maxLat: bbox[3],
+          minLon: tiepoint[3],
+          maxLon: tiepoint[3] + fullWidth * pixelScale[0],
+          maxLat: tiepoint[4],
+          minLat: tiepoint[4] - fullHeight * pixelScale[1],
         };
       }
-    } catch (e) {
-      console.warn('Could not extract geo bounds:', e);
+    } catch (e2) {
+      console.warn('Tiepoint extraction failed:', e2);
+    }
+  }
+
+  // Try ModelTransformation matrix as last resort
+  if (!bounds) {
+    try {
+      const transform = (fileDirectory as any).ModelTransformation;
+      if (transform && transform.length >= 8) {
+        // Affine transformation: [sx, 0, 0, tx, 0, sy, 0, ty, ...]
+        const sx = transform[0];
+        const ty = transform[3];
+        const sy = transform[5];
+        const tx = transform[7];
+        if (sx !== 0 && sy !== 0) {
+          bounds = {
+            minLon: Math.min(ty, ty + fullWidth * sx),
+            maxLon: Math.max(ty, ty + fullWidth * sx),
+            maxLat: Math.max(tx, tx + fullHeight * sy),
+            minLat: Math.min(tx, tx + fullHeight * sy),
+          };
+          console.log('Bounds from ModelTransformation:', bounds);
+        }
+      }
+    } catch (e3) {
+      console.warn('ModelTransformation extraction failed:', e3);
     }
   }
 
