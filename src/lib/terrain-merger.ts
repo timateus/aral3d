@@ -156,12 +156,14 @@ export function mergeExpandTerrains(base: TerrainData, overlay: TerrainData, fil
       }
 
       if (!filled) {
-        value = base.minElevation;
+        value = fillNoData ? base.minElevation : NaN;
       }
 
       merged[j * finalWidth + i] = value;
-      if (value < minElev) minElev = value;
-      if (value > maxElev) maxElev = value;
+      if (!isNaN(value)) {
+        if (value < minElev) minElev = value;
+        if (value > maxElev) maxElev = value;
+      }
     }
   }
 
