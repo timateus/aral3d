@@ -141,31 +141,51 @@ export function getElevationColor(normalized: number, rawElevation?: number): [n
 }
 
 function getElevationColorAbsolute(elev: number): [number, number, number] {
-  // Focus color detail on -12m to 300m range; compress above 300m
-  if (elev < 0) {
-    // Below sea level – pale green-grey (salt flats / dried seabed)
-    const t = Math.max(0, Math.min(1, (elev + 12) / 12));
-    return lerpColor([0.72, 0.7, 0.62], [0.76, 0.72, 0.55], t);
+  // Rich color detail from -12m to 300m; compressed above 300m
+  if (elev < -6) {
+    // Deep below sea level – grey-green (exposed seabed)
+    const t = Math.max(0, Math.min(1, (elev + 12) / 6));
+    return lerpColor([0.68, 0.67, 0.6], [0.72, 0.7, 0.58], t);
+  } else if (elev < 0) {
+    // Shallow below sea level – pale green-tan (salt crusts)
+    const t = (elev + 6) / 6;
+    return lerpColor([0.72, 0.7, 0.58], [0.78, 0.74, 0.52], t);
+  } else if (elev < 20) {
+    // Lowest plains – pale cream-yellow
+    const t = elev / 20;
+    return lerpColor([0.78, 0.74, 0.52], [0.85, 0.8, 0.5], t);
   } else if (elev < 50) {
-    // Low plains – pale sandy tan
-    const t = elev / 50;
-    return lerpColor([0.76, 0.72, 0.55], [0.82, 0.76, 0.48], t);
+    // Low plains – warm straw yellow
+    const t = (elev - 20) / 30;
+    return lerpColor([0.85, 0.8, 0.5], [0.88, 0.78, 0.42], t);
+  } else if (elev < 80) {
+    // Low-mid – golden yellow
+    const t = (elev - 50) / 30;
+    return lerpColor([0.88, 0.78, 0.42], [0.84, 0.72, 0.36], t);
   } else if (elev < 120) {
     // Mid-low – warm ochre
-    const t = (elev - 50) / 70;
-    return lerpColor([0.82, 0.76, 0.48], [0.78, 0.65, 0.35], t);
+    const t = (elev - 80) / 40;
+    return lerpColor([0.84, 0.72, 0.36], [0.78, 0.62, 0.32], t);
+  } else if (elev < 160) {
+    // Mid – amber-brown
+    const t = (elev - 120) / 40;
+    return lerpColor([0.78, 0.62, 0.32], [0.72, 0.55, 0.28], t);
   } else if (elev < 200) {
-    // Mid – golden brown
-    const t = (elev - 120) / 80;
-    return lerpColor([0.78, 0.65, 0.35], [0.68, 0.52, 0.3], t);
+    // Upper-mid – rich brown
+    const t = (elev - 160) / 40;
+    return lerpColor([0.72, 0.55, 0.28], [0.65, 0.48, 0.28], t);
+  } else if (elev < 250) {
+    // Transition – warm sienna
+    const t = (elev - 200) / 50;
+    return lerpColor([0.65, 0.48, 0.28], [0.6, 0.44, 0.3], t);
   } else if (elev < 300) {
-    // Upper mid – warm brown
-    const t = (elev - 200) / 100;
-    return lerpColor([0.68, 0.52, 0.3], [0.58, 0.45, 0.32], t);
+    // Upper transition – dusty brown
+    const t = (elev - 250) / 50;
+    return lerpColor([0.6, 0.44, 0.3], [0.56, 0.42, 0.32], t);
   } else if (elev < 1000) {
     // Mountains – compressed brown to grey
     const t = (elev - 300) / 700;
-    return lerpColor([0.58, 0.45, 0.32], [0.55, 0.52, 0.5], t);
+    return lerpColor([0.56, 0.42, 0.32], [0.55, 0.52, 0.5], t);
   } else if (elev < 3000) {
     // High mountains – slate
     const t = (elev - 1000) / 2000;
