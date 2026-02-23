@@ -293,14 +293,13 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
         />
       )}
 
-      {riverFlyover && onRiverFlyoverDone && (
-        <RiverFlyover
-          recording={riverFlyover}
-          terrain={terrain}
-          exaggeration={exaggeration}
-          onDone={onRiverFlyoverDone}
-        />
-      )}
+      <RiverFlyover
+        recording={!!riverFlyover}
+        terrain={terrain}
+        exaggeration={exaggeration}
+        onDone={onRiverFlyoverDone || (() => {})}
+        onAnimatingChange={setFlyoverAnimating}
+      />
 
       <OrbitControls
         enabled={!narrativeActive && !riverFlyover}
