@@ -19,7 +19,7 @@ const Index = () => {
   const [seabedTerrain, setSeabedTerrain] = useState<TerrainData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [dataSource, setDataSource] = useState<DataSource>('merged');
+  const dataSource: DataSource = 'merged';
   const [exaggeration, setExaggeration] = useState(10);
   const [waterLevel, setWaterLevel] = useState(29);
   const [showBorders, setShowBorders] = useState(true);
@@ -33,7 +33,7 @@ const Index = () => {
   const [started, setStarted] = useState(false);
   const [recording, setRecording] = useState(false);
   const [scenarioActions, setScenarioActions] = useState<ScenarioAction[]>([]);
-  const [showDataPanel, setShowDataPanel] = useState(false);
+  const [showDataPanel, setShowDataPanel] = useState(true);
   const viewerRef = useRef<TerrainViewerHandle>(null);
 
   // Lifted data panel state
@@ -109,10 +109,9 @@ const Index = () => {
 
   const terrain = useMemo(() => {
     if (!baseTerrain) return null;
-    if (dataSource === 'seabed' && seabedTerrain) return seabedTerrain;
-    if (dataSource === 'merged' && seabedTerrain) return mergeTerrains(baseTerrain, seabedTerrain);
+    if (seabedTerrain) return mergeTerrains(baseTerrain, seabedTerrain);
     return baseTerrain;
-  }, [baseTerrain, seabedTerrain, dataSource]);
+  }, [baseTerrain, seabedTerrain]);
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
@@ -161,9 +160,9 @@ const Index = () => {
         />
       )}
 
-      {/* Data Panel - positioned top center */}
+      {/* Data Panel - positioned left */}
       {started && showDataPanel && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
+        <div className="absolute top-16 left-4 z-10">
           <DataPanel
             currentYear={waterExtentYear}
             onClose={() => setShowDataPanel(false)}
@@ -199,8 +198,8 @@ const Index = () => {
             onWaterLevelChange={setWaterLevel}
             loading={loading}
             dataSource={dataSource}
-            onDataSourceChange={setDataSource}
-            hasSeabed={!!seabedTerrain}
+            onDataSourceChange={() => {}}
+            hasSeabed={false}
           />
           <Legend
             showBorders={showBorders}
