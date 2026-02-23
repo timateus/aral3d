@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { TerrainData, GeoBounds } from '@/lib/geotiff-loader';
 
 interface RiverFlyoverProps {
-  active: boolean;
+  recording: boolean;
   terrain: TerrainData;
   exaggeration: number;
   onDone: () => void;
@@ -43,19 +43,19 @@ function geoToMeshPos(
   return [x, zHeight, -planeY];
 }
 
-const RiverFlyover = ({ active, terrain, exaggeration, onDone }: RiverFlyoverProps) => {
-  const { camera, gl, scene } = useThree();
+const RiverFlyover = ({ recording, terrain, exaggeration, onDone }: RiverFlyoverProps) => {
+  const { camera, gl } = useThree();
   const [riverPath, setRiverPath] = useState<THREE.Vector3[] | null>(null);
   const progress = useRef(0);
-  const isActive = useRef(false);
+  const active = useRef(false);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const chunks = useRef<Blob[]>([]);
 
   const totalDuration = 15; // seconds
-  const cameraHeight = 1.8; // height above terrain along the path
-  const lookAheadSamples = 15; // how far ahead to look for camera direction
+  const cameraHeight = 1.8;
+  const lookAheadSamples = 15;
 
-  // Load river path
+  // Load river path on mount
   useEffect(() => {
     fetch('/data/AmuRivers.geojson')
       .then(r => r.json())
@@ -73,8 +73,6 @@ const RiverFlyover = ({ active, terrain, exaggeration, onDone }: RiverFlyoverPro
             mainFeature = f;
           }
         }
-
-        // If main feature is not found by sorder, use the longest LineString
         if (maxOrder === 0) {
           let maxLen = 0;
           for (const f of data.features) {
@@ -98,19 +96,16 @@ const RiverFlyover = ({ active, terrain, exaggeration, onDone }: RiverFlyoverPro
           }
         }
 
-        // The river flows toward the Aral Sea — check if we need to reverse
-        // We want to fly FROM the beginning (upstream) TO the Aral Sea (downstream)
-        // The Aral Sea is roughly at higher latitude (north) i.e. lower z in mesh space
+        // Fly toward the Aral Sea (north = lower z in mesh space)
         if (points.length >= 2) {
           const first = points[0];
           const last = points[points.length - 1];
-          // If last point is more south (higher z), reverse so we fly toward north (Aral Sea)
           if (last.z > first.z) {
             points.reverse();
           }
         }
 
-        // Subsample to smooth path (~200 points)
+        // Subsample to ~200 points for smooth path
         if (points.length > 200) {
           const step = points.length / 200;
           const sampled: THREE.Vector3[] = [];
@@ -126,13 +121,19 @@ const RiverFlyover = ({ active, terrain, exaggeration, onDone }: RiverFlyoverPro
       .catch(err => console.warn('Failed to load river path:', err));
   }, [terrain, exaggeration]);
 
-  // Start recording when active
+  // Start recording — mirrors VideoAnimator pattern exactly
   useEffect(() => {
-    if (active && riverPath && riverPath.length >= 2 && !isActive.current) {
-      isActive.current = true;
+    if (recording && riverPath && riverPath.length >= 2 && !active.current) {
+      active.current = true;
       progress.current = 0;
       chunks.current = [];
 
+      // Set camera to start of path
+      camera.position.copy(riverPath[0]);
+      const lookIdx = Math.min(lookAheadSamples, riverPath.length - 1);
+      camera.lookAt(riverPath[lookIdx]);
+
+      // Start recording
       const stream = gl.domElement.captureStream(30);
       const recorder = new MediaRecorder(stream, {
         mimeType: 'video/webm;codecs=vp9',
@@ -149,16 +150,16 @@ const RiverFlyover = ({ active, terrain, exaggeration, onDone }: RiverFlyoverPro
         link.href = url;
         link.click();
         URL.revokeObjectURL(url);
-        isActive.current = false;
+        active.current = false;
         onDone();
       };
       recorder.start();
       mediaRecorder.current = recorder;
     }
-  }, [active, riverPath]);
+  }, [recording, riverPath]);
 
   useFrame((_, delta) => {
-    if (!isActive.current || !riverPath || riverPath.length < 2) return;
+    if (!active.current || !riverPath || riverPath.length < 2) return;
 
     progress.current += delta / totalDuration;
     const p = Math.min(progress.current, 1);
@@ -168,7 +169,6 @@ const RiverFlyover = ({ active, terrain, exaggeration, onDone }: RiverFlyoverPro
       ? 2 * p * p
       : 1 - Math.pow(-2 * p + 2, 2) / 2;
 
-    // Get position along path using CatmullRom curve
     const pathLength = riverPath.length - 1;
     const exactIndex = eased * pathLength;
     const i = Math.floor(exactIndex);
@@ -183,7 +183,6 @@ const RiverFlyover = ({ active, terrain, exaggeration, onDone }: RiverFlyoverPro
     // Look ahead along the path
     const lookIdx = Math.min(i + lookAheadSamples, pathLength);
     const lookTarget = riverPath[lookIdx].clone();
-    // Look slightly below camera height for more cinematic angle
     lookTarget.y = lookTarget.y - cameraHeight * 0.5;
     camera.lookAt(lookTarget);
 
