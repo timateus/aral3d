@@ -8,7 +8,7 @@ import TimelineSlider from '@/components/TimelineSlider';
 import IntroOverlay from '@/components/IntroOverlay';
 import ScenarioChat from '@/components/ScenarioChat';
 import WaterVolumeDisplay from '@/components/WaterVolumeDisplay';
-import DataPanel from '@/components/DataPanel';
+import DataPanel, { AralAnnual, SEA_SERIES } from '@/components/DataPanel';
 import { Camera, Video, BarChart3 } from 'lucide-react';
 import type { ScenarioAction } from '@/types/scenario';
 
@@ -28,7 +28,7 @@ const Index = () => {
   const [show19thBasin, setShow19thBasin] = useState(true);
   const [show21stBasin, setShow21stBasin] = useState(true);
   const [showWaterExtent, setShowWaterExtent] = useState(true);
-  const [waterExtentYear, setWaterExtentYear] = useState(2012);
+  const [waterExtentYear, setWaterExtentYear] = useState(1960);
   
   const [started, setStarted] = useState(false);
   const [recording, setRecording] = useState(false);
@@ -36,14 +36,55 @@ const Index = () => {
   const [showDataPanel, setShowDataPanel] = useState(false);
   const viewerRef = useRef<TerrainViewerHandle>(null);
 
+  // Lifted data panel state
+  const [annualData, setAnnualData] = useState<AralAnnual[]>([]);
+  const [enabledSeries, setEnabledSeries] = useState<Set<string>>(
+    new Set(['seaLevel', 'volume', 'salinity'])
+  );
+  const [enabledClimate, setEnabledClimate] = useState<Set<string>>(
+    new Set(['temp', 'rainfall', 'humidity', 'groundwater'])
+  );
+
+  useEffect(() => {
+    fetch('/data/aral_sea_annual.json').then(r => r.json()).then(setAnnualData);
+  }, []);
+
+  const toggleSeries = useCallback((key: string) => {
+    setEnabledSeries(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  }, []);
+
+  const toggleClimate = useCallback((key: string) => {
+    setEnabledClimate(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  }, []);
+
+  // Current year metrics for 3D overlay
+  const currentMetrics = useMemo(() => {
+    const row = annualData.find(d => d.year === waterExtentYear);
+    if (!row) return [];
+    return SEA_SERIES
+      .filter(s => enabledSeries.has(s.key))
+      .map(s => ({
+        name: s.name,
+        value: row[s.key as keyof AralAnnual] as number,
+        unit: s.unit,
+        color: s.color,
+      }));
+  }, [annualData, waterExtentYear, enabledSeries]);
+
   const handleScenarioActions = useCallback((actions: ScenarioAction[]) => {
-    // Handle water_level actions by updating the slider
     for (const a of actions) {
       if (a.type === 'water_level') {
         setWaterLevel(a.value);
       }
     }
-    // Accumulate non-water-level actions
     const visualActions = actions.filter((a) => a.type !== 'water_level');
     if (visualActions.length > 0) {
       setScenarioActions((prev) => [...prev, ...visualActions]);
@@ -95,6 +136,7 @@ const Index = () => {
             onWaterLevelChange={setWaterLevel}
             onRecordingDone={() => setRecording(false)}
             scenarioActions={scenarioActions}
+            currentMetrics={currentMetrics}
           />
         )}
         {!terrain && !loading && error && (
@@ -119,10 +161,18 @@ const Index = () => {
         />
       )}
 
-      {/* Data Panel */}
+      {/* Data Panel - positioned top center */}
       {started && showDataPanel && (
-        <div className="absolute bottom-4 left-4 z-10">
-          <DataPanel currentYear={waterExtentYear} onClose={() => setShowDataPanel(false)} />
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
+          <DataPanel
+            currentYear={waterExtentYear}
+            onClose={() => setShowDataPanel(false)}
+            annualData={annualData}
+            enabledSeries={enabledSeries}
+            onToggleSeries={toggleSeries}
+            enabledClimate={enabledClimate}
+            onToggleClimate={toggleClimate}
+          />
         </div>
       )}
 
@@ -164,12 +214,6 @@ const Index = () => {
             show21stBasin={show21stBasin}
             onToggle21stBasin={setShow21stBasin}
           />
-          <TimelineSlider
-            year={waterExtentYear}
-            onYearChange={setWaterExtentYear}
-            visible={showWaterExtent}
-            onToggleVisible={setShowWaterExtent}
-          />
           {terrain && (
             <WaterVolumeDisplay
               terrain={terrain}
@@ -201,6 +245,16 @@ const Index = () => {
             {showDataPanel ? 'Hide Data Panel' : 'Show Data Panel'}
           </button>
         </div>
+      )}
+
+      {/* Timeline Slider - bottom bar */}
+      {started && (
+        <TimelineSlider
+          year={waterExtentYear}
+          onYearChange={setWaterExtentYear}
+          visible={showWaterExtent}
+          onToggleVisible={setShowWaterExtent}
+        />
       )}
     </div>
   );
