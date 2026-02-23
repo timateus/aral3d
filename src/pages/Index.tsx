@@ -96,6 +96,32 @@ const Index = () => {
     }
   }, []);
 
+  // Narrative step change handler
+  const handleNarrativeStepChange = useCallback((newStep: number) => {
+    setNarrativeStep(newStep);
+    const step = NARRATIVE_STEPS[newStep];
+    if (!step) return;
+    setWaterExtentYear(step.year);
+    setShowBorders(step.layers.showBorders);
+    setShowRivers(step.layers.showRivers);
+    setShow13thBasin(step.layers.show13thBasin);
+    setShow19thBasin(step.layers.show19thBasin);
+    setShow21stBasin(step.layers.show21stBasin);
+    setShowWaterExtent(step.layers.showWaterExtent);
+    setEnabledSeries(new Set(step.enabledSeries));
+  }, []);
+
+  const startNarrative = useCallback(() => {
+    setStarted(true);
+    setNarrativeActive(true);
+    setNarrativeStep(0);
+    handleNarrativeStepChange(0);
+  }, [handleNarrativeStepChange]);
+
+  const exitNarrative = useCallback(() => {
+    setNarrativeActive(false);
+  }, []);
+
   useEffect(() => {
     Promise.all([
       loadGeoTiff('/data/aral_region.tif'),
