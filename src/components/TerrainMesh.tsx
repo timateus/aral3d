@@ -117,7 +117,7 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
             0.35 + (1 - waterDepth) * 0.25,
           ];
         } else {
-          color = getElevationColor(normalized);
+          color = getElevationColor(normalized, elev);
         }
         colors[idx * 3] = color[0];
         colors[idx * 3 + 1] = color[1];

@@ -131,23 +131,49 @@ export async function loadGeoTiff(url: string): Promise<TerrainData> {
   return { width, height, elevations, minElevation, maxElevation, noDataValue, bounds };
 }
 
-export function getElevationColor(normalized: number): [number, number, number] {
-  // Hypsometric tinting: sandy lowlands → ochre → warm brown mountains → snow peaks
-  if (normalized < 0.2) {
-    // Lowlands – pale sandy / tan
-    return lerpColor([0.76, 0.7, 0.5], [0.82, 0.74, 0.45], normalized / 0.2);
-  } else if (normalized < 0.45) {
-    // Mid-low – ochre / warm yellow-brown
-    return lerpColor([0.82, 0.74, 0.45], [0.7, 0.55, 0.3], (normalized - 0.2) / 0.25);
-  } else if (normalized < 0.7) {
-    // Mid-high – warm brown to cool brown-gray
-    return lerpColor([0.7, 0.55, 0.3], [0.55, 0.45, 0.38], (normalized - 0.45) / 0.25);
-  } else if (normalized < 0.88) {
-    // Mountains – slate gray-purple
-    return lerpColor([0.55, 0.45, 0.38], [0.6, 0.58, 0.62], (normalized - 0.7) / 0.18);
+export function getElevationColor(normalized: number, rawElevation?: number): [number, number, number] {
+  // Use absolute elevation when available for better color distribution
+  if (rawElevation !== undefined) {
+    return getElevationColorAbsolute(rawElevation);
+  }
+  // Fallback to normalized
+  return getElevationColorAbsolute(normalized * 300);
+}
+
+function getElevationColorAbsolute(elev: number): [number, number, number] {
+  // Focus color detail on -12m to 300m range; compress above 300m
+  if (elev < 0) {
+    // Below sea level – pale green-grey (salt flats / dried seabed)
+    const t = Math.max(0, Math.min(1, (elev + 12) / 12));
+    return lerpColor([0.72, 0.7, 0.62], [0.76, 0.72, 0.55], t);
+  } else if (elev < 50) {
+    // Low plains – pale sandy tan
+    const t = elev / 50;
+    return lerpColor([0.76, 0.72, 0.55], [0.82, 0.76, 0.48], t);
+  } else if (elev < 120) {
+    // Mid-low – warm ochre
+    const t = (elev - 50) / 70;
+    return lerpColor([0.82, 0.76, 0.48], [0.78, 0.65, 0.35], t);
+  } else if (elev < 200) {
+    // Mid – golden brown
+    const t = (elev - 120) / 80;
+    return lerpColor([0.78, 0.65, 0.35], [0.68, 0.52, 0.3], t);
+  } else if (elev < 300) {
+    // Upper mid – warm brown
+    const t = (elev - 200) / 100;
+    return lerpColor([0.68, 0.52, 0.3], [0.58, 0.45, 0.32], t);
+  } else if (elev < 1000) {
+    // Mountains – compressed brown to grey
+    const t = (elev - 300) / 700;
+    return lerpColor([0.58, 0.45, 0.32], [0.55, 0.52, 0.5], t);
+  } else if (elev < 3000) {
+    // High mountains – slate
+    const t = (elev - 1000) / 2000;
+    return lerpColor([0.55, 0.52, 0.5], [0.65, 0.63, 0.65], t);
   } else {
     // Peaks – snow
-    return lerpColor([0.6, 0.58, 0.62], [0.95, 0.95, 0.97], (normalized - 0.88) / 0.12);
+    const t = Math.min(1, (elev - 3000) / 2000);
+    return lerpColor([0.65, 0.63, 0.65], [0.95, 0.95, 0.97], t);
   }
 }
 
