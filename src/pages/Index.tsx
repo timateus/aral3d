@@ -20,6 +20,7 @@ export type DataSource = 'regional' | 'seabed' | 'merged';
 const Index = () => {
   const [baseTerrain, setBaseTerrain] = useState<TerrainData | null>(null);
   const [seabedTerrain, setSeabedTerrain] = useState<TerrainData | null>(null);
+  const [khorezmTerrain, setKhorezmTerrain] = useState<TerrainData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const dataSource: DataSource = 'merged';
@@ -30,6 +31,7 @@ const Index = () => {
   const [show13thBasin, setShow13thBasin] = useState(true);
   const [show19thBasin, setShow19thBasin] = useState(true);
   const [show21stBasin, setShow21stBasin] = useState(true);
+  const [showKhorezm, setShowKhorezm] = useState(false);
   const [showWaterExtent, setShowWaterExtent] = useState(true);
   const [waterExtentYear, setWaterExtentYear] = useState(1960);
   
@@ -129,10 +131,15 @@ const Index = () => {
         console.warn('Seabed DEM failed to load:', err);
         return null;
       }),
+      loadGeoTiff('/data/khorezm.tif').catch((err) => {
+        console.warn('Khorezm DEM failed to load:', err);
+        return null;
+      }),
     ])
-      .then(([base, seabed]) => {
+      .then(([base, seabed, khorezm]) => {
         setBaseTerrain(base);
         if (seabed) setSeabedTerrain(seabed);
+        if (khorezm) setKhorezmTerrain(khorezm);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -140,9 +147,11 @@ const Index = () => {
 
   const terrain = useMemo(() => {
     if (!baseTerrain) return null;
-    if (seabedTerrain) return mergeTerrains(baseTerrain, seabedTerrain);
-    return baseTerrain;
-  }, [baseTerrain, seabedTerrain]);
+    let result = baseTerrain;
+    if (seabedTerrain) result = mergeTerrains(result, seabedTerrain);
+    if (showKhorezm && khorezmTerrain) result = mergeTerrains(result, khorezmTerrain);
+    return result;
+  }, [baseTerrain, seabedTerrain, khorezmTerrain, showKhorezm]);
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
@@ -255,6 +264,8 @@ const Index = () => {
             onToggle19thBasin={setShow19thBasin}
             show21stBasin={show21stBasin}
             onToggle21stBasin={setShow21stBasin}
+            showKhorezm={showKhorezm}
+            onToggleKhorezm={setShowKhorezm}
           />
           {terrain && (
             <WaterVolumeDisplay

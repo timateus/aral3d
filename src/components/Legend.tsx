@@ -11,9 +11,11 @@ interface LegendProps {
   onToggle19thBasin: (val: boolean) => void;
   show21stBasin: boolean;
   onToggle21stBasin: (val: boolean) => void;
+  showKhorezm: boolean;
+  onToggleKhorezm: (val: boolean) => void;
 }
 
-const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin, show21stBasin, onToggle21stBasin }: LegendProps) => {
+const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin, show21stBasin, onToggle21stBasin, showKhorezm, onToggleKhorezm }: LegendProps) => {
   return (
     <div className="glass-panel p-3 space-y-2 w-72">
       <label className="flex items-center justify-between cursor-pointer">
@@ -54,6 +56,14 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
           21st Century Canals
         </span>
         <Switch className="scale-75" checked={show21stBasin} onCheckedChange={onToggle21stBasin} />
+      </label>
+
+      <label className="flex items-center justify-between cursor-pointer">
+        <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
+          <span className="inline-block w-3 h-3 rounded-sm" style={{ background: 'linear-gradient(135deg, #6b8e23, #8B4513)' }} />
+          Khorezm DEM
+        </span>
+        <Switch className="scale-75" checked={showKhorezm} onCheckedChange={onToggleKhorezm} />
       </label>
     </div>
   );
