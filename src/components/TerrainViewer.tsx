@@ -14,6 +14,13 @@ export interface TerrainViewerHandle {
   recordVideo: () => void;
 }
 
+interface MetricItem {
+  name: string;
+  value: number;
+  unit: string;
+  color: string;
+}
+
 interface TerrainViewerProps {
   terrain: TerrainData;
   exaggeration: number;
@@ -31,6 +38,7 @@ interface TerrainViewerProps {
   recording?: boolean;
   onRecordingDone?: () => void;
   scenarioActions?: ScenarioAction[];
+  currentMetrics?: MetricItem[];
 }
 
 function CameraAnimator({ started }: { started: boolean }) {
@@ -187,7 +195,7 @@ function VideoAnimator({
   return null;
 }
 
-const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showWaterExtent, waterExtentYear, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions }, ref) => {
+const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showWaterExtent, waterExtentYear, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics }, ref) => {
   const screenshotFn = useRef<(() => void) | null>(null);
 
   useImperativeHandle(ref, () => ({
@@ -229,6 +237,30 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
               <div style={{ fontSize: '22px', fontWeight: 400, color: '#8ec8e8', marginTop: '4px' }}>
                 Water Level: {waterLevel} m
               </div>
+              {currentMetrics && currentMetrics.length > 0 && (
+                <div style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  justifyContent: 'center',
+                  gap: '6px 12px',
+                  marginTop: '8px',
+                  maxWidth: '400px',
+                }}>
+                  {currentMetrics.map(m => (
+                    <div key={m.name} style={{
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      color: m.color,
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {m.name.replace(/\s*\(.*\)/, '')}: <span style={{ color: '#fff', fontWeight: 600 }}>
+                        {typeof m.value === 'number' ? (m.value >= 1000 ? m.value.toLocaleString() : m.value) : m.value}
+                      </span>{' '}
+                      <span style={{ fontSize: '11px', opacity: 0.7 }}>{m.unit}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </Html>
         </group>

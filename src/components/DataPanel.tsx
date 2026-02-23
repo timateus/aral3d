@@ -3,11 +3,11 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip,
-  ReferenceLine, ResponsiveContainer, CartesianGrid, Legend,
+  ReferenceLine, ResponsiveContainer, CartesianGrid,
 } from 'recharts';
 import { ChevronDown, ChevronUp, X } from 'lucide-react';
 
-interface AralAnnual {
+export interface AralAnnual {
   year: number;
   seaLevel: number;
   surfaceArea: number;
@@ -31,59 +31,40 @@ interface ClimateMonthly {
 interface DataPanelProps {
   currentYear: number;
   onClose: () => void;
+  annualData: AralAnnual[];
+  enabledSeries: Set<string>;
+  onToggleSeries: (key: string) => void;
+  enabledClimate: Set<string>;
+  onToggleClimate: (key: string) => void;
 }
 
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-const SEA_SERIES = [
-  { key: 'seaLevel', name: 'Sea Level (m)', color: 'hsl(200, 80%, 60%)', yAxis: 'left' },
-  { key: 'surfaceArea', name: 'Area (km²)', color: 'hsl(280, 60%, 60%)', yAxis: 'right' },
-  { key: 'volume', name: 'Volume (km³)', color: 'hsl(170, 70%, 50%)', yAxis: 'right' },
-  { key: 'salinity', name: 'Salinity (g/L)', color: 'hsl(30, 80%, 55%)', yAxis: 'right' },
-  { key: 'riverInflow', name: 'River Inflow (km³)', color: 'hsl(210, 80%, 55%)', yAxis: 'right' },
-  { key: 'cottonHarvest', name: 'Cotton (Mt)', color: 'hsl(50, 70%, 55%)', yAxis: 'right' },
-  { key: 'irrigatedArea', name: 'Irrigated (Mha)', color: 'hsl(130, 60%, 50%)', yAxis: 'right' },
-  { key: 'tempAnomaly', name: 'Temp Δ (°C)', color: 'hsl(0, 70%, 60%)', yAxis: 'right' },
+export const SEA_SERIES = [
+  { key: 'seaLevel', name: 'Sea Level (m)', color: 'hsl(200, 80%, 60%)', unit: 'm', yAxis: 'left' },
+  { key: 'surfaceArea', name: 'Area (km²)', color: 'hsl(280, 60%, 60%)', unit: 'km²', yAxis: 'right' },
+  { key: 'volume', name: 'Volume (km³)', color: 'hsl(170, 70%, 50%)', unit: 'km³', yAxis: 'right' },
+  { key: 'salinity', name: 'Salinity (g/L)', color: 'hsl(30, 80%, 55%)', unit: 'g/L', yAxis: 'right' },
+  { key: 'riverInflow', name: 'River Inflow (km³)', color: 'hsl(210, 80%, 55%)', unit: 'km³', yAxis: 'right' },
+  { key: 'cottonHarvest', name: 'Cotton (Mt)', color: 'hsl(50, 70%, 55%)', unit: 'Mt', yAxis: 'right' },
+  { key: 'irrigatedArea', name: 'Irrigated (Mha)', color: 'hsl(130, 60%, 50%)', unit: 'Mha', yAxis: 'right' },
+  { key: 'tempAnomaly', name: 'Temp Δ (°C)', color: 'hsl(0, 70%, 60%)', unit: '°C', yAxis: 'right' },
 ];
 
-const CLIMATE_SERIES = [
+export const CLIMATE_SERIES = [
   { key: 'temp', name: 'Avg Temp (°C)', color: 'hsl(0, 70%, 60%)' },
   { key: 'rainfall', name: 'Avg Rainfall (mm)', color: 'hsl(210, 80%, 60%)' },
   { key: 'humidity', name: 'Avg Humidity (%)', color: 'hsl(170, 60%, 50%)' },
   { key: 'groundwater', name: 'Avg GW (cm)', color: 'hsl(50, 70%, 55%)' },
 ];
 
-const DataPanel = ({ currentYear, onClose }: DataPanelProps) => {
-  const [annualData, setAnnualData] = useState<AralAnnual[]>([]);
+const DataPanel = ({ currentYear, onClose, annualData, enabledSeries, onToggleSeries, enabledClimate, onToggleClimate }: DataPanelProps) => {
   const [monthlyData, setMonthlyData] = useState<ClimateMonthly[]>([]);
   const [expanded, setExpanded] = useState(false);
-  const [enabledSeries, setEnabledSeries] = useState<Set<string>>(
-    new Set(['seaLevel', 'volume', 'salinity'])
-  );
-  const [enabledClimate, setEnabledClimate] = useState<Set<string>>(
-    new Set(['temp', 'rainfall', 'humidity', 'groundwater'])
-  );
 
   useEffect(() => {
-    fetch('/data/aral_sea_annual.json').then(r => r.json()).then(setAnnualData);
     fetch('/data/karakalpakstan_monthly.json').then(r => r.json()).then(setMonthlyData);
   }, []);
-
-  const toggleSeries = (key: string) => {
-    setEnabledSeries(prev => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key); else next.add(key);
-      return next;
-    });
-  };
-
-  const toggleClimate = (key: string) => {
-    setEnabledClimate(prev => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key); else next.add(key);
-      return next;
-    });
-  };
 
   const climateAnnual = useMemo(() => {
     if (monthlyData.length === 0) return [];
@@ -107,7 +88,7 @@ const DataPanel = ({ currentYear, onClose }: DataPanelProps) => {
     <div className="glass-panel w-[480px] max-h-[520px] flex flex-col text-xs overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-border/30">
-        <span className="font-semibold text-foreground text-sm">📊 Data Panel — {currentYear}</span>
+        <span className="font-semibold text-foreground text-sm">📊 Data Panel</span>
         <div className="flex items-center gap-1">
           <button onClick={() => setExpanded(e => !e)} className="p-1 hover:bg-muted/50 rounded transition-colors">
             {expanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
@@ -126,12 +107,11 @@ const DataPanel = ({ currentYear, onClose }: DataPanelProps) => {
 
         {/* Sea History Tab */}
         <TabsContent value="sea" className="flex-1 flex flex-col min-h-0 px-3 pb-2">
-          {/* Series toggles */}
           <div className="flex flex-wrap gap-1 mt-1 mb-1">
             {SEA_SERIES.map(s => (
               <button
                 key={s.key}
-                onClick={() => toggleSeries(s.key)}
+                onClick={() => onToggleSeries(s.key)}
                 className="px-1.5 py-0.5 rounded text-[9px] border transition-colors"
                 style={{
                   borderColor: s.color,
@@ -210,14 +190,13 @@ const DataPanel = ({ currentYear, onClose }: DataPanelProps) => {
           )}
         </TabsContent>
 
-        {/* Climate Tab (1996–2025) */}
+        {/* Climate Tab */}
         <TabsContent value="climate" className="flex-1 flex flex-col min-h-0 px-3 pb-2">
-          {/* Climate series toggles */}
           <div className="flex flex-wrap gap-1 mt-1 mb-1">
             {CLIMATE_SERIES.map(s => (
               <button
                 key={s.key}
-                onClick={() => toggleClimate(s.key)}
+                onClick={() => onToggleClimate(s.key)}
                 className="px-1.5 py-0.5 rounded text-[9px] border transition-colors"
                 style={{
                   borderColor: s.color,
