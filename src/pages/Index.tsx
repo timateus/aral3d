@@ -137,11 +137,16 @@ const Index = () => {
         console.warn('Khorezm DEM failed to load:', err);
         return null;
       }),
+      loadGeoTiff('/data/watershed.tif').catch((err) => {
+        console.warn('Watershed DEM failed to load:', err);
+        return null;
+      }),
     ])
-      .then(([base, seabed, khorezm]) => {
+      .then(([base, seabed, khorezm, watershed]) => {
         setBaseTerrain(base);
         if (seabed) setSeabedTerrain(seabed);
         if (khorezm) setKhorezmTerrain(khorezm);
+        if (watershed) setWatershedTerrain(watershed);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
