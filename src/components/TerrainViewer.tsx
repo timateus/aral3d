@@ -33,6 +33,7 @@ interface TerrainViewerProps {
   show21stBasin: boolean;
   showWaterExtent: boolean;
   waterExtentYear: number;
+  hideNoData?: boolean;
   
   started: boolean;
   onWaterLevelChange?: (level: number) => void;
