@@ -294,7 +294,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
 
       {riverFlyover && onRiverFlyoverDone && (
         <RiverFlyover
-          active={riverFlyover}
+          recording={riverFlyover}
           terrain={terrain}
           exaggeration={exaggeration}
           onDone={onRiverFlyoverDone}
