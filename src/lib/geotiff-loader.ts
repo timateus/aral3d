@@ -17,10 +17,6 @@ export interface TerrainData {
   bounds: GeoBounds | null;
 }
 
-// Known bounds for GeoTIFFs that lack georeferencing metadata
-const KNOWN_BOUNDS: Record<string, GeoBounds> = {
-  '/data/watershed.tif': { minLon: 55.0, maxLon: 68.0, minLat: 35.0, maxLat: 48.0 },
-};
 
 export async function loadGeoTiff(url: string): Promise<TerrainData> {
   const response = await fetch(url);
