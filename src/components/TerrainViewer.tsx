@@ -4,6 +4,7 @@ import { OrbitControls, GizmoHelper, GizmoViewport, Html } from '@react-three/dr
 import TerrainMesh from './TerrainMesh';
 import GeoFeatures from './GeoFeatures';
 import WaterExtentLayer from './WaterExtentLayer';
+import NarrativeCameraController from './NarrativeCameraController';
 import ScenarioOverlay from './ScenarioOverlay';
 import { TerrainData } from '@/lib/geotiff-loader';
 import type { ScenarioAction } from '@/types/scenario';
@@ -39,6 +40,9 @@ interface TerrainViewerProps {
   onRecordingDone?: () => void;
   scenarioActions?: ScenarioAction[];
   currentMetrics?: MetricItem[];
+  narrativeActive?: boolean;
+  narrativeCameraPosition?: [number, number, number];
+  narrativeCameraTarget?: [number, number, number];
 }
 
 function CameraAnimator({ started }: { started: boolean }) {
@@ -195,7 +199,7 @@ function VideoAnimator({
   return null;
 }
 
-const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showWaterExtent, waterExtentYear, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics }, ref) => {
+const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showWaterExtent, waterExtentYear, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget }, ref) => {
   const screenshotFn = useRef<(() => void) | null>(null);
 
   useImperativeHandle(ref, () => ({
@@ -266,7 +270,14 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
         </group>
       )}
 
-      <CameraAnimator started={started} />
+      {!narrativeActive && <CameraAnimator started={started} />}
+      {narrativeActive && narrativeCameraPosition && narrativeCameraTarget && (
+        <NarrativeCameraController
+          active={narrativeActive}
+          position={narrativeCameraPosition}
+          target={narrativeCameraTarget}
+        />
+      )}
       <ScreenshotHelper onReady={(fn) => { screenshotFn.current = fn; }} />
       {recording && onWaterLevelChange && onRecordingDone && (
         <VideoAnimator
@@ -277,6 +288,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
       )}
 
       <OrbitControls
+        enabled={!narrativeActive}
         enableDamping
         dampingFactor={0.05}
         minDistance={2}

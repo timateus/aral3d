@@ -11,6 +11,9 @@ import WaterVolumeDisplay from '@/components/WaterVolumeDisplay';
 import DataPanel, { AralAnnual, SEA_SERIES } from '@/components/DataPanel';
 import { Camera, Video, BarChart3 } from 'lucide-react';
 import type { ScenarioAction } from '@/types/scenario';
+import { NARRATIVE_STEPS } from '@/lib/narrative-steps';
+import NarrativeOverlay from '@/components/NarrativeOverlay';
+import { BookOpen } from 'lucide-react';
 
 export type DataSource = 'regional' | 'seabed' | 'merged';
 
@@ -34,6 +37,8 @@ const Index = () => {
   const [recording, setRecording] = useState(false);
   const [scenarioActions, setScenarioActions] = useState<ScenarioAction[]>([]);
   const [showDataPanel, setShowDataPanel] = useState(true);
+  const [narrativeActive, setNarrativeActive] = useState(false);
+  const [narrativeStep, setNarrativeStep] = useState(0);
   const viewerRef = useRef<TerrainViewerHandle>(null);
 
   // Lifted data panel state
@@ -91,6 +96,32 @@ const Index = () => {
     }
   }, []);
 
+  // Narrative step change handler
+  const handleNarrativeStepChange = useCallback((newStep: number) => {
+    setNarrativeStep(newStep);
+    const step = NARRATIVE_STEPS[newStep];
+    if (!step) return;
+    setWaterExtentYear(step.year);
+    setShowBorders(step.layers.showBorders);
+    setShowRivers(step.layers.showRivers);
+    setShow13thBasin(step.layers.show13thBasin);
+    setShow19thBasin(step.layers.show19thBasin);
+    setShow21stBasin(step.layers.show21stBasin);
+    setShowWaterExtent(step.layers.showWaterExtent);
+    setEnabledSeries(new Set(step.enabledSeries));
+  }, []);
+
+  const startNarrative = useCallback(() => {
+    setStarted(true);
+    setNarrativeActive(true);
+    setNarrativeStep(0);
+    handleNarrativeStepChange(0);
+  }, [handleNarrativeStepChange]);
+
+  const exitNarrative = useCallback(() => {
+    setNarrativeActive(false);
+  }, []);
+
   useEffect(() => {
     Promise.all([
       loadGeoTiff('/data/aral_region.tif'),
@@ -136,6 +167,9 @@ const Index = () => {
             onRecordingDone={() => setRecording(false)}
             scenarioActions={scenarioActions}
             currentMetrics={currentMetrics}
+            narrativeActive={narrativeActive}
+            narrativeCameraPosition={narrativeActive ? NARRATIVE_STEPS[narrativeStep]?.camera.position : undefined}
+            narrativeCameraTarget={narrativeActive ? NARRATIVE_STEPS[narrativeStep]?.camera.target : undefined}
           />
         )}
         {!terrain && !loading && error && (
@@ -149,11 +183,20 @@ const Index = () => {
 
       {/* Intro Overlay */}
       {!started && !loading && terrain && (
-        <IntroOverlay onStart={() => setStarted(true)} />
+        <IntroOverlay onStart={() => setStarted(true)} onGuidedTour={startNarrative} />
+      )}
+
+      {/* Narrative Overlay */}
+      {narrativeActive && (
+        <NarrativeOverlay
+          step={narrativeStep}
+          onStepChange={handleNarrativeStepChange}
+          onExit={exitNarrative}
+        />
       )}
 
       {/* Scenario Chat */}
-      {started && (
+      {started && !narrativeActive && (
         <ScenarioChat
           onActions={handleScenarioActions}
           onClear={() => setScenarioActions([])}
@@ -161,7 +204,7 @@ const Index = () => {
       )}
 
       {/* Data Panel - positioned left */}
-      {started && showDataPanel && (
+      {started && !narrativeActive && showDataPanel && (
         <div className="absolute top-16 left-4 z-10">
           <DataPanel
             currentYear={waterExtentYear}
@@ -176,7 +219,7 @@ const Index = () => {
       )}
 
       {/* Header */}
-      {started && (
+      {started && !narrativeActive && (
         <div className="absolute top-4 left-4 z-10">
           <h1 className="text-lg font-semibold text-foreground tracking-tight">
             Aral Sea Terrain Viewer
@@ -188,7 +231,7 @@ const Index = () => {
       )}
 
       {/* Controls */}
-      {started && (
+      {started && !narrativeActive && (
         <div className="absolute top-4 right-4 z-10 space-y-3">
           <ControlPanel
             terrain={terrain}
@@ -243,11 +286,18 @@ const Index = () => {
             <BarChart3 className="w-3.5 h-3.5" />
             {showDataPanel ? 'Hide Data Panel' : 'Show Data Panel'}
           </button>
+          <button
+            onClick={startNarrative}
+            className="glass-panel p-2.5 w-72 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            Guided Tour
+          </button>
         </div>
       )}
 
       {/* Timeline Slider - bottom bar */}
-      {started && (
+      {started && !narrativeActive && (
         <TimelineSlider
           year={waterExtentYear}
           onYearChange={setWaterExtentYear}
