@@ -17,10 +17,6 @@ export interface TerrainData {
   bounds: GeoBounds | null;
 }
 
-// Known bounds for GeoTIFFs that lack georeferencing metadata
-const KNOWN_BOUNDS: Record<string, GeoBounds> = {
-  '/data/watershed.tif': { minLon: 55.0, maxLon: 68.0, minLat: 35.0, maxLat: 48.0 },
-};
 
 export async function loadGeoTiff(url: string): Promise<TerrainData> {
   const response = await fetch(url);
@@ -125,16 +121,9 @@ export async function loadGeoTiff(url: string): Promise<TerrainData> {
     } catch (_) {}
   }
 
-  // Last resort: use known bounds table by URL path
+  // Last resort: warn
   if (!bounds) {
-    const path = new URL(url, window.location.origin).pathname;
-    const known = KNOWN_BOUNDS[path];
-    if (known) {
-      bounds = { ...known };
-      console.log('Using known bounds for', path, bounds);
-    } else {
-      console.warn('No bounds found for', path);
-    }
+    console.warn('No bounds found for', url);
   }
 
   console.log('Terrain loaded:', { width, height, minElevation, maxElevation, noDataValue, bounds });
