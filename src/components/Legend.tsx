@@ -11,9 +11,11 @@ interface LegendProps {
   onToggle19thBasin: (val: boolean) => void;
   show21stBasin: boolean;
   onToggle21stBasin: (val: boolean) => void;
+  showKhorezm: boolean;
+  onToggleKhorezm: (val: boolean) => void;
 }
 
-const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin, show21stBasin, onToggle21stBasin }: LegendProps) => {
+const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin, show21stBasin, onToggle21stBasin, showKhorezm, onToggleKhorezm }: LegendProps) => {
   return (
     <div className="glass-panel p-3 space-y-2 w-72">
       <label className="flex items-center justify-between cursor-pointer">
