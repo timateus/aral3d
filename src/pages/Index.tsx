@@ -33,7 +33,7 @@ const Index = () => {
   const [started, setStarted] = useState(false);
   const [recording, setRecording] = useState(false);
   const [scenarioActions, setScenarioActions] = useState<ScenarioAction[]>([]);
-  const [showDataPanel, setShowDataPanel] = useState(false);
+  const [showDataPanel, setShowDataPanel] = useState(true);
   const viewerRef = useRef<TerrainViewerHandle>(null);
 
   // Lifted data panel state
