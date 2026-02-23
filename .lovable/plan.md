@@ -1,140 +1,59 @@
 
 
-# Scenario Simulation Chatbot for Aral Sea Terrain Viewer
+# Data Visualization Panel for Aral Sea Map
 
 ## Overview
+Add a collapsible data visualization panel to the 3D map that displays historical climate and Aral Sea data from the uploaded Excel spreadsheet. The panel will feature interactive charts (using the already-installed Recharts library) and a data table, synchronized with the existing timeline slider.
 
-Add an AI-powered chatbot panel that interprets natural language commands (e.g., "draw forests around canals", "build a dam near Nukus") and renders the results as 3D overlays on the terrain. The AI parses commands into structured actions, and the viewer renders them as visual scenario elements.
+## Data
+The spreadsheet contains two datasets:
 
-## Architecture
+**Sheet 1 - Monthly Climate (1996-2025):**
+- Avg Temperature, Total Rainfall, Avg Humidity, Groundwater Level
 
-The system has three layers:
-
-1. **Chat UI** -- A collapsible panel on the left side of the screen where the user types scenario commands and sees responses
-2. **AI Backend** -- A Lovable Cloud edge function that calls Lovable AI (Gemini) with a system prompt containing terrain context (bounds, cities, rivers, canals). It uses tool-calling to return structured scenario actions
-3. **Scenario Overlay Renderer** -- A Three.js component that renders the AI-parsed actions as 3D objects on the terrain (forest patches, dam structures, water level changes, etc.)
-
-```text
-User Input --> Chat UI --> Edge Function --> Lovable AI (Gemini)
-                                                  |
-                                          tool_call response
-                                                  |
-                                     structured scenario actions
-                                                  |
-                                     ScenarioOverlay component
-                                          renders on terrain
-```
-
-## Prerequisites
-
-- **Enable Lovable Cloud** -- needed for the edge function
-- **Lovable AI** is auto-provisioned with `LOVABLE_API_KEY`
-
-## Supported Scenario Actions
-
-The AI will return structured actions via tool-calling. Initial action types:
-
-| Action Type | Parameters | Visual |
-|---|---|---|
-| `forest` | center lat/lon, radius (km), density | Green tree-like 3D meshes scattered on terrain |
-| `dam` | lat/lon, width, height | Gray box/wall across a river path |
-| `water_level` | value (meters) | Updates the existing water level slider |
-| `canal` | start lat/lon, end lat/lon, width | Blue line on terrain surface |
-| `settlement` | lat/lon, name, size | Small cluster of box meshes |
-| `label` | lat/lon, text | Floating text label |
+**Sheet 2 - Annual Aral Sea (1925-2024):**
+- Sea Level (m), Surface Area (km2), Volume (km3), Salinity (g/L), River Inflow (km3), Cotton Harvest, Irrigated Area, Temperature Anomaly
 
 ## Implementation Steps
 
-### Step 1: Enable Lovable Cloud
+### 1. Convert Excel data to static JSON files
+Create two JSON data files in `public/data/`:
+- `karakalpakstan_monthly.json` - monthly climate records
+- `aral_sea_annual.json` - annual sea-level/volume/salinity records
 
-Required to host the edge function that calls Lovable AI.
+This avoids runtime Excel parsing and keeps the app lightweight.
 
-### Step 2: Create the Edge Function (`supabase/functions/scenario-chat/index.ts`)
+### 2. Create a `DataPanel` component
+A new collapsible glass panel (bottom-left of the screen) with two tabs:
+- **Sea History** tab: Recharts `AreaChart` showing sea level, volume, and surface area over time (1925-2024). A vertical reference line highlights the currently selected timeline year.
+- **Climate** tab: Recharts `LineChart` showing monthly temperature, rainfall, humidity, and groundwater for the selected year (or nearest available year from 1996-2025).
 
-- Accepts `{ messages }` from the frontend
-- System prompt includes geographic context: terrain bounds, city coordinates, river/canal names and approximate locations, current water level
-- Uses Lovable AI with **tool-calling** to extract structured scenario actions
-- Defines a `apply_scenario` tool with the schema for all action types
-- Returns the AI's text response + parsed scenario actions as JSON
+Each tab will also have a small scrollable data table beneath the chart for precise values.
 
-### Step 3: Create the Chat UI Component (`src/components/ScenarioChat.tsx`)
+### 3. Integrate with existing state
+- The panel reads `waterExtentYear` from Index.tsx to highlight the current year on charts
+- A toggle button (chart icon) in the top-right control area opens/closes the panel
+- The panel is hidden until the user clicks "Start" (respects `started` state)
 
-- Collapsible panel on the left side, toggled by a chat icon button
-- Simple message list with user/assistant messages
-- Input field at the bottom
-- Renders AI responses with markdown support
-- Extracts scenario actions from the AI response and passes them up to the parent
-
-### Step 4: Create the Scenario Overlay Component (`src/components/ScenarioOverlay.tsx`)
-
-- Receives an array of scenario actions
-- For each action type, renders appropriate 3D geometry on the terrain:
-  - **Forests**: Instanced cone/cylinder meshes (simplified trees) scattered within a radius, positioned on terrain surface
-  - **Dams**: Box geometry positioned and oriented across the terrain
-  - **Canals**: Line geometry similar to existing river rendering
-  - **Settlements**: Small box clusters
-  - **Labels**: Html labels similar to existing city markers
-- Uses the same `geoToMeshPos` coordinate conversion as existing components
-- Water level changes update the parent state directly
-
-### Step 5: Wire Everything Together in Index.tsx
-
-- Add `scenarioActions` state array
-- Add `showChat` toggle state
-- Render `ScenarioChat` panel (conditionally)
-- Pass scenario actions to `ScenarioOverlay` inside the Canvas
-- When AI returns a `water_level` action, update the `waterLevel` state
+### 4. UI/UX Design
+- Uses the existing `glass-panel` CSS class for consistent styling
+- Compact size (~400px wide, ~300px tall) to avoid obscuring the 3D terrain
+- Tabs via Radix Tabs component (already installed)
+- Charts use muted colors matching the dark theme (blues, teals, amber)
 
 ## Technical Details
 
-### Edge Function System Prompt (key context provided to AI)
+### New Files
+- `public/data/aral_sea_annual.json` - 100 rows of annual data
+- `public/data/karakalpakstan_monthly.json` - ~350 rows of monthly data
+- `src/components/DataPanel.tsx` - main panel component with tabs, charts, and table
 
-The system prompt will include:
-- The terrain's geographic bounds (lat/lon extents)
-- List of cities with coordinates (Nukus, Moynaq, Aral, etc.)
-- Major rivers (Amu Darya) and their approximate path
-- Known canal names from the GeoJSON data
-- Current water level
-- Instructions to place features using real lat/lon coordinates within the bounds
+### Modified Files
+- `src/pages/Index.tsx` - add DataPanel component with `waterExtentYear` prop, add toggle button
 
-### Tool-Calling Schema
-
-```text
-Tool: apply_scenario
-Parameters:
-  actions: array of objects, each with:
-    - type: "forest" | "dam" | "water_level" | "canal" | "settlement" | "label"
-    - lat, lon (center point)
-    - radius (for forests, in km)
-    - width, height (for dams)
-    - start/end coordinates (for canals)
-    - value (for water_level)
-    - name/text (for labels/settlements)
-```
-
-### 3D Rendering Approach
-
-- **Forests**: Use `InstancedMesh` with cone geometry for performance. Scatter ~50-200 instances within the specified radius, each positioned on the terrain surface using elevation lookup.
-- **Dams**: Simple `BoxGeometry` scaled and rotated to span across the terrain at the specified location.
-- **Canals**: Reuse the `Line` component pattern from `GeoFeatures.tsx`.
-
-### Chat UI Design
-
-- Glass-panel styling matching existing controls
-- Max width ~320px, full height on the left side
-- Scrollable message area
-- Messages styled with role-based colors (user = white, assistant = primary blue)
-- "Clear scenario" button to reset all overlays
-
-## New Files
-
-1. `supabase/functions/scenario-chat/index.ts` -- AI edge function
-2. `src/components/ScenarioChat.tsx` -- Chat panel UI
-3. `src/components/ScenarioOverlay.tsx` -- 3D scenario renderer
-4. `src/types/scenario.ts` -- Shared type definitions for scenario actions
-
-## Modified Files
-
-1. `src/pages/Index.tsx` -- Add chat toggle, scenario state, wire components
-2. `supabase/config.toml` -- Register the edge function
+### Dependencies
+No new dependencies needed. Uses existing:
+- `recharts` for charts
+- `@radix-ui/react-tabs` for tab switching
+- Tailwind for styling
 
