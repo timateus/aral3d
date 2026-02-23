@@ -13,6 +13,8 @@ interface LegendProps {
   onToggle21stBasin: (val: boolean) => void;
   showKhorezm: boolean;
   onToggleKhorezm: (val: boolean) => void;
+  showWatershed: boolean;
+  onToggleWatershed: (val: boolean) => void;
 }
 
 const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin, show21stBasin, onToggle21stBasin, showKhorezm, onToggleKhorezm }: LegendProps) => {
