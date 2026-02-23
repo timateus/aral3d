@@ -20,6 +20,7 @@ export type DataSource = 'regional' | 'seabed' | 'merged';
 const Index = () => {
   const [baseTerrain, setBaseTerrain] = useState<TerrainData | null>(null);
   const [seabedTerrain, setSeabedTerrain] = useState<TerrainData | null>(null);
+  const [khorezmTerrain, setKhorezmTerrain] = useState<TerrainData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const dataSource: DataSource = 'merged';
@@ -30,6 +31,7 @@ const Index = () => {
   const [show13thBasin, setShow13thBasin] = useState(true);
   const [show19thBasin, setShow19thBasin] = useState(true);
   const [show21stBasin, setShow21stBasin] = useState(true);
+  const [showKhorezm, setShowKhorezm] = useState(false);
   const [showWaterExtent, setShowWaterExtent] = useState(true);
   const [waterExtentYear, setWaterExtentYear] = useState(1960);
   
