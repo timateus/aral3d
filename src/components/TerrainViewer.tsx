@@ -34,6 +34,7 @@ interface TerrainViewerProps {
   showWaterExtent: boolean;
   waterExtentYear: number;
   hideNoData?: boolean;
+  waterBounds?: import('@/lib/geotiff-loader').GeoBounds | null;
   
   started: boolean;
   onWaterLevelChange?: (level: number) => void;
