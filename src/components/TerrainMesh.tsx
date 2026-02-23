@@ -11,7 +11,7 @@ interface TerrainMeshProps {
   hideNoData?: boolean;
 }
 
-const TerrainMesh = ({ terrain, exaggeration, waterLevel }: TerrainMeshProps) => {
+const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false }: TerrainMeshProps) => {
   const [hoverInfo, setHoverInfo] = useState<{ position: THREE.Vector3; elevation: number } | null>(null);
   const meshRef = useRef<THREE.Mesh>(null);
 
@@ -20,29 +20,36 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel }: TerrainMeshProps) =>
     const w = width;
     const h = height;
 
-    const geo = new THREE.PlaneGeometry(10, 10 * (h / w), w - 1, h - 1);
-    const positions = geo.attributes.position;
-    const colors = new Float32Array(positions.count * 3);
     const elevRange = maxElevation - minElevation || 1;
     const maxHeight = 10 * (exaggeration / 100);
+
+    // Build per-vertex data
+    const vertexPositions: number[] = [];
+    const vertexColors: number[] = [];
+    const vertexUvs: number[] = [];
+    const isNoData: boolean[] = [];
 
     for (let j = 0; j < h; j++) {
       for (let i = 0; i < w; i++) {
         const srcIdx = j * width + i;
-        const vertIdx = j * w + i;
         let elev = elevations[srcIdx];
 
-        if ((noDataValue !== null && elev === noDataValue) || isNaN(elev) || elev <= -9999) {
-          elev = minElevation;
-        }
+        const nd = isNaN(elev) || (noDataValue !== null && elev === noDataValue) || elev <= -9999;
+        isNoData.push(nd);
+
+        if (nd) elev = minElevation;
 
         const normalized = (elev - minElevation) / elevRange;
-        positions.setZ(vertIdx, normalized * maxHeight);
+        const x = (i / (w - 1) - 0.5) * 10;
+        const y = (0.5 - j / (h - 1)) * 10 * (h / w);
+        const z = normalized * maxHeight;
+
+        vertexPositions.push(x, y, z);
+        vertexUvs.push(i / (w - 1), 1 - j / (h - 1));
 
         const isWater = elev <= waterLevel;
         let color: [number, number, number];
         if (isWater) {
-          // Deeper water = darker blue
           const waterDepth = Math.max(0, Math.min(1, (waterLevel - elev) / (waterLevel - minElevation || 1)));
           color = [
             0.04 + (1 - waterDepth) * 0.12,
@@ -52,13 +59,38 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel }: TerrainMeshProps) =>
         } else {
           color = getElevationColor(normalized);
         }
-        colors[vertIdx * 3] = color[0];
-        colors[vertIdx * 3 + 1] = color[1];
-        colors[vertIdx * 3 + 2] = color[2];
+        vertexColors.push(color[0], color[1], color[2]);
       }
     }
 
-    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    // Build index buffer, skipping faces with no-data vertices if hideNoData
+    const indices: number[] = [];
+    for (let j = 0; j < h - 1; j++) {
+      for (let i = 0; i < w - 1; i++) {
+        const a = j * w + i;
+        const b = j * w + i + 1;
+        const c = (j + 1) * w + i;
+        const d = (j + 1) * w + i + 1;
+
+        if (hideNoData && (isNoData[a] || isNoData[b] || isNoData[c])) {
+          // skip triangle
+        } else {
+          indices.push(a, b, c);
+        }
+
+        if (hideNoData && (isNoData[b] || isNoData[d] || isNoData[c])) {
+          // skip triangle
+        } else {
+          indices.push(b, d, c);
+        }
+      }
+    }
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(vertexPositions, 3));
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(vertexColors, 3));
+    geo.setAttribute('uv', new THREE.Float32BufferAttribute(vertexUvs, 2));
+    geo.setIndex(indices);
     geo.computeVertexNormals();
 
     const mat = new THREE.MeshStandardMaterial({
@@ -70,7 +102,7 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel }: TerrainMeshProps) =>
     });
 
     return { geometry: geo, material: mat };
-  }, [terrain, exaggeration, waterLevel]);
+  }, [terrain, exaggeration, waterLevel, hideNoData]);
 
   const handlePointerMove = useCallback((e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation();
