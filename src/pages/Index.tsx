@@ -278,6 +278,8 @@ const Index = () => {
             onToggle21stBasin={setShow21stBasin}
             showKhorezm={showKhorezm}
             onToggleKhorezm={setShowKhorezm}
+            showWatershed={showWatershed}
+            onToggleWatershed={setShowWatershed}
           />
           {terrain && (
             <WaterVolumeDisplay
