@@ -9,7 +9,7 @@ import IntroOverlay from '@/components/IntroOverlay';
 import ScenarioChat from '@/components/ScenarioChat';
 import WaterVolumeDisplay from '@/components/WaterVolumeDisplay';
 import DataPanel, { AralAnnual, SEA_SERIES } from '@/components/DataPanel';
-import { Camera, Video, BarChart3 } from 'lucide-react';
+import { Camera, Video, BarChart3, Navigation } from 'lucide-react';
 import type { ScenarioAction } from '@/types/scenario';
 import { NARRATIVE_STEPS } from '@/lib/narrative-steps';
 import NarrativeOverlay from '@/components/NarrativeOverlay';
@@ -39,6 +39,7 @@ const Index = () => {
   
   const [started, setStarted] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [riverFlyover, setRiverFlyover] = useState(false);
   const [scenarioActions, setScenarioActions] = useState<ScenarioAction[]>([]);
   const [showDataPanel, setShowDataPanel] = useState(true);
   const [narrativeActive, setNarrativeActive] = useState(false);
@@ -192,6 +193,8 @@ const Index = () => {
             narrativeActive={narrativeActive}
             narrativeCameraPosition={narrativeActive ? NARRATIVE_STEPS[narrativeStep]?.camera.position : undefined}
             narrativeCameraTarget={narrativeActive ? NARRATIVE_STEPS[narrativeStep]?.camera.target : undefined}
+            riverFlyover={riverFlyover}
+            onRiverFlyoverDone={() => setRiverFlyover(false)}
           />
         )}
         {!terrain && !loading && error && (
@@ -304,6 +307,14 @@ const Index = () => {
           >
             <Video className="w-3.5 h-3.5" />
             {recording ? 'Recording…' : 'Make a Video'}
+          </button>
+          <button
+            onClick={() => { if (!riverFlyover) setRiverFlyover(true); }}
+            disabled={riverFlyover || recording}
+            className="glass-panel p-2.5 w-72 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
+          >
+            <Navigation className="w-3.5 h-3.5" />
+            {riverFlyover ? 'Flying…' : 'Amu Darya Flyover'}
           </button>
           <button
             onClick={() => setShowDataPanel(v => !v)}

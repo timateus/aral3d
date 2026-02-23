@@ -6,6 +6,7 @@ import GeoFeatures from './GeoFeatures';
 import WaterExtentLayer from './WaterExtentLayer';
 import NarrativeCameraController from './NarrativeCameraController';
 import ScenarioOverlay from './ScenarioOverlay';
+import RiverFlyover from './RiverFlyover';
 import { TerrainData } from '@/lib/geotiff-loader';
 import type { ScenarioAction } from '@/types/scenario';
 import * as THREE from 'three';
@@ -45,6 +46,8 @@ interface TerrainViewerProps {
   narrativeActive?: boolean;
   narrativeCameraPosition?: [number, number, number];
   narrativeCameraTarget?: [number, number, number];
+  riverFlyover?: boolean;
+  onRiverFlyoverDone?: () => void;
 }
 
 function CameraAnimator({ started }: { started: boolean }) {
@@ -201,7 +204,7 @@ function VideoAnimator({
   return null;
 }
 
-const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showWaterExtent, waterExtentYear, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget }, ref) => {
+const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showWaterExtent, waterExtentYear, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone }, ref) => {
   const screenshotFn = useRef<(() => void) | null>(null);
 
   useImperativeHandle(ref, () => ({
@@ -289,8 +292,17 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
         />
       )}
 
+      {riverFlyover && onRiverFlyoverDone && (
+        <RiverFlyover
+          active={riverFlyover}
+          terrain={terrain}
+          exaggeration={exaggeration}
+          onDone={onRiverFlyoverDone}
+        />
+      )}
+
       <OrbitControls
-        enabled={!narrativeActive}
+        enabled={!narrativeActive && !riverFlyover}
         enableDamping
         dampingFactor={0.05}
         minDistance={2}
