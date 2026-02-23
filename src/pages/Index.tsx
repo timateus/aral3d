@@ -19,7 +19,7 @@ const Index = () => {
   const [seabedTerrain, setSeabedTerrain] = useState<TerrainData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [dataSource, setDataSource] = useState<DataSource>('merged');
+  const dataSource: DataSource = 'merged';
   const [exaggeration, setExaggeration] = useState(10);
   const [waterLevel, setWaterLevel] = useState(29);
   const [showBorders, setShowBorders] = useState(true);
