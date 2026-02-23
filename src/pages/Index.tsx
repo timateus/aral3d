@@ -137,8 +137,8 @@ const Index = () => {
         console.warn('Khorezm DEM failed to load:', err);
         return null;
       }),
-      loadGeoTiff('/data/watershed.tif').catch((err) => {
-        console.warn('Watershed DEM failed to load:', err);
+      loadGeoTiff('/data/lower_amudarya.tif').catch((err) => {
+        console.warn('Lower Amu Darya DEM failed to load:', err);
         return null;
       }),
     ])
