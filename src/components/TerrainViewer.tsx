@@ -39,6 +39,9 @@ interface TerrainViewerProps {
   onRecordingDone?: () => void;
   scenarioActions?: ScenarioAction[];
   currentMetrics?: MetricItem[];
+  narrativeActive?: boolean;
+  narrativeCameraPosition?: [number, number, number];
+  narrativeCameraTarget?: [number, number, number];
 }
 
 function CameraAnimator({ started }: { started: boolean }) {
