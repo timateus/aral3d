@@ -270,7 +270,14 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
         </group>
       )}
 
-      <CameraAnimator started={started} />
+      {!narrativeActive && <CameraAnimator started={started} />}
+      {narrativeActive && narrativeCameraPosition && narrativeCameraTarget && (
+        <NarrativeCameraController
+          active={narrativeActive}
+          position={narrativeCameraPosition}
+          target={narrativeCameraTarget}
+        />
+      )}
       <ScreenshotHelper onReady={(fn) => { screenshotFn.current = fn; }} />
       {recording && onWaterLevelChange && onRecordingDone && (
         <VideoAnimator
@@ -281,6 +288,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
       )}
 
       <OrbitControls
+        enabled={!narrativeActive}
         enableDamping
         dampingFactor={0.05}
         minDistance={2}
