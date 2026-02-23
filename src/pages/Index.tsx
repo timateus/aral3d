@@ -149,7 +149,7 @@ const Index = () => {
     if (!baseTerrain) return null;
     let result = baseTerrain;
     if (seabedTerrain) result = mergeTerrains(result, seabedTerrain);
-    if (showKhorezm && khorezmTerrain) result = mergeTerrains(result, khorezmTerrain);
+    if (showKhorezm && khorezmTerrain) result = mergeExpandTerrains(result, khorezmTerrain);
     return result;
   }, [baseTerrain, seabedTerrain, khorezmTerrain, showKhorezm]);
 
