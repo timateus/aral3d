@@ -199,8 +199,8 @@ const Index = () => {
             onWaterLevelChange={setWaterLevel}
             loading={loading}
             dataSource={dataSource}
-            onDataSourceChange={setDataSource}
-            hasSeabed={!!seabedTerrain}
+            onDataSourceChange={() => {}}
+            hasSeabed={false}
           />
           <Legend
             showBorders={showBorders}
