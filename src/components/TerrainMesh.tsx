@@ -8,6 +8,7 @@ interface TerrainMeshProps {
   terrain: TerrainData;
   exaggeration: number;
   waterLevel: number;
+  hideNoData?: boolean;
 }
 
 const TerrainMesh = ({ terrain, exaggeration, waterLevel }: TerrainMeshProps) => {
