@@ -275,7 +275,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
         </group>
       )}
 
-      {!narrativeActive && <CameraAnimator started={started} />}
+      {!narrativeActive && !riverFlyover && <CameraAnimator started={started} />}
       {narrativeActive && narrativeCameraPosition && narrativeCameraTarget && (
         <NarrativeCameraController
           active={narrativeActive}
