@@ -70,7 +70,7 @@ export function mergeTerrains(base: TerrainData, overlay: TerrainData): TerrainD
  * Areas outside the base but inside the overlay are filled with overlay data.
  * Areas outside both are filled with the base min elevation.
  */
-export function mergeExpandTerrains(base: TerrainData, overlay: TerrainData): TerrainData {
+export function mergeExpandTerrains(base: TerrainData, overlay: TerrainData, fillNoData = true): TerrainData {
   if (!base.bounds || !overlay.bounds) {
     console.warn('Cannot merge terrains without geographic bounds, returning base');
     return base;
