@@ -121,16 +121,9 @@ export async function loadGeoTiff(url: string): Promise<TerrainData> {
     } catch (_) {}
   }
 
-  // Last resort: use known bounds table by URL path
+  // Last resort: warn
   if (!bounds) {
-    const path = new URL(url, window.location.origin).pathname;
-    const known = KNOWN_BOUNDS[path];
-    if (known) {
-      bounds = { ...known };
-      console.log('Using known bounds for', path, bounds);
-    } else {
-      console.warn('No bounds found for', path);
-    }
+    console.warn('No bounds found for', url);
   }
 
   console.log('Terrain loaded:', { width, height, minElevation, maxElevation, noDataValue, bounds });
