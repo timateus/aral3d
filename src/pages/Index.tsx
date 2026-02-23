@@ -11,6 +11,9 @@ import WaterVolumeDisplay from '@/components/WaterVolumeDisplay';
 import DataPanel, { AralAnnual, SEA_SERIES } from '@/components/DataPanel';
 import { Camera, Video, BarChart3 } from 'lucide-react';
 import type { ScenarioAction } from '@/types/scenario';
+import { NARRATIVE_STEPS } from '@/lib/narrative-steps';
+import NarrativeOverlay from '@/components/NarrativeOverlay';
+import { BookOpen } from 'lucide-react';
 
 export type DataSource = 'regional' | 'seabed' | 'merged';
 
@@ -34,6 +37,8 @@ const Index = () => {
   const [recording, setRecording] = useState(false);
   const [scenarioActions, setScenarioActions] = useState<ScenarioAction[]>([]);
   const [showDataPanel, setShowDataPanel] = useState(true);
+  const [narrativeActive, setNarrativeActive] = useState(false);
+  const [narrativeStep, setNarrativeStep] = useState(0);
   const viewerRef = useRef<TerrainViewerHandle>(null);
 
   // Lifted data panel state
