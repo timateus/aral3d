@@ -184,6 +184,7 @@ const Index = () => {
             started={started}
             recording={recording}
             hideNoData={hideNoData}
+            waterBounds={baseTerrain?.bounds}
             onWaterLevelChange={setWaterLevel}
             onRecordingDone={() => setRecording(false)}
             scenarioActions={scenarioActions}
