@@ -131,10 +131,15 @@ const Index = () => {
         console.warn('Seabed DEM failed to load:', err);
         return null;
       }),
+      loadGeoTiff('/data/khorezm.tif').catch((err) => {
+        console.warn('Khorezm DEM failed to load:', err);
+        return null;
+      }),
     ])
-      .then(([base, seabed]) => {
+      .then(([base, seabed, khorezm]) => {
         setBaseTerrain(base);
         if (seabed) setSeabedTerrain(seabed);
+        if (khorezm) setKhorezmTerrain(khorezm);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -142,9 +147,11 @@ const Index = () => {
 
   const terrain = useMemo(() => {
     if (!baseTerrain) return null;
-    if (seabedTerrain) return mergeTerrains(baseTerrain, seabedTerrain);
-    return baseTerrain;
-  }, [baseTerrain, seabedTerrain]);
+    let result = baseTerrain;
+    if (seabedTerrain) result = mergeTerrains(result, seabedTerrain);
+    if (showKhorezm && khorezmTerrain) result = mergeTerrains(result, khorezmTerrain);
+    return result;
+  }, [baseTerrain, seabedTerrain, khorezmTerrain, showKhorezm]);
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
