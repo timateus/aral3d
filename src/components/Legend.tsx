@@ -57,6 +57,14 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
         </span>
         <Switch className="scale-75" checked={show21stBasin} onCheckedChange={onToggle21stBasin} />
       </label>
+
+      <label className="flex items-center justify-between cursor-pointer">
+        <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
+          <span className="inline-block w-3 h-3 rounded-sm" style={{ background: 'linear-gradient(135deg, #6b8e23, #8B4513)' }} />
+          Khorezm DEM
+        </span>
+        <Switch className="scale-75" checked={showKhorezm} onCheckedChange={onToggleKhorezm} />
+      </label>
     </div>
   );
 };
