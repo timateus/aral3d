@@ -183,6 +183,7 @@ const Index = () => {
             waterExtentYear={waterExtentYear}
             started={started}
             recording={recording}
+            hideNoData={hideNoData}
             onWaterLevelChange={setWaterLevel}
             onRecordingDone={() => setRecording(false)}
             scenarioActions={scenarioActions}
