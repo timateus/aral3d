@@ -33,6 +33,7 @@ interface TerrainViewerProps {
   show21stBasin: boolean;
   showWaterExtent: boolean;
   waterExtentYear: number;
+  hideNoData?: boolean;
   
   started: boolean;
   onWaterLevelChange?: (level: number) => void;
@@ -199,7 +200,7 @@ function VideoAnimator({
   return null;
 }
 
-const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showWaterExtent, waterExtentYear, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget }, ref) => {
+const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showWaterExtent, waterExtentYear, hideNoData, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget }, ref) => {
   const screenshotFn = useRef<(() => void) | null>(null);
 
   useImperativeHandle(ref, () => ({
@@ -220,7 +221,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
       <directionalLight position={[5, 10, 5]} intensity={1.2} castShadow />
       <directionalLight position={[-3, 5, -3]} intensity={0.4} color="#8ec8e8" />
 
-      <TerrainMesh terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} />
+      <TerrainMesh terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} hideNoData={hideNoData} />
       <GeoFeatures terrain={terrain} exaggeration={exaggeration} showBorders={showBorders} showRivers={showRivers} show13thBasin={show13thBasin} show19thBasin={show19thBasin} show21stBasin={show21stBasin} />
       {showWaterExtent && <WaterExtentLayer terrain={terrain} exaggeration={exaggeration} year={waterExtentYear} />}
       {scenarioActions && scenarioActions.length > 0 && (

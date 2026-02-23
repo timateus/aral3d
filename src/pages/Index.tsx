@@ -32,6 +32,8 @@ const Index = () => {
   const [show19thBasin, setShow19thBasin] = useState(true);
   const [show21stBasin, setShow21stBasin] = useState(true);
   const [showKhorezm, setShowKhorezm] = useState(false);
+  const [showWatershed, setShowWatershed] = useState(false);
+  const [watershedTerrain, setWatershedTerrain] = useState<TerrainData | null>(null);
   const [showWaterExtent, setShowWaterExtent] = useState(true);
   const [waterExtentYear, setWaterExtentYear] = useState(1960);
   
@@ -135,23 +137,32 @@ const Index = () => {
         console.warn('Khorezm DEM failed to load:', err);
         return null;
       }),
+      loadGeoTiff('/data/watershed.tif').catch((err) => {
+        console.warn('Watershed DEM failed to load:', err);
+        return null;
+      }),
     ])
-      .then(([base, seabed, khorezm]) => {
+      .then(([base, seabed, khorezm, watershed]) => {
         setBaseTerrain(base);
         if (seabed) setSeabedTerrain(seabed);
         if (khorezm) setKhorezmTerrain(khorezm);
+        if (watershed) setWatershedTerrain(watershed);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
 
-  const terrain = useMemo(() => {
-    if (!baseTerrain) return null;
+  const { terrain, hideNoData } = useMemo(() => {
+    if (!baseTerrain) return { terrain: null, hideNoData: false };
     let result = baseTerrain;
     if (seabedTerrain) result = mergeTerrains(result, seabedTerrain);
     if (showKhorezm && khorezmTerrain) result = mergeExpandTerrains(result, khorezmTerrain);
-    return result;
-  }, [baseTerrain, seabedTerrain, khorezmTerrain, showKhorezm]);
+    if (showWatershed && watershedTerrain) {
+      result = mergeExpandTerrains(result, watershedTerrain, false);
+      return { terrain: result, hideNoData: true };
+    }
+    return { terrain: result, hideNoData: false };
+  }, [baseTerrain, seabedTerrain, khorezmTerrain, showKhorezm, watershedTerrain, showWatershed]);
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
@@ -172,6 +183,7 @@ const Index = () => {
             waterExtentYear={waterExtentYear}
             started={started}
             recording={recording}
+            hideNoData={hideNoData}
             onWaterLevelChange={setWaterLevel}
             onRecordingDone={() => setRecording(false)}
             scenarioActions={scenarioActions}
@@ -266,6 +278,8 @@ const Index = () => {
             onToggle21stBasin={setShow21stBasin}
             showKhorezm={showKhorezm}
             onToggleKhorezm={setShowKhorezm}
+            showWatershed={showWatershed}
+            onToggleWatershed={setShowWatershed}
           />
           {terrain && (
             <WaterVolumeDisplay
