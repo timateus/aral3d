@@ -193,6 +193,8 @@ const Index = () => {
             narrativeActive={narrativeActive}
             narrativeCameraPosition={narrativeActive ? NARRATIVE_STEPS[narrativeStep]?.camera.position : undefined}
             narrativeCameraTarget={narrativeActive ? NARRATIVE_STEPS[narrativeStep]?.camera.target : undefined}
+            riverFlyover={riverFlyover}
+            onRiverFlyoverDone={() => setRiverFlyover(false)}
           />
         )}
         {!terrain && !loading && error && (
