@@ -57,35 +57,23 @@ export async function loadGeoTiff(url: string): Promise<TerrainData> {
     if (val > maxElevation) maxElevation = val;
   }
 
-  // Extract geographic bounds from image bbox or tiepoint + pixel scale
+  // Extract geographic bounds
   let bounds: GeoBounds | null = null;
 
-  // Debug: log all file directory keys for troubleshooting
-  console.log('GeoTIFF fileDirectory keys:', Object.keys(fileDirectory));
-  console.log('GeoTIFF ModelTiepoint:', (fileDirectory as any).ModelTiepoint);
-  console.log('GeoTIFF ModelPixelScale:', (fileDirectory as any).ModelPixelScale);
-  console.log('GeoTIFF ModelTransformation:', (fileDirectory as any).ModelTransformation);
-  
+  // Try getBoundingBox first (works for most well-formed GeoTIFFs)
   try {
     const bbox = image.getBoundingBox();
-    console.log('GeoTIFF getBoundingBox:', bbox);
     if (bbox && bbox.length === 4 && (bbox[2] - bbox[0]) > 0 && (bbox[3] - bbox[1]) > 0) {
-      bounds = {
-        minLon: bbox[0],
-        minLat: bbox[1],
-        maxLon: bbox[2],
-        maxLat: bbox[3],
-      };
+      bounds = { minLon: bbox[0], minLat: bbox[1], maxLon: bbox[2], maxLat: bbox[3] };
     }
-  } catch (e) {
-    console.warn('getBoundingBox failed:', e);
-  }
+  } catch (_) { /* no affine transformation */ }
 
-  // Try tiepoint + pixel scale if bbox didn't work
+  // Try tiepoint + pixel scale
   if (!bounds) {
     try {
-      const tiepoint = (fileDirectory as any).ModelTiepoint;
-      const pixelScale = (fileDirectory as any).ModelPixelScale;
+      const fd = fileDirectory as any;
+      const tiepoint = fd.ModelTiepoint ?? fd.actualizedFields?.ModelTiepoint;
+      const pixelScale = fd.ModelPixelScale ?? fd.actualizedFields?.ModelPixelScale;
       if (tiepoint && pixelScale && pixelScale[0] > 0 && pixelScale[1] > 0) {
         bounds = {
           minLon: tiepoint[3],
@@ -94,34 +82,58 @@ export async function loadGeoTiff(url: string): Promise<TerrainData> {
           minLat: tiepoint[4] - fullHeight * pixelScale[1],
         };
       }
-    } catch (e2) {
-      console.warn('Tiepoint extraction failed:', e2);
-    }
+    } catch (_) {}
   }
 
-  // Try ModelTransformation matrix as last resort
+  // Try GDAL metadata for bounds
   if (!bounds) {
     try {
-      const transform = (fileDirectory as any).ModelTransformation;
-      if (transform && transform.length >= 8) {
-        // Affine transformation: [sx, 0, 0, tx, 0, sy, 0, ty, ...]
-        const sx = transform[0];
-        const ty = transform[3];
-        const sy = transform[5];
-        const tx = transform[7];
-        if (sx !== 0 && sy !== 0) {
-          bounds = {
-            minLon: Math.min(ty, ty + fullWidth * sx),
-            maxLon: Math.max(ty, ty + fullWidth * sx),
-            maxLat: Math.max(tx, tx + fullHeight * sy),
-            minLat: Math.min(tx, tx + fullHeight * sy),
-          };
-          console.log('Bounds from ModelTransformation:', bounds);
+      const gdalMeta = (image as any).getGDALMetadata?.();
+      console.log('GDAL metadata:', gdalMeta);
+    } catch (_) {}
+  }
+
+  // Try to read GeoTransform from GDAL_METADATA XML
+  if (!bounds) {
+    try {
+      const fd = fileDirectory as any;
+      const metaXml = fd.GDAL_METADATA ?? fd.actualizedFields?.GDAL_METADATA;
+      if (metaXml && typeof metaXml === 'string') {
+        console.log('GDAL_METADATA XML:', metaXml);
+      }
+    } catch (_) {}
+  }
+
+  // Try origin + resolution methods
+  if (!bounds) {
+    try {
+      const origin = image.getOrigin();
+      const resolution = image.getResolution();
+      if (origin && resolution) {
+        bounds = {
+          minLon: origin[0],
+          maxLon: origin[0] + fullWidth * Math.abs(resolution[0]),
+          maxLat: origin[1],
+          minLat: origin[1] - fullHeight * Math.abs(resolution[1]),
+        };
+      }
+    } catch (_) {}
+  }
+
+  // Last resort: log all raw file directory fields for debugging
+  if (!bounds) {
+    try {
+      const fd = fileDirectory as any;
+      const actualKeys = fd.actualizedFields ? Object.keys(fd.actualizedFields) : [];
+      const deferredKeys = fd.deferredFields ? Object.keys(fd.deferredFields) : [];
+      console.warn('No bounds found. actualizedFields:', actualKeys, 'deferredFields:', deferredKeys);
+      // Try to iterate and log all actual field values
+      if (fd.actualizedFields) {
+        for (const key of actualKeys) {
+          console.log(`  field ${key}:`, fd.actualizedFields[key]);
         }
       }
-    } catch (e3) {
-      console.warn('ModelTransformation extraction failed:', e3);
-    }
+    } catch (_) {}
   }
 
   console.log('Terrain loaded:', { width, height, minElevation, maxElevation, noDataValue, bounds });
