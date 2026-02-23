@@ -1,4 +1,4 @@
-import { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls, GizmoHelper, GizmoViewport, Html } from '@react-three/drei';
 import TerrainMesh from './TerrainMesh';
@@ -206,6 +206,7 @@ function VideoAnimator({
 
 const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showWaterExtent, waterExtentYear, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone }, ref) => {
   const screenshotFn = useRef<(() => void) | null>(null);
+  const [flyoverAnimating, setFlyoverAnimating] = useState(false);
 
   useImperativeHandle(ref, () => ({
     screenshot: () => screenshotFn.current?.(),
@@ -275,7 +276,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
         </group>
       )}
 
-      {!narrativeActive && !riverFlyover && <CameraAnimator started={started} />}
+      {!narrativeActive && !flyoverAnimating && <CameraAnimator started={started} />}
       {narrativeActive && narrativeCameraPosition && narrativeCameraTarget && (
         <NarrativeCameraController
           active={narrativeActive}
@@ -292,17 +293,16 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
         />
       )}
 
-      {riverFlyover && onRiverFlyoverDone && (
-        <RiverFlyover
-          recording={riverFlyover}
-          terrain={terrain}
-          exaggeration={exaggeration}
-          onDone={onRiverFlyoverDone}
-        />
-      )}
+      <RiverFlyover
+        recording={!!riverFlyover}
+        terrain={terrain}
+        exaggeration={exaggeration}
+        onDone={onRiverFlyoverDone || (() => {})}
+        onAnimatingChange={setFlyoverAnimating}
+      />
 
       <OrbitControls
-        enabled={!narrativeActive && !riverFlyover}
+        enabled={!narrativeActive && !flyoverAnimating}
         enableDamping
         dampingFactor={0.05}
         minDistance={2}
