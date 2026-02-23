@@ -109,10 +109,9 @@ const Index = () => {
 
   const terrain = useMemo(() => {
     if (!baseTerrain) return null;
-    if (dataSource === 'seabed' && seabedTerrain) return seabedTerrain;
-    if (dataSource === 'merged' && seabedTerrain) return mergeTerrains(baseTerrain, seabedTerrain);
+    if (seabedTerrain) return mergeTerrains(baseTerrain, seabedTerrain);
     return baseTerrain;
-  }, [baseTerrain, seabedTerrain, dataSource]);
+  }, [baseTerrain, seabedTerrain]);
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
