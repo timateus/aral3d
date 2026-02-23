@@ -67,19 +67,23 @@ const DataPanel = ({ currentYear, onClose }: DataPanelProps) => {
     });
   };
 
-  const climateYear = useMemo(() => {
+  const climateAnnual = useMemo(() => {
     if (monthlyData.length === 0) return [];
-    const years = [...new Set(monthlyData.map(d => d.year))];
-    const closest = years.reduce((prev, curr) =>
-      Math.abs(curr - currentYear) < Math.abs(prev - currentYear) ? curr : prev
-    );
-    return monthlyData.filter(d => d.year === closest).map((d, i) => ({
-      ...d,
-      monthShort: MONTHS_SHORT[i] || d.month.slice(0, 3),
-    }));
-  }, [monthlyData, currentYear]);
-
-  const climateDisplayYear = climateYear[0]?.year ?? currentYear;
+    const byYear = new Map<number, ClimateMonthly[]>();
+    for (const d of monthlyData) {
+      if (!byYear.has(d.year)) byYear.set(d.year, []);
+      byYear.get(d.year)!.push(d);
+    }
+    return Array.from(byYear.entries())
+      .map(([year, rows]) => ({
+        year,
+        temp: +(rows.reduce((s, r) => s + r.temp, 0) / rows.length).toFixed(1),
+        rainfall: +(rows.reduce((s, r) => s + r.rainfall, 0) / rows.length).toFixed(1),
+        humidity: +(rows.reduce((s, r) => s + r.humidity, 0) / rows.length).toFixed(1),
+        groundwater: +(rows.reduce((s, r) => s + r.groundwater, 0) / rows.length).toFixed(1),
+      }))
+      .sort((a, b) => a.year - b.year);
+  }, [monthlyData]);
 
   return (
     <div className="glass-panel w-[480px] max-h-[520px] flex flex-col text-xs overflow-hidden">
@@ -99,7 +103,7 @@ const DataPanel = ({ currentYear, onClose }: DataPanelProps) => {
       <Tabs defaultValue="sea" className="flex-1 flex flex-col min-h-0">
         <TabsList className="mx-3 mt-2 bg-muted/30 h-8">
           <TabsTrigger value="sea" className="text-xs h-6 px-3">Sea History (1925–2024)</TabsTrigger>
-          <TabsTrigger value="climate" className="text-xs h-6 px-3">Climate ({climateDisplayYear})</TabsTrigger>
+          <TabsTrigger value="climate" className="text-xs h-6 px-3">Climate (1996–2025)</TabsTrigger>
         </TabsList>
 
         {/* Sea History Tab */}
@@ -192,18 +196,19 @@ const DataPanel = ({ currentYear, onClose }: DataPanelProps) => {
         <TabsContent value="climate" className="flex-1 flex flex-col min-h-0 px-3 pb-2">
           <div className="h-[180px] mt-1">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={climateYear} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
+              <LineChart data={climateAnnual} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
-                <XAxis dataKey="monthShort" tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} />
+                <XAxis dataKey="year" tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} />
                 <YAxis tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} />
                 <Tooltip
                   contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 6, fontSize: 11 }}
                   labelStyle={{ color: 'hsl(var(--foreground))' }}
                 />
-                <Line type="monotone" dataKey="temp" name="Temp (°C)" stroke="hsl(0, 70%, 60%)" strokeWidth={1.5} dot={false} />
-                <Line type="monotone" dataKey="rainfall" name="Rainfall (mm)" stroke="hsl(210, 80%, 60%)" strokeWidth={1.5} dot={false} />
-                <Line type="monotone" dataKey="humidity" name="Humidity (%)" stroke="hsl(170, 60%, 50%)" strokeWidth={1.5} dot={false} />
-                <Line type="monotone" dataKey="groundwater" name="GW Level (cm)" stroke="hsl(50, 70%, 55%)" strokeWidth={1.5} dot={false} />
+                <Line type="monotone" dataKey="temp" name="Avg Temp (°C)" stroke="hsl(0, 70%, 60%)" strokeWidth={1.5} dot={false} />
+                <Line type="monotone" dataKey="rainfall" name="Avg Rainfall (mm)" stroke="hsl(210, 80%, 60%)" strokeWidth={1.5} dot={false} />
+                <Line type="monotone" dataKey="humidity" name="Avg Humidity (%)" stroke="hsl(170, 60%, 50%)" strokeWidth={1.5} dot={false} />
+                <Line type="monotone" dataKey="groundwater" name="Avg GW (cm)" stroke="hsl(50, 70%, 55%)" strokeWidth={1.5} dot={false} />
+                <ReferenceLine x={currentYear} stroke="hsl(45, 90%, 60%)" strokeDasharray="3 3" strokeWidth={1.5} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -213,7 +218,7 @@ const DataPanel = ({ currentYear, onClose }: DataPanelProps) => {
               <table className="w-full text-[10px]">
                 <thead className="sticky top-0 bg-background/80 backdrop-blur">
                   <tr className="text-muted-foreground">
-                    <th className="text-left py-1 px-1">Month</th>
+                    <th className="text-left py-1 px-1">Year</th>
                     <th className="text-right py-1 px-1">Temp °C</th>
                     <th className="text-right py-1 px-1">Rain mm</th>
                     <th className="text-right py-1 px-1">Humid %</th>
@@ -221,9 +226,9 @@ const DataPanel = ({ currentYear, onClose }: DataPanelProps) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {climateYear.map(d => (
-                    <tr key={d.month}>
-                      <td className="py-0.5 px-1">{d.monthShort}</td>
+                  {climateAnnual.map(d => (
+                    <tr key={d.year} className={d.year === currentYear ? 'bg-accent/20' : ''}>
+                      <td className="py-0.5 px-1 font-mono">{d.year}</td>
                       <td className="text-right py-0.5 px-1">{d.temp}</td>
                       <td className="text-right py-0.5 px-1">{d.rainfall}</td>
                       <td className="text-right py-0.5 px-1">{d.humidity}</td>
