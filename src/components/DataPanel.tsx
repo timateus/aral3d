@@ -46,12 +46,22 @@ const SEA_SERIES = [
   { key: 'tempAnomaly', name: 'Temp Δ (°C)', color: 'hsl(0, 70%, 60%)', yAxis: 'right' },
 ];
 
+const CLIMATE_SERIES = [
+  { key: 'temp', name: 'Avg Temp (°C)', color: 'hsl(0, 70%, 60%)' },
+  { key: 'rainfall', name: 'Avg Rainfall (mm)', color: 'hsl(210, 80%, 60%)' },
+  { key: 'humidity', name: 'Avg Humidity (%)', color: 'hsl(170, 60%, 50%)' },
+  { key: 'groundwater', name: 'Avg GW (cm)', color: 'hsl(50, 70%, 55%)' },
+];
+
 const DataPanel = ({ currentYear, onClose }: DataPanelProps) => {
   const [annualData, setAnnualData] = useState<AralAnnual[]>([]);
   const [monthlyData, setMonthlyData] = useState<ClimateMonthly[]>([]);
   const [expanded, setExpanded] = useState(false);
   const [enabledSeries, setEnabledSeries] = useState<Set<string>>(
     new Set(['seaLevel', 'volume', 'salinity'])
+  );
+  const [enabledClimate, setEnabledClimate] = useState<Set<string>>(
+    new Set(['temp', 'rainfall', 'humidity', 'groundwater'])
   );
 
   useEffect(() => {
@@ -61,6 +71,14 @@ const DataPanel = ({ currentYear, onClose }: DataPanelProps) => {
 
   const toggleSeries = (key: string) => {
     setEnabledSeries(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
+
+  const toggleClimate = (key: string) => {
+    setEnabledClimate(prev => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key); else next.add(key);
       return next;
@@ -194,7 +212,26 @@ const DataPanel = ({ currentYear, onClose }: DataPanelProps) => {
 
         {/* Climate Tab (1996–2025) */}
         <TabsContent value="climate" className="flex-1 flex flex-col min-h-0 px-3 pb-2">
-          <div className="h-[180px] mt-1">
+          {/* Climate series toggles */}
+          <div className="flex flex-wrap gap-1 mt-1 mb-1">
+            {CLIMATE_SERIES.map(s => (
+              <button
+                key={s.key}
+                onClick={() => toggleClimate(s.key)}
+                className="px-1.5 py-0.5 rounded text-[9px] border transition-colors"
+                style={{
+                  borderColor: s.color,
+                  background: enabledClimate.has(s.key) ? s.color : 'transparent',
+                  color: enabledClimate.has(s.key) ? '#fff' : s.color,
+                  opacity: enabledClimate.has(s.key) ? 1 : 0.5,
+                }}
+              >
+                {s.name}
+              </button>
+            ))}
+          </div>
+
+          <div className="h-[180px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={climateAnnual} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
@@ -204,10 +241,9 @@ const DataPanel = ({ currentYear, onClose }: DataPanelProps) => {
                   contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 6, fontSize: 11 }}
                   labelStyle={{ color: 'hsl(var(--foreground))' }}
                 />
-                <Line type="monotone" dataKey="temp" name="Avg Temp (°C)" stroke="hsl(0, 70%, 60%)" strokeWidth={1.5} dot={false} />
-                <Line type="monotone" dataKey="rainfall" name="Avg Rainfall (mm)" stroke="hsl(210, 80%, 60%)" strokeWidth={1.5} dot={false} />
-                <Line type="monotone" dataKey="humidity" name="Avg Humidity (%)" stroke="hsl(170, 60%, 50%)" strokeWidth={1.5} dot={false} />
-                <Line type="monotone" dataKey="groundwater" name="Avg GW (cm)" stroke="hsl(50, 70%, 55%)" strokeWidth={1.5} dot={false} />
+                {CLIMATE_SERIES.filter(s => enabledClimate.has(s.key)).map(s => (
+                  <Line key={s.key} type="monotone" dataKey={s.key} name={s.name} stroke={s.color} strokeWidth={1.5} dot={false} />
+                ))}
                 <ReferenceLine x={currentYear} stroke="hsl(45, 90%, 60%)" strokeDasharray="3 3" strokeWidth={1.5} />
               </LineChart>
             </ResponsiveContainer>
