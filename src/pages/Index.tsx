@@ -309,6 +309,14 @@ const Index = () => {
             {recording ? 'Recording…' : 'Make a Video'}
           </button>
           <button
+            onClick={() => { if (!riverFlyover) setRiverFlyover(true); }}
+            disabled={riverFlyover || recording}
+            className="glass-panel p-2.5 w-72 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
+          >
+            <Navigation className="w-3.5 h-3.5" />
+            {riverFlyover ? 'Flying…' : 'Amu Darya Flyover'}
+          </button>
+          <button
             onClick={() => setShowDataPanel(v => !v)}
             className="glass-panel p-2.5 w-72 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
