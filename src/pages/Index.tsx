@@ -180,7 +180,7 @@ const Index = () => {
 
       {/* Intro Overlay */}
       {!started && !loading && terrain && (
-        <IntroOverlay onStart={() => setStarted(true)} />
+        <IntroOverlay onStart={() => setStarted(true)} onGuidedTour={startNarrative} />
       )}
 
       {/* Scenario Chat */}
