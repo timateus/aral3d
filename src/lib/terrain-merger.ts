@@ -94,8 +94,8 @@ export function mergeExpandTerrains(base: TerrainData, overlay: TerrainData, fil
   const outWidth = Math.round((unionBounds.maxLon - unionBounds.minLon) / baseLonPerPx) + 1;
   const outHeight = Math.round((unionBounds.maxLat - unionBounds.minLat) / baseLatPerPx) + 1;
 
-  // Cap at reasonable size
-  const maxDim = 600;
+  // Cap at reasonable size to prevent performance issues
+  const maxDim = 450;
   const finalWidth = Math.min(outWidth, maxDim);
   const finalHeight = Math.min(outHeight, maxDim);
 
