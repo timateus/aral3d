@@ -25,7 +25,8 @@ const Index = () => {
   const [error, setError] = useState<string | null>(null);
   const dataSource: DataSource = 'merged';
   const [exaggeration, setExaggeration] = useState(10);
-  const [waterLevel, setWaterLevel] = useState(29);
+  const [waterLevel, setWaterLevel] = useState(53);
+  const [waterLevelManual, setWaterLevelManual] = useState(false);
   const [showBorders, setShowBorders] = useState(true);
   const [showRivers, setShowRivers] = useState(true);
   const [show13thBasin, setShow13thBasin] = useState(true);
