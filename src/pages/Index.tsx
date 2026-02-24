@@ -89,6 +89,11 @@ const Index = () => {
       }));
   }, [annualData, waterExtentYear, enabledSeries]);
 
+  const currentRiverInflow = useMemo(() => {
+    const row = annualData.find(d => d.year === waterExtentYear);
+    return row?.riverInflow as number | undefined;
+  }, [annualData, waterExtentYear]);
+
   const handleScenarioActions = useCallback((actions: ScenarioAction[]) => {
     for (const a of actions) {
       if (a.type === 'water_level') {
