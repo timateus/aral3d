@@ -279,7 +279,7 @@ const Index = () => {
             exaggeration={exaggeration}
             onExaggerationChange={setExaggeration}
             waterLevel={waterLevel}
-            onWaterLevelChange={setWaterLevel}
+            onWaterLevelChange={(v) => { setWaterLevelManual(true); setWaterLevel(v); }}
             loading={loading}
             dataSource={dataSource}
             onDataSourceChange={() => {}}
