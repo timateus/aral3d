@@ -48,6 +48,7 @@ interface TerrainViewerProps {
   narrativeCameraTarget?: [number, number, number];
   riverFlyover?: boolean;
   onRiverFlyoverDone?: () => void;
+  riverInflow?: number;
 }
 
 function CameraAnimator({ started }: { started: boolean }) {
