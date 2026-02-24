@@ -10,6 +10,7 @@ interface GeoFeaturesProps {
   show13thBasin: boolean;
   show19thBasin: boolean;
   show21stBasin: boolean;
+  riverInflow?: number;
 }
 
 interface City {
