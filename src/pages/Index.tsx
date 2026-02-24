@@ -25,7 +25,8 @@ const Index = () => {
   const [error, setError] = useState<string | null>(null);
   const dataSource: DataSource = 'merged';
   const [exaggeration, setExaggeration] = useState(10);
-  const [waterLevel, setWaterLevel] = useState(29);
+  const [waterLevel, setWaterLevel] = useState(53);
+  const [waterLevelManual, setWaterLevelManual] = useState(false);
   const [showBorders, setShowBorders] = useState(true);
   const [showRivers, setShowRivers] = useState(true);
   const [show13thBasin, setShow13thBasin] = useState(true);
@@ -58,6 +59,19 @@ const Index = () => {
   useEffect(() => {
     fetch('/data/aral_sea_annual.json').then(r => r.json()).then(setAnnualData);
   }, []);
+
+  // Sync water level to sea level time series when year changes
+  useEffect(() => {
+    setWaterLevelManual(false);
+  }, [waterExtentYear]);
+
+  useEffect(() => {
+    if (waterLevelManual) return;
+    const row = annualData.find(d => d.year === waterExtentYear);
+    if (row && row.seaLevel != null) {
+      setWaterLevel(row.seaLevel as number);
+    }
+  }, [waterExtentYear, annualData, waterLevelManual]);
 
   const toggleSeries = useCallback((key: string) => {
     setEnabledSeries(prev => {
@@ -269,7 +283,7 @@ const Index = () => {
             exaggeration={exaggeration}
             onExaggerationChange={setExaggeration}
             waterLevel={waterLevel}
-            onWaterLevelChange={setWaterLevel}
+            onWaterLevelChange={(v) => { setWaterLevelManual(true); setWaterLevel(v); }}
             loading={loading}
             dataSource={dataSource}
             onDataSourceChange={() => {}}
