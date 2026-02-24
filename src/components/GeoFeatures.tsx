@@ -182,7 +182,7 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
     }
 
     return segments;
-  }, [terrain, exaggeration, bounds, meshWidth, meshHeight, geoJsonData]);
+  }, [terrain, exaggeration, bounds, meshWidth, meshHeight, geoJsonData, riverInflow]);
 
   const BORDER_COUNTRIES = ['Uzbekistan'];
 

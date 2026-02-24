@@ -200,6 +200,7 @@ const Index = () => {
             narrativeCameraTarget={narrativeActive ? NARRATIVE_STEPS[narrativeStep]?.camera.target : undefined}
             riverFlyover={riverFlyover}
             onRiverFlyoverDone={() => setRiverFlyover(false)}
+            riverInflow={currentRiverInflow}
           />
         )}
         {!terrain && !loading && error && (
