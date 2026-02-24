@@ -62,6 +62,10 @@ const Index = () => {
 
   // Sync water level to sea level time series when year changes
   useEffect(() => {
+    setWaterLevelManual(false);
+  }, [waterExtentYear]);
+
+  useEffect(() => {
     if (waterLevelManual) return;
     const row = annualData.find(d => d.year === waterExtentYear);
     if (row && row.seaLevel != null) {
