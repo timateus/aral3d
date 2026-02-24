@@ -174,9 +174,10 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
         // Scale line width by stream order and river inflow
         // Max historical inflow ~60 km³/yr (1960s), min ~5 km³/yr (2000s)
         const inflowScale = riverInflow != null
-          ? Math.max(0.3, Math.min(1.5, riverInflow / 40))
+          ? Math.max(0.2, (riverInflow / 30) ** 0.7)
           : 1;
-        const lineWidth = Math.max(0.3, sorder * 0.4 * inflowScale);
+        const baseWidth = sorder * 1.2;
+        const lineWidth = Math.max(0.3, baseWidth * inflowScale);
         segments.push({ points, width: lineWidth });
       }
     }
