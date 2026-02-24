@@ -60,6 +60,15 @@ const Index = () => {
     fetch('/data/aral_sea_annual.json').then(r => r.json()).then(setAnnualData);
   }, []);
 
+  // Sync water level to sea level time series when year changes
+  useEffect(() => {
+    if (waterLevelManual) return;
+    const row = annualData.find(d => d.year === waterExtentYear);
+    if (row && row.seaLevel != null) {
+      setWaterLevel(row.seaLevel as number);
+    }
+  }, [waterExtentYear, annualData, waterLevelManual]);
+
   const toggleSeries = useCallback((key: string) => {
     setEnabledSeries(prev => {
       const next = new Set(prev);
