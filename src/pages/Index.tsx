@@ -14,10 +14,14 @@ import type { ScenarioAction } from '@/types/scenario';
 import { NARRATIVE_STEPS } from '@/lib/narrative-steps';
 import NarrativeOverlay from '@/components/NarrativeOverlay';
 import { BookOpen } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useUserLocation } from '@/hooks/useUserLocation';
 
 export type DataSource = 'regional' | 'seabed' | 'merged';
 
 const Index = () => {
+  const isMobile = useIsMobile();
+  const { location: userLocation } = useUserLocation();
   const [baseTerrain, setBaseTerrain] = useState<TerrainData | null>(null);
   const [seabedTerrain, setSeabedTerrain] = useState<TerrainData | null>(null);
   const [khorezmTerrain, setKhorezmTerrain] = useState<TerrainData | null>(null);
@@ -215,6 +219,7 @@ const Index = () => {
             riverFlyover={riverFlyover}
             onRiverFlyoverDone={() => setRiverFlyover(false)}
             riverInflow={currentRiverInflow}
+            userLocation={userLocation}
           />
         )}
         {!terrain && !loading && error && (
@@ -241,7 +246,7 @@ const Index = () => {
       )}
 
       {/* Scenario Chat */}
-      {started && !narrativeActive && (
+      {started && !narrativeActive && !isMobile && (
         <ScenarioChat
           onActions={handleScenarioActions}
           onClear={() => setScenarioActions([])}
@@ -249,7 +254,7 @@ const Index = () => {
       )}
 
       {/* Data Panel - positioned left */}
-      {started && !narrativeActive && showDataPanel && (
+      {started && !narrativeActive && showDataPanel && !isMobile && (
         <div className="absolute top-16 left-4 z-10">
           <DataPanel
             currentYear={waterExtentYear}
@@ -264,7 +269,7 @@ const Index = () => {
       )}
 
       {/* Header */}
-      {started && !narrativeActive && (
+      {started && !narrativeActive && !isMobile && (
         <div className="absolute top-4 left-4 z-10">
           <h1 className="text-lg font-semibold text-foreground tracking-tight">
             Aral Sea Terrain Viewer
@@ -275,8 +280,8 @@ const Index = () => {
         </div>
       )}
 
-      {/* Controls */}
-      {started && !narrativeActive && (
+      {/* Controls - desktop only */}
+      {started && !narrativeActive && !isMobile && (
         <div className="absolute top-4 right-4 z-10 space-y-3">
           <ControlPanel
             terrain={terrain}

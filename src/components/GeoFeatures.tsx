@@ -11,6 +11,7 @@ interface GeoFeaturesProps {
   show19thBasin: boolean;
   show21stBasin: boolean;
   riverInflow?: number;
+  userLocation?: { lat: number; lon: number } | null;
 }
 
 interface City {
@@ -85,7 +86,7 @@ function geoToMeshPos(
   return [x, zHeight, -planeY];
 }
 
-const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, riverInflow }: GeoFeaturesProps) => {
+const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, riverInflow, userLocation }: GeoFeaturesProps) => {
   const bounds = terrain.bounds;
   const w = terrain.width;
   const h = terrain.height;
@@ -344,6 +345,46 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
           opacity={0.7}
         />
       ))}
+
+      {/* User GPS location pin */}
+      {userLocation && (() => {
+        const pos = geoToMeshPos(userLocation.lat, userLocation.lon, bounds, terrain, exaggeration, meshWidth, meshHeight);
+        if (!pos) return null;
+        return (
+          <group position={pos}>
+            {/* Pin shaft */}
+            <mesh position={[0, 0.15, 0]}>
+              <cylinderGeometry args={[0.01, 0.01, 0.3, 8]} />
+              <meshStandardMaterial color="#ff3b30" />
+            </mesh>
+            {/* Pin head */}
+            <mesh position={[0, 0.35, 0]}>
+              <sphereGeometry args={[0.06, 12, 12]} />
+              <meshStandardMaterial color="#ff3b30" emissive="#ff3b30" emissiveIntensity={0.8} />
+            </mesh>
+            {/* Pulsing ring at base */}
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
+              <ringGeometry args={[0.06, 0.1, 24]} />
+              <meshStandardMaterial color="#ff3b30" transparent opacity={0.5} />
+            </mesh>
+            <Html position={[0, 0.5, 0]} center distanceFactor={8} style={{ pointerEvents: 'none' }}>
+              <div style={{
+                color: '#ff3b30',
+                padding: '1px 6px',
+                fontSize: '10px',
+                fontFamily: "'Inter', system-ui, sans-serif",
+                fontWeight: 600,
+                whiteSpace: 'nowrap',
+                textShadow: '0 1px 4px rgba(0,0,0,0.9)',
+                background: 'rgba(0,0,0,0.5)',
+                borderRadius: '4px',
+              }}>
+                📍 You are here
+              </div>
+            </Html>
+          </group>
+        );
+      })()}
     </group>
   );
 };
