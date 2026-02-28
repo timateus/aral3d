@@ -370,6 +370,17 @@ const Index = () => {
         </div>
       )}
 
+      {/* Mobile locate button */}
+      {started && !narrativeActive && isMobile && (
+        <button
+          onClick={requestLocation}
+          disabled={locating}
+          className="absolute top-4 right-4 z-10 glass-panel p-2.5 flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
+        >
+          {locating ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
+        </button>
+      )}
+
       {/* Timeline Slider - bottom bar */}
       {started && !narrativeActive && (
         <TimelineSlider
