@@ -274,9 +274,9 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
           key={`border-${i}`}
           points={points}
           color="#ffffff"
-          lineWidth={1}
+          lineWidth={3}
           transparent
-          opacity={0.3}
+          opacity={0.4}
         />
       ))}
 
