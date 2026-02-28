@@ -54,22 +54,60 @@ const CITIES: City[] = [
 ];
 
 interface Lake {
+  id: number;
   name: string;
   lat: number;
   lon: number;
-  radius: number; // approximate radius in mesh units
+  area_ha: number; // total area in hectares
+  district: string;
+  massiv: string;
+  organization: string;
 }
 
+// All 31 lakes from the Moynaq district spreadsheet
+// Lake #31 excluded: coordinates are in incomplete DMS format with no longitude
 const LAKES: Lake[] = [
-  { name: 'Sudochye', lat: 43.55, lon: 58.22, radius: 0.15 },
-  { name: 'Sarykamysh', lat: 41.85, lon: 57.17, radius: 0.25 },
-  { name: 'Dautkul', lat: 42.05, lon: 59.25, radius: 0.08 },
-  { name: 'Mashankul', lat: 43.40, lon: 58.50, radius: 0.06 },
-  { name: 'Akchakul', lat: 43.30, lon: 58.80, radius: 0.06 },
-  { name: 'Karateren', lat: 43.15, lon: 58.45, radius: 0.07 },
-  { name: 'Zhiltyrbas', lat: 43.65, lon: 58.90, radius: 0.08 },
-  { name: 'Rybachye', lat: 43.50, lon: 58.60, radius: 0.06 },
+  { id: 1, name: "Moynaq qoltig'i ko'li", lat: 43.763841, lon: 58.964160, area_ha: 12338, district: 'Мойнак тумани', massiv: 'Мадели ОФЙ Аккала массиви', organization: 'Қорақалпоқбалиқ уюшмаси' },
+  { id: 2, name: 'Zakir ko\'li', lat: 43.531286, lon: 59.022702, area_ha: 330, district: 'Мойнак тумани', massiv: 'Бозатау ОФЙ Мойнак массиви', organization: 'Қорақалпоқбалиқ уюшмаси' },
+  { id: 3, name: "Go'nedariya ko'li", lat: 43.830093, lon: 59.590997, area_ha: 395, district: 'Мойнак тумани', massiv: 'Мадели ОФЙ Аккала массиви', organization: 'Қорақалпоқбалиқ уюшмаси' },
+  { id: 4, name: "Kishi Maqpal ko'li", lat: 43.697551, lon: 59.209823, area_ha: 203, district: 'Мойнак тумани', massiv: 'Мадели ОФЙ Аккала массиви', organization: 'Қорақалпоқбалиқ уюшмаси' },
+  { id: 5, name: "Qizil Keme ko'li", lat: 43.631329, lon: 59.203436, area_ha: 565, district: 'Мойнак тумани', massiv: 'Мадели ОФЙ Аккала массиви', organization: 'Қорақалпоқбалиқ уюшмаси' },
+  { id: 6, name: "Shege ko'l suv ombori", lat: 43.553596, lon: 59.075574, area_ha: 1660, district: 'Мойнак тумани', massiv: 'Мадели ОФЙ Аккала массиви', organization: 'Қорақалпоқбалиқ уюшмаси' },
+  { id: 7, name: 'Lake #7 (XXX)', lat: 44.021572, lon: 59.663175, area_ha: 58, district: 'Мойнак тумани', massiv: 'Мадели ОФЙ Аккала массиви', organization: 'Қорақалпоқбалиқ уюшмаси' },
+  { id: 8, name: 'Zhyltyrbas (protok levaya)', lat: 43.595506, lon: 59.855519, area_ha: 50, district: 'Мойнак тумани', massiv: 'Казакдарья ОФЙ', organization: 'Қорақалпоқбалиқ уюшмаси' },
+  { id: 9, name: "Qaramollabas ko'li", lat: 43.521095, lon: 60.416966, area_ha: 102, district: 'Мойнак тумани', massiv: 'Казакдарья ОФЙ', organization: 'Қорақалпоқбалиқ уюшмаси' },
+  { id: 10, name: "Taxtin Kut ko'li", lat: 43.590676, lon: 59.987829, area_ha: 125, district: 'Мойнак тумани', massiv: 'Казакдарья ОФЙ', organization: 'Қорақалпоқбалиқ уюшмаси' },
+  { id: 11, name: "Sudochye-Aqpetkey ko'ller sistemasi", lat: 43.641446, lon: 60.379004, area_ha: 65, district: 'Мойнак тумани', massiv: 'Казакдарья ОФЙ', organization: 'Қорақалпоқбалиқ уюшмаси' },
+  { id: 12, name: "Tog'izariq", lat: 43.916144, lon: 60.527130, area_ha: 158, district: 'Мойнак тумани', massiv: 'Казакдарья ОФЙ', organization: 'Қорақалпоқбалиқ уюшмаси' },
+  { id: 13, name: 'Lake #13', lat: 43.309483, lon: 58.835091, area_ha: 90, district: 'Мойнак тумани', massiv: 'Дослық ОФЙ', organization: 'Қорақалпоқбалиқ уюшмаси' },
+  { id: 14, name: 'Lake #14', lat: 43.660638, lon: 59.186010, area_ha: 3025, district: 'Мойнак тумани', massiv: 'Мадели ОФЙ Аккала массиви', organization: 'Қорақалпоқбалиқ уюшмаси' },
+  { id: 15, name: 'Lake #15', lat: 43.536801, lon: 59.204404, area_ha: 4458, district: 'Мойнак тумани', massiv: 'Мадели ОФЙ Аккала массиви', organization: 'Қорақалпоқбалиқ уюшмаси' },
+  { id: 16, name: 'Lake #16', lat: 43.879733, lon: 60.529911, area_ha: 150, district: 'Мойнак тумани', massiv: 'Казакдарья ОФЙ', organization: 'Қорақалпоқбалиқ уюшмаси' },
+  { id: 17, name: 'Lake #17', lat: 43.686566, lon: 60.341457, area_ha: 237, district: 'Мойнак тумани', massiv: 'Казакдарья ОФЙ', organization: 'Қорақалпоқбалиқ уюшмаси' },
+  { id: 18, name: 'Lake #18', lat: 43.727240, lon: 60.362598, area_ha: 30, district: 'Мойнак тумани', massiv: 'Казакдарья ОФЙ', organization: 'Қорақалпоқбалиқ уюшмаси' },
+  { id: 19, name: 'Lake #19', lat: 43.664246, lon: 60.370959, area_ha: 51, district: 'Мойнак тумани', massiv: 'Казакдарья ОФЙ', organization: 'Қорақалпоқбалиқ уюшмаси' },
+  { id: 20, name: 'Lake #20', lat: 43.631387, lon: 60.410786, area_ha: 47, district: 'Мойнак тумани', massiv: 'Казакдарья ОФЙ', organization: 'Қорақалпоқбалиқ уюшмаси' },
+  { id: 21, name: 'Lake #21', lat: 43.293387, lon: 58.875336, area_ha: 400, district: 'Мойнак тумани', massiv: 'Дослық ОФЙ', organization: 'Қорақалпоқбалиқ уюшмаси' },
+  { id: 22, name: 'Lake #22', lat: 43.259087, lon: 58.886452, area_ha: 900, district: 'Мойнак тумани', massiv: 'Дослық ОФЙ', organization: 'Қорақалпоқбалиқ уюшмаси' },
+  { id: 23, name: 'Lake #23', lat: 43.313105, lon: 58.829010, area_ha: 220, district: 'Мойнак тумани', massiv: 'Дослық ОФЙ', organization: 'Қорақалпоқбалиқ уюшмаси' },
+  { id: 24, name: 'Lake #24', lat: 43.693403, lon: 60.457166, area_ha: 150, district: 'Мойнак тумани', massiv: 'Казакдарья ОФЙ', organization: 'Қорақалпоқбалиқ уюшмаси' },
+  { id: 25, name: 'Lake #25', lat: 43.644927, lon: 60.401481, area_ha: 103.1, district: 'Мойнак тумани', massiv: 'Казакдарья ОФЙ', organization: 'Қорақалпоқбалиқ уюшмаси' },
+  { id: 26, name: 'Lake #26', lat: 43.650416, lon: 59.206249, area_ha: 300, district: 'Мойнак тумани', massiv: 'Мадели ОФЙ Аккала массиви', organization: 'Қорақалпоқбалиқ уюшмаси' },
+  { id: 27, name: 'Lake #27 (Meliorativ)', lat: 44.724393, lon: 58.353690, area_ha: 227077.5, district: 'Мойнак тумани', massiv: 'Мадели ОФЙ Аккала массиви', organization: 'Meliorativ Ekspeditsiya' },
+  { id: 28, name: 'Lake #28 (Muynoq Akva Sanoat)', lat: 43.505066, lon: 59.797014, area_ha: 17248.3, district: 'Мойнак тумани', massiv: 'Казакдарья ОФЙ', organization: 'MUYNOQ AKVA SANOAT MCHJ' },
+  { id: 29, name: 'Lake #29 (Muynoq Akva Sanoat)', lat: 43.557507, lon: 58.543366, area_ha: 18969.7, district: 'Мойнак тумани', massiv: 'Мадели ОФЙ Аккала массиви', organization: 'MUYNOQ AKVA SANOAT MCHJ' },
+  { id: 30, name: 'Lake #30', lat: 43.743981, lon: 59.106235, area_ha: 2818.7, district: 'Мойнак тумани', massiv: 'Учсай ОФЙ', organization: 'MUYNOQ AKVA SANOAT MCHJ' },
 ];
+
+// Convert area in hectares to mesh radius
+// Terrain mesh is 10 units wide covering ~7° longitude (~550km at this latitude)
+// 1 mesh unit ≈ 55 km
+function areaHaToMeshRadius(area_ha: number): number {
+  const area_km2 = area_ha / 100;
+  const radius_km = Math.sqrt(area_km2 / Math.PI);
+  const km_per_mesh_unit = 55;
+  return Math.max(0.02, radius_km / km_per_mesh_unit);
+}
 
 function geoToMeshPos(
   lat: number,
