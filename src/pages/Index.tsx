@@ -9,7 +9,7 @@ import IntroOverlay from '@/components/IntroOverlay';
 import ScenarioChat from '@/components/ScenarioChat';
 import WaterVolumeDisplay from '@/components/WaterVolumeDisplay';
 import DataPanel, { AralAnnual, SEA_SERIES } from '@/components/DataPanel';
-import { Camera, Video, BarChart3, Navigation, MapPin, Loader2 } from 'lucide-react';
+import { Camera, Video, BarChart3, Navigation, MapPin, Loader2, Crosshair } from 'lucide-react';
 import type { ScenarioAction } from '@/types/scenario';
 import { NARRATIVE_STEPS } from '@/lib/narrative-steps';
 import NarrativeOverlay from '@/components/NarrativeOverlay';
@@ -49,6 +49,7 @@ const Index = () => {
   const [scenarioActions, setScenarioActions] = useState<ScenarioAction[]>([]);
   const [showDataPanel, setShowDataPanel] = useState(true);
   const [narrativeActive, setNarrativeActive] = useState(false);
+  const [showInspector, setShowInspector] = useState(false);
   const [narrativeStep, setNarrativeStep] = useState(0);
   const viewerRef = useRef<TerrainViewerHandle>(null);
 
@@ -222,6 +223,7 @@ const Index = () => {
             onRiverFlyoverDone={() => setRiverFlyover(false)}
             riverInflow={currentRiverInflow}
             userLocation={userLocation}
+            inspectorEnabled={showInspector}
           />
         )}
         {!terrain && !loading && error && (
@@ -358,6 +360,13 @@ const Index = () => {
           >
             <BookOpen className="w-3.5 h-3.5" />
             Guided Tour
+          </button>
+          <button
+            onClick={() => setShowInspector(v => !v)}
+            className={`glass-panel p-2.5 w-72 flex items-center justify-center gap-2 text-xs transition-colors cursor-pointer ${showInspector ? 'text-foreground ring-1 ring-primary/50' : 'text-muted-foreground hover:text-foreground'}`}
+          >
+            <Crosshair className="w-3.5 h-3.5" />
+            {showInspector ? 'Inspector On' : 'Inspector Off'}
           </button>
           <button
             onClick={requestLocation}
