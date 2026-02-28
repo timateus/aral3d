@@ -359,6 +359,14 @@ const Index = () => {
             <BookOpen className="w-3.5 h-3.5" />
             Guided Tour
           </button>
+          <button
+            onClick={requestLocation}
+            disabled={locating}
+            className="glass-panel p-2.5 w-72 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
+          >
+            {locating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MapPin className="w-3.5 h-3.5" />}
+            {locating ? 'Locating…' : userLocation ? 'Located ✓' : 'Locate Me'}
+          </button>
         </div>
       )}
 
