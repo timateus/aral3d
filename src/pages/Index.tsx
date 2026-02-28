@@ -223,6 +223,7 @@ const Index = () => {
             onRiverFlyoverDone={() => setRiverFlyover(false)}
             riverInflow={currentRiverInflow}
             userLocation={userLocation}
+            inspectorEnabled={showInspector}
           />
         )}
         {!terrain && !loading && error && (
