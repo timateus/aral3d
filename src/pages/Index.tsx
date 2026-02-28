@@ -49,6 +49,7 @@ const Index = () => {
   const [scenarioActions, setScenarioActions] = useState<ScenarioAction[]>([]);
   const [showDataPanel, setShowDataPanel] = useState(true);
   const [narrativeActive, setNarrativeActive] = useState(false);
+  const [showInspector, setShowInspector] = useState(false);
   const [narrativeStep, setNarrativeStep] = useState(0);
   const viewerRef = useRef<TerrainViewerHandle>(null);
 
