@@ -10,6 +10,7 @@ interface TerrainMeshProps {
   waterLevel: number;
   hideNoData?: boolean;
   waterBounds?: GeoBounds | null;
+  inspectorEnabled?: boolean;
 }
 
 const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, waterBounds }: TerrainMeshProps) => {
