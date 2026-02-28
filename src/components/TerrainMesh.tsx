@@ -155,7 +155,12 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
       elev = minElevation;
     }
 
-    setHoverInfo({ position: point.clone(), elevation: Math.round(elev) });
+    // Compute lat/lon from UV
+    const { bounds } = terrain;
+    const lon = bounds.minLon + uv.x * (bounds.maxLon - bounds.minLon);
+    const lat = bounds.maxLat - (1 - uv.y) * (bounds.maxLat - bounds.minLat);
+
+    setHoverInfo({ position: point.clone(), elevation: Math.round(elev), lat, lon });
   }, [terrain]);
 
   const handlePointerLeave = useCallback(() => {
@@ -172,23 +177,25 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
         onPointerMove={handlePointerMove}
         onPointerLeave={handlePointerLeave}
       />
-      {hoverInfo && (
+      {inspectorEnabled && hoverInfo && (
         <Html
           position={[hoverInfo.position.x, hoverInfo.position.y + 0.15, hoverInfo.position.z]}
           center
           distanceFactor={8}
-          style={{ pointerEvents: 'none' }}
+          style={{ pointerEvents: 'none', zIndex: 9999 }}
         >
           <div style={{
             color: '#fff',
-            background: 'rgba(0,0,0,0.7)',
-            padding: '2px 6px',
-            borderRadius: '3px',
+            background: 'rgba(0,0,0,0.85)',
+            padding: '4px 8px',
+            borderRadius: '4px',
             fontSize: '10px',
             fontFamily: "'Inter', system-ui, sans-serif",
             whiteSpace: 'nowrap',
+            lineHeight: 1.4,
           }}>
-            {hoverInfo.elevation} m
+            <div style={{ fontWeight: 600 }}>{hoverInfo.elevation} m</div>
+            <div style={{ opacity: 0.8 }}>{hoverInfo.lat.toFixed(4)}°N, {hoverInfo.lon.toFixed(4)}°E</div>
           </div>
         </Html>
       )}

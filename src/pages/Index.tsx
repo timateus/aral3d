@@ -362,6 +362,13 @@ const Index = () => {
             Guided Tour
           </button>
           <button
+            onClick={() => setShowInspector(v => !v)}
+            className={`glass-panel p-2.5 w-72 flex items-center justify-center gap-2 text-xs transition-colors cursor-pointer ${showInspector ? 'text-foreground ring-1 ring-primary/50' : 'text-muted-foreground hover:text-foreground'}`}
+          >
+            <Crosshair className="w-3.5 h-3.5" />
+            {showInspector ? 'Inspector On' : 'Inspector Off'}
+          </button>
+          <button
             onClick={requestLocation}
             disabled={locating}
             className="glass-panel p-2.5 w-72 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
