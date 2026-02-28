@@ -9,7 +9,7 @@ import IntroOverlay from '@/components/IntroOverlay';
 import ScenarioChat from '@/components/ScenarioChat';
 import WaterVolumeDisplay from '@/components/WaterVolumeDisplay';
 import DataPanel, { AralAnnual, SEA_SERIES } from '@/components/DataPanel';
-import { Camera, Video, BarChart3, Navigation } from 'lucide-react';
+import { Camera, Video, BarChart3, Navigation, MapPin, Loader2 } from 'lucide-react';
 import type { ScenarioAction } from '@/types/scenario';
 import { NARRATIVE_STEPS } from '@/lib/narrative-steps';
 import NarrativeOverlay from '@/components/NarrativeOverlay';
@@ -21,7 +21,7 @@ export type DataSource = 'regional' | 'seabed' | 'merged';
 
 const Index = () => {
   const isMobile = useIsMobile();
-  const { location: userLocation } = useUserLocation();
+  const { location: userLocation, loading: locating, requestLocation } = useUserLocation();
   const [baseTerrain, setBaseTerrain] = useState<TerrainData | null>(null);
   const [seabedTerrain, setSeabedTerrain] = useState<TerrainData | null>(null);
   const [khorezmTerrain, setKhorezmTerrain] = useState<TerrainData | null>(null);
@@ -37,6 +37,7 @@ const Index = () => {
   const [show19thBasin, setShow19thBasin] = useState(true);
   const [show21stBasin, setShow21stBasin] = useState(true);
   const [showKhorezm, setShowKhorezm] = useState(false);
+  const [showLakes, setShowLakes] = useState(false);
   const [showWatershed, setShowWatershed] = useState(false);
   const [watershedTerrain, setWatershedTerrain] = useState<TerrainData | null>(null);
   const [showWaterExtent, setShowWaterExtent] = useState(true);
@@ -203,6 +204,7 @@ const Index = () => {
             show13thBasin={show13thBasin}
             show19thBasin={show19thBasin}
             show21stBasin={show21stBasin}
+            showLakes={showLakes}
             showWaterExtent={showWaterExtent}
             waterExtentYear={waterExtentYear}
             started={started}
@@ -309,6 +311,8 @@ const Index = () => {
             onToggleKhorezm={setShowKhorezm}
             showWatershed={showWatershed}
             onToggleWatershed={setShowWatershed}
+            showLakes={showLakes}
+            onToggleLakes={setShowLakes}
           />
           {terrain && (
             <WaterVolumeDisplay
@@ -355,7 +359,26 @@ const Index = () => {
             <BookOpen className="w-3.5 h-3.5" />
             Guided Tour
           </button>
+          <button
+            onClick={requestLocation}
+            disabled={locating}
+            className="glass-panel p-2.5 w-72 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
+          >
+            {locating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MapPin className="w-3.5 h-3.5" />}
+            {locating ? 'Locating…' : userLocation ? 'Located ✓' : 'Locate Me'}
+          </button>
         </div>
+      )}
+
+      {/* Mobile locate button */}
+      {started && !narrativeActive && isMobile && (
+        <button
+          onClick={requestLocation}
+          disabled={locating}
+          className="absolute top-4 right-4 z-10 glass-panel p-2.5 flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
+        >
+          {locating ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
+        </button>
       )}
 
       {/* Timeline Slider - bottom bar */}

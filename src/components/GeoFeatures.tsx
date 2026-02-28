@@ -10,6 +10,7 @@ interface GeoFeaturesProps {
   show13thBasin: boolean;
   show19thBasin: boolean;
   show21stBasin: boolean;
+  showLakes: boolean;
   riverInflow?: number;
   userLocation?: { lat: number; lon: number } | null;
 }
@@ -48,6 +49,26 @@ const CITIES: City[] = [
   { name: 'Chimbay', lat: 42.930, lon: 59.770 },
   { name: 'Takhtakupir', lat: 43.015, lon: 59.826 },
   { name: 'Qazaly', lat: 45.763, lon: 62.110 },
+  { name: 'Urgench', lat: 41.550, lon: 60.633 },
+  { name: 'Khiva', lat: 41.379, lon: 60.356 },
+];
+
+interface Lake {
+  name: string;
+  lat: number;
+  lon: number;
+  radius: number; // approximate radius in mesh units
+}
+
+const LAKES: Lake[] = [
+  { name: 'Sudochye', lat: 43.55, lon: 58.22, radius: 0.15 },
+  { name: 'Sarykamysh', lat: 41.85, lon: 57.17, radius: 0.25 },
+  { name: 'Dautkul', lat: 42.05, lon: 59.25, radius: 0.08 },
+  { name: 'Mashankul', lat: 43.40, lon: 58.50, radius: 0.06 },
+  { name: 'Akchakul', lat: 43.30, lon: 58.80, radius: 0.06 },
+  { name: 'Karateren', lat: 43.15, lon: 58.45, radius: 0.07 },
+  { name: 'Zhiltyrbas', lat: 43.65, lon: 58.90, radius: 0.08 },
+  { name: 'Rybachye', lat: 43.50, lon: 58.60, radius: 0.06 },
 ];
 
 function geoToMeshPos(
@@ -86,7 +107,7 @@ function geoToMeshPos(
   return [x, zHeight, -planeY];
 }
 
-const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, riverInflow, userLocation }: GeoFeaturesProps) => {
+const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, riverInflow, userLocation }: GeoFeaturesProps) => {
   const bounds = terrain.bounds;
   const w = terrain.width;
   const h = terrain.height;
@@ -253,9 +274,9 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
           key={`border-${i}`}
           points={points}
           color="#ffffff"
-          lineWidth={1}
+          lineWidth={3}
           transparent
-          opacity={0.3}
+          opacity={0.4}
         />
       ))}
 
@@ -346,7 +367,33 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
         />
       ))}
 
-      {/* User GPS location pin */}
+      {/* Lakes */}
+      {showLakes && LAKES.map((lake) => {
+        const pos = geoToMeshPos(lake.lat, lake.lon, bounds, terrain, exaggeration, meshWidth, meshHeight);
+        if (!pos) return null;
+        return (
+          <group key={lake.name} position={pos}>
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
+              <circleGeometry args={[lake.radius, 24]} />
+              <meshStandardMaterial color="#2d8fce" transparent opacity={0.6} emissive="#2d8fce" emissiveIntensity={0.3} />
+            </mesh>
+            <Html position={[0, 0.12, 0]} center distanceFactor={8} style={{ pointerEvents: 'none' }}>
+              <div style={{
+                color: '#5bc0eb',
+                padding: '1px 4px',
+                fontSize: '8px',
+                fontFamily: "'Inter', system-ui, sans-serif",
+                fontWeight: 400,
+                fontStyle: 'italic',
+                whiteSpace: 'nowrap',
+                textShadow: '0 1px 3px rgba(0,0,0,0.8)',
+              }}>
+                {lake.name}
+              </div>
+            </Html>
+          </group>
+        );
+      })}
       {userLocation && (() => {
         const pos = geoToMeshPos(userLocation.lat, userLocation.lon, bounds, terrain, exaggeration, meshWidth, meshHeight);
         if (!pos) return null;
