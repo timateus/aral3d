@@ -32,7 +32,7 @@ interface TerrainViewerProps {
   show13thBasin: boolean;
   show19thBasin: boolean;
   show21stBasin: boolean;
-  showWaterExtent: boolean;
+  showLakes: boolean;
   waterExtentYear: number;
   hideNoData?: boolean;
   waterBounds?: import('@/lib/geotiff-loader').GeoBounds | null;
