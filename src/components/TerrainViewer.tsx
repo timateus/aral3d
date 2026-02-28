@@ -52,6 +52,7 @@ interface TerrainViewerProps {
   onRiverFlyoverDone?: () => void;
   riverInflow?: number;
   userLocation?: { lat: number; lon: number } | null;
+  inspectorEnabled?: boolean;
 }
 
 function CameraAnimator({ started }: { started: boolean }) {
