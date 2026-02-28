@@ -7,6 +7,7 @@ import WaterExtentLayer from './WaterExtentLayer';
 import NarrativeCameraController from './NarrativeCameraController';
 import ScenarioOverlay from './ScenarioOverlay';
 import RiverFlyover from './RiverFlyover';
+import WASDControls from './WASDControls';
 import { TerrainData } from '@/lib/geotiff-loader';
 import type { ScenarioAction } from '@/types/scenario';
 import * as THREE from 'three';
