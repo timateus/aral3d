@@ -562,4 +562,59 @@ const HoverLabel = ({ label }: { label: NamedLabel }) => {
   );
 };
 
+const LakeMarker = ({ lake, pos, radius }: { lake: Lake; pos: [number, number, number]; radius: number }) => {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <group position={pos}>
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, 0.02, 0]}
+        onPointerOver={() => setHovered(true)}
+        onPointerOut={() => setHovered(false)}
+      >
+        <circleGeometry args={[radius, 24]} />
+        <meshStandardMaterial color="#2d8fce" transparent opacity={0.6} emissive="#2d8fce" emissiveIntensity={0.3} />
+      </mesh>
+      <Html position={[0, 0.12, 0]} center distanceFactor={8} style={{ pointerEvents: 'none' }}>
+        <div style={{
+          color: '#5bc0eb',
+          padding: '1px 4px',
+          fontSize: '8px',
+          fontFamily: "'Inter', system-ui, sans-serif",
+          fontWeight: 400,
+          fontStyle: 'italic',
+          whiteSpace: 'nowrap',
+          textShadow: '0 1px 3px rgba(0,0,0,0.8)',
+        }}>
+          {lake.name}
+        </div>
+      </Html>
+      {hovered && (
+        <Html position={[0, 0.3, 0]} center distanceFactor={6} style={{ pointerEvents: 'none' }}>
+          <div style={{
+            background: 'rgba(0,0,0,0.85)',
+            color: '#e0f0ff',
+            padding: '6px 10px',
+            borderRadius: '6px',
+            fontSize: '10px',
+            fontFamily: "'Inter', system-ui, sans-serif",
+            lineHeight: '1.5',
+            whiteSpace: 'nowrap',
+            border: '1px solid rgba(91,192,235,0.3)',
+            textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+          }}>
+            <div style={{ fontWeight: 600, fontSize: '11px', color: '#5bc0eb', marginBottom: '3px' }}>{lake.name}</div>
+            <div>📐 Area: <b>{lake.area_ha.toLocaleString()} ha</b></div>
+            <div>📍 {lake.lat.toFixed(4)}°N, {lake.lon.toFixed(4)}°E</div>
+            <div>🏘️ {lake.district}</div>
+            <div>🗺️ {lake.massiv}</div>
+            <div>🏢 {lake.organization}</div>
+          </div>
+        </Html>
+      )}
+    </group>
+  );
+};
+
 export default GeoFeatures;
