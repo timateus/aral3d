@@ -204,6 +204,7 @@ const Index = () => {
             show13thBasin={show13thBasin}
             show19thBasin={show19thBasin}
             show21stBasin={show21stBasin}
+            showLakes={showLakes}
             showWaterExtent={showWaterExtent}
             waterExtentYear={waterExtentYear}
             started={started}
