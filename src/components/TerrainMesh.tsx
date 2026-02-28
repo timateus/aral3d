@@ -13,8 +13,8 @@ interface TerrainMeshProps {
   inspectorEnabled?: boolean;
 }
 
-const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, waterBounds }: TerrainMeshProps) => {
-  const [hoverInfo, setHoverInfo] = useState<{ position: THREE.Vector3; elevation: number } | null>(null);
+const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, waterBounds, inspectorEnabled = false }: TerrainMeshProps) => {
+  const [hoverInfo, setHoverInfo] = useState<{ position: THREE.Vector3; elevation: number; lat: number; lon: number } | null>(null);
   const meshRef = useRef<THREE.Mesh>(null);
 
   // Geometry only depends on terrain shape + exaggeration (NOT waterLevel)
