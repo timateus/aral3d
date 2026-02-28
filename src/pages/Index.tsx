@@ -21,7 +21,7 @@ export type DataSource = 'regional' | 'seabed' | 'merged';
 
 const Index = () => {
   const isMobile = useIsMobile();
-  const { location: userLocation } = useUserLocation();
+  const { location: userLocation, loading: locating, requestLocation } = useUserLocation();
   const [baseTerrain, setBaseTerrain] = useState<TerrainData | null>(null);
   const [seabedTerrain, setSeabedTerrain] = useState<TerrainData | null>(null);
   const [khorezmTerrain, setKhorezmTerrain] = useState<TerrainData | null>(null);
