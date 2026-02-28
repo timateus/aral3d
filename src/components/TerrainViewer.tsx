@@ -7,6 +7,7 @@ import WaterExtentLayer from './WaterExtentLayer';
 import NarrativeCameraController from './NarrativeCameraController';
 import ScenarioOverlay from './ScenarioOverlay';
 import RiverFlyover from './RiverFlyover';
+import WASDControls from './WASDControls';
 import { TerrainData } from '@/lib/geotiff-loader';
 import type { ScenarioAction } from '@/types/scenario';
 import * as THREE from 'three';
@@ -312,6 +313,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
         maxDistance={30}
         maxPolarAngle={Math.PI / 2.1}
       />
+      <WASDControls enabled={!narrativeActive && !flyoverAnimating} />
 
       <GizmoHelper alignment="bottom-right" margin={[60, 60]}>
         <GizmoViewport labelColor="white" axisHeadScale={0.8} />
