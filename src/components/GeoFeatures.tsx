@@ -409,27 +409,9 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
       {showLakes && LAKES.map((lake) => {
         const pos = geoToMeshPos(lake.lat, lake.lon, bounds, terrain, exaggeration, meshWidth, meshHeight);
         if (!pos) return null;
+        const radius = areaHaToMeshRadius(lake.area_ha);
         return (
-          <group key={lake.name} position={pos}>
-            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
-              <circleGeometry args={[lake.radius, 24]} />
-              <meshStandardMaterial color="#2d8fce" transparent opacity={0.6} emissive="#2d8fce" emissiveIntensity={0.3} />
-            </mesh>
-            <Html position={[0, 0.12, 0]} center distanceFactor={8} style={{ pointerEvents: 'none' }}>
-              <div style={{
-                color: '#5bc0eb',
-                padding: '1px 4px',
-                fontSize: '8px',
-                fontFamily: "'Inter', system-ui, sans-serif",
-                fontWeight: 400,
-                fontStyle: 'italic',
-                whiteSpace: 'nowrap',
-                textShadow: '0 1px 3px rgba(0,0,0,0.8)',
-              }}>
-                {lake.name}
-              </div>
-            </Html>
-          </group>
+          <LakeMarker key={lake.id} lake={lake} pos={pos} radius={radius} />
         );
       })}
       {userLocation && (() => {
