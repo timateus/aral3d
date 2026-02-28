@@ -49,6 +49,26 @@ const CITIES: City[] = [
   { name: 'Chimbay', lat: 42.930, lon: 59.770 },
   { name: 'Takhtakupir', lat: 43.015, lon: 59.826 },
   { name: 'Qazaly', lat: 45.763, lon: 62.110 },
+  { name: 'Urgench', lat: 41.550, lon: 60.633 },
+  { name: 'Khiva', lat: 41.379, lon: 60.356 },
+];
+
+interface Lake {
+  name: string;
+  lat: number;
+  lon: number;
+  radius: number; // approximate radius in mesh units
+}
+
+const LAKES: Lake[] = [
+  { name: 'Sudochye', lat: 43.55, lon: 58.22, radius: 0.15 },
+  { name: 'Sarykamysh', lat: 41.85, lon: 57.17, radius: 0.25 },
+  { name: 'Dautkul', lat: 42.05, lon: 59.25, radius: 0.08 },
+  { name: 'Mashankul', lat: 43.40, lon: 58.50, radius: 0.06 },
+  { name: 'Akchakul', lat: 43.30, lon: 58.80, radius: 0.06 },
+  { name: 'Karateren', lat: 43.15, lon: 58.45, radius: 0.07 },
+  { name: 'Zhiltyrbas', lat: 43.65, lon: 58.90, radius: 0.08 },
+  { name: 'Rybachye', lat: 43.50, lon: 58.60, radius: 0.06 },
 ];
 
 function geoToMeshPos(
