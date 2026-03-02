@@ -377,6 +377,22 @@ const Index = () => {
             {locating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MapPin className="w-3.5 h-3.5" />}
             {locating ? 'Locating…' : userLocation ? 'Located ✓' : 'Locate Me'}
           </button>
+          <button
+            onClick={() => {
+              if (!terrain) return;
+              const blob = exportTerrainSTL(terrain);
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'aral_basin_x30_220mm.stl';
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+            className="glass-panel p-2.5 w-72 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Export STL (220mm, x30)
+          </button>
         </div>
       )}
 
