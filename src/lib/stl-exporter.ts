@@ -18,7 +18,7 @@ export function exportTerrainSTL(terrain: TerrainData): Blob {
   const w = Math.floor((width - 1) / stepX) + 1;
   const h = Math.floor((height - 1) / stepY) + 1;
 
-  const EXAGGERATION = 30;
+  const EXAGGERATION = 300;
   const BED_MM = 220; // mm
   const BASE_THICKNESS_MM = 3; // solid base below lowest point
 
