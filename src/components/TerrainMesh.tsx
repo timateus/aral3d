@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { Html } from '@react-three/drei';
 import { ThreeEvent } from '@react-three/fiber';
 import { TerrainData, GeoBounds, getElevationColor } from '@/lib/geotiff-loader';
+import { PopData, samplePopulation } from './PopulationDensityLayer';
 
 interface TerrainMeshProps {
   terrain: TerrainData;
@@ -11,6 +12,7 @@ interface TerrainMeshProps {
   hideNoData?: boolean;
   waterBounds?: GeoBounds | null;
   inspectorEnabled?: boolean;
+  popData?: PopData | null;
 }
 
 const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, waterBounds, inspectorEnabled = false }: TerrainMeshProps) => {
