@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { Html } from '@react-three/drei';
 import { ThreeEvent } from '@react-three/fiber';
 import { TerrainData, GeoBounds, getElevationColor } from '@/lib/geotiff-loader';
+import { PopData, samplePopulation } from './PopulationDensityLayer';
 
 interface TerrainMeshProps {
   terrain: TerrainData;
@@ -11,10 +12,11 @@ interface TerrainMeshProps {
   hideNoData?: boolean;
   waterBounds?: GeoBounds | null;
   inspectorEnabled?: boolean;
+  popData?: PopData | null;
 }
 
-const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, waterBounds, inspectorEnabled = false }: TerrainMeshProps) => {
-  const [hoverInfo, setHoverInfo] = useState<{ position: THREE.Vector3; elevation: number; lat: number; lon: number } | null>(null);
+const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, waterBounds, inspectorEnabled = false, popData }: TerrainMeshProps) => {
+  const [hoverInfo, setHoverInfo] = useState<{ position: THREE.Vector3; elevation: number; lat: number; lon: number; population: number | null } | null>(null);
   const meshRef = useRef<THREE.Mesh>(null);
 
   // Geometry only depends on terrain shape + exaggeration (NOT waterLevel)
@@ -160,8 +162,9 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
     const lon = bounds.minLon + uv.x * (bounds.maxLon - bounds.minLon);
     const lat = bounds.maxLat - (1 - uv.y) * (bounds.maxLat - bounds.minLat);
 
-    setHoverInfo({ position: point.clone(), elevation: Math.round(elev), lat, lon });
-  }, [terrain]);
+    const population = samplePopulation(popData ?? null, lon, lat);
+    setHoverInfo({ position: point.clone(), elevation: Math.round(elev), lat, lon, population });
+  }, [terrain, popData]);
 
   const handlePointerLeave = useCallback(() => {
     setHoverInfo(null);
@@ -196,6 +199,9 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
           }}>
             <div style={{ fontWeight: 600 }}>{hoverInfo.elevation} m</div>
             <div style={{ opacity: 0.8 }}>{hoverInfo.lat.toFixed(4)}°N, {hoverInfo.lon.toFixed(4)}°E</div>
+            {hoverInfo.population !== null && (
+              <div style={{ color: '#a8e06c', fontWeight: 500 }}>Pop: {hoverInfo.population.toFixed(1)} /km²</div>
+            )}
           </div>
         </Html>
       )}
