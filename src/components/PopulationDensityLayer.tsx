@@ -83,12 +83,9 @@ const PopulationDensityLayer = ({ terrain, exaggeration }: PopulationDensityLaye
     const { width: pw, height: ph, values, bounds: pb, noDataValue: pNoData, maxVal } = popData;
     if (maxVal <= 0) return null;
 
-    // Build a plane matching the population raster extent, projected onto terrain
-    // We'll sample the pop raster at lower res for performance
-    const stepI = Math.max(1, Math.floor(pw / 128));
-    const stepJ = Math.max(1, Math.floor(ph / 128));
-    const gw = Math.floor(pw / stepI);
-    const gh = Math.floor(ph / stepJ);
+    // Use full resolution - no downsampling
+    const gw = pw;
+    const gh = ph;
 
     const positions: number[] = [];
     const colors: number[] = [];
