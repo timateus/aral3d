@@ -41,6 +41,7 @@ const Index = () => {
   const [showLakes, setShowLakes] = useState(false);
   const [showWatershed, setShowWatershed] = useState(false);
   const [watershedTerrain, setWatershedTerrain] = useState<TerrainData | null>(null);
+  const [showPopDensity, setShowPopDensity] = useState(false);
   const [showWaterExtent, setShowWaterExtent] = useState(true);
   const [waterExtentYear, setWaterExtentYear] = useState(1960);
   
@@ -209,6 +210,7 @@ const Index = () => {
             showLakes={showLakes}
             showWaterExtent={showWaterExtent}
             waterExtentYear={waterExtentYear}
+            showPopDensity={showPopDensity}
             started={started}
             recording={recording}
             hideNoData={hideNoData}
@@ -316,6 +318,8 @@ const Index = () => {
             onToggleWatershed={setShowWatershed}
             showLakes={showLakes}
             onToggleLakes={setShowLakes}
+            showPopDensity={showPopDensity}
+            onTogglePopDensity={setShowPopDensity}
           />
           {terrain && (
             <WaterVolumeDisplay

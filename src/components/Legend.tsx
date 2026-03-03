@@ -17,9 +17,11 @@ interface LegendProps {
   onToggleWatershed: (val: boolean) => void;
   showLakes: boolean;
   onToggleLakes: (val: boolean) => void;
+  showPopDensity: boolean;
+  onTogglePopDensity: (val: boolean) => void;
 }
 
-const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin, show21stBasin, onToggle21stBasin, showKhorezm, onToggleKhorezm, showWatershed, onToggleWatershed, showLakes, onToggleLakes }: LegendProps) => {
+const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin, show21stBasin, onToggle21stBasin, showKhorezm, onToggleKhorezm, showWatershed, onToggleWatershed, showLakes, onToggleLakes, showPopDensity, onTogglePopDensity }: LegendProps) => {
   return (
     <div className="glass-panel p-3 space-y-2 w-72">
       <label className="flex items-center justify-between cursor-pointer">
@@ -84,6 +86,14 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
           Lower Amu Darya DEM
         </span>
         <Switch className="scale-75" checked={showWatershed} onCheckedChange={onToggleWatershed} />
+      </label>
+
+      <label className="flex items-center justify-between cursor-pointer">
+        <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
+          <span className="inline-block w-3 h-3 rounded-sm" style={{ background: 'linear-gradient(135deg, #e8c838, #e84038)' }} />
+          Population Density
+        </span>
+        <Switch className="scale-75" checked={showPopDensity} onCheckedChange={onTogglePopDensity} />
       </label>
     </div>
   );
