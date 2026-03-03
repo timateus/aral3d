@@ -95,14 +95,13 @@ const PopulationDensityLayer = ({ terrain, exaggeration }: PopulationDensityLaye
     for (let j = 0; j < gh; j++) {
       for (let i = 0; i < gw; i++) {
         const pidx = j * pw + i;
-        let val = values[pidx];
-        let val = values[pidx];
+        const val = values[pidx];
 
         const isND = (pNoData !== null && val === pNoData) || isNaN(val) || val < 0;
 
         // Geo coords of this pop pixel
-        const lon = pb.minLon + (si / (pw - 1)) * (pb.maxLon - pb.minLon);
-        const lat = pb.maxLat - (sj / (ph - 1)) * (pb.maxLat - pb.minLat);
+        const lon = pb.minLon + (i / (pw - 1)) * (pb.maxLon - pb.minLon);
+        const lat = pb.maxLat - (j / (ph - 1)) * (pb.maxLat - pb.minLat);
 
         // Map to terrain mesh coords
         const u = (lon - tb.minLon) / (tb.maxLon - tb.minLon);
