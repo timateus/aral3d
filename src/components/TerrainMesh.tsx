@@ -162,8 +162,9 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
     const lon = bounds.minLon + uv.x * (bounds.maxLon - bounds.minLon);
     const lat = bounds.maxLat - (1 - uv.y) * (bounds.maxLat - bounds.minLat);
 
-    setHoverInfo({ position: point.clone(), elevation: Math.round(elev), lat, lon });
-  }, [terrain]);
+    const population = samplePopulation(popData ?? null, lon, lat);
+    setHoverInfo({ position: point.clone(), elevation: Math.round(elev), lat, lon, population });
+  }, [terrain, popData]);
 
   const handlePointerLeave = useCallback(() => {
     setHoverInfo(null);
