@@ -94,9 +94,8 @@ const PopulationDensityLayer = ({ terrain, exaggeration }: PopulationDensityLaye
 
     for (let j = 0; j < gh; j++) {
       for (let i = 0; i < gw; i++) {
-        const si = i * stepI;
-        const sj = j * stepJ;
-        const pidx = sj * pw + si;
+        const pidx = j * pw + i;
+        let val = values[pidx];
         let val = values[pidx];
 
         const isND = (pNoData !== null && val === pNoData) || isNaN(val) || val < 0;
