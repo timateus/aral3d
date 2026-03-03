@@ -26,13 +26,11 @@ function loadPopulationTiff(): Promise<PopData> {
       const fullW = image.getWidth();
       const fullH = image.getHeight();
 
-      const maxDim = 256;
-      const scaleX = Math.max(1, Math.ceil(fullW / maxDim));
-      const scaleY = Math.max(1, Math.ceil(fullH / maxDim));
-      const width = Math.floor(fullW / scaleX);
-      const height = Math.floor(fullH / scaleY);
+    // Use full resolution - no downsampling
+    const width = fullW;
+    const height = fullH;
 
-      const rasters = await image.readRasters({ width, height, resampleMethod: 'nearest' });
+    const rasters = await image.readRasters({ resampleMethod: 'nearest' });
       const values = rasters[0] as Float32Array | Float64Array;
 
       const fd = image.getFileDirectory() as any;
