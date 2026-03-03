@@ -26,13 +26,11 @@ function loadPopulationTiff(): Promise<PopData> {
       const fullW = image.getWidth();
       const fullH = image.getHeight();
 
-      const maxDim = 256;
-      const scaleX = Math.max(1, Math.ceil(fullW / maxDim));
-      const scaleY = Math.max(1, Math.ceil(fullH / maxDim));
-      const width = Math.floor(fullW / scaleX);
-      const height = Math.floor(fullH / scaleY);
+    // Use full resolution - no downsampling
+    const width = fullW;
+    const height = fullH;
 
-      const rasters = await image.readRasters({ width, height, resampleMethod: 'nearest' });
+    const rasters = await image.readRasters({ resampleMethod: 'nearest' });
       const values = rasters[0] as Float32Array | Float64Array;
 
       const fd = image.getFileDirectory() as any;
@@ -85,12 +83,9 @@ const PopulationDensityLayer = ({ terrain, exaggeration }: PopulationDensityLaye
     const { width: pw, height: ph, values, bounds: pb, noDataValue: pNoData, maxVal } = popData;
     if (maxVal <= 0) return null;
 
-    // Build a plane matching the population raster extent, projected onto terrain
-    // We'll sample the pop raster at lower res for performance
-    const stepI = Math.max(1, Math.floor(pw / 128));
-    const stepJ = Math.max(1, Math.floor(ph / 128));
-    const gw = Math.floor(pw / stepI);
-    const gh = Math.floor(ph / stepJ);
+    // Use full resolution - no downsampling
+    const gw = pw;
+    const gh = ph;
 
     const positions: number[] = [];
     const colors: number[] = [];
@@ -99,16 +94,14 @@ const PopulationDensityLayer = ({ terrain, exaggeration }: PopulationDensityLaye
 
     for (let j = 0; j < gh; j++) {
       for (let i = 0; i < gw; i++) {
-        const si = i * stepI;
-        const sj = j * stepJ;
-        const pidx = sj * pw + si;
-        let val = values[pidx];
+        const pidx = j * pw + i;
+        const val = values[pidx];
 
         const isND = (pNoData !== null && val === pNoData) || isNaN(val) || val < 0;
 
         // Geo coords of this pop pixel
-        const lon = pb.minLon + (si / (pw - 1)) * (pb.maxLon - pb.minLon);
-        const lat = pb.maxLat - (sj / (ph - 1)) * (pb.maxLat - pb.minLat);
+        const lon = pb.minLon + (i / (pw - 1)) * (pb.maxLon - pb.minLon);
+        const lat = pb.maxLat - (j / (ph - 1)) * (pb.maxLat - pb.minLat);
 
         // Map to terrain mesh coords
         const u = (lon - tb.minLon) / (tb.maxLon - tb.minLon);
