@@ -131,8 +131,8 @@ const PopulationDensityLayer = ({ terrain, exaggeration }: PopulationDensityLaye
 
         const normElev = (elev - minElevation) / elevRange;
         const x = (u - 0.5) * meshW;
-        const z = -(v - 0.5) * meshH;
-        const y = normElev * maxH + 0.02; // slight offset above terrain
+        const y = (0.5 - v) * meshH;
+        const z = normElev * maxH + 0.02; // slight offset above terrain
 
         positions.push(x, y, z);
         valid.push(!isND);
