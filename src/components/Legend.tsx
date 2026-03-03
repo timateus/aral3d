@@ -90,11 +90,29 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
 
       <label className="flex items-center justify-between cursor-pointer">
         <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
-          <span className="inline-block w-3 h-3 rounded-sm" style={{ background: 'linear-gradient(135deg, #e8c838, #e84038)' }} />
+          <span className="inline-block w-3 h-3 rounded-sm" style={{ background: 'linear-gradient(135deg, #440154, #31688e, #35b779, #fde725)' }} />
           Population Density
         </span>
         <Switch className="scale-75" checked={showPopDensity} onCheckedChange={onTogglePopDensity} />
       </label>
+
+      {showPopDensity && (
+        <div className="ml-5 space-y-1">
+          <div className="flex items-center gap-1">
+            <div
+              className="h-2 flex-1 rounded-sm"
+              style={{
+                background: 'linear-gradient(to right, #440154, #482878, #31688e, #21918c, #35b779, #8fd744, #fde725)',
+              }}
+            />
+          </div>
+          <div className="flex justify-between text-[9px] text-muted-foreground">
+            <span>Low</span>
+            <span>High</span>
+          </div>
+          <div className="text-[9px] text-muted-foreground opacity-70">persons / km²</div>
+        </div>
+      )}
     </div>
   );
 };
