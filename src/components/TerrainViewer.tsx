@@ -4,7 +4,7 @@ import { OrbitControls, GizmoHelper, GizmoViewport, Html } from '@react-three/dr
 import TerrainMesh from './TerrainMesh';
 import GeoFeatures from './GeoFeatures';
 import WaterExtentLayer from './WaterExtentLayer';
-import PopulationDensityLayer from './PopulationDensityLayer';
+import PopulationDensityLayer, { PopData } from './PopulationDensityLayer';
 import NarrativeCameraController from './NarrativeCameraController';
 import ScenarioOverlay from './ScenarioOverlay';
 import RiverFlyover from './RiverFlyover';
