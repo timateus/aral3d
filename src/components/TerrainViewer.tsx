@@ -38,6 +38,8 @@ interface TerrainViewerProps {
   showWaterExtent: boolean;
   waterExtentYear: number;
   showPopDensity?: boolean;
+  popHexSize?: number;
+  popHexHeight?: number;
   hideNoData?: boolean;
   waterBounds?: import('@/lib/geotiff-loader').GeoBounds | null;
   
