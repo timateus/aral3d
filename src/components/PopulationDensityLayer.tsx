@@ -7,6 +7,8 @@ interface PopulationDensityLayerProps {
   terrain: TerrainData;
   exaggeration: number;
   onDataLoaded?: (data: PopData | null) => void;
+  hexSize?: number;       // 0.05 – 0.5 in mesh units
+  hexHeightExag?: number; // 0 – 5 multiplier
 }
 
 export interface PopData {
@@ -33,26 +35,15 @@ export function samplePopulation(popData: PopData | null, lon: number, lat: numb
   return val;
 }
 
-/** Viridis-inspired color ramp: dark purple → blue → teal → green → yellow */
-export function popDensityColor(val: number, maxVal: number): [number, number, number] {
-  const t = Math.min(1, Math.max(0, Math.log1p(val) / Math.log1p(maxVal)));
-  // Viridis approximation
-  const r = Math.min(1, Math.max(0, -0.05 + t * 0.1 + t * t * 1.2));
-  const g = Math.min(1, Math.max(0, 0.03 + t * 0.85));
-  const b = Math.min(1, Math.max(0, 0.33 + t * 0.3 - t * t * 0.55));
-  return [r, g, b];
-}
-
-// Better viridis with specific stops
+// Viridis color stops
 function viridisColor(t: number): [number, number, number] {
-  // 5-stop viridis: 0=dark purple, 0.25=blue, 0.5=teal, 0.75=green, 1.0=yellow
   const stops: [number, number, number][] = [
-    [0.267, 0.004, 0.329],  // dark purple
-    [0.282, 0.141, 0.458],  // indigo
-    [0.127, 0.357, 0.525],  // blue-teal
-    [0.133, 0.553, 0.420],  // teal-green
-    [0.478, 0.733, 0.220],  // green
-    [0.993, 0.906, 0.144],  // yellow
+    [0.267, 0.004, 0.329],
+    [0.282, 0.141, 0.458],
+    [0.127, 0.357, 0.525],
+    [0.133, 0.553, 0.420],
+    [0.478, 0.733, 0.220],
+    [0.993, 0.906, 0.144],
   ];
   const n = stops.length - 1;
   const idx = Math.min(Math.floor(t * n), n - 1);
@@ -74,9 +65,6 @@ function loadPopulationTiff(): Promise<PopData> {
       const image = await tiff.getImage();
       const fullW = image.getWidth();
       const fullH = image.getHeight();
-
-      const width = fullW;
-      const height = fullH;
 
       const rasters = await image.readRasters({ resampleMethod: 'nearest' });
       const values = rasters[0] as Float32Array | Float64Array;
@@ -107,11 +95,98 @@ function loadPopulationTiff(): Promise<PopData> {
         if (v > maxVal) maxVal = v;
       }
 
-      return { width, height, values, bounds, noDataValue, maxVal };
+      return { width: fullW, height: fullH, values, bounds, noDataValue, maxVal };
     });
 }
 
-const PopulationDensityLayer = ({ terrain, exaggeration, onDataLoaded }: PopulationDensityLayerProps) => {
+/** Convert axial hex coords to pixel (flat-top) center */
+function hexToPixel(q: number, r: number, size: number): [number, number] {
+  const x = size * (3 / 2 * q);
+  const y = size * (Math.sqrt(3) / 2 * q + Math.sqrt(3) * r);
+  return [x, y];
+}
+
+/** Convert pixel to axial hex coords (flat-top) */
+function pixelToHex(px: number, py: number, size: number): [number, number] {
+  const q = (2 / 3 * px) / size;
+  const r = (-1 / 3 * px + Math.sqrt(3) / 3 * py) / size;
+  return [q, r];
+}
+
+function axialRound(q: number, r: number): [number, number] {
+  const s = -q - r;
+  let rq = Math.round(q);
+  let rr = Math.round(r);
+  let rs = Math.round(s);
+  const qDiff = Math.abs(rq - q);
+  const rDiff = Math.abs(rr - r);
+  const sDiff = Math.abs(rs - s);
+  if (qDiff > rDiff && qDiff > sDiff) rq = -rr - rs;
+  else if (rDiff > sDiff) rr = -rq - rs;
+  return [rq, rr];
+}
+
+/** Build a flat-top hexagon geometry with given size and height (extruded prism) */
+function buildHexGeometry(size: number, height: number): THREE.BufferGeometry {
+  const verts: number[] = [];
+  const indices: number[] = [];
+
+  // 6 outer vertices on top, 6 on bottom, + 2 centers
+  const topCenter = 0;
+  const botCenter = 1;
+  // top ring: 2..7, bot ring: 8..13
+  verts.push(0, height, 0); // top center
+  verts.push(0, 0, 0);      // bot center
+
+  for (let i = 0; i < 6; i++) {
+    const angle = (Math.PI / 3) * i;
+    const x = size * Math.cos(angle);
+    const z = size * Math.sin(angle);
+    verts.push(x, height, z); // top ring
+  }
+  for (let i = 0; i < 6; i++) {
+    const angle = (Math.PI / 3) * i;
+    const x = size * Math.cos(angle);
+    const z = size * Math.sin(angle);
+    verts.push(x, 0, z); // bot ring
+  }
+
+  // Top face
+  for (let i = 0; i < 6; i++) {
+    indices.push(topCenter, 2 + i, 2 + (i + 1) % 6);
+  }
+  // Bottom face
+  for (let i = 0; i < 6; i++) {
+    indices.push(botCenter, 8 + (i + 1) % 6, 8 + i);
+  }
+  // Side faces
+  for (let i = 0; i < 6; i++) {
+    const t1 = 2 + i;
+    const t2 = 2 + (i + 1) % 6;
+    const b1 = 8 + i;
+    const b2 = 8 + (i + 1) % 6;
+    indices.push(t1, b1, t2);
+    indices.push(t2, b1, b2);
+  }
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+  geo.setIndex(indices);
+  geo.computeVertexNormals();
+  return geo;
+}
+
+interface HexBin {
+  q: number;
+  r: number;
+  cx: number; // mesh x
+  cy: number; // mesh y (mapped from geo)
+  totalPop: number;
+  count: number;
+  baseZ: number; // terrain elevation z
+}
+
+const PopulationDensityLayer = ({ terrain, exaggeration, onDataLoaded, hexSize = 0.15, hexHeightExag = 1.0 }: PopulationDensityLayerProps) => {
   const [popData, setPopData] = useState<PopData | null>(null);
 
   useEffect(() => {
@@ -126,7 +201,7 @@ const PopulationDensityLayer = ({ terrain, exaggeration, onDataLoaded }: Populat
       });
   }, []);
 
-  const mesh = useMemo(() => {
+  const meshGroup = useMemo(() => {
     if (!popData || !terrain.bounds) return null;
 
     const { width: tw, height: th, elevations, minElevation, maxElevation, noDataValue: tNoData } = terrain;
@@ -139,36 +214,29 @@ const PopulationDensityLayer = ({ terrain, exaggeration, onDataLoaded }: Populat
     const { width: pw, height: ph, values, bounds: pb, noDataValue: pNoData, maxVal } = popData;
     if (maxVal <= 0) return null;
 
-    const gw = pw;
-    const gh = ph;
+    // Bin population pixels into hexagons
+    const bins = new Map<string, HexBin>();
 
-    const positions: number[] = [];
-    const colors: number[] = [];
-    const alphas: number[] = [];
-    const indices: number[] = [];
-    const valid: boolean[] = [];
-
-    for (let j = 0; j < gh; j++) {
-      for (let i = 0; i < gw; i++) {
-        const pidx = j * pw + i;
-        const val = values[pidx];
-
+    for (let j = 0; j < ph; j++) {
+      for (let i = 0; i < pw; i++) {
+        const val = values[j * pw + i];
         const isND = (pNoData !== null && val === pNoData) || isNaN(val) || val < 0 || val === 0;
+        if (isND) continue;
 
-        // Geo coords of this pop pixel
         const lon = pb.minLon + (i / (pw - 1)) * (pb.maxLon - pb.minLon);
         const lat = pb.maxLat - (j / (ph - 1)) * (pb.maxLat - pb.minLat);
 
-        // Map to terrain mesh coords
         const u = (lon - tb.minLon) / (tb.maxLon - tb.minLon);
         const vt = (tb.maxLat - lat) / (tb.maxLat - tb.minLat);
+        if (u < 0 || u > 1 || vt < 0 || vt > 1) continue;
 
-        if (u < 0 || u > 1 || vt < 0 || vt > 1) {
-          valid.push(false);
-          positions.push(0, 0, 0);
-          colors.push(0, 0, 0, 0);
-          continue;
-        }
+        const mx = (u - 0.5) * meshW;
+        const my = (0.5 - vt) * meshH;
+
+        // Convert mesh coords to hex axial
+        const [hq, hr] = pixelToHex(mx, my, hexSize);
+        const [rq, rr] = axialRound(hq, hr);
+        const key = `${rq},${rr}`;
 
         // Sample terrain elevation
         const tx = Math.min(Math.floor(u * (tw - 1)), tw - 1);
@@ -177,57 +245,75 @@ const PopulationDensityLayer = ({ terrain, exaggeration, onDataLoaded }: Populat
         if ((tNoData !== null && elev === tNoData) || isNaN(elev) || elev <= -9999) {
           elev = minElevation;
         }
-
         const normElev = (elev - minElevation) / elevRange;
-        const x = (u - 0.5) * meshW;
-        const y = (0.5 - vt) * meshH;
-        // Base z on terrain, then add population height
-        const baseZ = normElev * maxH + 0.02;
-        const popHeight = isND ? 0 : Math.log1p(val) / Math.log1p(maxVal) * maxH * 0.3;
-        const z = baseZ + popHeight;
+        const baseZ = normElev * maxH;
 
-        positions.push(x, y, z);
-        valid.push(!isND);
-
-        if (isND) {
-          colors.push(0, 0, 0, 0); // fully transparent
+        if (bins.has(key)) {
+          const bin = bins.get(key)!;
+          bin.totalPop += val;
+          bin.count += 1;
+          bin.baseZ = Math.max(bin.baseZ, baseZ); // use highest terrain point in hex
         } else {
-          const t = Math.min(1, Math.log1p(val) / Math.log1p(maxVal));
-          const [cr, cg, cb] = viridisColor(t);
-          colors.push(cr, cg, cb, 0.85);
+          const [cx, cy] = hexToPixel(rq, rr, hexSize);
+          bins.set(key, { q: rq, r: rr, cx, cy, totalPop: val, count: 1, baseZ });
         }
       }
     }
 
-    // Build triangle indices, skip faces touching any no-data vertex
-    for (let j = 0; j < gh - 1; j++) {
-      for (let i = 0; i < gw - 1; i++) {
-        const a = j * gw + i;
-        const b = a + 1;
-        const c = a + gw;
-        const d = c + 1;
-        if (valid[a] && valid[b] && valid[c]) indices.push(a, b, c);
-        if (valid[b] && valid[d] && valid[c]) indices.push(b, d, c);
-      }
+    if (bins.size === 0) return null;
+
+    // Find max average density for normalization
+    let maxAvg = 0;
+    for (const bin of bins.values()) {
+      const avg = bin.totalPop / bin.count;
+      if (avg > maxAvg) maxAvg = avg;
+    }
+    if (maxAvg <= 0) return null;
+
+    // Build instanced mesh
+    const hexGeo = buildHexGeometry(hexSize * 0.9, 1); // unit height, will scale
+    const material = new THREE.MeshStandardMaterial({
+      roughness: 0.5,
+      metalness: 0.2,
+      transparent: true,
+      opacity: 0.88,
+      side: THREE.DoubleSide,
+    });
+
+    const instanceCount = bins.size;
+    const instancedMesh = new THREE.InstancedMesh(hexGeo, material, instanceCount);
+    const colorAttr = new THREE.InstancedBufferAttribute(new Float32Array(instanceCount * 3), 3);
+    instancedMesh.instanceColor = colorAttr;
+
+    const dummy = new THREE.Object3D();
+    let idx = 0;
+    const maxPopHeight = maxH * 0.4 * hexHeightExag;
+
+    for (const bin of bins.values()) {
+      const avg = bin.totalPop / bin.count;
+      const t = Math.min(1, Math.log1p(avg) / Math.log1p(maxAvg));
+      const h = Math.max(0.01, t * maxPopHeight);
+
+      dummy.position.set(bin.cx, bin.baseZ + 0.01, bin.cy);
+      dummy.scale.set(1, h, 1);
+      dummy.updateMatrix();
+      instancedMesh.setMatrixAt(idx, dummy.matrix);
+
+      const [cr, cg, cb] = viridisColor(t);
+      colorAttr.setXYZ(idx, cr, cg, cb);
+      idx++;
     }
 
-    if (indices.length === 0) return null;
+    instancedMesh.instanceMatrix.needsUpdate = true;
+    colorAttr.needsUpdate = true;
 
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 4));
-    geo.setIndex(indices);
-    geo.computeVertexNormals();
+    return instancedMesh;
+  }, [popData, terrain, exaggeration, hexSize, hexHeightExag]);
 
-    return geo;
-  }, [popData, terrain, exaggeration]);
-
-  if (!mesh) return null;
+  if (!meshGroup) return null;
 
   return (
-    <mesh geometry={mesh} rotation={[-Math.PI / 2, 0, 0]}>
-      <meshBasicMaterial vertexColors transparent side={THREE.DoubleSide} depthWrite={false} />
-    </mesh>
+    <primitive object={meshGroup} rotation={[-Math.PI / 2, 0, 0]} />
   );
 };
 
