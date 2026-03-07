@@ -324,6 +324,10 @@ const Index = () => {
             onToggleLakes={setShowLakes}
             showPopDensity={showPopDensity}
             onTogglePopDensity={setShowPopDensity}
+            popHexSize={popHexSize}
+            onPopHexSizeChange={setPopHexSize}
+            popHexHeight={popHexHeight}
+            onPopHexHeightChange={setPopHexHeight}
           />
           {terrain && (
             <WaterVolumeDisplay
