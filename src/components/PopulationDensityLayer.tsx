@@ -38,12 +38,12 @@ export function samplePopulation(popData: PopData | null, lon: number, lat: numb
 // Viridis color stops
 function viridisColor(t: number): [number, number, number] {
   const stops: [number, number, number][] = [
-    [0.267, 0.004, 0.329],
-    [0.282, 0.141, 0.458],
-    [0.127, 0.357, 0.525],
-    [0.133, 0.553, 0.420],
-    [0.478, 0.733, 0.220],
     [0.993, 0.906, 0.144],
+    [0.478, 0.733, 0.220],
+    [0.133, 0.553, 0.420],
+    [0.127, 0.357, 0.525],
+    [0.282, 0.141, 0.458],
+    [0.267, 0.004, 0.329],
   ];
   const n = stops.length - 1;
   const idx = Math.min(Math.floor(t * n), n - 1);
