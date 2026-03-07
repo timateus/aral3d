@@ -181,7 +181,10 @@ const PopulationDensityLayer = ({ terrain, exaggeration, onDataLoaded }: Populat
         const normElev = (elev - minElevation) / elevRange;
         const x = (u - 0.5) * meshW;
         const y = (0.5 - vt) * meshH;
-        const z = normElev * maxH + 0.02;
+        // Base z on terrain, then add population height
+        const baseZ = normElev * maxH + 0.02;
+        const popHeight = isND ? 0 : Math.log1p(val) / Math.log1p(maxVal) * maxH * 0.3;
+        const z = baseZ + popHeight;
 
         positions.push(x, y, z);
         valid.push(!isND);
