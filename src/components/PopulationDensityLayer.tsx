@@ -261,7 +261,7 @@ const PopulationDensityLayer = ({ terrain, exaggeration, onDataLoaded, hexSize =
     if (maxAvg <= 0) return null;
 
     // Build instanced mesh
-    const hexGeo = buildHexGeometry(hexSize * 0.9, 1); // unit height, will scale
+    const hexGeo = buildHexGeometry(hexSize * 0.9);
     const material = new THREE.MeshStandardMaterial({
       roughness: 0.5,
       metalness: 0.2,
