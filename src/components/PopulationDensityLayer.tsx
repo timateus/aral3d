@@ -126,45 +126,35 @@ function axialRound(q: number, r: number): [number, number] {
   return [rq, rr];
 }
 
-/** Build a flat-top hexagon geometry with given size and height (extruded prism) */
-function buildHexGeometry(size: number, height: number): THREE.BufferGeometry {
+/** Build a flat-top hexagon geometry extruded along Z axis (height=1, will be scaled) */
+function buildHexGeometry(size: number): THREE.BufferGeometry {
   const verts: number[] = [];
   const indices: number[] = [];
 
-  // 6 outer vertices on top, 6 on bottom, + 2 centers
+  // top center (z=1), bot center (z=0)
   const topCenter = 0;
   const botCenter = 1;
-  // top ring: 2..7, bot ring: 8..13
-  verts.push(0, height, 0); // top center
-  verts.push(0, 0, 0);      // bot center
+  verts.push(0, 0, 1); // top center
+  verts.push(0, 0, 0); // bot center
 
+  // top ring: indices 2..7, bot ring: 8..13
   for (let i = 0; i < 6; i++) {
     const angle = (Math.PI / 3) * i;
-    const x = size * Math.cos(angle);
-    const z = size * Math.sin(angle);
-    verts.push(x, height, z); // top ring
+    verts.push(size * Math.cos(angle), size * Math.sin(angle), 1);
   }
   for (let i = 0; i < 6; i++) {
     const angle = (Math.PI / 3) * i;
-    const x = size * Math.cos(angle);
-    const z = size * Math.sin(angle);
-    verts.push(x, 0, z); // bot ring
+    verts.push(size * Math.cos(angle), size * Math.sin(angle), 0);
   }
 
   // Top face
-  for (let i = 0; i < 6; i++) {
-    indices.push(topCenter, 2 + i, 2 + (i + 1) % 6);
-  }
+  for (let i = 0; i < 6; i++) indices.push(topCenter, 2 + i, 2 + (i + 1) % 6);
   // Bottom face
-  for (let i = 0; i < 6; i++) {
-    indices.push(botCenter, 8 + (i + 1) % 6, 8 + i);
-  }
+  for (let i = 0; i < 6; i++) indices.push(botCenter, 8 + (i + 1) % 6, 8 + i);
   // Side faces
   for (let i = 0; i < 6; i++) {
-    const t1 = 2 + i;
-    const t2 = 2 + (i + 1) % 6;
-    const b1 = 8 + i;
-    const b2 = 8 + (i + 1) % 6;
+    const t1 = 2 + i, t2 = 2 + (i + 1) % 6;
+    const b1 = 8 + i, b2 = 8 + (i + 1) % 6;
     indices.push(t1, b1, t2);
     indices.push(t2, b1, b2);
   }
@@ -271,7 +261,7 @@ const PopulationDensityLayer = ({ terrain, exaggeration, onDataLoaded, hexSize =
     if (maxAvg <= 0) return null;
 
     // Build instanced mesh
-    const hexGeo = buildHexGeometry(hexSize * 0.9, 1); // unit height, will scale
+    const hexGeo = buildHexGeometry(hexSize * 0.9);
     const material = new THREE.MeshStandardMaterial({
       roughness: 0.5,
       metalness: 0.2,
@@ -294,8 +284,9 @@ const PopulationDensityLayer = ({ terrain, exaggeration, onDataLoaded, hexSize =
       const t = Math.min(1, Math.log1p(avg) / Math.log1p(maxAvg));
       const h = Math.max(0.01, t * maxPopHeight);
 
-      dummy.position.set(bin.cx, bin.baseZ + 0.01, bin.cy);
-      dummy.scale.set(1, h, 1);
+      // Position: x, y are horizontal plane; z is elevation (before group rotation)
+      dummy.position.set(bin.cx, bin.cy, bin.baseZ + 0.01);
+      dummy.scale.set(1, 1, h);
       dummy.updateMatrix();
       instancedMesh.setMatrixAt(idx, dummy.matrix);
 
