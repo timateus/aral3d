@@ -213,6 +213,8 @@ const Index = () => {
             showWaterExtent={showWaterExtent}
             waterExtentYear={waterExtentYear}
             showPopDensity={showPopDensity}
+            popHexSize={popHexSize}
+            popHexHeight={popHexHeight}
             started={started}
             recording={recording}
             hideNoData={hideNoData}
