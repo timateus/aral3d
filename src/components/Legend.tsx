@@ -99,7 +99,7 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
             <div
               className="h-2 flex-1 rounded-sm"
               style={{
-                background: 'linear-gradient(to right, #440154, #482878, #31688e, #21918c, #35b779, #8fd744, #fde725)',
+                background: 'linear-gradient(to right, #fde725, #8fd744, #35b779, #21918c, #31688e, #482878, #440154)',
               }}
             />
           </div>
