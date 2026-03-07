@@ -284,8 +284,9 @@ const PopulationDensityLayer = ({ terrain, exaggeration, onDataLoaded, hexSize =
       const t = Math.min(1, Math.log1p(avg) / Math.log1p(maxAvg));
       const h = Math.max(0.01, t * maxPopHeight);
 
-      dummy.position.set(bin.cx, bin.baseZ + 0.01, bin.cy);
-      dummy.scale.set(1, h, 1);
+      // Position: x, y are horizontal plane; z is elevation (before group rotation)
+      dummy.position.set(bin.cx, bin.cy, bin.baseZ + 0.01);
+      dummy.scale.set(1, 1, h);
       dummy.updateMatrix();
       instancedMesh.setMatrixAt(idx, dummy.matrix);
 
