@@ -42,6 +42,8 @@ const Index = () => {
   const [showWatershed, setShowWatershed] = useState(false);
   const [watershedTerrain, setWatershedTerrain] = useState<TerrainData | null>(null);
   const [showPopDensity, setShowPopDensity] = useState(false);
+  const [popHexSize, setPopHexSize] = useState(0.15);
+  const [popHexHeight, setPopHexHeight] = useState(1.0);
   const [showWaterExtent, setShowWaterExtent] = useState(true);
   const [waterExtentYear, setWaterExtentYear] = useState(1960);
   
