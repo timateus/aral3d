@@ -14,7 +14,7 @@ interface TerrainMeshProps {
   inspectorEnabled?: boolean;
   popData?: PopData | null;
   damToolActive?: boolean;
-  onDamPlace?: (lat: number, lon: number) => void;
+  onDamPlace?: (row: number, col: number) => void;
   waterFlowActive?: boolean;
   onWaterFlowClick?: (row: number, col: number) => void;
 }
