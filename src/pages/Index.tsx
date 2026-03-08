@@ -62,7 +62,9 @@ const Index = () => {
   const [raiseBrushRadius, setRaiseBrushRadius] = useState(5);
   const [raiseAmount, setRaiseAmount] = useState(10);
   const [raiseEditCount, setRaiseEditCount] = useState(0);
+  const [raiseEnabled, setRaiseEnabled] = useState(true);
   const originalElevationsRef = useRef<Float32Array | null>(null);
+  const raisedPixelsRef = useRef<Set<number>>(new Set());
   const [terrainVersion, setTerrainVersion] = useState(0);
   const [waterFlowActive, setWaterFlowActive] = useState(false);
   const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
@@ -291,7 +293,6 @@ const Index = () => {
   // Raise terrain click handler
   const handleRaiseTerrainClick = useCallback((row: number, col: number) => {
     if (!terrain) return;
-    // Save original elevations on first edit
     if (!originalElevationsRef.current) {
       originalElevationsRef.current = new Float32Array(terrain.elevations);
     }
@@ -306,9 +307,9 @@ const Index = () => {
         const falloff = 1 - dist / (raiseBrushRadius + 1);
         const idx = r * width + c;
         elevations[idx] += raiseAmount * falloff;
+        raisedPixelsRef.current.add(idx);
       }
     }
-    // Update max elevation
     let newMax = terrain.maxElevation;
     for (let i = 0; i < elevations.length; i++) {
       if (elevations[i] > newMax) newMax = elevations[i];
@@ -321,16 +322,41 @@ const Index = () => {
   const handleResetTerrain = useCallback(() => {
     if (!terrain || !originalElevationsRef.current) return;
     terrain.elevations.set(originalElevationsRef.current);
-    // Recalculate max
     let newMax = terrain.minElevation;
     for (let i = 0; i < terrain.elevations.length; i++) {
       if (terrain.elevations[i] > newMax) newMax = terrain.elevations[i];
     }
     terrain.maxElevation = newMax;
     originalElevationsRef.current = null;
+    raisedPixelsRef.current = new Set();
     setRaiseEditCount(0);
+    setRaiseEnabled(true);
     setTerrainVersion(v => v + 1);
   }, [terrain]);
+
+  const handleToggleRaise = useCallback(() => {
+    if (!terrain || !originalElevationsRef.current) return;
+    if (raiseEnabled) {
+      // Disable: restore original elevations
+      terrain.elevations.set(originalElevationsRef.current);
+    } else {
+      // Enable: reapply by computing diff
+      // We stored the modified state, so we need to swap back
+      // Actually, let's store the modified elevations when disabling
+    }
+    // Simpler: swap current and original
+    const current = new Float32Array(terrain.elevations);
+    terrain.elevations.set(originalElevationsRef.current);
+    originalElevationsRef.current = current;
+    // Recalc max
+    let newMax = terrain.minElevation;
+    for (let i = 0; i < terrain.elevations.length; i++) {
+      if (terrain.elevations[i] > newMax) newMax = terrain.elevations[i];
+    }
+    terrain.maxElevation = newMax;
+    setRaiseEnabled(v => !v);
+    setTerrainVersion(v => v + 1);
+  }, [terrain, raiseEnabled]);
 
   const handleScenarioActions = useCallback((actions: ScenarioAction[]) => {
     for (const a of actions) {
@@ -388,6 +414,7 @@ const Index = () => {
             flowState={flowState}
             flowRenderKey={flowRenderKey}
             terrainVersion={terrainVersion}
+            raisedPixels={raiseEnabled ? raisedPixelsRef.current : undefined}
           />
         )}
         {!terrain && !loading && error && (
@@ -547,6 +574,8 @@ const Index = () => {
             raiseAmount={raiseAmount}
             onRaiseAmountChange={setRaiseAmount}
             editCount={raiseEditCount}
+            raiseEnabled={raiseEnabled}
+            onToggleRaise={handleToggleRaise}
           />
           <WaterFlowPanel
             active={waterFlowActive}

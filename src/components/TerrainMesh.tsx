@@ -18,9 +18,10 @@ interface TerrainMeshProps {
   waterFlowActive?: boolean;
   onWaterFlowClick?: (row: number, col: number) => void;
   terrainVersion?: number;
+  raisedPixels?: Set<number>;
 }
 
-const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, waterBounds, inspectorEnabled = false, popData, damToolActive = false, onDamPlace, waterFlowActive = false, onWaterFlowClick, terrainVersion = 0 }: TerrainMeshProps) => {
+const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, waterBounds, inspectorEnabled = false, popData, damToolActive = false, onDamPlace, waterFlowActive = false, onWaterFlowClick, terrainVersion = 0, raisedPixels }: TerrainMeshProps) => {
   const [hoverInfo, setHoverInfo] = useState<{ position: THREE.Vector3; elevation: number; lat: number; lon: number; population: number | null } | null>(null);
   const meshRef = useRef<THREE.Mesh>(null);
 
@@ -124,6 +125,14 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
             0.12 + (1 - waterDepth) * 0.2,
             0.35 + (1 - waterDepth) * 0.25,
           ];
+        } else if (raisedPixels && raisedPixels.has(idx)) {
+          // Pink for raised terrain pixels
+          const base = getElevationColor(normalized, elev);
+          color = [
+            Math.min(1, base[0] * 0.3 + 0.91 * 0.7),
+            Math.min(1, base[1] * 0.3 + 0.26 * 0.7),
+            Math.min(1, base[2] * 0.3 + 0.58 * 0.7),
+          ];
         } else {
           color = getElevationColor(normalized, elev);
         }
@@ -135,7 +144,7 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
 
     geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
     geometry.attributes.color.needsUpdate = true;
-  }, [geometry, vertexMeta, waterLevel, waterBounds, terrain, terrainVersion]);
+  }, [geometry, vertexMeta, waterLevel, waterBounds, terrain, terrainVersion, raisedPixels]);
 
   const material = useMemo(() => {
     return new THREE.MeshStandardMaterial({
