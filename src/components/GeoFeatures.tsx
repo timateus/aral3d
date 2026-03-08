@@ -217,39 +217,44 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
   }, [terrain, exaggeration, bounds, meshWidth, meshHeight, basin21Data]);
 
   const riverLines = useMemo(() => {
-    if (!bounds || !geoJsonData) return [];
+    if (!bounds) return [];
 
-    const segments: { points: [number, number, number][]; width: number }[] = [];
+    const segments: { points: [number, number, number][]; width: number; color: string }[] = [];
 
-    for (const feature of geoJsonData.features) {
-      if (feature.geometry.type !== 'LineString') continue;
-      const coords = feature.geometry.coordinates as number[][];
-      const sorder = (feature.properties?.sorder as number) || 1;
-      const points: [number, number, number][] = [];
+    // Helper to process a GeoJSON collection into river segments
+    const processRiverData = (data: GeoJSONCollection | null, color: string) => {
+      if (!data) return;
+      for (const feature of data.features) {
+        if (feature.geometry.type !== 'LineString') continue;
+        const coords = feature.geometry.coordinates as number[][];
+        const sorder = (feature.properties?.sorder as number) || 1;
+        const points: [number, number, number][] = [];
 
-      for (const coord of coords) {
-        const lon = coord[0] as number;
-        const lat = coord[1] as number;
-        const pos = geoToMeshPos(lat, lon, bounds, terrain, exaggeration, meshWidth, meshHeight);
-        if (pos) {
-          points.push([pos[0], pos[1] + 0.03, pos[2]]);
+        for (const coord of coords) {
+          const lon = coord[0] as number;
+          const lat = coord[1] as number;
+          const pos = geoToMeshPos(lat, lon, bounds, terrain, exaggeration, meshWidth, meshHeight);
+          if (pos) {
+            points.push([pos[0], pos[1] + 0.03, pos[2]]);
+          }
+        }
+
+        if (points.length >= 2) {
+          const inflowScale = riverInflow != null
+            ? Math.max(0.2, (riverInflow / 30) ** 0.7)
+            : 1;
+          const baseWidth = sorder * 3.6;
+          const lineWidth = Math.max(0.3, baseWidth * inflowScale);
+          segments.push({ points, width: lineWidth, color });
         }
       }
+    };
 
-      if (points.length >= 2) {
-        // Scale line width by stream order and river inflow
-        // Max historical inflow ~60 km³/yr (1960s), min ~5 km³/yr (2000s)
-        const inflowScale = riverInflow != null
-          ? Math.max(0.2, (riverInflow / 30) ** 0.7)
-          : 1;
-        const baseWidth = sorder * 3.6;
-        const lineWidth = Math.max(0.3, baseWidth * inflowScale);
-        segments.push({ points, width: lineWidth });
-      }
-    }
+    processRiverData(geoJsonData, '#4fc3f7');
+    processRiverData(syrDaryaData, '#7ecaf7');
 
     return segments;
-  }, [terrain, exaggeration, bounds, meshWidth, meshHeight, geoJsonData, riverInflow]);
+  }, [terrain, exaggeration, bounds, meshWidth, meshHeight, geoJsonData, syrDaryaData, riverInflow]);
 
   const BORDER_COUNTRIES = ['Uzbekistan'];
 
