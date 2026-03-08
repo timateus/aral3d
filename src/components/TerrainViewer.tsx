@@ -64,6 +64,10 @@ interface TerrainViewerProps {
   damToolActive?: boolean;
   onDamPlace?: (lat: number, lon: number) => void;
   reservoirResult?: ReservoirResult | null;
+  waterFlowActive?: boolean;
+  onWaterFlowClick?: (row: number, col: number) => void;
+  flowState?: WaterFlowState | null;
+  flowRenderKey?: number;
 }
 
 function CameraAnimator({ started }: { started: boolean }) {
