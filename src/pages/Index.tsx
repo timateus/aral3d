@@ -293,7 +293,6 @@ const Index = () => {
   // Raise terrain click handler
   const handleRaiseTerrainClick = useCallback((row: number, col: number) => {
     if (!terrain) return;
-    // Save original elevations on first edit
     if (!originalElevationsRef.current) {
       originalElevationsRef.current = new Float32Array(terrain.elevations);
     }
@@ -308,9 +307,9 @@ const Index = () => {
         const falloff = 1 - dist / (raiseBrushRadius + 1);
         const idx = r * width + c;
         elevations[idx] += raiseAmount * falloff;
+        raisedPixelsRef.current.add(idx);
       }
     }
-    // Update max elevation
     let newMax = terrain.maxElevation;
     for (let i = 0; i < elevations.length; i++) {
       if (elevations[i] > newMax) newMax = elevations[i];
