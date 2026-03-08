@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { loadGeoTiff, TerrainData } from '@/lib/geotiff-loader';
 import { mergeTerrains, mergeExpandTerrains } from '@/lib/terrain-merger';
 import { simulateReservoir } from '@/lib/dam-simulation';
+import { createFlowState, addWaterAt, stepFlow, WaterFlowState } from '@/lib/water-flow-simulation';
 import TerrainViewer, { TerrainViewerHandle } from '@/components/TerrainViewer';
 import ControlPanel from '@/components/ControlPanel';
 import Legend from '@/components/Legend';
@@ -17,6 +18,7 @@ import type { ReservoirResult } from '@/lib/dam-simulation';
 import { NARRATIVE_STEPS } from '@/lib/narrative-steps';
 import NarrativeOverlay from '@/components/NarrativeOverlay';
 import DamToolPanel from '@/components/DamToolPanel';
+import WaterFlowPanel from '@/components/WaterFlowPanel';
 import { BookOpen } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useUserLocation } from '@/hooks/useUserLocation';
@@ -61,6 +63,15 @@ const Index = () => {
   const [damToolActive, setDamToolActive] = useState(false);
   const [damPosition, setDamPosition] = useState<{ lat: number; lon: number } | null>(null);
   const [reservoirResult, setReservoirResult] = useState<ReservoirResult | null>(null);
+  const [waterFlowActive, setWaterFlowActive] = useState(false);
+  const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
+  const [flowRenderKey, setFlowRenderKey] = useState(0);
+  const [flowAnimating, setFlowAnimating] = useState(false);
+  const [flowSpeed, setFlowSpeed] = useState(5);
+  const [flowWaterAmount, setFlowWaterAmount] = useState(5);
+  const [flowWetCount, setFlowWetCount] = useState(0);
+  const flowStateRef = useRef<WaterFlowState | null>(null);
+  const flowAnimRef = useRef<number | null>(null);
   const viewerRef = useRef<TerrainViewerHandle>(null);
 
   // Lifted data panel state
@@ -190,6 +201,92 @@ const Index = () => {
     return { terrain: result, hideNoData: false };
   }, [baseTerrain, seabedTerrain, khorezmTerrain, showKhorezm, watershedTerrain, showWatershed]);
 
+  // --- Water flow simulation ---
+  const handleWaterFlowClick = useCallback((row: number, col: number) => {
+    if (!terrain) return;
+    let state = flowStateRef.current;
+    if (!state) {
+      state = createFlowState(terrain);
+      flowStateRef.current = state;
+    }
+    addWaterAt(state, row, col, flowWaterAmount, 3);
+    setFlowState(state);
+    setFlowRenderKey(k => k + 1);
+    // Count wet pixels
+    let count = 0;
+    for (let i = 0; i < state.waterDepth.length; i++) {
+      if (state.waterDepth[i] > 0.01) count++;
+    }
+    setFlowWetCount(count);
+  }, [terrain, flowWaterAmount]);
+
+  const doFlowStep = useCallback(() => {
+    const state = flowStateRef.current;
+    if (!state) return;
+    stepFlow(state);
+    setFlowState(state);
+    setFlowRenderKey(k => k + 1);
+    let count = 0;
+    for (let i = 0; i < state.waterDepth.length; i++) {
+      if (state.waterDepth[i] > 0.01) count++;
+    }
+    setFlowWetCount(count);
+  }, []);
+
+  const resetFlow = useCallback(() => {
+    flowStateRef.current = null;
+    setFlowState(null);
+    setFlowRenderKey(0);
+    setFlowAnimating(false);
+    setFlowWetCount(0);
+    if (flowAnimRef.current) {
+      cancelAnimationFrame(flowAnimRef.current);
+      flowAnimRef.current = null;
+    }
+  }, []);
+
+  // Animation loop for flow
+  useEffect(() => {
+    if (!flowAnimating) {
+      if (flowAnimRef.current) {
+        cancelAnimationFrame(flowAnimRef.current);
+        flowAnimRef.current = null;
+      }
+      return;
+    }
+
+    let lastTime = 0;
+    const interval = 1000 / (flowSpeed * 3); // ms between steps
+
+    const tick = (time: number) => {
+      if (time - lastTime >= interval) {
+        lastTime = time;
+        // Run multiple steps per frame for higher speeds
+        const stepsPerFrame = Math.max(1, Math.floor(flowSpeed / 5));
+        for (let s = 0; s < stepsPerFrame; s++) {
+          doFlowStep();
+        }
+      }
+      flowAnimRef.current = requestAnimationFrame(tick);
+    };
+
+    flowAnimRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (flowAnimRef.current) cancelAnimationFrame(flowAnimRef.current);
+    };
+  }, [flowAnimating, flowSpeed, doFlowStep]);
+
+  // Cleanup on deactivate
+  useEffect(() => {
+    if (!waterFlowActive) {
+      setFlowAnimating(false);
+      if (flowAnimRef.current) {
+        cancelAnimationFrame(flowAnimRef.current);
+        flowAnimRef.current = null;
+      }
+    }
+  }, [waterFlowActive]);
+
   const handleScenarioActions = useCallback((actions: ScenarioAction[]) => {
     for (const a of actions) {
       if (a.type === 'water_level') {
@@ -254,6 +351,10 @@ const Index = () => {
             damToolActive={damToolActive}
             onDamPlace={(lat, lon) => setDamPosition({ lat, lon })}
             reservoirResult={reservoirResult}
+            waterFlowActive={waterFlowActive}
+            onWaterFlowClick={handleWaterFlowClick}
+            flowState={flowState}
+            flowRenderKey={flowRenderKey}
           />
         )}
         {!terrain && !loading && error && (
@@ -408,12 +509,27 @@ const Index = () => {
             <DamToolPanel
               terrain={terrain}
               active={damToolActive}
-              onToggle={() => setDamToolActive(v => !v)}
+              onToggle={() => { setDamToolActive(v => !v); setWaterFlowActive(false); }}
               damPosition={damPosition}
               onSimulationResult={setReservoirResult}
               onClear={() => setDamPosition(null)}
             />
           )}
+          <WaterFlowPanel
+            active={waterFlowActive}
+            onToggle={() => { setWaterFlowActive(v => !v); setDamToolActive(false); }}
+            isPlaced={!!flowState}
+            stepCount={flowState?.stepCount ?? 0}
+            wetPixelCount={flowWetCount}
+            isAnimating={flowAnimating}
+            onToggleAnimate={() => setFlowAnimating(v => !v)}
+            onStep={doFlowStep}
+            onReset={resetFlow}
+            speed={flowSpeed}
+            onSpeedChange={setFlowSpeed}
+            waterAmount={flowWaterAmount}
+            onWaterAmountChange={setFlowWaterAmount}
+          />
           <button
             onClick={requestLocation}
             disabled={locating}
