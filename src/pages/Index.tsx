@@ -315,10 +315,7 @@ const Index = () => {
     }
     terrain.maxElevation = newMax;
     setRaiseEditCount(c => c + 1);
-    // Force re-render of terrain
-    setExaggeration(prev => prev); // no-op, need to trigger re-render
-    // Trigger a state change to force TerrainMesh to re-compute
-    setWaterLevel(wl => wl);
+    setTerrainVersion(v => v + 1);
   }, [terrain, raiseBrushRadius, raiseAmount]);
 
   const handleResetTerrain = useCallback(() => {
