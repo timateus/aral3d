@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { loadGeoTiff, TerrainData } from '@/lib/geotiff-loader';
 import { mergeTerrains, mergeExpandTerrains } from '@/lib/terrain-merger';
-import { simulateReservoir } from '@/lib/dam-simulation';
 import { createFlowState, addWaterAt, stepFlow, WaterFlowState } from '@/lib/water-flow-simulation';
 import TerrainViewer, { TerrainViewerHandle } from '@/components/TerrainViewer';
 import ControlPanel from '@/components/ControlPanel';
