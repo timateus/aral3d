@@ -201,6 +201,92 @@ const Index = () => {
     return { terrain: result, hideNoData: false };
   }, [baseTerrain, seabedTerrain, khorezmTerrain, showKhorezm, watershedTerrain, showWatershed]);
 
+  // --- Water flow simulation ---
+  const handleWaterFlowClick = useCallback((row: number, col: number) => {
+    if (!terrain) return;
+    let state = flowStateRef.current;
+    if (!state) {
+      state = createFlowState(terrain);
+      flowStateRef.current = state;
+    }
+    addWaterAt(state, row, col, flowWaterAmount, 3);
+    setFlowState(state);
+    setFlowRenderKey(k => k + 1);
+    // Count wet pixels
+    let count = 0;
+    for (let i = 0; i < state.waterDepth.length; i++) {
+      if (state.waterDepth[i] > 0.01) count++;
+    }
+    setFlowWetCount(count);
+  }, [terrain, flowWaterAmount]);
+
+  const doFlowStep = useCallback(() => {
+    const state = flowStateRef.current;
+    if (!state) return;
+    stepFlow(state);
+    setFlowState(state);
+    setFlowRenderKey(k => k + 1);
+    let count = 0;
+    for (let i = 0; i < state.waterDepth.length; i++) {
+      if (state.waterDepth[i] > 0.01) count++;
+    }
+    setFlowWetCount(count);
+  }, []);
+
+  const resetFlow = useCallback(() => {
+    flowStateRef.current = null;
+    setFlowState(null);
+    setFlowRenderKey(0);
+    setFlowAnimating(false);
+    setFlowWetCount(0);
+    if (flowAnimRef.current) {
+      cancelAnimationFrame(flowAnimRef.current);
+      flowAnimRef.current = null;
+    }
+  }, []);
+
+  // Animation loop for flow
+  useEffect(() => {
+    if (!flowAnimating) {
+      if (flowAnimRef.current) {
+        cancelAnimationFrame(flowAnimRef.current);
+        flowAnimRef.current = null;
+      }
+      return;
+    }
+
+    let lastTime = 0;
+    const interval = 1000 / (flowSpeed * 3); // ms between steps
+
+    const tick = (time: number) => {
+      if (time - lastTime >= interval) {
+        lastTime = time;
+        // Run multiple steps per frame for higher speeds
+        const stepsPerFrame = Math.max(1, Math.floor(flowSpeed / 5));
+        for (let s = 0; s < stepsPerFrame; s++) {
+          doFlowStep();
+        }
+      }
+      flowAnimRef.current = requestAnimationFrame(tick);
+    };
+
+    flowAnimRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (flowAnimRef.current) cancelAnimationFrame(flowAnimRef.current);
+    };
+  }, [flowAnimating, flowSpeed, doFlowStep]);
+
+  // Cleanup on deactivate
+  useEffect(() => {
+    if (!waterFlowActive) {
+      setFlowAnimating(false);
+      if (flowAnimRef.current) {
+        cancelAnimationFrame(flowAnimRef.current);
+        flowAnimRef.current = null;
+      }
+    }
+  }, [waterFlowActive]);
+
   const handleScenarioActions = useCallback((actions: ScenarioAction[]) => {
     for (const a of actions) {
       if (a.type === 'water_level') {
