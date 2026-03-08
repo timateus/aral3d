@@ -175,16 +175,24 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
   }, []);
 
   const handleClick = useCallback((e: ThreeEvent<MouseEvent>) => {
-    if (!damToolActive || !onDamPlace) return;
     e.stopPropagation();
     const { uv } = e;
     if (!uv) return;
-    const { bounds: b } = terrain;
-    if (!b) return;
-    const lon = b.minLon + uv.x * (b.maxLon - b.minLon);
-    const lat = b.maxLat - (1 - uv.y) * (b.maxLat - b.minLat);
-    onDamPlace(lat, lon);
-  }, [damToolActive, onDamPlace, terrain]);
+    const { bounds: b, width, height } = terrain;
+
+    if (waterFlowActive && onWaterFlowClick) {
+      const pixelX = Math.floor(uv.x * (width - 1));
+      const pixelY = Math.floor((1 - uv.y) * (height - 1));
+      onWaterFlowClick(pixelY, pixelX);
+      return;
+    }
+
+    if (damToolActive && onDamPlace && b) {
+      const lon = b.minLon + uv.x * (b.maxLon - b.minLon);
+      const lat = b.maxLat - (1 - uv.y) * (b.maxLat - b.minLat);
+      onDamPlace(lat, lon);
+    }
+  }, [damToolActive, onDamPlace, waterFlowActive, onWaterFlowClick, terrain]);
 
   return (
     <group>
