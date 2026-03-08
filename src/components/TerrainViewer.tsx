@@ -7,7 +7,6 @@ import WaterExtentLayer from './WaterExtentLayer';
 import PopulationDensityLayer, { PopData } from './PopulationDensityLayer';
 import NarrativeCameraController from './NarrativeCameraController';
 import ScenarioOverlay from './ScenarioOverlay';
-import ReservoirOverlay from './ReservoirOverlay';
 import WaterFlowOverlay from './WaterFlowOverlay';
 import RiverFlyover from './RiverFlyover';
 import WASDControls from './WASDControls';
