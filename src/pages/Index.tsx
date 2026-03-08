@@ -414,6 +414,7 @@ const Index = () => {
             flowState={flowState}
             flowRenderKey={flowRenderKey}
             terrainVersion={terrainVersion}
+            raisedPixels={raiseEnabled ? raisedPixelsRef.current : undefined}
           />
         )}
         {!terrain && !loading && error && (
