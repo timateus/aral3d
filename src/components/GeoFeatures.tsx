@@ -153,6 +153,7 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
   const meshHeight = 10 * (h / w);
 
   const [geoJsonData, setGeoJsonData] = useState<GeoJSONCollection | null>(null);
+  const [syrDaryaData, setSyrDaryaData] = useState<GeoJSONCollection | null>(null);
   const [countriesData, setCountriesData] = useState<GeoJSONCollection | null>(null);
   const [basin13Data, setBasin13Data] = useState<GeoJSONCollection | null>(null);
   const [basin19Data, setBasin19Data] = useState<GeoJSONCollection | null>(null);
@@ -163,6 +164,11 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
       .then((r) => r.json())
       .then((data) => setGeoJsonData(data))
       .catch((err) => console.warn('Failed to load river GeoJSON:', err));
+
+    fetch('/data/syrdarya_basin.geojson')
+      .then((r) => r.json())
+      .then((data) => setSyrDaryaData(data))
+      .catch((err) => console.warn('Failed to load Syr Darya GeoJSON:', err));
 
     fetch('/data/countries.geojson')
       .then((r) => r.json())
