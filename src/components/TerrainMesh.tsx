@@ -125,6 +125,14 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
             0.12 + (1 - waterDepth) * 0.2,
             0.35 + (1 - waterDepth) * 0.25,
           ];
+        } else if (raisedPixels && raisedPixels.has(idx)) {
+          // Pink for raised terrain pixels
+          const base = getElevationColor(normalized, elev);
+          color = [
+            Math.min(1, base[0] * 0.3 + 0.91 * 0.7),
+            Math.min(1, base[1] * 0.3 + 0.26 * 0.7),
+            Math.min(1, base[2] * 0.3 + 0.58 * 0.7),
+          ];
         } else {
           color = getElevationColor(normalized, elev);
         }
