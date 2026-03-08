@@ -329,7 +329,7 @@ const Index = () => {
     terrain.maxElevation = newMax;
     originalElevationsRef.current = null;
     setRaiseEditCount(0);
-    setWaterLevel(wl => wl);
+    setTerrainVersion(v => v + 1);
   }, [terrain]);
 
   const handleScenarioActions = useCallback((actions: ScenarioAction[]) => {
