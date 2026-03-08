@@ -172,6 +172,18 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
     setHoverInfo(null);
   }, []);
 
+  const handleClick = useCallback((e: ThreeEvent<MouseEvent>) => {
+    if (!damToolActive || !onDamPlace) return;
+    e.stopPropagation();
+    const { uv } = e;
+    if (!uv) return;
+    const { bounds: b } = terrain;
+    if (!b) return;
+    const lon = b.minLon + uv.x * (b.maxLon - b.minLon);
+    const lat = b.maxLat - (1 - uv.y) * (b.maxLat - b.minLat);
+    onDamPlace(lat, lon);
+  }, [damToolActive, onDamPlace, terrain]);
+
   return (
     <group>
       <mesh
