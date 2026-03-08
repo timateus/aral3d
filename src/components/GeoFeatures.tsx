@@ -529,12 +529,86 @@ function extractNamedLabels(
   return labels;
 }
 
+const CanalLineWithLabel = ({ segment, color }: { segment: CanalSegment; color: string }) => {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <group>
+      <Line
+        points={segment.points}
+        color={color}
+        lineWidth={hovered ? 3 : 1.5}
+        transparent
+        opacity={hovered ? 1 : 0.7}
+      />
+      {/* Invisible hover tube along the line at midpoint */}
+      {segment.midPos && (
+        <mesh
+          position={segment.midPos}
+          onPointerOver={() => setHovered(true)}
+          onPointerOut={() => setHovered(false)}
+        >
+          <sphereGeometry args={[0.15, 6, 6]} />
+          <meshBasicMaterial transparent opacity={0} />
+        </mesh>
+      )}
+      {/* Always-visible name along canal */}
+      {segment.name && segment.midPos && (
+        <Html
+          position={[segment.midPos[0], segment.midPos[1] + 0.06, segment.midPos[2]]}
+          center
+          distanceFactor={10}
+          style={{ pointerEvents: 'none' }}
+        >
+          <div style={{
+            color,
+            fontSize: '7px',
+            fontFamily: "'Inter', system-ui, sans-serif",
+            fontWeight: 400,
+            fontStyle: 'italic',
+            whiteSpace: 'nowrap',
+            textShadow: '0 1px 3px rgba(0,0,0,0.9)',
+            opacity: hovered ? 1 : 0.6,
+            transform: `rotate(${segment.angle}deg)`,
+            transition: 'opacity 0.2s',
+          }}>
+            {segment.name}
+          </div>
+        </Html>
+      )}
+      {/* Larger tooltip on hover */}
+      {hovered && segment.name && segment.midPos && (
+        <Html
+          position={[segment.midPos[0], segment.midPos[1] + 0.2, segment.midPos[2]]}
+          center
+          distanceFactor={6}
+          style={{ pointerEvents: 'none' }}
+        >
+          <div style={{
+            color,
+            padding: '3px 8px',
+            fontSize: '11px',
+            fontFamily: "'Inter', system-ui, sans-serif",
+            fontWeight: 600,
+            whiteSpace: 'nowrap',
+            background: 'rgba(0,0,0,0.8)',
+            borderRadius: '4px',
+            textShadow: '0 1px 3px rgba(0,0,0,0.9)',
+            border: `1px solid ${color}33`,
+          }}>
+            {segment.name}
+          </div>
+        </Html>
+      )}
+    </group>
+  );
+};
+
 const HoverLabel = ({ label }: { label: NamedLabel }) => {
   const [hovered, setHovered] = useState(false);
 
   return (
     <group position={label.pos}>
-      {/* Invisible hover sphere */}
       <mesh
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
@@ -542,12 +616,10 @@ const HoverLabel = ({ label }: { label: NamedLabel }) => {
         <sphereGeometry args={[0.12, 8, 8]} />
         <meshBasicMaterial transparent opacity={0} />
       </mesh>
-      {/* Small dot always visible */}
       <mesh>
         <sphereGeometry args={[0.02, 6, 6]} />
         <meshStandardMaterial color={label.color} emissive={label.color} emissiveIntensity={0.5} />
       </mesh>
-      {/* Label on hover */}
       {hovered && (
         <Html position={[0, 0.1, 0]} center distanceFactor={8} style={{ pointerEvents: 'none' }}>
           <div style={{
