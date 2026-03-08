@@ -12,6 +12,7 @@ import DataPanel, { AralAnnual, SEA_SERIES } from '@/components/DataPanel';
 import { Camera, Video, BarChart3, Navigation, MapPin, Loader2, Crosshair, Download } from 'lucide-react';
 import { exportTerrainSTL } from '@/lib/stl-exporter';
 import type { ScenarioAction } from '@/types/scenario';
+import type { ReservoirResult } from '@/lib/dam-simulation';
 import { NARRATIVE_STEPS } from '@/lib/narrative-steps';
 import NarrativeOverlay from '@/components/NarrativeOverlay';
 import { BookOpen } from 'lucide-react';
