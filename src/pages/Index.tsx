@@ -236,6 +236,9 @@ const Index = () => {
             riverInflow={currentRiverInflow}
             userLocation={userLocation}
             inspectorEnabled={showInspector}
+            damToolActive={damToolActive}
+            onDamPlace={(lat, lon) => setDamPosition({ lat, lon })}
+            reservoirResult={reservoirResult}
           />
         )}
         {!terrain && !loading && error && (
