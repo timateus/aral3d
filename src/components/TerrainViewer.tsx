@@ -59,6 +59,9 @@ interface TerrainViewerProps {
   riverInflow?: number;
   userLocation?: { lat: number; lon: number } | null;
   inspectorEnabled?: boolean;
+  damToolActive?: boolean;
+  onDamPlace?: (lat: number, lon: number) => void;
+  reservoirResult?: ReservoirResult | null;
 }
 
 function CameraAnimator({ started }: { started: boolean }) {
