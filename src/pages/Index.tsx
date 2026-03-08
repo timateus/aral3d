@@ -57,6 +57,9 @@ const Index = () => {
   const [narrativeActive, setNarrativeActive] = useState(false);
   const [showInspector, setShowInspector] = useState(false);
   const [narrativeStep, setNarrativeStep] = useState(0);
+  const [damToolActive, setDamToolActive] = useState(false);
+  const [damPosition, setDamPosition] = useState<{ lat: number; lon: number } | null>(null);
+  const [reservoirResult, setReservoirResult] = useState<ReservoirResult | null>(null);
   const viewerRef = useRef<TerrainViewerHandle>(null);
 
   // Lifted data panel state
