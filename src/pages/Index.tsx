@@ -351,6 +351,10 @@ const Index = () => {
             damToolActive={damToolActive}
             onDamPlace={(lat, lon) => setDamPosition({ lat, lon })}
             reservoirResult={reservoirResult}
+            waterFlowActive={waterFlowActive}
+            onWaterFlowClick={handleWaterFlowClick}
+            flowState={flowState}
+            flowRenderKey={flowRenderKey}
           />
         )}
         {!terrain && !loading && error && (
