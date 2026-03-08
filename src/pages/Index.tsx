@@ -190,7 +190,30 @@ const Index = () => {
     return { terrain: result, hideNoData: false };
   }, [baseTerrain, seabedTerrain, khorezmTerrain, showKhorezm, watershedTerrain, showWatershed]);
 
-  return (
+  const handleScenarioActions = useCallback((actions: ScenarioAction[]) => {
+    for (const a of actions) {
+      if (a.type === 'water_level') {
+        setWaterLevel(a.value);
+      }
+      if (a.type === 'dam' && a.simulate && terrain) {
+        const res = simulateReservoir(
+          terrain,
+          a.lat,
+          a.lon,
+          a.height ?? 30,
+          a.width ?? 200,
+          a.orientation
+        );
+        setDamPosition({ lat: a.lat, lon: a.lon });
+        setReservoirResult(res);
+      }
+    }
+    const visualActions = actions.filter((a) => a.type !== 'water_level');
+    if (visualActions.length > 0) {
+      setScenarioActions((prev) => [...prev, ...visualActions]);
+    }
+  }, [terrain]);
+
     <div className="relative w-screen h-screen overflow-hidden bg-background">
       {/* 3D Viewer */}
       <div className="absolute inset-0">
