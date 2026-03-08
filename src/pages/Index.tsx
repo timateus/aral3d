@@ -287,22 +287,57 @@ const Index = () => {
     }
   }, [waterFlowActive]);
 
+  // Raise terrain click handler
+  const handleRaiseTerrainClick = useCallback((row: number, col: number) => {
+    if (!terrain) return;
+    // Save original elevations on first edit
+    if (!originalElevationsRef.current) {
+      originalElevationsRef.current = new Float32Array(terrain.elevations);
+    }
+    const { width, height, elevations } = terrain;
+    for (let dr = -raiseBrushRadius; dr <= raiseBrushRadius; dr++) {
+      for (let dc = -raiseBrushRadius; dc <= raiseBrushRadius; dc++) {
+        const r = row + dr;
+        const c = col + dc;
+        if (r < 0 || r >= height || c < 0 || c >= width) continue;
+        const dist = Math.sqrt(dr * dr + dc * dc);
+        if (dist > raiseBrushRadius) continue;
+        const falloff = 1 - dist / (raiseBrushRadius + 1);
+        const idx = r * width + c;
+        elevations[idx] += raiseAmount * falloff;
+      }
+    }
+    // Update max elevation
+    let newMax = terrain.maxElevation;
+    for (let i = 0; i < elevations.length; i++) {
+      if (elevations[i] > newMax) newMax = elevations[i];
+    }
+    terrain.maxElevation = newMax;
+    setRaiseEditCount(c => c + 1);
+    // Force re-render of terrain
+    setExaggeration(prev => prev); // no-op, need to trigger re-render
+    // Trigger a state change to force TerrainMesh to re-compute
+    setWaterLevel(wl => wl);
+  }, [terrain, raiseBrushRadius, raiseAmount]);
+
+  const handleResetTerrain = useCallback(() => {
+    if (!terrain || !originalElevationsRef.current) return;
+    terrain.elevations.set(originalElevationsRef.current);
+    // Recalculate max
+    let newMax = terrain.minElevation;
+    for (let i = 0; i < terrain.elevations.length; i++) {
+      if (terrain.elevations[i] > newMax) newMax = terrain.elevations[i];
+    }
+    terrain.maxElevation = newMax;
+    originalElevationsRef.current = null;
+    setRaiseEditCount(0);
+    setWaterLevel(wl => wl);
+  }, [terrain]);
+
   const handleScenarioActions = useCallback((actions: ScenarioAction[]) => {
     for (const a of actions) {
       if (a.type === 'water_level') {
         setWaterLevel(a.value);
-      }
-      if (a.type === 'dam' && a.simulate && terrain) {
-        const res = simulateReservoir(
-          terrain,
-          a.lat,
-          a.lon,
-          a.height ?? 30,
-          a.width ?? 200,
-          a.orientation
-        );
-        setDamPosition({ lat: a.lat, lon: a.lon });
-        setReservoirResult(res);
       }
     }
     const visualActions = actions.filter((a) => a.type !== 'water_level');
