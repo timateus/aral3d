@@ -330,39 +330,18 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
       ))}
 
       {/* 13th century basin */}
-      {show13thBasin && basinLines13.map((points, i) => (
-        <Line
-          key={`basin13-${i}`}
-          points={points}
-          color="#e8a838"
-          lineWidth={1.5}
-          transparent
-          opacity={0.7}
-        />
+      {show13thBasin && basinLines13.map((seg, i) => (
+        <CanalLineWithLabel key={`basin13-${i}`} segment={seg} color="#e8a838" />
       ))}
 
       {/* 19th century basin */}
-      {show19thBasin && basinLines19.map((points, i) => (
-        <Line
-          key={`basin19-${i}`}
-          points={points}
-          color="#38e8a8"
-          lineWidth={1.5}
-          transparent
-          opacity={0.7}
-        />
+      {show19thBasin && basinLines19.map((seg, i) => (
+        <CanalLineWithLabel key={`basin19-${i}`} segment={seg} color="#38e8a8" />
       ))}
 
       {/* 21st century basin */}
-      {show21stBasin && basinLines21.map((points, i) => (
-        <Line
-          key={`basin21-${i}`}
-          points={points}
-          color="#e84038"
-          lineWidth={1.5}
-          transparent
-          opacity={0.7}
-        />
+      {show21stBasin && basinLines21.map((seg, i) => (
+        <CanalLineWithLabel key={`basin21-${i}`} segment={seg} color="#e84038" />
       ))}
 
       {/* City markers */}
@@ -467,6 +446,13 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
   );
 };
 
+interface CanalSegment {
+  points: [number, number, number][];
+  name: string | null;
+  midPos: [number, number, number] | null;
+  angle: number;
+}
+
 function extractMultiLineStrings(
   data: GeoJSONCollection,
   bounds: GeoBounds,
@@ -474,22 +460,34 @@ function extractMultiLineStrings(
   exaggeration: number,
   meshWidth: number,
   meshHeight: number,
-): [number, number, number][][] {
-  const segments: [number, number, number][][] = [];
+): CanalSegment[] {
+  const segments: CanalSegment[] = [];
   for (const feature of data.features) {
+    const name = (feature.properties?.Name as string) || null;
     let lines: number[][][] = [];
     if (feature.geometry.type === 'LineString') {
       lines = [feature.geometry.coordinates as number[][]];
     } else if (feature.geometry.type === 'MultiLineString') {
       lines = feature.geometry.coordinates as number[][][];
     }
+    // Collect all points for this feature across sub-lines
+    const allPoints: [number, number, number][] = [];
     for (const line of lines) {
-      const points: [number, number, number][] = [];
       for (const coord of line) {
         const pos = geoToMeshPos(coord[1], coord[0], bounds, terrain, exaggeration, meshWidth, meshHeight);
-        if (pos) points.push([pos[0], pos[1] + 0.04, pos[2]]);
+        if (pos) allPoints.push([pos[0], pos[1] + 0.04, pos[2]]);
       }
-      if (points.length >= 2) segments.push(points);
+    }
+    if (allPoints.length >= 2) {
+      const midIdx = Math.floor(allPoints.length / 2);
+      const midPos = allPoints[midIdx];
+      // Calculate angle from neighboring points for text rotation
+      const prevIdx = Math.max(0, midIdx - 1);
+      const nextIdx = Math.min(allPoints.length - 1, midIdx + 1);
+      const dx = allPoints[nextIdx][0] - allPoints[prevIdx][0];
+      const dz = allPoints[nextIdx][2] - allPoints[prevIdx][2];
+      const angle = Math.atan2(dz, dx) * (180 / Math.PI);
+      segments.push({ points: allPoints, name, midPos, angle });
     }
   }
   return segments;
@@ -531,12 +529,86 @@ function extractNamedLabels(
   return labels;
 }
 
+const CanalLineWithLabel = ({ segment, color }: { segment: CanalSegment; color: string }) => {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <group>
+      <Line
+        points={segment.points}
+        color={color}
+        lineWidth={hovered ? 3 : 1.5}
+        transparent
+        opacity={hovered ? 1 : 0.7}
+      />
+      {/* Invisible hover tube along the line at midpoint */}
+      {segment.midPos && (
+        <mesh
+          position={segment.midPos}
+          onPointerOver={() => setHovered(true)}
+          onPointerOut={() => setHovered(false)}
+        >
+          <sphereGeometry args={[0.15, 6, 6]} />
+          <meshBasicMaterial transparent opacity={0} />
+        </mesh>
+      )}
+      {/* Always-visible name along canal */}
+      {segment.name && segment.midPos && (
+        <Html
+          position={[segment.midPos[0], segment.midPos[1] + 0.06, segment.midPos[2]]}
+          center
+          distanceFactor={10}
+          style={{ pointerEvents: 'none' }}
+        >
+          <div style={{
+            color,
+            fontSize: '7px',
+            fontFamily: "'Inter', system-ui, sans-serif",
+            fontWeight: 400,
+            fontStyle: 'italic',
+            whiteSpace: 'nowrap',
+            textShadow: '0 1px 3px rgba(0,0,0,0.9)',
+            opacity: hovered ? 1 : 0.6,
+            transform: `rotate(${segment.angle}deg)`,
+            transition: 'opacity 0.2s',
+          }}>
+            {segment.name}
+          </div>
+        </Html>
+      )}
+      {/* Larger tooltip on hover */}
+      {hovered && segment.name && segment.midPos && (
+        <Html
+          position={[segment.midPos[0], segment.midPos[1] + 0.2, segment.midPos[2]]}
+          center
+          distanceFactor={6}
+          style={{ pointerEvents: 'none' }}
+        >
+          <div style={{
+            color,
+            padding: '3px 8px',
+            fontSize: '11px',
+            fontFamily: "'Inter', system-ui, sans-serif",
+            fontWeight: 600,
+            whiteSpace: 'nowrap',
+            background: 'rgba(0,0,0,0.8)',
+            borderRadius: '4px',
+            textShadow: '0 1px 3px rgba(0,0,0,0.9)',
+            border: `1px solid ${color}33`,
+          }}>
+            {segment.name}
+          </div>
+        </Html>
+      )}
+    </group>
+  );
+};
+
 const HoverLabel = ({ label }: { label: NamedLabel }) => {
   const [hovered, setHovered] = useState(false);
 
   return (
     <group position={label.pos}>
-      {/* Invisible hover sphere */}
       <mesh
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
@@ -544,12 +616,10 @@ const HoverLabel = ({ label }: { label: NamedLabel }) => {
         <sphereGeometry args={[0.12, 8, 8]} />
         <meshBasicMaterial transparent opacity={0} />
       </mesh>
-      {/* Small dot always visible */}
       <mesh>
         <sphereGeometry args={[0.02, 6, 6]} />
         <meshStandardMaterial color={label.color} emissive={label.color} emissiveIntensity={0.5} />
       </mesh>
-      {/* Label on hover */}
       {hovered && (
         <Html position={[0, 0.1, 0]} center distanceFactor={8} style={{ pointerEvents: 'none' }}>
           <div style={{
