@@ -63,6 +63,15 @@ const Index = () => {
   const [damToolActive, setDamToolActive] = useState(false);
   const [damPosition, setDamPosition] = useState<{ lat: number; lon: number } | null>(null);
   const [reservoirResult, setReservoirResult] = useState<ReservoirResult | null>(null);
+  const [waterFlowActive, setWaterFlowActive] = useState(false);
+  const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
+  const [flowRenderKey, setFlowRenderKey] = useState(0);
+  const [flowAnimating, setFlowAnimating] = useState(false);
+  const [flowSpeed, setFlowSpeed] = useState(5);
+  const [flowWaterAmount, setFlowWaterAmount] = useState(5);
+  const [flowWetCount, setFlowWetCount] = useState(0);
+  const flowStateRef = useRef<WaterFlowState | null>(null);
+  const flowAnimRef = useRef<number | null>(null);
   const viewerRef = useRef<TerrainViewerHandle>(null);
 
   // Lifted data panel state
