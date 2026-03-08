@@ -89,7 +89,7 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
       geometry: geo,
       vertexMeta: { isNoData, normalizedElevs, rawElevs, width: w, height: h },
     };
-  }, [terrain, exaggeration, hideNoData]);
+  }, [terrain, exaggeration, hideNoData, terrainVersion]);
 
   // Colors depend on waterLevel but NOT geometry shape — much cheaper to recompute
   useMemo(() => {
