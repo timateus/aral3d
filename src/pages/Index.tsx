@@ -384,8 +384,7 @@ const Index = () => {
             userLocation={userLocation}
             inspectorEnabled={showInspector}
             damToolActive={damToolActive}
-            onDamPlace={(lat, lon) => setDamPosition({ lat, lon })}
-            reservoirResult={reservoirResult}
+            onDamPlace={handleRaiseTerrainClick}
             waterFlowActive={waterFlowActive}
             onWaterFlowClick={handleWaterFlowClick}
             flowState={flowState}
