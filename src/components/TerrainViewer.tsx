@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
-import { OrbitControls, GizmoHelper, GizmoViewport, Html } from '@react-three/drei';
+import { GizmoHelper, GizmoViewport, Html } from '@react-three/drei';
 import TerrainMesh from './TerrainMesh';
 import GeoFeatures from './GeoFeatures';
 import WaterExtentLayer from './WaterExtentLayer';
@@ -9,7 +9,7 @@ import NarrativeCameraController from './NarrativeCameraController';
 import ScenarioOverlay from './ScenarioOverlay';
 import WaterFlowOverlay from './WaterFlowOverlay';
 import RiverFlyover from './RiverFlyover';
-import WASDControls from './WASDControls';
+import MapControls from './MapControls';
 import { TerrainData } from '@/lib/geotiff-loader';
 import type { ScenarioAction } from '@/types/scenario';
 import type { WaterFlowState } from '@/lib/water-flow-simulation';
@@ -225,6 +225,7 @@ function VideoAnimator({
 
 const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, showWaterExtent, waterExtentYear, showPopDensity, popHexSize, popHexHeight, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone, riverInflow, userLocation, inspectorEnabled, damToolActive, onDamPlace, waterFlowActive, onWaterFlowClick, flowState, flowRenderKey, terrainVersion, raisedPixels }, ref) => {
   const screenshotFn = useRef<(() => void) | null>(null);
+  const orbitRef = useRef<any>(null);
   const [flyoverAnimating, setFlyoverAnimating] = useState(false);
   const [popData, setPopData] = useState<PopData | null>(null);
 
@@ -325,15 +326,10 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
         onAnimatingChange={setFlyoverAnimating}
       />
 
-      <OrbitControls
+      <MapControls
         enabled={!narrativeActive && !flyoverAnimating}
-        enableDamping
-        dampingFactor={0.05}
-        minDistance={2}
-        maxDistance={30}
-        maxPolarAngle={Math.PI / 2.1}
+        orbitRef={orbitRef}
       />
-      <WASDControls enabled={!narrativeActive && !flyoverAnimating} />
 
       <GizmoHelper alignment="bottom-right" margin={[60, 60]}>
         <GizmoViewport labelColor="white" axisHeadScale={0.8} />
