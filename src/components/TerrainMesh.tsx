@@ -18,6 +18,7 @@ interface TerrainMeshProps {
   waterFlowActive?: boolean;
   onWaterFlowClick?: (row: number, col: number) => void;
   terrainVersion?: number;
+  raisedPixels?: Set<number>;
 }
 
 const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, waterBounds, inspectorEnabled = false, popData, damToolActive = false, onDamPlace, waterFlowActive = false, onWaterFlowClick, terrainVersion = 0 }: TerrainMeshProps) => {
