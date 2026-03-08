@@ -1,7 +1,7 @@
-import { useState, useCallback } from 'react';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
-import { Mountain, X, ArrowUp } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Mountain, X, ArrowUp, Eye, EyeOff } from 'lucide-react';
 
 interface DamToolPanelProps {
   active: boolean;
@@ -12,6 +12,8 @@ interface DamToolPanelProps {
   raiseAmount: number;
   onRaiseAmountChange: (v: number) => void;
   editCount: number;
+  raiseEnabled: boolean;
+  onToggleRaise: () => void;
 }
 
 const DamToolPanel = ({
@@ -23,6 +25,8 @@ const DamToolPanel = ({
   raiseAmount,
   onRaiseAmountChange,
   editCount,
+  raiseEnabled,
+  onToggleRaise,
 }: DamToolPanelProps) => {
   return (
     <div className="glass-panel w-72 overflow-hidden">
@@ -79,9 +83,22 @@ const DamToolPanel = ({
           </div>
 
           {editCount > 0 && (
-            <div className="text-xs text-muted-foreground text-center">
-              {editCount} edit{editCount !== 1 ? 's' : ''} applied
-            </div>
+            <>
+              <div className="flex items-center justify-between rounded-md bg-accent/30 p-2">
+                <label className="text-xs text-foreground flex items-center gap-1.5">
+                  {raiseEnabled ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                  Show raised terrain
+                </label>
+                <Switch
+                  checked={raiseEnabled}
+                  onCheckedChange={onToggleRaise}
+                />
+              </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span className="inline-block w-3 h-3 rounded-sm" style={{ background: '#e84393' }} />
+                {editCount} edit{editCount !== 1 ? 's' : ''} · {raiseEnabled ? 'Enabled' : 'Disabled'}
+              </div>
+            </>
           )}
 
           <Button
