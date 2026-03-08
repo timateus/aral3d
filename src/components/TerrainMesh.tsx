@@ -14,12 +14,13 @@ interface TerrainMeshProps {
   inspectorEnabled?: boolean;
   popData?: PopData | null;
   damToolActive?: boolean;
-  onDamPlace?: (lat: number, lon: number) => void;
+  onDamPlace?: (row: number, col: number) => void;
   waterFlowActive?: boolean;
   onWaterFlowClick?: (row: number, col: number) => void;
+  terrainVersion?: number;
 }
 
-const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, waterBounds, inspectorEnabled = false, popData, damToolActive = false, onDamPlace, waterFlowActive = false, onWaterFlowClick }: TerrainMeshProps) => {
+const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, waterBounds, inspectorEnabled = false, popData, damToolActive = false, onDamPlace, waterFlowActive = false, onWaterFlowClick, terrainVersion = 0 }: TerrainMeshProps) => {
   const [hoverInfo, setHoverInfo] = useState<{ position: THREE.Vector3; elevation: number; lat: number; lon: number; population: number | null } | null>(null);
   const meshRef = useRef<THREE.Mesh>(null);
 
@@ -88,7 +89,7 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
       geometry: geo,
       vertexMeta: { isNoData, normalizedElevs, rawElevs, width: w, height: h },
     };
-  }, [terrain, exaggeration, hideNoData]);
+  }, [terrain, exaggeration, hideNoData, terrainVersion]);
 
   // Colors depend on waterLevel but NOT geometry shape — much cheaper to recompute
   useMemo(() => {
@@ -134,7 +135,7 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
 
     geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
     geometry.attributes.color.needsUpdate = true;
-  }, [geometry, vertexMeta, waterLevel, waterBounds, terrain]);
+  }, [geometry, vertexMeta, waterLevel, waterBounds, terrain, terrainVersion]);
 
   const material = useMemo(() => {
     return new THREE.MeshStandardMaterial({
@@ -187,10 +188,11 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
       return;
     }
 
-    if (damToolActive && onDamPlace && b) {
-      const lon = b.minLon + uv.x * (b.maxLon - b.minLon);
-      const lat = b.maxLat - (1 - uv.y) * (b.maxLat - b.minLat);
-      onDamPlace(lat, lon);
+    if (damToolActive && onDamPlace) {
+      const pixelX = Math.floor(uv.x * (width - 1));
+      const pixelY = Math.floor((1 - uv.y) * (height - 1));
+      onDamPlace(pixelY, pixelX);
+      return;
     }
   }, [damToolActive, onDamPlace, waterFlowActive, onWaterFlowClick, terrain]);
 

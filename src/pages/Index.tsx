@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { loadGeoTiff, TerrainData } from '@/lib/geotiff-loader';
 import { mergeTerrains, mergeExpandTerrains } from '@/lib/terrain-merger';
-import { simulateReservoir } from '@/lib/dam-simulation';
 import { createFlowState, addWaterAt, stepFlow, WaterFlowState } from '@/lib/water-flow-simulation';
 import TerrainViewer, { TerrainViewerHandle } from '@/components/TerrainViewer';
 import ControlPanel from '@/components/ControlPanel';
@@ -14,7 +13,6 @@ import DataPanel, { AralAnnual, SEA_SERIES } from '@/components/DataPanel';
 import { Camera, Video, BarChart3, Navigation, MapPin, Loader2, Crosshair, Download, Waves } from 'lucide-react';
 import { exportTerrainSTL } from '@/lib/stl-exporter';
 import type { ScenarioAction } from '@/types/scenario';
-import type { ReservoirResult } from '@/lib/dam-simulation';
 import { NARRATIVE_STEPS } from '@/lib/narrative-steps';
 import NarrativeOverlay from '@/components/NarrativeOverlay';
 import DamToolPanel from '@/components/DamToolPanel';
@@ -61,8 +59,11 @@ const Index = () => {
   const [showInspector, setShowInspector] = useState(false);
   const [narrativeStep, setNarrativeStep] = useState(0);
   const [damToolActive, setDamToolActive] = useState(false);
-  const [damPosition, setDamPosition] = useState<{ lat: number; lon: number } | null>(null);
-  const [reservoirResult, setReservoirResult] = useState<ReservoirResult | null>(null);
+  const [raiseBrushRadius, setRaiseBrushRadius] = useState(5);
+  const [raiseAmount, setRaiseAmount] = useState(10);
+  const [raiseEditCount, setRaiseEditCount] = useState(0);
+  const originalElevationsRef = useRef<Float32Array | null>(null);
+  const [terrainVersion, setTerrainVersion] = useState(0);
   const [waterFlowActive, setWaterFlowActive] = useState(false);
   const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
   const [flowRenderKey, setFlowRenderKey] = useState(0);
@@ -287,22 +288,54 @@ const Index = () => {
     }
   }, [waterFlowActive]);
 
+  // Raise terrain click handler
+  const handleRaiseTerrainClick = useCallback((row: number, col: number) => {
+    if (!terrain) return;
+    // Save original elevations on first edit
+    if (!originalElevationsRef.current) {
+      originalElevationsRef.current = new Float32Array(terrain.elevations);
+    }
+    const { width, height, elevations } = terrain;
+    for (let dr = -raiseBrushRadius; dr <= raiseBrushRadius; dr++) {
+      for (let dc = -raiseBrushRadius; dc <= raiseBrushRadius; dc++) {
+        const r = row + dr;
+        const c = col + dc;
+        if (r < 0 || r >= height || c < 0 || c >= width) continue;
+        const dist = Math.sqrt(dr * dr + dc * dc);
+        if (dist > raiseBrushRadius) continue;
+        const falloff = 1 - dist / (raiseBrushRadius + 1);
+        const idx = r * width + c;
+        elevations[idx] += raiseAmount * falloff;
+      }
+    }
+    // Update max elevation
+    let newMax = terrain.maxElevation;
+    for (let i = 0; i < elevations.length; i++) {
+      if (elevations[i] > newMax) newMax = elevations[i];
+    }
+    terrain.maxElevation = newMax;
+    setRaiseEditCount(c => c + 1);
+    setTerrainVersion(v => v + 1);
+  }, [terrain, raiseBrushRadius, raiseAmount]);
+
+  const handleResetTerrain = useCallback(() => {
+    if (!terrain || !originalElevationsRef.current) return;
+    terrain.elevations.set(originalElevationsRef.current);
+    // Recalculate max
+    let newMax = terrain.minElevation;
+    for (let i = 0; i < terrain.elevations.length; i++) {
+      if (terrain.elevations[i] > newMax) newMax = terrain.elevations[i];
+    }
+    terrain.maxElevation = newMax;
+    originalElevationsRef.current = null;
+    setRaiseEditCount(0);
+    setTerrainVersion(v => v + 1);
+  }, [terrain]);
+
   const handleScenarioActions = useCallback((actions: ScenarioAction[]) => {
     for (const a of actions) {
       if (a.type === 'water_level') {
         setWaterLevel(a.value);
-      }
-      if (a.type === 'dam' && a.simulate && terrain) {
-        const res = simulateReservoir(
-          terrain,
-          a.lat,
-          a.lon,
-          a.height ?? 30,
-          a.width ?? 200,
-          a.orientation
-        );
-        setDamPosition({ lat: a.lat, lon: a.lon });
-        setReservoirResult(res);
       }
     }
     const visualActions = actions.filter((a) => a.type !== 'water_level');
@@ -349,12 +382,12 @@ const Index = () => {
             userLocation={userLocation}
             inspectorEnabled={showInspector}
             damToolActive={damToolActive}
-            onDamPlace={(lat, lon) => setDamPosition({ lat, lon })}
-            reservoirResult={reservoirResult}
+            onDamPlace={handleRaiseTerrainClick}
             waterFlowActive={waterFlowActive}
             onWaterFlowClick={handleWaterFlowClick}
             flowState={flowState}
             flowRenderKey={flowRenderKey}
+            terrainVersion={terrainVersion}
           />
         )}
         {!terrain && !loading && error && (
@@ -505,16 +538,16 @@ const Index = () => {
             <Crosshair className="w-3.5 h-3.5" />
             {showInspector ? 'Inspector On' : 'Inspector Off'}
           </button>
-          {terrain && (
-            <DamToolPanel
-              terrain={terrain}
-              active={damToolActive}
-              onToggle={() => { setDamToolActive(v => !v); setWaterFlowActive(false); }}
-              damPosition={damPosition}
-              onSimulationResult={setReservoirResult}
-              onClear={() => setDamPosition(null)}
-            />
-          )}
+          <DamToolPanel
+            active={damToolActive}
+            onToggle={() => { setDamToolActive(v => !v); setWaterFlowActive(false); }}
+            onClear={handleResetTerrain}
+            brushRadius={raiseBrushRadius}
+            onBrushRadiusChange={setRaiseBrushRadius}
+            raiseAmount={raiseAmount}
+            onRaiseAmountChange={setRaiseAmount}
+            editCount={raiseEditCount}
+          />
           <WaterFlowPanel
             active={waterFlowActive}
             onToggle={() => { setWaterFlowActive(v => !v); setDamToolActive(false); }}
