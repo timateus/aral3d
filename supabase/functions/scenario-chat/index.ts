@@ -84,6 +84,8 @@ const TOOL_SCHEMA = {
               name: { type: "string", description: "Name (for settlement)" },
               text: { type: "string", description: "Label text (for label)" },
               size: { type: "number", description: "Size 1-5 (for settlement)" },
+              simulate: { type: "boolean", description: "Trigger reservoir flood-fill simulation (for dam)" },
+              orientation: { type: "number", description: "Dam wall angle in degrees (for dam, auto-detected if omitted)" },
             },
             required: ["type"],
             additionalProperties: false,
