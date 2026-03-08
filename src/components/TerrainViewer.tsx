@@ -60,8 +60,7 @@ interface TerrainViewerProps {
   userLocation?: { lat: number; lon: number } | null;
   inspectorEnabled?: boolean;
   damToolActive?: boolean;
-  onDamPlace?: (lat: number, lon: number) => void;
-  reservoirResult?: ReservoirResult | null;
+  onDamPlace?: (row: number, col: number) => void;
   waterFlowActive?: boolean;
   onWaterFlowClick?: (row: number, col: number) => void;
   flowState?: WaterFlowState | null;
