@@ -94,7 +94,7 @@ const WaterFlowPanel = ({
                   value={[speed]}
                   onValueChange={([v]) => onSpeedChange(v)}
                   min={1}
-                  max={20}
+                  max={300}
                   step={1}
                   className="w-full"
                 />
