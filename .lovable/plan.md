@@ -1,59 +1,134 @@
 
 
-# Dam Reservoir Simulation
+# Guided Narrative Tour for the Aral Sea
 
-## Concept
+## The Story (7 Steps)
 
-When a user places a dam on the terrain, we simulate water filling behind it using a **flood-fill algorithm** on the DEM data. The dam acts as a barrier at a certain elevation; water accumulates in the basin behind it up to the dam's crest height. The result is a realistic reservoir shape dictated by actual topography.
+The narrative tells the story of the Aral Sea's transformation through a sequence of guided steps. Each step controls: the camera position, the timeline year, which data layers are visible, which metrics are highlighted, and displays a narration card.
 
-## Algorithm: Flood Fill from Dam
+### Step 1 -- "The Fourth-Largest Lake"
+- **Year**: 1960 | **Camera**: High wide shot (18, 16, 18)
+- **Layers**: Water extent ON, borders ON, rivers ON, basins OFF
+- **Metrics**: Sea Level, Surface Area, Volume
+- **Text**: "In 1960, the Aral Sea was the world's fourth-largest lake -- 68,000 km2 of water sustaining an entire region."
 
-1. **Dam placement** defines a location, orientation, crest elevation, and width
-2. **Seed point**: Pick a point on the upstream side of the dam (user specifies or we auto-detect the lower-elevation side)
-3. **Flood fill**: Starting from the seed, BFS/flood-fill across DEM pixels where `elevation < crest_elevation`, stopping at the dam wall and at terrain that exceeds crest height
-4. **Output**: A set of flooded pixels → rendered as blue-tinted water on the terrain, plus volume calculation
+### Step 2 -- "The Rivers That Fed It"
+- **Year**: 1960 | **Camera**: Orbit to show river inflows from the south
+- **Layers**: Rivers highlighted, 13th/19th century basins ON
+- **Metrics**: River Inflow
+- **Text**: "The Amu Darya and Syr Darya rivers delivered ~55 km3 of water annually, following ancient basin paths carved over centuries."
+
+### Step 3 -- "The Soviet Cotton Plan"
+- **Year**: 1970 | **Camera**: Pull back to show irrigated land context
+- **Layers**: Water extent ON, rivers ON
+- **Metrics**: Cotton Harvest, Irrigated Area, River Inflow
+- **Text**: "In the 1960s, Soviet planners diverted river water to irrigate cotton fields. By 1970, inflow had dropped dramatically."
+
+### Step 4 -- "The Shrinking Begins"
+- **Year**: 1990 | **Camera**: Zoom closer, lower angle to show exposed seabed
+- **Layers**: Water extent ON, 1960 extent outline for comparison
+- **Metrics**: Sea Level, Volume, Salinity
+- **Text**: "By 1990, the sea had lost 60% of its volume. Salinity tripled, devastating fisheries and ecosystems."
+
+### Step 5 -- "The Sea Splits"
+- **Year**: 2005 | **Camera**: Top-down view showing the split
+- **Layers**: Water extent ON, 21st century canals ON
+- **Metrics**: Sea Level, Surface Area, Volume
+- **Text**: "By 2005, the Aral Sea had split into separate bodies. The Eastern basin was nearly gone."
+
+### Step 6 -- "Climate Consequences"
+- **Year**: 2015 | **Camera**: Slow orbit
+- **Layers**: Water extent ON
+- **Metrics**: Temp Anomaly, Salinity
+- **Text**: "The exposed seabed became a source of toxic dust storms. Regional temperatures shifted, rainfall patterns changed."
+
+### Step 7 -- "The Aral Sea Today"
+- **Year**: 2024 | **Camera**: Final resting position
+- **Layers**: All layers ON
+- **Metrics**: All key metrics
+- **Text**: "Today, only fragments remain. The Northern Aral has partially recovered thanks to the Kok-Aral Dam, but the Southern basin continues to shrink. Explore freely."
 
 ## Architecture
 
-### New utility: `src/lib/dam-simulation.ts`
-- `simulateReservoir(terrain, damLat, damLon, damHeight, damOrientation?)` → returns `{ floodedPixels: Set<number>, volume: number, surfaceArea: number, maxDepth: number }`
-- BFS flood-fill on the elevation grid from the upstream side
-- Dam modeled as a line segment across the terrain at crest elevation; pixels on the dam line block the fill
-- Volume computed same way as `calcVolumeFromWaterLevel` but only for flooded pixels
+### Data Structure
 
-### New type: extend `DamAction` in `src/types/scenario.ts`
-- Add optional `simulate?: boolean` — when true, trigger reservoir simulation
-- Add optional `orientation?: number` — dam wall angle in degrees (default: auto-detect perpendicular to slope)
+```text
+// src/lib/narrative-steps.ts
 
-### New component: `src/components/ReservoirOverlay.tsx`
-- Takes simulation result + terrain data
-- Renders flooded area as a semi-transparent blue mesh on the terrain surface (recolor flooded vertices or render a separate water plane clipped to the flood extent)
-- Shows an info panel with reservoir stats: volume (km³), surface area (km²), max depth (m)
+interface NarrativeStep {
+  id: number;
+  title: string;
+  text: string;
+  year: number;
+  camera: { position: [x, y, z], target: [x, y, z] };
+  layers: {
+    showBorders: boolean;
+    showRivers: boolean;
+    show13thBasin: boolean;
+    show19thBasin: boolean;
+    show21stBasin: boolean;
+    showWaterExtent: boolean;
+  };
+  enabledSeries: string[];   // which metrics to highlight
+  duration?: number;          // seconds to hold before user can advance
+}
+```
 
-### Integration into existing flow
-- **ScenarioChat**: The AI chatbot can already place dams via `apply_scenario`. When a dam action has `simulate: true`, Index.tsx runs the flood-fill and passes results to TerrainViewer
-- **Manual mode**: Add a "Place Dam" interactive mode — user clicks on terrain to set dam location, drags to set orientation, slider for dam height. Live-update the reservoir as they adjust height
-- **TerrainMesh coloring**: Flooded pixels get water coloring (same blue gradient already used for sea level), layered on top of normal terrain colors
-- **Edge function update**: Update the system prompt so the AI knows about `simulate: true` and can trigger reservoir visualization
+All 7 steps defined as a static array in this file.
 
-### UI additions in `src/pages/Index.tsx`
-- "Dam Tool" button in the control area — toggles interactive dam placement mode
-- When active: click sets position, drag sets orientation, height slider appears
-- Reservoir stats panel shows volume/area/depth
-- Clear button to remove placed dams
+### New Components
 
-### Performance
-- BFS on a 450×450 grid (~200k pixels) is fast (<50ms)
-- Memoize simulation result on dam position + height changes
-- Debounce height slider to avoid re-running on every pixel
+**`src/components/NarrativeOverlay.tsx`** -- The UI layer for the guided tour:
+- Bottom-center narration card (glass-panel) showing title, text, and step dots
+- "Next" / "Back" / "Skip Tour" buttons
+- Step indicator dots (1-7)
+- Fade-in/out transitions between steps
 
-## Implementation Order
+**`src/components/NarrativeCameraController.tsx`** -- A Three.js component inside the Canvas:
+- Receives the target camera position/target for the current step
+- Smoothly animates the camera using `useFrame` with lerp
+- Disables OrbitControls during the narrative (re-enables on exit)
 
-1. Create `dam-simulation.ts` with flood-fill algorithm
-2. Extend `DamAction` type with simulation fields  
-3. Create `ReservoirOverlay.tsx` to render flooded area on terrain
-4. Add interactive dam placement UI (click-to-place + height slider)
-5. Wire into TerrainViewer and Index.tsx state management
-6. Update edge function system prompt for AI-driven dam simulation
-7. Add reservoir stats display (volume, area, depth)
+### State Management (in Index.tsx)
 
+```text
+const [narrativeActive, setNarrativeActive] = useState(false);
+const [narrativeStep, setNarrativeStep] = useState(0);
+```
+
+When `narrativeActive` is true:
+- The current step drives: `waterExtentYear`, `showBorders`, `showRivers`, `show13thBasin`, `show19thBasin`, `show21stBasin`, `showWaterExtent`, `enabledSeries`
+- The timeline slider, control panel, legend, and data panel are hidden (clean cinematic view)
+- The NarrativeOverlay is shown at the bottom
+
+### Entry and Exit
+
+**Entry points:**
+1. The IntroOverlay gets a second button: "Guided Tour" alongside "Explore". Clicking it sets `narrativeActive = true` and `started = true`.
+2. A small "Guided Tour" button added to the controls area (top-right) for re-entering after free exploration.
+
+**Exit points:**
+1. "Skip Tour" button on the NarrativeOverlay -- exits immediately to free exploration mode
+2. Completing all 7 steps -- the final step's "Finish" button exits to free exploration
+3. Pressing Escape key
+
+On exit: `narrativeActive` is set to `false`, all UI panels reappear, OrbitControls re-enable, and the app state is left at the final step's year/layers (so the user continues from where the story ended).
+
+### Modified Files
+
+| File | Changes |
+|---|---|
+| `src/lib/narrative-steps.ts` | New file -- step definitions array |
+| `src/components/NarrativeOverlay.tsx` | New file -- narration card UI |
+| `src/components/NarrativeCameraController.tsx` | New file -- camera animation inside Canvas |
+| `src/components/IntroOverlay.tsx` | Add "Guided Tour" button |
+| `src/components/TerrainViewer.tsx` | Add NarrativeCameraController, accept narrative props, conditionally disable OrbitControls |
+| `src/pages/Index.tsx` | Add narrative state, wire step changes to all layer/year/metric state, conditionally hide panels during tour |
+
+### Camera Control During Narrative
+
+The `OrbitControls` component receives `enabled={!narrativeActive}` so users cannot manually rotate during the tour. The `NarrativeCameraController` uses `useFrame` to smoothly lerp camera position and lookAt target over ~2 seconds per transition.
+
+### No New Dependencies
+
+Everything uses existing libraries: React state, Three.js camera manipulation via R3F's `useFrame`, and Tailwind + glass-panel for the overlay UI.

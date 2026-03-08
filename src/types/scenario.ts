@@ -12,6 +12,8 @@ export interface DamAction {
   lon: number;
   width?: number; // meters, default 200
   height?: number; // meters, default 30
+  simulate?: boolean; // when true, trigger reservoir flood-fill simulation
+  orientation?: number; // dam wall angle in degrees (default: auto-detect)
 }
 
 export interface WaterLevelAction {

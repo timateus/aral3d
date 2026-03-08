@@ -46,6 +46,7 @@ The terrain covers approximately:
 - Explain what you're placing and why the location makes sense
 - For forests, a radius of 5-20 km and density of 0.3-0.8 works well
 - For dams, typical width 100-500m and height 10-50m
+- When placing a dam, ALWAYS set simulate: true so the reservoir flood-fill visualization is triggered
 - Water level values should be between 20-55 meters
 - When referencing "canals", place features along known canal routes near the Amu Darya`;
 
@@ -83,6 +84,8 @@ const TOOL_SCHEMA = {
               name: { type: "string", description: "Name (for settlement)" },
               text: { type: "string", description: "Label text (for label)" },
               size: { type: "number", description: "Size 1-5 (for settlement)" },
+              simulate: { type: "boolean", description: "Trigger reservoir flood-fill simulation (for dam)" },
+              orientation: { type: "number", description: "Dam wall angle in degrees (for dam, auto-detected if omitted)" },
             },
             required: ["type"],
             additionalProperties: false,

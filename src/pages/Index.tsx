@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { loadGeoTiff, TerrainData } from '@/lib/geotiff-loader';
 import { mergeTerrains, mergeExpandTerrains } from '@/lib/terrain-merger';
+import { simulateReservoir } from '@/lib/dam-simulation';
 import TerrainViewer, { TerrainViewerHandle } from '@/components/TerrainViewer';
 import ControlPanel from '@/components/ControlPanel';
 import Legend from '@/components/Legend';
@@ -9,11 +10,13 @@ import IntroOverlay from '@/components/IntroOverlay';
 import ScenarioChat from '@/components/ScenarioChat';
 import WaterVolumeDisplay from '@/components/WaterVolumeDisplay';
 import DataPanel, { AralAnnual, SEA_SERIES } from '@/components/DataPanel';
-import { Camera, Video, BarChart3, Navigation, MapPin, Loader2, Crosshair, Download } from 'lucide-react';
+import { Camera, Video, BarChart3, Navigation, MapPin, Loader2, Crosshair, Download, Waves } from 'lucide-react';
 import { exportTerrainSTL } from '@/lib/stl-exporter';
 import type { ScenarioAction } from '@/types/scenario';
+import type { ReservoirResult } from '@/lib/dam-simulation';
 import { NARRATIVE_STEPS } from '@/lib/narrative-steps';
 import NarrativeOverlay from '@/components/NarrativeOverlay';
+import DamToolPanel from '@/components/DamToolPanel';
 import { BookOpen } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useUserLocation } from '@/hooks/useUserLocation';
@@ -55,6 +58,9 @@ const Index = () => {
   const [narrativeActive, setNarrativeActive] = useState(false);
   const [showInspector, setShowInspector] = useState(false);
   const [narrativeStep, setNarrativeStep] = useState(0);
+  const [damToolActive, setDamToolActive] = useState(false);
+  const [damPosition, setDamPosition] = useState<{ lat: number; lon: number } | null>(null);
+  const [reservoirResult, setReservoirResult] = useState<ReservoirResult | null>(null);
   const viewerRef = useRef<TerrainViewerHandle>(null);
 
   // Lifted data panel state
@@ -118,17 +124,7 @@ const Index = () => {
     return row?.riverInflow as number | undefined;
   }, [annualData, waterExtentYear]);
 
-  const handleScenarioActions = useCallback((actions: ScenarioAction[]) => {
-    for (const a of actions) {
-      if (a.type === 'water_level') {
-        setWaterLevel(a.value);
-      }
-    }
-    const visualActions = actions.filter((a) => a.type !== 'water_level');
-    if (visualActions.length > 0) {
-      setScenarioActions((prev) => [...prev, ...visualActions]);
-    }
-  }, []);
+  
 
   // Narrative step change handler
   const handleNarrativeStepChange = useCallback((newStep: number) => {
@@ -194,6 +190,30 @@ const Index = () => {
     return { terrain: result, hideNoData: false };
   }, [baseTerrain, seabedTerrain, khorezmTerrain, showKhorezm, watershedTerrain, showWatershed]);
 
+  const handleScenarioActions = useCallback((actions: ScenarioAction[]) => {
+    for (const a of actions) {
+      if (a.type === 'water_level') {
+        setWaterLevel(a.value);
+      }
+      if (a.type === 'dam' && a.simulate && terrain) {
+        const res = simulateReservoir(
+          terrain,
+          a.lat,
+          a.lon,
+          a.height ?? 30,
+          a.width ?? 200,
+          a.orientation
+        );
+        setDamPosition({ lat: a.lat, lon: a.lon });
+        setReservoirResult(res);
+      }
+    }
+    const visualActions = actions.filter((a) => a.type !== 'water_level');
+    if (visualActions.length > 0) {
+      setScenarioActions((prev) => [...prev, ...visualActions]);
+    }
+  }, [terrain]);
+
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
       {/* 3D Viewer */}
@@ -231,6 +251,9 @@ const Index = () => {
             riverInflow={currentRiverInflow}
             userLocation={userLocation}
             inspectorEnabled={showInspector}
+            damToolActive={damToolActive}
+            onDamPlace={(lat, lon) => setDamPosition({ lat, lon })}
+            reservoirResult={reservoirResult}
           />
         )}
         {!terrain && !loading && error && (
@@ -381,6 +404,16 @@ const Index = () => {
             <Crosshair className="w-3.5 h-3.5" />
             {showInspector ? 'Inspector On' : 'Inspector Off'}
           </button>
+          {terrain && (
+            <DamToolPanel
+              terrain={terrain}
+              active={damToolActive}
+              onToggle={() => setDamToolActive(v => !v)}
+              damPosition={damPosition}
+              onSimulationResult={setReservoirResult}
+              onClear={() => setDamPosition(null)}
+            />
+          )}
           <button
             onClick={requestLocation}
             disabled={locating}

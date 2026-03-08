@@ -13,9 +13,11 @@ interface TerrainMeshProps {
   waterBounds?: GeoBounds | null;
   inspectorEnabled?: boolean;
   popData?: PopData | null;
+  damToolActive?: boolean;
+  onDamPlace?: (lat: number, lon: number) => void;
 }
 
-const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, waterBounds, inspectorEnabled = false, popData }: TerrainMeshProps) => {
+const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, waterBounds, inspectorEnabled = false, popData, damToolActive = false, onDamPlace }: TerrainMeshProps) => {
   const [hoverInfo, setHoverInfo] = useState<{ position: THREE.Vector3; elevation: number; lat: number; lon: number; population: number | null } | null>(null);
   const meshRef = useRef<THREE.Mesh>(null);
 
@@ -170,6 +172,18 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
     setHoverInfo(null);
   }, []);
 
+  const handleClick = useCallback((e: ThreeEvent<MouseEvent>) => {
+    if (!damToolActive || !onDamPlace) return;
+    e.stopPropagation();
+    const { uv } = e;
+    if (!uv) return;
+    const { bounds: b } = terrain;
+    if (!b) return;
+    const lon = b.minLon + uv.x * (b.maxLon - b.minLon);
+    const lat = b.maxLat - (1 - uv.y) * (b.maxLat - b.minLat);
+    onDamPlace(lat, lon);
+  }, [damToolActive, onDamPlace, terrain]);
+
   return (
     <group>
       <mesh
@@ -179,6 +193,7 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
         rotation={[-Math.PI / 2, 0, 0]}
         onPointerMove={handlePointerMove}
         onPointerLeave={handlePointerLeave}
+        onClick={handleClick}
       />
       {inspectorEnabled && hoverInfo && (
         <Html
