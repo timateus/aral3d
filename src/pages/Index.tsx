@@ -129,12 +129,25 @@ const Index = () => {
       if (a.type === 'water_level') {
         setWaterLevel(a.value);
       }
+      // Handle AI-placed dams with simulate flag
+      if (a.type === 'dam' && a.simulate && terrain) {
+        const res = simulateReservoir(
+          terrain,
+          a.lat,
+          a.lon,
+          a.height ?? 30,
+          a.width ?? 200,
+          a.orientation
+        );
+        setDamPosition({ lat: a.lat, lon: a.lon });
+        setReservoirResult(res);
+      }
     }
     const visualActions = actions.filter((a) => a.type !== 'water_level');
     if (visualActions.length > 0) {
       setScenarioActions((prev) => [...prev, ...visualActions]);
     }
-  }, []);
+  }, [terrain]);
 
   // Narrative step change handler
   const handleNarrativeStepChange = useCallback((newStep: number) => {
