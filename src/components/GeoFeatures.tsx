@@ -467,6 +467,13 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
   );
 };
 
+interface CanalSegment {
+  points: [number, number, number][];
+  name: string | null;
+  midPos: [number, number, number] | null;
+  angle: number;
+}
+
 function extractMultiLineStrings(
   data: GeoJSONCollection,
   bounds: GeoBounds,
@@ -474,22 +481,34 @@ function extractMultiLineStrings(
   exaggeration: number,
   meshWidth: number,
   meshHeight: number,
-): [number, number, number][][] {
-  const segments: [number, number, number][][] = [];
+): CanalSegment[] {
+  const segments: CanalSegment[] = [];
   for (const feature of data.features) {
+    const name = (feature.properties?.Name as string) || null;
     let lines: number[][][] = [];
     if (feature.geometry.type === 'LineString') {
       lines = [feature.geometry.coordinates as number[][]];
     } else if (feature.geometry.type === 'MultiLineString') {
       lines = feature.geometry.coordinates as number[][][];
     }
+    // Collect all points for this feature across sub-lines
+    const allPoints: [number, number, number][] = [];
     for (const line of lines) {
-      const points: [number, number, number][] = [];
       for (const coord of line) {
         const pos = geoToMeshPos(coord[1], coord[0], bounds, terrain, exaggeration, meshWidth, meshHeight);
-        if (pos) points.push([pos[0], pos[1] + 0.04, pos[2]]);
+        if (pos) allPoints.push([pos[0], pos[1] + 0.04, pos[2]]);
       }
-      if (points.length >= 2) segments.push(points);
+    }
+    if (allPoints.length >= 2) {
+      const midIdx = Math.floor(allPoints.length / 2);
+      const midPos = allPoints[midIdx];
+      // Calculate angle from neighboring points for text rotation
+      const prevIdx = Math.max(0, midIdx - 1);
+      const nextIdx = Math.min(allPoints.length - 1, midIdx + 1);
+      const dx = allPoints[nextIdx][0] - allPoints[prevIdx][0];
+      const dz = allPoints[nextIdx][2] - allPoints[prevIdx][2];
+      const angle = Math.atan2(dz, dx) * (180 / Math.PI);
+      segments.push({ points: allPoints, name, midPos, angle });
     }
   }
   return segments;
