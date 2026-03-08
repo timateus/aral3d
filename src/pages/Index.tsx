@@ -387,6 +387,7 @@ const Index = () => {
             onWaterFlowClick={handleWaterFlowClick}
             flowState={flowState}
             flowRenderKey={flowRenderKey}
+            terrainVersion={terrainVersion}
           />
         )}
         {!terrain && !loading && error && (
