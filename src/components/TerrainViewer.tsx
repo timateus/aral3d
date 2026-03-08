@@ -8,11 +8,13 @@ import PopulationDensityLayer, { PopData } from './PopulationDensityLayer';
 import NarrativeCameraController from './NarrativeCameraController';
 import ScenarioOverlay from './ScenarioOverlay';
 import ReservoirOverlay from './ReservoirOverlay';
+import WaterFlowOverlay from './WaterFlowOverlay';
 import RiverFlyover from './RiverFlyover';
 import WASDControls from './WASDControls';
 import { TerrainData } from '@/lib/geotiff-loader';
 import type { ScenarioAction } from '@/types/scenario';
 import type { ReservoirResult } from '@/lib/dam-simulation';
+import type { WaterFlowState } from '@/lib/water-flow-simulation';
 import * as THREE from 'three';
 
 export interface TerrainViewerHandle {
