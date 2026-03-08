@@ -322,16 +322,41 @@ const Index = () => {
   const handleResetTerrain = useCallback(() => {
     if (!terrain || !originalElevationsRef.current) return;
     terrain.elevations.set(originalElevationsRef.current);
-    // Recalculate max
     let newMax = terrain.minElevation;
     for (let i = 0; i < terrain.elevations.length; i++) {
       if (terrain.elevations[i] > newMax) newMax = terrain.elevations[i];
     }
     terrain.maxElevation = newMax;
     originalElevationsRef.current = null;
+    raisedPixelsRef.current = new Set();
     setRaiseEditCount(0);
+    setRaiseEnabled(true);
     setTerrainVersion(v => v + 1);
   }, [terrain]);
+
+  const handleToggleRaise = useCallback(() => {
+    if (!terrain || !originalElevationsRef.current) return;
+    if (raiseEnabled) {
+      // Disable: restore original elevations
+      terrain.elevations.set(originalElevationsRef.current);
+    } else {
+      // Enable: reapply by computing diff
+      // We stored the modified state, so we need to swap back
+      // Actually, let's store the modified elevations when disabling
+    }
+    // Simpler: swap current and original
+    const current = new Float32Array(terrain.elevations);
+    terrain.elevations.set(originalElevationsRef.current);
+    originalElevationsRef.current = current;
+    // Recalc max
+    let newMax = terrain.minElevation;
+    for (let i = 0; i < terrain.elevations.length; i++) {
+      if (terrain.elevations[i] > newMax) newMax = terrain.elevations[i];
+    }
+    terrain.maxElevation = newMax;
+    setRaiseEnabled(v => !v);
+    setTerrainVersion(v => v + 1);
+  }, [terrain, raiseEnabled]);
 
   const handleScenarioActions = useCallback((actions: ScenarioAction[]) => {
     for (const a of actions) {
