@@ -13,6 +13,8 @@ interface TerrainMeshProps {
   waterBounds?: GeoBounds | null;
   inspectorEnabled?: boolean;
   popData?: PopData | null;
+  damToolActive?: boolean;
+  onDamPlace?: (lat: number, lon: number) => void;
 }
 
 const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, waterBounds, inspectorEnabled = false, popData }: TerrainMeshProps) => {
