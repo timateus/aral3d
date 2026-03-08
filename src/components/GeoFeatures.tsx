@@ -330,39 +330,18 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
       ))}
 
       {/* 13th century basin */}
-      {show13thBasin && basinLines13.map((points, i) => (
-        <Line
-          key={`basin13-${i}`}
-          points={points}
-          color="#e8a838"
-          lineWidth={1.5}
-          transparent
-          opacity={0.7}
-        />
+      {show13thBasin && basinLines13.map((seg, i) => (
+        <CanalLineWithLabel key={`basin13-${i}`} segment={seg} color="#e8a838" />
       ))}
 
       {/* 19th century basin */}
-      {show19thBasin && basinLines19.map((points, i) => (
-        <Line
-          key={`basin19-${i}`}
-          points={points}
-          color="#38e8a8"
-          lineWidth={1.5}
-          transparent
-          opacity={0.7}
-        />
+      {show19thBasin && basinLines19.map((seg, i) => (
+        <CanalLineWithLabel key={`basin19-${i}`} segment={seg} color="#38e8a8" />
       ))}
 
       {/* 21st century basin */}
-      {show21stBasin && basinLines21.map((points, i) => (
-        <Line
-          key={`basin21-${i}`}
-          points={points}
-          color="#e84038"
-          lineWidth={1.5}
-          transparent
-          opacity={0.7}
-        />
+      {show21stBasin && basinLines21.map((seg, i) => (
+        <CanalLineWithLabel key={`basin21-${i}`} segment={seg} color="#e84038" />
       ))}
 
       {/* City markers */}
