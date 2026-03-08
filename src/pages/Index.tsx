@@ -59,8 +59,10 @@ const Index = () => {
   const [showInspector, setShowInspector] = useState(false);
   const [narrativeStep, setNarrativeStep] = useState(0);
   const [damToolActive, setDamToolActive] = useState(false);
-  const [damPosition, setDamPosition] = useState<{ lat: number; lon: number } | null>(null);
-  const [reservoirResult, setReservoirResult] = useState<ReservoirResult | null>(null);
+  const [raiseBrushRadius, setRaiseBrushRadius] = useState(5);
+  const [raiseAmount, setRaiseAmount] = useState(10);
+  const [raiseEditCount, setRaiseEditCount] = useState(0);
+  const originalElevationsRef = useRef<Float32Array | null>(null);
   const [waterFlowActive, setWaterFlowActive] = useState(false);
   const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
   const [flowRenderKey, setFlowRenderKey] = useState(0);
