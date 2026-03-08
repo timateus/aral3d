@@ -15,6 +15,7 @@ import type { ScenarioAction } from '@/types/scenario';
 import type { ReservoirResult } from '@/lib/dam-simulation';
 import { NARRATIVE_STEPS } from '@/lib/narrative-steps';
 import NarrativeOverlay from '@/components/NarrativeOverlay';
+import DamToolPanel from '@/components/DamToolPanel';
 import { BookOpen } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useUserLocation } from '@/hooks/useUserLocation';
