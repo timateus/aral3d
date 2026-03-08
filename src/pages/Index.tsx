@@ -389,6 +389,16 @@ const Index = () => {
             <Crosshair className="w-3.5 h-3.5" />
             {showInspector ? 'Inspector On' : 'Inspector Off'}
           </button>
+          {terrain && (
+            <DamToolPanel
+              terrain={terrain}
+              active={damToolActive}
+              onToggle={() => setDamToolActive(v => !v)}
+              damPosition={damPosition}
+              onSimulationResult={setReservoirResult}
+              onClear={() => setDamPosition(null)}
+            />
+          )}
           <button
             onClick={requestLocation}
             disabled={locating}
