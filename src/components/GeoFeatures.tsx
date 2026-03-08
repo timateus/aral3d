@@ -409,7 +409,7 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
         <Line
           key={`river-${i}`}
           points={seg.points}
-          color="#5b9bd5"
+          color={seg.color}
           lineWidth={seg.width}
           transparent
           opacity={0.7}
