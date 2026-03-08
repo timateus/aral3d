@@ -573,6 +573,8 @@ const Index = () => {
             raiseAmount={raiseAmount}
             onRaiseAmountChange={setRaiseAmount}
             editCount={raiseEditCount}
+            raiseEnabled={raiseEnabled}
+            onToggleRaise={handleToggleRaise}
           />
           <WaterFlowPanel
             active={waterFlowActive}
