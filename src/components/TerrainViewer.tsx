@@ -245,9 +245,6 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
       <directionalLight position={[-3, 5, -3]} intensity={0.4} color="#8ec8e8" />
 
       <TerrainMesh terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} hideNoData={hideNoData} waterBounds={waterBounds} inspectorEnabled={inspectorEnabled} popData={showPopDensity ? popData : null} damToolActive={damToolActive} onDamPlace={onDamPlace} waterFlowActive={waterFlowActive} onWaterFlowClick={onWaterFlowClick} />
-      {reservoirResult && (
-        <ReservoirOverlay terrain={terrain} exaggeration={exaggeration} reservoir={reservoirResult} />
-      )}
       {flowState && flowRenderKey !== undefined && (
         <WaterFlowOverlay terrain={terrain} exaggeration={exaggeration} flowState={flowState} renderKey={flowRenderKey} />
       )}
