@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
-import { OrbitControls, GizmoHelper, GizmoViewport, Html } from '@react-three/drei';
+import { GizmoHelper, GizmoViewport, Html } from '@react-three/drei';
 import TerrainMesh from './TerrainMesh';
 import GeoFeatures from './GeoFeatures';
 import WaterExtentLayer from './WaterExtentLayer';
@@ -9,7 +9,7 @@ import NarrativeCameraController from './NarrativeCameraController';
 import ScenarioOverlay from './ScenarioOverlay';
 import WaterFlowOverlay from './WaterFlowOverlay';
 import RiverFlyover from './RiverFlyover';
-import WASDControls from './WASDControls';
+import MapControls from './MapControls';
 import { TerrainData } from '@/lib/geotiff-loader';
 import type { ScenarioAction } from '@/types/scenario';
 import type { WaterFlowState } from '@/lib/water-flow-simulation';
