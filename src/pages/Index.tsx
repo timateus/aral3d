@@ -124,7 +124,7 @@ const Index = () => {
     return row?.riverInflow as number | undefined;
   }, [annualData, waterExtentYear]);
 
-  // handleScenarioActions is defined after terrain useMemo below
+  
 
   // Narrative step change handler
   const handleNarrativeStepChange = useCallback((newStep: number) => {
