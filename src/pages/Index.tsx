@@ -63,6 +63,7 @@ const Index = () => {
   const [raiseAmount, setRaiseAmount] = useState(10);
   const [raiseEditCount, setRaiseEditCount] = useState(0);
   const originalElevationsRef = useRef<Float32Array | null>(null);
+  const [terrainVersion, setTerrainVersion] = useState(0);
   const [waterFlowActive, setWaterFlowActive] = useState(false);
   const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
   const [flowRenderKey, setFlowRenderKey] = useState(0);
