@@ -214,6 +214,7 @@ const Index = () => {
     }
   }, [terrain]);
 
+  return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
       {/* 3D Viewer */}
       <div className="absolute inset-0">
