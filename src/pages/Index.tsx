@@ -9,7 +9,7 @@ import IntroOverlay from '@/components/IntroOverlay';
 import ScenarioChat from '@/components/ScenarioChat';
 import WaterVolumeDisplay from '@/components/WaterVolumeDisplay';
 import DataPanel, { AralAnnual, SEA_SERIES } from '@/components/DataPanel';
-import { Camera, Video, BarChart3, Navigation, MapPin, Loader2, Crosshair, Download } from 'lucide-react';
+import { Camera, Video, BarChart3, Navigation, MapPin, Loader2, Crosshair, Download, Waves } from 'lucide-react';
 import { exportTerrainSTL } from '@/lib/stl-exporter';
 import type { ScenarioAction } from '@/types/scenario';
 import type { ReservoirResult } from '@/lib/dam-simulation';
