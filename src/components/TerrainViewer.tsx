@@ -325,15 +325,10 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
         onAnimatingChange={setFlyoverAnimating}
       />
 
-      <OrbitControls
+      <MapControls
         enabled={!narrativeActive && !flyoverAnimating}
-        enableDamping
-        dampingFactor={0.05}
-        minDistance={2}
-        maxDistance={30}
-        maxPolarAngle={Math.PI / 2.1}
+        orbitRef={orbitRef}
       />
-      <WASDControls enabled={!narrativeActive && !flyoverAnimating} />
 
       <GizmoHelper alignment="bottom-right" margin={[60, 60]}>
         <GizmoViewport labelColor="white" axisHeadScale={0.8} />

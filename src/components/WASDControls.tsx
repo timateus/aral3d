@@ -23,18 +23,27 @@ export default function WASDControls({ enabled = true }: { enabled?: boolean }) 
 
   useFrame(() => {
     if (!enabled) return;
+    // Get camera's forward direction projected onto XZ plane
     const dir = new THREE.Vector3();
     camera.getWorldDirection(dir);
     dir.y = 0;
     dir.normalize();
-    const right = new THREE.Vector3().crossVectors(dir, camera.up).normalize();
+    const right = new THREE.Vector3().crossVectors(dir, new THREE.Vector3(0, 1, 0)).normalize();
 
-    if (keys.current.w) camera.position.addScaledVector(dir, speed);
-    if (keys.current.s) camera.position.addScaledVector(dir, -speed);
-    if (keys.current.a) camera.position.addScaledVector(right, -speed);
-    if (keys.current.d) camera.position.addScaledVector(right, speed);
-    if (keys.current.q) camera.position.y -= speed;
-    if (keys.current.e) camera.position.y += speed;
+    const delta = new THREE.Vector3();
+    if (keys.current.w) delta.addScaledVector(dir, speed);
+    if (keys.current.s) delta.addScaledVector(dir, -speed);
+    if (keys.current.a) delta.addScaledVector(right, -speed);
+    if (keys.current.d) delta.addScaledVector(right, speed);
+    if (keys.current.q) delta.y -= speed;
+    if (keys.current.e) delta.y += speed;
+
+    if (delta.lengthSq() > 0) {
+      camera.position.add(delta);
+      // Also move OrbitControls target so panning stays in sync
+      // We dispatch a custom event that TerrainViewer listens for
+      window.dispatchEvent(new CustomEvent('wasd-move', { detail: { x: delta.x, y: delta.y, z: delta.z } }));
+    }
   });
 
   return null;
