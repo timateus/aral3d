@@ -187,10 +187,11 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
       return;
     }
 
-    if (damToolActive && onDamPlace && b) {
-      const lon = b.minLon + uv.x * (b.maxLon - b.minLon);
-      const lat = b.maxLat - (1 - uv.y) * (b.maxLat - b.minLat);
-      onDamPlace(lat, lon);
+    if (damToolActive && onDamPlace) {
+      const pixelX = Math.floor(uv.x * (width - 1));
+      const pixelY = Math.floor((1 - uv.y) * (height - 1));
+      onDamPlace(pixelY, pixelX);
+      return;
     }
   }, [damToolActive, onDamPlace, waterFlowActive, onWaterFlowClick, terrain]);
 
