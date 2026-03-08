@@ -505,12 +505,27 @@ const Index = () => {
             <DamToolPanel
               terrain={terrain}
               active={damToolActive}
-              onToggle={() => setDamToolActive(v => !v)}
+              onToggle={() => { setDamToolActive(v => !v); setWaterFlowActive(false); }}
               damPosition={damPosition}
               onSimulationResult={setReservoirResult}
               onClear={() => setDamPosition(null)}
             />
           )}
+          <WaterFlowPanel
+            active={waterFlowActive}
+            onToggle={() => { setWaterFlowActive(v => !v); setDamToolActive(false); }}
+            isPlaced={!!flowState}
+            stepCount={flowState?.stepCount ?? 0}
+            wetPixelCount={flowWetCount}
+            isAnimating={flowAnimating}
+            onToggleAnimate={() => setFlowAnimating(v => !v)}
+            onStep={doFlowStep}
+            onReset={resetFlow}
+            speed={flowSpeed}
+            onSpeedChange={setFlowSpeed}
+            waterAmount={flowWaterAmount}
+            onWaterAmountChange={setFlowWaterAmount}
+          />
           <button
             onClick={requestLocation}
             disabled={locating}
