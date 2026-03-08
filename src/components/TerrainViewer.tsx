@@ -66,6 +66,7 @@ interface TerrainViewerProps {
   flowState?: WaterFlowState | null;
   flowRenderKey?: number;
   terrainVersion?: number;
+  raisedPixels?: Set<number>;
 }
 
 function CameraAnimator({ started }: { started: boolean }) {
