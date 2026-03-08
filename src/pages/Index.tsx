@@ -196,12 +196,16 @@ const Index = () => {
     if (!baseTerrain) return { terrain: null, hideNoData: false };
     let result = baseTerrain;
     if (seabedTerrain) result = mergeTerrains(result, seabedTerrain);
-    if (showKhorezm && khorezmTerrain) result = mergeExpandTerrains(result, khorezmTerrain);
+    let expanded = false;
+    if (showKhorezm && khorezmTerrain) {
+      result = mergeExpandTerrains(result, khorezmTerrain, false);
+      expanded = true;
+    }
     if (showWatershed && watershedTerrain) {
       result = mergeExpandTerrains(result, watershedTerrain, false);
-      return { terrain: result, hideNoData: true };
+      expanded = true;
     }
-    return { terrain: result, hideNoData: false };
+    return { terrain: result, hideNoData: expanded };
   }, [baseTerrain, seabedTerrain, khorezmTerrain, showKhorezm, watershedTerrain, showWatershed]);
 
   // --- Water flow simulation ---
