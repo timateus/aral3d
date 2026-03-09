@@ -517,6 +517,8 @@ const Index = () => {
             onToggle21cLakes={setShow21cLakes}
             showPopDensity={showPopDensity}
             onTogglePopDensity={setShowPopDensity}
+            showMigration={showMigration}
+            onToggleMigration={setShowMigration}
             popHexSize={popHexSize}
             onPopHexSizeChange={setPopHexSize}
             popHexHeight={popHexHeight}
