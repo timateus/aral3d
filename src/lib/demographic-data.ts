@@ -75,8 +75,8 @@ const ALIASES: Record<string, string[]> = {
   'ellikkala': ['ellikqala'],
   'turtkul': ['tortkol', 'turtkul'],
   'bozatau': ['bozatov'],
-  'karauzak': ['qarauzak'],
-  'kanlykul': ['qanlikol'],
+  'karauzak': ['qarauzak', 'karauzyak'],
+  'kanlykul': ['qanlikol', 'kanlikul'],
   'takhiatash': ['taxiatosh'],
   
   // Andijan
