@@ -1,7 +1,15 @@
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { Html, Line } from '@react-three/drei';
 import { TerrainData, GeoBounds } from '@/lib/geotiff-loader';
 import * as THREE from 'three';
+
+interface CanalHighlight {
+  canal: string;
+  lat: number;
+  lon: number;
+  ethnicity: string;
+  color: string;
+}
 
 interface GeoFeaturesProps {
   terrain: TerrainData;
@@ -15,6 +23,7 @@ interface GeoFeaturesProps {
   show21cLakes?: boolean;
   riverInflow?: number;
   userLocation?: { lat: number; lon: number } | null;
+  canalHighlights?: CanalHighlight[];
 }
 
 interface City {
@@ -147,7 +156,7 @@ function geoToMeshPos(
   return [x, zHeight, -planeY];
 }
 
-const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, riverInflow, userLocation }: GeoFeaturesProps) => {
+const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, riverInflow, userLocation, canalHighlights }: GeoFeaturesProps) => {
   const bounds = terrain.bounds;
   const w = terrain.width;
   const h = terrain.height;
@@ -529,6 +538,13 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
           </group>
         );
       })()}
+
+      {/* Canal tour highlights */}
+      {canalHighlights && canalHighlights.map((ch, i) => {
+        const pos = geoToMeshPos(ch.lat, ch.lon, bounds, terrain, exaggeration, meshWidth, meshHeight);
+        if (!pos) return null;
+        return <CanalHighlightMarker key={`canal-hl-${i}`} pos={pos} canal={ch.canal} color={ch.color} />;
+      })}
     </group>
   );
 };
@@ -781,6 +797,56 @@ const LakeMarker = ({ lake, pos, radius }: { lake: Lake; pos: [number, number, n
           </div>
         </Html>
       )}
+    </group>
+  );
+};
+
+// Pulsing canal highlight marker
+const CanalHighlightMarker = ({ pos, canal, color }: { pos: [number, number, number]; canal: string; color: string }) => {
+  const ringRef = useRef<THREE.Mesh>(null);
+  const [time, setTime] = useState(0);
+
+  useEffect(() => {
+    let id: number;
+    const tick = () => {
+      setTime(t => t + 0.03);
+      id = requestAnimationFrame(tick);
+    };
+    id = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  const scale = 1 + 0.3 * Math.sin(time * 2);
+  const opacity = 0.6 + 0.3 * Math.sin(time * 2);
+
+  return (
+    <group position={[pos[0], pos[1] + 0.08, pos[2]]}>
+      {/* Pulsing ring */}
+      <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]} scale={[scale, scale, 1]}>
+        <ringGeometry args={[0.08, 0.12, 24]} />
+        <meshBasicMaterial color={color} transparent opacity={opacity} side={THREE.DoubleSide} depthWrite={false} />
+      </mesh>
+      {/* Inner dot */}
+      <mesh>
+        <sphereGeometry args={[0.035, 10, 10]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.8} />
+      </mesh>
+      {/* Label */}
+      <Html position={[0, 0.18, 0]} center distanceFactor={8} style={{ pointerEvents: 'none' }}>
+        <div style={{
+          color,
+          padding: '1px 5px',
+          fontSize: '8px',
+          fontFamily: "'Inter', system-ui, sans-serif",
+          fontWeight: 600,
+          whiteSpace: 'nowrap',
+          textShadow: '0 1px 6px rgba(0,0,0,0.9), 0 0px 2px rgba(0,0,0,0.7)',
+          background: 'rgba(0,0,0,0.5)',
+          borderRadius: '3px',
+        }}>
+          {canal}
+        </div>
+      </Html>
     </group>
   );
 };
