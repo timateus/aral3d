@@ -159,6 +159,7 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
   const [basin13Data, setBasin13Data] = useState<GeoJSONCollection | null>(null);
   const [basin19Data, setBasin19Data] = useState<GeoJSONCollection | null>(null);
   const [basin21Data, setBasin21Data] = useState<GeoJSONCollection | null>(null);
+  const [lakes21cData, setLakes21cData] = useState<GeoJSONCollection | null>(null);
 
   useEffect(() => {
     fetch('/data/AmuRivers.geojson')
