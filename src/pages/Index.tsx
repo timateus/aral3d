@@ -525,7 +525,7 @@ const Index = () => {
       )}
 
       {/* Header */}
-      {started && !narrativeActive && !isMobile && (
+      {started && !narrativeActive && !canalTourActive && !isMobile && (
         <div className="absolute top-4 left-4 z-10">
           <h1 className="text-lg font-semibold text-foreground tracking-tight">
             Aral Sea Terrain Viewer
