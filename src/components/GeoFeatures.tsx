@@ -406,19 +406,25 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
       ))}
 
       {/* 13th century basin */}
-      {show13thBasin && basinLines13.map((seg, i) => (
-        <CanalLineWithLabel key={`basin13-${i}`} segment={seg} color="#e8a838" highlighted={!!(highlightedCanalNames && seg.name && canalNameMatches(seg.name, highlightedCanalNames))} />
-      ))}
+      {show13thBasin && basinLines13.map((seg, i) => {
+        const isHighlighted = !!(highlightedCanalNames && seg.name && canalNameMatches(seg.name, highlightedCanalNames));
+        if (canalTourActive && !isHighlighted) return null;
+        return <CanalLineWithLabel key={`basin13-${i}`} segment={seg} color="#e8a838" highlighted={isHighlighted} />;
+      })}
 
       {/* 19th century basin */}
-      {show19thBasin && basinLines19.map((seg, i) => (
-        <CanalLineWithLabel key={`basin19-${i}`} segment={seg} color="#38e8a8" highlighted={!!(highlightedCanalNames && seg.name && canalNameMatches(seg.name, highlightedCanalNames))} />
-      ))}
+      {show19thBasin && basinLines19.map((seg, i) => {
+        const isHighlighted = !!(highlightedCanalNames && seg.name && canalNameMatches(seg.name, highlightedCanalNames));
+        if (canalTourActive && !isHighlighted) return null;
+        return <CanalLineWithLabel key={`basin19-${i}`} segment={seg} color="#38e8a8" highlighted={isHighlighted} />;
+      })}
 
       {/* 21st century basin */}
-      {show21stBasin && basinLines21.map((seg, i) => (
-        <CanalLineWithLabel key={`basin21-${i}`} segment={seg} color="#e84038" highlighted={!!(highlightedCanalNames && seg.name && canalNameMatches(seg.name, highlightedCanalNames))} />
-      ))}
+      {show21stBasin && basinLines21.map((seg, i) => {
+        const isHighlighted = !!(highlightedCanalNames && seg.name && canalNameMatches(seg.name, highlightedCanalNames));
+        if (canalTourActive && !isHighlighted) return null;
+        return <CanalLineWithLabel key={`basin21-${i}`} segment={seg} color="#e84038" highlighted={isHighlighted} />;
+      })}
 
       {/* City markers */}
       {cityMarkers.map((city) => (
