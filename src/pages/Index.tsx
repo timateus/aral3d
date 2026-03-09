@@ -429,6 +429,7 @@ const Index = () => {
             showChoropleth={showChoropleth}
             choroplethIndicator={choroplethIndicator}
           />
+        )}
         {!terrain && !loading && error && (
           <div className="flex items-center justify-center h-full">
             <div className="glass-panel p-6 text-center">

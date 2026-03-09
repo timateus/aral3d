@@ -146,6 +146,7 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
         </div>
       )}
 
+      {showPopDensity && (
         <div className="ml-5 space-y-2">
           <div className="flex items-center gap-1">
             <div
