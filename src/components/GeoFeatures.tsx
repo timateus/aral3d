@@ -450,18 +450,14 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
         </group>
       ))}
 
-      {/* Basin hover labels - 13th century */}
-      {show13thBasin && basinLabels13.map((label, i) => (
+      {/* Basin hover labels - only in free exploration (not during canal tour) */}
+      {!canalTourActive && show13thBasin && basinLabels13.map((label, i) => (
         <HoverLabel key={`label13-${i}`} label={label} />
       ))}
-
-      {/* Basin hover labels - 19th century */}
-      {show19thBasin && basinLabels19.map((label, i) => (
+      {!canalTourActive && show19thBasin && basinLabels19.map((label, i) => (
         <HoverLabel key={`label19-${i}`} label={label} />
       ))}
-
-      {/* Basin hover labels - 21st century */}
-      {show21stBasin && basinLabels21.map((label, i) => (
+      {!canalTourActive && show21stBasin && basinLabels21.map((label, i) => (
         <HoverLabel key={`label21-${i}`} label={label} />
       ))}
 
