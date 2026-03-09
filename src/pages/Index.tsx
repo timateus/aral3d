@@ -429,6 +429,7 @@ const Index = () => {
             migrationYear={waterExtentYear}
             showChoropleth={showChoropleth}
             choroplethIndicator={choroplethIndicator}
+            choroplethExaggeration={choroplethExaggeration}
           />
         )}
         {!terrain && !loading && error && (

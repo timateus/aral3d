@@ -263,7 +263,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
       {showWaterExtent && <WaterExtentLayer terrain={terrain} exaggeration={exaggeration} year={waterExtentYear} />}
       {showPopDensity && <PopulationDensityLayer terrain={terrain} exaggeration={exaggeration} onDataLoaded={setPopData} hexSize={popHexSize} hexHeightExag={popHexHeight} />}
       {showMigration && <MigrationLayer terrain={terrain} exaggeration={exaggeration} year={migrationYear ?? waterExtentYear} />}
-      {showChoropleth && <ChoroplethLayer terrain={terrain} exaggeration={exaggeration} year={waterExtentYear} indicatorId={choroplethIndicator} />}
+      {showChoropleth && <ChoroplethLayer terrain={terrain} exaggeration={exaggeration} year={waterExtentYear} indicatorId={choroplethIndicator} choroplethExaggeration={choroplethExaggeration} />}
       {scenarioActions && scenarioActions.length > 0 && (
         <ScenarioOverlay actions={scenarioActions} terrain={terrain} exaggeration={exaggeration} />
       )}
