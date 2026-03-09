@@ -49,7 +49,7 @@ interface RegionMesh {
   height: number;
 }
 
-const MAX_EXTRUDE = 1.5;
+const MAX_EXTRUDE = 2.0;
 
 /**
  * Project lon/lat to the SAME coordinate system as the terrain mesh.
