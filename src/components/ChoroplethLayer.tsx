@@ -21,6 +21,7 @@ interface ChoroplethLayerProps {
   exaggeration: number;
   year: number;
   indicatorId?: string;
+  choroplethExaggeration?: number;
 }
 
 interface GeoJSONFeature {
