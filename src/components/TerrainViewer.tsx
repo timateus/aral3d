@@ -37,6 +37,7 @@ interface TerrainViewerProps {
   show19thBasin: boolean;
   show21stBasin: boolean;
   showLakes: boolean;
+  show21cLakes?: boolean;
   showWaterExtent: boolean;
   waterExtentYear: number;
   showPopDensity?: boolean;
