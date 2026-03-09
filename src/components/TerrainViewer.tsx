@@ -9,6 +9,7 @@ import NarrativeCameraController from './NarrativeCameraController';
 import ScenarioOverlay from './ScenarioOverlay';
 import WaterFlowOverlay from './WaterFlowOverlay';
 import MigrationLayer from './MigrationLayer';
+import ChoroplethLayer from './ChoroplethLayer';
 import RiverFlyover from './RiverFlyover';
 import MapControls from './MapControls';
 import { TerrainData } from '@/lib/geotiff-loader';
