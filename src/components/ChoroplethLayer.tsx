@@ -20,7 +20,6 @@ function geoToMeshPos(
 ): [number, number, number] | null {
   const nx = (lon - bounds.minLon) / (bounds.maxLon - bounds.minLon);
   const ny = (lat - bounds.minLat) / (bounds.maxLat - bounds.minLat);
-  if (nx < -0.5 || nx > 1.5 || ny < -0.5 || ny > 1.5) return null;
   const x = (nx - 0.5) * meshWidth;
   const planeY = (ny - 0.5) * meshHeight;
   const inBounds = nx >= 0 && nx <= 1 && ny >= 0 && ny <= 1;
