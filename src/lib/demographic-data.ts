@@ -289,21 +289,36 @@ const REGION_CODE_PREFIX: Record<string, string> = {
   '1726': 'tashkent city',
 };
 
-/** Map ADM1 shapeName (normalized) → region code prefix */
+/** Map ADM1 shapeName (super-normalized) → region code prefix.
+ *  Includes GeoJSON transliteration variants (e.g. "xorazm" for Khorezm) */
 const ADM1_TO_CODE: Record<string, string> = {
   'karakalpakstan': '1735',
+  'republicofkarakalpakstan': '1735',
   'andijan': '1703',
+  'andijon': '1703',
   'bukhara': '1706',
+  'buxoro': '1706',
   'jizzakh': '1708',
+  'jizzax': '1708',
   'kashkadarya': '1710',
+  'qashqadaryo': '1710',
   'navoi': '1712',
+  'navoiy': '1712',
   'namangan': '1714',
   'samarkand': '1718',
+  'samarqand': '1718',
   'surkhandarya': '1722',
+  'surxondaryo': '1722',
   'syrdarya': '1724',
+  'sirdaryo': '1724',
   'tashkent': '1727',
+  'toshkent': '1727',
   'fergana': '1730',
+  'fargona': '1730',
   'khorezm': '1733',
+  'xorazm': '1733',
+  'tashkentcity': '1726',
+  'toshkentcity': '1726',
 };
 
 function parseCsv(text: string): CsvData {
