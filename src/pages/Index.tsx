@@ -539,6 +539,8 @@ const Index = () => {
               setShowChoropleth(val);
               if (val) setExaggeration(1);
             }}
+            choroplethIndicator={choroplethIndicator}
+            onChoroplethIndicatorChange={setChoroplethIndicator}
           />
           {terrain && (
             <WaterVolumeDisplay
