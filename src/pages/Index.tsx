@@ -37,9 +37,9 @@ const Index = () => {
   const [waterLevelManual, setWaterLevelManual] = useState(false);
   const [showBorders, setShowBorders] = useState(true);
   const [showRivers, setShowRivers] = useState(true);
-  const [show13thBasin, setShow13thBasin] = useState(true);
-  const [show19thBasin, setShow19thBasin] = useState(true);
-  const [show21stBasin, setShow21stBasin] = useState(true);
+  const [show13thBasin, setShow13thBasin] = useState(false);
+  const [show19thBasin, setShow19thBasin] = useState(false);
+  const [show21stBasin, setShow21stBasin] = useState(false);
   const [showKhorezm, setShowKhorezm] = useState(false);
   const [showLakes, setShowLakes] = useState(false);
   const [show21cLakes, setShow21cLakes] = useState(false);
