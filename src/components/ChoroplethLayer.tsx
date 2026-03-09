@@ -191,6 +191,34 @@ const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage', 
     const result: RegionMesh[] = [];
     const globalMax = csvData ? getGlobalMax(csvData) : 100;
 
+    // First pass: collect all non-zero values to find the minimum
+    const allValues: number[] = [];
+    const collectValue = (shapeName: string, isAdm2: boolean) => {
+      if (isSewage) {
+        const d = isAdm2 ? getSewageForDistrict(shapeName, year) : getSewageForRegion(shapeName, year);
+        if (d && d.value > 0) allValues.push(d.value);
+      } else if (csvData) {
+        const d = isAdm2 ? lookupByShapeName(csvData, shapeName, year) : lookupByRegionName(csvData, shapeName, year);
+        if (d && d.value > 0) allValues.push(d.value);
+      }
+    };
+    for (const feat of adm2Geo.features) {
+      const sn = feat.properties.shapeName || '';
+      if (sn) collectValue(sn, true);
+    }
+    for (const feat of adm1Geo.features) {
+      const sn = feat.properties.shapeName || '';
+      if (sn) collectValue(sn, false);
+    }
+    const globalMin = allValues.length > 0 ? Math.min(...allValues) : 0;
+    const range = isSewage ? (100 - globalMin) : (globalMax - globalMin);
+
+    const getNormalizedHeight = (value: number): number => {
+      if (range <= 0 || value <= 0) return 0;
+      const normalized = (value - globalMin) / range;
+      return Math.sqrt(Math.max(0, normalized)) * choroplethExaggeration;
+    };
+
     const getRings = (feat: GeoJSONFeature): number[][][] => {
       const rings: number[][][] = [];
       if (feat.geometry.type === 'Polygon') {
