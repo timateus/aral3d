@@ -477,7 +477,6 @@ export function lookupByRegionName(
   if (!row && /karakalpakstan/i.test(regionName)) {
     row = data.byNormName.get('republic of karakalpakstan') ||
           data.byNormName.get('republicofkarakalpakstan');
-    // Also try by code
     if (!row) row = data.byCode.get('1735');
   }
   // Try by code
@@ -487,7 +486,13 @@ export function lookupByRegionName(
   }
 
   if (!row) return null;
-  return { nameEn: row.nameEn, nameRu: row.nameRu, value: row.values[year] ?? 0 };
+  // Use exact year or closest available year
+  let val = row.values[year] ?? 0;
+  if (val === 0) {
+    const cy = closestYear(row.values, year);
+    val = row.values[cy] ?? 0;
+  }
+  return { nameEn: row.nameEn, nameRu: row.nameRu, value: val };
 }
 
 /** Check if a region has district-level data in this dataset */
