@@ -311,6 +311,7 @@ const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage' }
       if (mesh) result.push(mesh);
     }
 
+    console.log('[Choropleth] Built regions:', result.length, 'indicator:', indicatorId, 'globalMax:', globalMax);
     return result;
   }, [adm2Geo, adm1Geo, converter, year, isSewage, csvData, indicator]);
 
