@@ -324,35 +324,39 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
   const lakes21cPolygons = useMemo(() => {
     if (!bounds || !lakes21cData) return [];
     const results: { outline: [number, number, number][]; geometry: THREE.BufferGeometry }[] = [];
-    for (const feature of lakes21cData.features) {
-      let rings: number[][][] = [];
-      if (feature.geometry.type === 'Polygon') {
-        rings = feature.geometry.coordinates as number[][][];
-      } else if (feature.geometry.type === 'MultiPolygon') {
-        for (const poly of feature.geometry.coordinates as number[][][][]) {
-          rings.push(...poly);
+    
+    const processPolygonRings = (polygonRings: number[][][]) => {
+      // First ring is the outer boundary
+      const outerRing = polygonRings[0];
+      if (!outerRing || outerRing.length < 3) return;
+      
+      const points3d: [number, number, number][] = [];
+      const points2d: THREE.Vector2[] = [];
+      let avgY = 0;
+      for (const coord of outerRing) {
+        const pos = geoToMeshPos(coord[1], coord[0], bounds, terrain, exaggeration, meshWidth, meshHeight);
+        if (pos) {
+          points3d.push([pos[0], pos[1] + 0.04, pos[2]]);
+          points2d.push(new THREE.Vector2(pos[0], pos[2]));
+          avgY += pos[1] + 0.04;
         }
       }
-      for (const ring of rings) {
-        const points3d: [number, number, number][] = [];
-        const points2d: THREE.Vector2[] = [];
-        let avgY = 0;
-        for (const coord of ring) {
-          const pos = geoToMeshPos(coord[1], coord[0], bounds, terrain, exaggeration, meshWidth, meshHeight);
-          if (pos) {
-            points3d.push([pos[0], pos[1] + 0.04, pos[2]]);
-            points2d.push(new THREE.Vector2(pos[0], pos[2]));
-            avgY += pos[1] + 0.04;
-          }
-        }
-        if (points2d.length >= 3) {
-          avgY /= points2d.length;
-          const shape = new THREE.Shape(points2d);
-          const geo = new THREE.ShapeGeometry(shape);
-          // Rotate from XY plane to XZ plane and position at avgY
-          geo.rotateX(-Math.PI / 2);
-          geo.translate(0, avgY, 0);
-          results.push({ outline: points3d, geometry: geo });
+      if (points2d.length >= 3) {
+        avgY /= points2d.length;
+        const shape = new THREE.Shape(points2d);
+        const geo = new THREE.ShapeGeometry(shape);
+        geo.rotateX(-Math.PI / 2);
+        geo.translate(0, avgY, 0);
+        results.push({ outline: points3d, geometry: geo });
+      }
+    };
+    
+    for (const feature of lakes21cData.features) {
+      if (feature.geometry.type === 'Polygon') {
+        processPolygonRings(feature.geometry.coordinates as number[][][]);
+      } else if (feature.geometry.type === 'MultiPolygon') {
+        for (const poly of feature.geometry.coordinates as number[][][][]) {
+          processPolygonRings(poly);
         }
       }
     }
