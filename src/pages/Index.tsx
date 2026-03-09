@@ -553,7 +553,7 @@ const Index = () => {
           )}
           <button
             onClick={() => viewerRef.current?.screenshot()}
-            className="glass-panel p-2.5 w-72 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            className="glass-panel p-2.5 w-full flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
             <Camera className="w-3.5 h-3.5" />
             Save Screenshot
@@ -561,7 +561,7 @@ const Index = () => {
           <button
             onClick={() => { if (!recording) setRecording(true); }}
             disabled={recording}
-            className="glass-panel p-2.5 w-72 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
+            className="glass-panel p-2.5 w-full flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
           >
             <Video className="w-3.5 h-3.5" />
             {recording ? 'Recording…' : 'Make a Video'}
@@ -569,28 +569,28 @@ const Index = () => {
           <button
             onClick={() => { if (!riverFlyover) setRiverFlyover(true); }}
             disabled={riverFlyover || recording}
-            className="glass-panel p-2.5 w-72 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
+            className="glass-panel p-2.5 w-full flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
           >
             <Navigation className="w-3.5 h-3.5" />
             {riverFlyover ? 'Flying…' : 'Amu Darya Flyover'}
           </button>
           <button
             onClick={() => setShowDataPanel(v => !v)}
-            className="glass-panel p-2.5 w-72 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            className="glass-panel p-2.5 w-full flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
             <BarChart3 className="w-3.5 h-3.5" />
             {showDataPanel ? 'Hide Data Panel' : 'Show Data Panel'}
           </button>
           <button
             onClick={startNarrative}
-            className="glass-panel p-2.5 w-72 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            className="glass-panel p-2.5 w-full flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
             <BookOpen className="w-3.5 h-3.5" />
             Guided Tour
           </button>
           <button
             onClick={() => setShowInspector(v => !v)}
-            className={`glass-panel p-2.5 w-72 flex items-center justify-center gap-2 text-xs transition-colors cursor-pointer ${showInspector ? 'text-foreground ring-1 ring-primary/50' : 'text-muted-foreground hover:text-foreground'}`}
+            className={`glass-panel p-2.5 w-full flex items-center justify-center gap-2 text-xs transition-colors cursor-pointer ${showInspector ? 'text-foreground ring-1 ring-primary/50' : 'text-muted-foreground hover:text-foreground'}`}
           >
             <Crosshair className="w-3.5 h-3.5" />
             {showInspector ? 'Inspector On' : 'Inspector Off'}
@@ -625,7 +625,7 @@ const Index = () => {
           <button
             onClick={requestLocation}
             disabled={locating}
-            className="glass-panel p-2.5 w-72 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
+            className="glass-panel p-2.5 w-full flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
           >
             {locating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MapPin className="w-3.5 h-3.5" />}
             {locating ? 'Locating…' : userLocation ? 'Located ✓' : 'Locate Me'}
@@ -641,7 +641,7 @@ const Index = () => {
               a.click();
               URL.revokeObjectURL(url);
             }}
-            className="glass-panel p-2.5 w-72 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            className="glass-panel p-2.5 w-full flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" />
             Export STL (220mm, x30)

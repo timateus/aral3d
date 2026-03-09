@@ -567,8 +567,11 @@ export function getIndicatorColor(indicator: DemographicIndicator, value: number
   }
 }
 
-/** Get normalized height (0-1) for a given indicator and value, proportional to global max */
+/** Get normalized height (0-1) for a given indicator and value.
+ *  Uses sqrt scaling so low-value datasets still show visible differences. */
 export function getIndicatorHeight(indicator: DemographicIndicator, value: number, maxVal: number = 100): number {
   if (maxVal <= 0 || value <= 0) return 0;
-  return Math.max(0, Math.min(1, value / maxVal));
+  const linear = Math.max(0, Math.min(1, value / maxVal));
+  // sqrt scaling: amplifies differences among low values
+  return Math.sqrt(linear);
 }
