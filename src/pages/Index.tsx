@@ -532,6 +532,8 @@ const Index = () => {
             onPopHexSizeChange={setPopHexSize}
             popHexHeight={popHexHeight}
             onPopHexHeightChange={setPopHexHeight}
+            showChoropleth={showChoropleth}
+            onToggleChoropleth={setShowChoropleth}
           />
           {terrain && (
             <WaterVolumeDisplay
