@@ -543,6 +543,8 @@ const Index = () => {
             }}
             choroplethIndicator={choroplethIndicator}
             onChoroplethIndicatorChange={setChoroplethIndicator}
+            choroplethExaggeration={choroplethExaggeration}
+            onChoroplethExaggerationChange={setChoroplethExaggeration}
           />
           {terrain && (
             <WaterVolumeDisplay
