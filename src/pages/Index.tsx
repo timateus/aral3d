@@ -467,6 +467,13 @@ const Index = () => {
             showChoropleth={showChoropleth}
             choroplethIndicator={choroplethIndicator}
             choroplethExaggeration={choroplethExaggeration}
+            canalHighlights={canalTourActive ? CANAL_TOUR_STEPS[canalTourStep]?.canals.map(c => ({
+              canal: c.canal,
+              lat: c.lat,
+              lon: c.lon,
+              ethnicity: c.ethnicity,
+              color: getEthnicityColor(c.ethnicity),
+            })) : undefined}
           />
         )}
         {!terrain && !loading && error && (
