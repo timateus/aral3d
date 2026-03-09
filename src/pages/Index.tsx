@@ -490,7 +490,7 @@ const Index = () => {
 
       {/* Controls - desktop only */}
       {started && !narrativeActive && !isMobile && (
-        <div className="absolute top-4 right-4 z-10 space-y-3">
+        <div className="absolute top-4 right-4 z-10 space-y-3 max-h-[calc(100vh-2rem)] overflow-y-auto w-[280px] scrollbar-thin pr-1">
           <ControlPanel
             terrain={terrain}
             exaggeration={exaggeration}
