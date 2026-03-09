@@ -24,6 +24,7 @@ interface GeoFeaturesProps {
   riverInflow?: number;
   userLocation?: { lat: number; lon: number } | null;
   canalHighlights?: CanalHighlight[];
+  highlightedCanalNames?: Set<string>;
 }
 
 interface City {
