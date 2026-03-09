@@ -69,6 +69,8 @@ interface TerrainViewerProps {
   flowRenderKey?: number;
   terrainVersion?: number;
   raisedPixels?: Set<number>;
+  showMigration?: boolean;
+  migrationYear?: number;
 }
 
 function CameraAnimator({ started }: { started: boolean }) {
