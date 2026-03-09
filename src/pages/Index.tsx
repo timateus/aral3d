@@ -474,6 +474,16 @@ const Index = () => {
         </div>
       )}
 
+      {/* Choropleth Panel */}
+      {started && !narrativeActive && showChoropleth && !isMobile && (
+        <div className="absolute top-16 left-4 z-10" style={{ top: showDataPanel ? '420px' : '64px' }}>
+          <ChoroplethPanel
+            year={waterExtentYear}
+            onClose={() => setShowChoropleth(false)}
+          />
+        </div>
+      )}
+
       {/* Header */}
       {started && !narrativeActive && !isMobile && (
         <div className="absolute top-4 left-4 z-10">
