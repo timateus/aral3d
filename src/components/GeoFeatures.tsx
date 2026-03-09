@@ -24,6 +24,7 @@ interface GeoFeaturesProps {
   riverInflow?: number;
   userLocation?: { lat: number; lon: number } | null;
   canalHighlights?: CanalHighlight[];
+  highlightedCanalNames?: Set<string>;
 }
 
 interface City {
@@ -156,7 +157,7 @@ function geoToMeshPos(
   return [x, zHeight, -planeY];
 }
 
-const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, riverInflow, userLocation, canalHighlights }: GeoFeaturesProps) => {
+const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, riverInflow, userLocation, canalHighlights, highlightedCanalNames }: GeoFeaturesProps) => {
   const bounds = terrain.bounds;
   const w = terrain.width;
   const h = terrain.height;
@@ -405,17 +406,17 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
 
       {/* 13th century basin */}
       {show13thBasin && basinLines13.map((seg, i) => (
-        <CanalLineWithLabel key={`basin13-${i}`} segment={seg} color="#e8a838" />
+        <CanalLineWithLabel key={`basin13-${i}`} segment={seg} color="#e8a838" highlighted={!!(highlightedCanalNames && seg.name && canalNameMatches(seg.name, highlightedCanalNames))} />
       ))}
 
       {/* 19th century basin */}
       {show19thBasin && basinLines19.map((seg, i) => (
-        <CanalLineWithLabel key={`basin19-${i}`} segment={seg} color="#38e8a8" />
+        <CanalLineWithLabel key={`basin19-${i}`} segment={seg} color="#38e8a8" highlighted={!!(highlightedCanalNames && seg.name && canalNameMatches(seg.name, highlightedCanalNames))} />
       ))}
 
       {/* 21st century basin */}
       {show21stBasin && basinLines21.map((seg, i) => (
-        <CanalLineWithLabel key={`basin21-${i}`} segment={seg} color="#e84038" />
+        <CanalLineWithLabel key={`basin21-${i}`} segment={seg} color="#e84038" highlighted={!!(highlightedCanalNames && seg.name && canalNameMatches(seg.name, highlightedCanalNames))} />
       ))}
 
       {/* City markers */}
@@ -632,17 +633,64 @@ function extractNamedLabels(
   return labels;
 }
 
-const CanalLineWithLabel = ({ segment, color }: { segment: CanalSegment; color: string }) => {
+// Name matching helper for canal highlights
+function canalNameMatches(segmentName: string | null, highlightedNames: Set<string>): boolean {
+  if (!segmentName) return false;
+  const sn = segmentName.toLowerCase().trim();
+  for (const hn of highlightedNames) {
+    const h = hn.toLowerCase().trim();
+    // Check various match patterns
+    if (sn === h) return true;
+    if (sn.includes(h) || h.includes(sn)) return true;
+    // Match partial: "Kegeyli" matches "Kegeyli Canal"
+    const snWords = sn.split(/[\s\-_]+/);
+    const hnWords = h.split(/[\s\-_]+/);
+    if (snWords.some(w => w.length > 3 && hnWords.some(hw => hw.length > 3 && (w.includes(hw) || hw.includes(w))))) return true;
+  }
+  return false;
+}
+
+const HIGHLIGHT_COLOR = '#ff1493'; // Hot pink for highlighted canals
+
+const CanalLineWithLabel = ({ segment, color, highlighted }: { segment: CanalSegment; color: string; highlighted?: boolean }) => {
   const [hovered, setHovered] = useState(false);
+  const ringRef = useRef<THREE.Mesh>(null);
+  const [time, setTime] = useState(0);
+
+  useEffect(() => {
+    if (!highlighted) return;
+    let id: number;
+    const tick = () => {
+      setTime(t => t + 0.03);
+      id = requestAnimationFrame(tick);
+    };
+    id = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(id);
+  }, [highlighted]);
+
+  const displayColor = highlighted ? HIGHLIGHT_COLOR : color;
+  const lineWidth = highlighted ? (hovered ? 6 : 4) : (hovered ? 3 : 1.5);
+  const opacity = highlighted ? 1 : (hovered ? 1 : 0.7);
+  const glowScale = highlighted ? 1 + 0.15 * Math.sin(time * 3) : 1;
 
   return (
     <group>
+      {/* Glow line behind for highlighted canals */}
+      {highlighted && (
+        <Line
+          points={segment.points}
+          color={HIGHLIGHT_COLOR}
+          lineWidth={8}
+          transparent
+          opacity={0.25 + 0.1 * Math.sin(time * 3)}
+        />
+      )}
       <Line
         points={segment.points}
-        color={color}
-        lineWidth={hovered ? 3 : 1.5}
+        color={displayColor}
+        lineWidth={lineWidth}
         transparent
-        opacity={hovered ? 1 : 0.7}
+        opacity={opacity}
       />
       {/* Invisible hover tube along the line at midpoint */}
       {segment.midPos && (
@@ -658,22 +706,28 @@ const CanalLineWithLabel = ({ segment, color }: { segment: CanalSegment; color: 
       {/* Always-visible name along canal */}
       {segment.name && segment.midPos && (
         <Html
-          position={[segment.midPos[0], segment.midPos[1] + 0.06, segment.midPos[2]]}
+          position={[segment.midPos[0], segment.midPos[1] + (highlighted ? 0.15 : 0.06), segment.midPos[2]]}
           center
-          distanceFactor={10}
+          distanceFactor={highlighted ? 7 : 10}
           style={{ pointerEvents: 'none' }}
         >
           <div style={{
-            color,
-            fontSize: '7px',
+            color: displayColor,
+            fontSize: highlighted ? '11px' : '7px',
             fontFamily: "'Inter', system-ui, sans-serif",
-            fontWeight: 400,
-            fontStyle: 'italic',
+            fontWeight: highlighted ? 700 : 400,
+            fontStyle: highlighted ? 'normal' : 'italic',
             whiteSpace: 'nowrap',
-            textShadow: '0 1px 3px rgba(0,0,0,0.9)',
-            opacity: hovered ? 1 : 0.6,
-            transform: `rotate(${segment.angle}deg)`,
+            textShadow: highlighted
+              ? `0 0 8px ${HIGHLIGHT_COLOR}, 0 1px 4px rgba(0,0,0,0.9)`
+              : '0 1px 3px rgba(0,0,0,0.9)',
+            opacity: highlighted ? 1 : (hovered ? 1 : 0.6),
+            transform: `rotate(${segment.angle}deg) scale(${glowScale})`,
             transition: 'opacity 0.2s',
+            background: highlighted ? 'rgba(0,0,0,0.6)' : 'transparent',
+            padding: highlighted ? '2px 6px' : '0',
+            borderRadius: highlighted ? '4px' : '0',
+            border: highlighted ? `1px solid ${HIGHLIGHT_COLOR}66` : 'none',
           }}>
             {segment.name}
           </div>
@@ -688,7 +742,7 @@ const CanalLineWithLabel = ({ segment, color }: { segment: CanalSegment; color: 
           style={{ pointerEvents: 'none' }}
         >
           <div style={{
-            color,
+            color: displayColor,
             padding: '3px 8px',
             fontSize: '11px',
             fontFamily: "'Inter', system-ui, sans-serif",
@@ -697,7 +751,7 @@ const CanalLineWithLabel = ({ segment, color }: { segment: CanalSegment; color: 
             background: 'rgba(0,0,0,0.8)',
             borderRadius: '4px',
             textShadow: '0 1px 3px rgba(0,0,0,0.9)',
-            border: `1px solid ${color}33`,
+            border: `1px solid ${displayColor}33`,
           }}>
             {segment.name}
           </div>
@@ -801,7 +855,7 @@ const LakeMarker = ({ lake, pos, radius }: { lake: Lake; pos: [number, number, n
   );
 };
 
-// Pulsing canal highlight marker
+// Pulsing canal highlight marker (fallback for canals without GeoJSON line match)
 const CanalHighlightMarker = ({ pos, canal, color }: { pos: [number, number, number]; canal: string; color: string }) => {
   const ringRef = useRef<THREE.Mesh>(null);
   const [time, setTime] = useState(0);
@@ -817,32 +871,33 @@ const CanalHighlightMarker = ({ pos, canal, color }: { pos: [number, number, num
   }, []);
 
   const scale = 1 + 0.3 * Math.sin(time * 2);
-  const opacity = 0.6 + 0.3 * Math.sin(time * 2);
+  const opacity = 0.7 + 0.3 * Math.sin(time * 2);
 
   return (
-    <group position={[pos[0], pos[1] + 0.08, pos[2]]}>
+    <group position={[pos[0], pos[1] + 0.1, pos[2]]}>
       {/* Pulsing ring */}
       <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]} scale={[scale, scale, 1]}>
-        <ringGeometry args={[0.08, 0.12, 24]} />
-        <meshBasicMaterial color={color} transparent opacity={opacity} side={THREE.DoubleSide} depthWrite={false} />
+        <ringGeometry args={[0.12, 0.18, 24]} />
+        <meshBasicMaterial color={HIGHLIGHT_COLOR} transparent opacity={opacity} side={THREE.DoubleSide} depthWrite={false} />
       </mesh>
       {/* Inner dot */}
       <mesh>
-        <sphereGeometry args={[0.035, 10, 10]} />
-        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.8} />
+        <sphereGeometry args={[0.05, 10, 10]} />
+        <meshStandardMaterial color={HIGHLIGHT_COLOR} emissive={HIGHLIGHT_COLOR} emissiveIntensity={0.9} />
       </mesh>
       {/* Label */}
-      <Html position={[0, 0.18, 0]} center distanceFactor={8} style={{ pointerEvents: 'none' }}>
+      <Html position={[0, 0.25, 0]} center distanceFactor={7} style={{ pointerEvents: 'none' }}>
         <div style={{
-          color,
-          padding: '1px 5px',
-          fontSize: '8px',
+          color: HIGHLIGHT_COLOR,
+          padding: '2px 8px',
+          fontSize: '11px',
           fontFamily: "'Inter', system-ui, sans-serif",
-          fontWeight: 600,
+          fontWeight: 700,
           whiteSpace: 'nowrap',
-          textShadow: '0 1px 6px rgba(0,0,0,0.9), 0 0px 2px rgba(0,0,0,0.7)',
-          background: 'rgba(0,0,0,0.5)',
-          borderRadius: '3px',
+          textShadow: `0 0 8px ${HIGHLIGHT_COLOR}, 0 1px 6px rgba(0,0,0,0.9)`,
+          background: 'rgba(0,0,0,0.6)',
+          borderRadius: '4px',
+          border: `1px solid ${HIGHLIGHT_COLOR}66`,
         }}>
           {canal}
         </div>

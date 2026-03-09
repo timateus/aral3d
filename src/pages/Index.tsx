@@ -183,10 +183,12 @@ const Index = () => {
     setWaterExtentYear(step.year);
     setShowBorders(step.layers.showBorders);
     setShowRivers(step.layers.showRivers);
-    setShow13thBasin(step.layers.show13thBasin);
-    setShow19thBasin(step.layers.show19thBasin);
-    setShow21stBasin(step.layers.show21stBasin);
+    // Always show all basin layers during canal tour so we can highlight matching lines
+    setShow13thBasin(true);
+    setShow19thBasin(true);
+    setShow21stBasin(true);
     setShowWaterExtent(step.layers.showWaterExtent);
+    setShowKhorezm(true);
   }, []);
 
   const startCanalTour = useCallback(() => {
@@ -198,6 +200,7 @@ const Index = () => {
 
   const exitCanalTour = useCallback(() => {
     setCanalTourActive(false);
+    setShowKhorezm(false);
   }, []);
 
   useEffect(() => {
@@ -474,6 +477,7 @@ const Index = () => {
               ethnicity: c.ethnicity,
               color: getEthnicityColor(c.ethnicity),
             })) : undefined}
+            highlightedCanalNames={canalTourActive ? new Set(CANAL_TOUR_STEPS[canalTourStep]?.canals.map(c => c.canal)) : undefined}
           />
         )}
         {!terrain && !loading && error && (
