@@ -175,8 +175,9 @@ const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage', 
     loadIndicatorData(indicator).then(d => setCsvData(d));
   }, [indicator, isSewage]);
 
-  const meshWidth = (terrain.width / Math.max(terrain.width, terrain.height)) * 10;
-  const meshHeight = (terrain.height / Math.max(terrain.width, terrain.height)) * 10;
+  // Must match TerrainMesh: x spans 10, y spans 10*(h/w)
+  const meshWidth = 10;
+  const meshHeight = 10 * (terrain.height / terrain.width);
   const safeBounds = terrain.bounds || { minLon: 56, maxLon: 62, minLat: 42, maxLat: 47 };
 
   const converter = useCallback((lon: number, lat: number) =>
