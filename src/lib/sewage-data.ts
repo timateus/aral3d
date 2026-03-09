@@ -83,17 +83,34 @@ export const KHOREZM_DISTRICT_SEWAGE: Record<string, SewageEntry> = {
   'Yangibazar': mkEntry('Yangibazar district', 'Янгибазарский район', [0,0,0,0,0,0,5.1,9.7,14.5,15.9,19.2,21.6,22.7,24.8,26.4]),
 };
 
+/** Normalize a name for fuzzy matching */
+function normSewage(name: string): string {
+  return name.toLowerCase().replace(/\s*(district|city|region|province)\s*/gi, ' ').replace(/\s+/g, ' ').trim();
+}
+
+// Build normalized lookup maps
+const normKK = new Map<string, SewageEntry>();
+for (const [k, v] of Object.entries(KK_DISTRICT_SEWAGE)) normKK.set(normSewage(k), v);
+
+const normKH = new Map<string, SewageEntry>();
+for (const [k, v] of Object.entries(KHOREZM_DISTRICT_SEWAGE)) normKH.set(normSewage(k), v);
+
+const normRegion = new Map<string, SewageEntry>();
+for (const [k, v] of Object.entries(REGION_SEWAGE)) normRegion.set(normSewage(k), v);
+
 /** Lookup sewage value: tries district maps first, then region */
 export function getSewageForDistrict(shapeName: string, year: number): { entry: SewageEntry; value: number } | null {
-  const kk = KK_DISTRICT_SEWAGE[shapeName];
+  const n = normSewage(shapeName);
+  const kk = normKK.get(n);
   if (kk) return { entry: kk, value: kk.values[year] ?? 0 };
-  const kh = KHOREZM_DISTRICT_SEWAGE[shapeName];
+  const kh = normKH.get(n);
   if (kh) return { entry: kh, value: kh.values[year] ?? 0 };
   return null;
 }
 
 export function getSewageForRegion(regionName: string, year: number): { entry: SewageEntry; value: number } | null {
-  const r = REGION_SEWAGE[regionName];
+  const n = normSewage(regionName);
+  const r = normRegion.get(n);
   if (!r) return null;
   return { entry: r, value: r.values[year] ?? 0 };
 }

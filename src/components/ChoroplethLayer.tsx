@@ -187,11 +187,11 @@ const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage' }
 
   const meshWidth = (terrain.width / Math.max(terrain.width, terrain.height)) * 10;
   const meshHeight = (terrain.height / Math.max(terrain.width, terrain.height)) * 10;
-  const bounds = terrain.bounds;
+  const safeBounds = terrain.bounds || { minLon: 56, maxLon: 62, minLat: 42, maxLat: 47 };
 
   const converter = useCallback((lon: number, lat: number) =>
-    geoToMeshPos(lon, lat, bounds, terrain, exaggeration, meshWidth, meshHeight),
-    [bounds, terrain, exaggeration, meshWidth, meshHeight]
+    geoToMeshPos(lon, lat, safeBounds, terrain, exaggeration, meshWidth, meshHeight),
+    [safeBounds, terrain, exaggeration, meshWidth, meshHeight]
   );
 
   const regions = useMemo(() => {

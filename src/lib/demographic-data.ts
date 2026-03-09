@@ -13,8 +13,11 @@ export const INDICATORS: DemographicIndicator[] = [
   { id: 'sewage', name: 'Sewage Coverage', nameRu: 'Канализация', unit: '%', file: '', colorMode: 'pct-good' },
   { id: 'drinking_water', name: 'Drinking Water', nameRu: 'Питьевая вода', unit: '%', file: '/data/drinking_water.csv', colorMode: 'pct-good' },
   { id: 'natural_gas', name: 'Natural Gas', nameRu: 'Природный газ', unit: '%', file: '/data/natural_gas.csv', colorMode: 'pct-good' },
-  { id: 'adolescent_childbirth', name: 'Teen Childbirth (15-17)', nameRu: 'Рожд. подростков', unit: '‰', file: '/data/adolescent_childbirth.csv', colorMode: 'pct-bad' },
   { id: 'life_expectancy', name: 'Life Expectancy', nameRu: 'Прод. жизни', unit: 'yrs', file: '/data/life_expectancy.csv', colorMode: 'years' },
+  { id: 'maternal_mortality', name: 'Maternal Mortality', nameRu: 'Материнская смертность', unit: 'per 100k', file: '/data/maternal_mortality.csv', colorMode: 'pct-bad' },
+  { id: 'infant_mortality', name: 'Infant Mortality', nameRu: 'Младенч. смертность', unit: '‰', file: '/data/infant_mortality.csv', colorMode: 'pct-bad' },
+  { id: 'child_mortality', name: 'Child Mortality (<5)', nameRu: 'Детская смертность (<5)', unit: '‰', file: '/data/child_mortality.csv', colorMode: 'pct-bad' },
+  { id: 'adolescent_childbirth', name: 'Teen Childbirth (15-17)', nameRu: 'Рожд. подростков', unit: '‰', file: '/data/adolescent_childbirth.csv', colorMode: 'pct-bad' },
   { id: 'marriages', name: 'Marriages (Rural)', nameRu: 'Браки (село)', unit: '', file: '/data/arranged_marriages.csv', colorMode: 'count' },
   { id: 'arrivals', name: 'Immigration', nameRu: 'Иммиграция', unit: '', file: '/data/arrivals.csv', colorMode: 'count' },
   { id: 'emigrants', name: 'Emigration', nameRu: 'Эмиграция', unit: '', file: '/data/emigrants.csv', colorMode: 'count' },
@@ -286,21 +289,36 @@ const REGION_CODE_PREFIX: Record<string, string> = {
   '1726': 'tashkent city',
 };
 
-/** Map ADM1 shapeName (normalized) → region code prefix */
+/** Map ADM1 shapeName (super-normalized) → region code prefix.
+ *  Includes GeoJSON transliteration variants (e.g. "xorazm" for Khorezm) */
 const ADM1_TO_CODE: Record<string, string> = {
   'karakalpakstan': '1735',
+  'republicofkarakalpakstan': '1735',
   'andijan': '1703',
+  'andijon': '1703',
   'bukhara': '1706',
+  'buxoro': '1706',
   'jizzakh': '1708',
+  'jizzax': '1708',
   'kashkadarya': '1710',
+  'qashqadaryo': '1710',
   'navoi': '1712',
+  'navoiy': '1712',
   'namangan': '1714',
   'samarkand': '1718',
+  'samarqand': '1718',
   'surkhandarya': '1722',
+  'surxondaryo': '1722',
   'syrdarya': '1724',
+  'sirdaryo': '1724',
   'tashkent': '1727',
+  'toshkent': '1727',
   'fergana': '1730',
+  'fargona': '1730',
   'khorezm': '1733',
+  'xorazm': '1733',
+  'tashkentcity': '1726',
+  'toshkentcity': '1726',
 };
 
 function parseCsv(text: string): CsvData {
@@ -337,12 +355,16 @@ function parseCsv(text: string): CsvData {
     const row: CsvRow = { code, nameEn, nameRu, values };
     rows.push(row);
 
-    // Index by normalized name
+    // Index by normalized name (with suffix stripped)
     const norm = normalizeName(nameEn);
     byNormName.set(norm, row);
-    // Also index by super-normalized
+    // Also index by super-normalized (alpha-only)
     const sn = superNormalize(nameEn);
     if (!byNormName.has(sn)) byNormName.set(sn, row);
+    
+    // Also index by the raw English name lowercased for direct matching
+    const rawLower = nameEn.toLowerCase().trim();
+    if (!byNormName.has(rawLower)) byNormName.set(rawLower, row);
 
     // Index by code
     byCode.set(code, row);
