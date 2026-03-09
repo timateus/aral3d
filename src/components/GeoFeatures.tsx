@@ -429,16 +429,26 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
         <HoverLabel key={`label21-${i}`} label={label} />
       ))}
 
-      {/* 21c Lakes (Robert) */}
-      {show21cLakes && lakes21cOutlines.map((points, i) => (
-        <Line
-          key={`lake21c-${i}`}
-          points={points}
-          color="#00e5ff"
-          lineWidth={1.5}
-          transparent
-          opacity={0.8}
-        />
+      {/* 21c Lakes (Robert) - filled + outline */}
+      {show21cLakes && lakes21cPolygons.map((lake, i) => (
+        <group key={`lake21c-${i}`}>
+          <mesh geometry={lake.geometry}>
+            <meshStandardMaterial
+              color="#ff69b4"
+              transparent
+              opacity={0.45}
+              side={THREE.DoubleSide}
+              depthWrite={false}
+            />
+          </mesh>
+          <Line
+            points={lake.outline}
+            color="#ff85c8"
+            lineWidth={1.5}
+            transparent
+            opacity={0.9}
+          />
+        </group>
       ))}
 
       {/* Rivers from GeoJSON */}
