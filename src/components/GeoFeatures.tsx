@@ -633,17 +633,64 @@ function extractNamedLabels(
   return labels;
 }
 
-const CanalLineWithLabel = ({ segment, color }: { segment: CanalSegment; color: string }) => {
+// Name matching helper for canal highlights
+function canalNameMatches(segmentName: string | null, highlightedNames: Set<string>): boolean {
+  if (!segmentName) return false;
+  const sn = segmentName.toLowerCase().trim();
+  for (const hn of highlightedNames) {
+    const h = hn.toLowerCase().trim();
+    // Check various match patterns
+    if (sn === h) return true;
+    if (sn.includes(h) || h.includes(sn)) return true;
+    // Match partial: "Kegeyli" matches "Kegeyli Canal"
+    const snWords = sn.split(/[\s\-_]+/);
+    const hnWords = h.split(/[\s\-_]+/);
+    if (snWords.some(w => w.length > 3 && hnWords.some(hw => hw.length > 3 && (w.includes(hw) || hw.includes(w))))) return true;
+  }
+  return false;
+}
+
+const HIGHLIGHT_COLOR = '#ff1493'; // Hot pink for highlighted canals
+
+const CanalLineWithLabel = ({ segment, color, highlighted }: { segment: CanalSegment; color: string; highlighted?: boolean }) => {
   const [hovered, setHovered] = useState(false);
+  const ringRef = useRef<THREE.Mesh>(null);
+  const [time, setTime] = useState(0);
+
+  useEffect(() => {
+    if (!highlighted) return;
+    let id: number;
+    const tick = () => {
+      setTime(t => t + 0.03);
+      id = requestAnimationFrame(tick);
+    };
+    id = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(id);
+  }, [highlighted]);
+
+  const displayColor = highlighted ? HIGHLIGHT_COLOR : color;
+  const lineWidth = highlighted ? (hovered ? 6 : 4) : (hovered ? 3 : 1.5);
+  const opacity = highlighted ? 1 : (hovered ? 1 : 0.7);
+  const glowScale = highlighted ? 1 + 0.15 * Math.sin(time * 3) : 1;
 
   return (
     <group>
+      {/* Glow line behind for highlighted canals */}
+      {highlighted && (
+        <Line
+          points={segment.points}
+          color={HIGHLIGHT_COLOR}
+          lineWidth={8}
+          transparent
+          opacity={0.25 + 0.1 * Math.sin(time * 3)}
+        />
+      )}
       <Line
         points={segment.points}
-        color={color}
-        lineWidth={hovered ? 3 : 1.5}
+        color={displayColor}
+        lineWidth={lineWidth}
         transparent
-        opacity={hovered ? 1 : 0.7}
+        opacity={opacity}
       />
       {/* Invisible hover tube along the line at midpoint */}
       {segment.midPos && (
@@ -659,22 +706,28 @@ const CanalLineWithLabel = ({ segment, color }: { segment: CanalSegment; color: 
       {/* Always-visible name along canal */}
       {segment.name && segment.midPos && (
         <Html
-          position={[segment.midPos[0], segment.midPos[1] + 0.06, segment.midPos[2]]}
+          position={[segment.midPos[0], segment.midPos[1] + (highlighted ? 0.15 : 0.06), segment.midPos[2]]}
           center
-          distanceFactor={10}
+          distanceFactor={highlighted ? 7 : 10}
           style={{ pointerEvents: 'none' }}
         >
           <div style={{
-            color,
-            fontSize: '7px',
+            color: displayColor,
+            fontSize: highlighted ? '11px' : '7px',
             fontFamily: "'Inter', system-ui, sans-serif",
-            fontWeight: 400,
-            fontStyle: 'italic',
+            fontWeight: highlighted ? 700 : 400,
+            fontStyle: highlighted ? 'normal' : 'italic',
             whiteSpace: 'nowrap',
-            textShadow: '0 1px 3px rgba(0,0,0,0.9)',
-            opacity: hovered ? 1 : 0.6,
-            transform: `rotate(${segment.angle}deg)`,
+            textShadow: highlighted
+              ? `0 0 8px ${HIGHLIGHT_COLOR}, 0 1px 4px rgba(0,0,0,0.9)`
+              : '0 1px 3px rgba(0,0,0,0.9)',
+            opacity: highlighted ? 1 : (hovered ? 1 : 0.6),
+            transform: `rotate(${segment.angle}deg) scale(${glowScale})`,
             transition: 'opacity 0.2s',
+            background: highlighted ? 'rgba(0,0,0,0.6)' : 'transparent',
+            padding: highlighted ? '2px 6px' : '0',
+            borderRadius: highlighted ? '4px' : '0',
+            border: highlighted ? `1px solid ${HIGHLIGHT_COLOR}66` : 'none',
           }}>
             {segment.name}
           </div>
@@ -689,7 +742,7 @@ const CanalLineWithLabel = ({ segment, color }: { segment: CanalSegment; color: 
           style={{ pointerEvents: 'none' }}
         >
           <div style={{
-            color,
+            color: displayColor,
             padding: '3px 8px',
             fontSize: '11px',
             fontFamily: "'Inter', system-ui, sans-serif",
@@ -698,7 +751,7 @@ const CanalLineWithLabel = ({ segment, color }: { segment: CanalSegment; color: 
             background: 'rgba(0,0,0,0.8)',
             borderRadius: '4px',
             textShadow: '0 1px 3px rgba(0,0,0,0.9)',
-            border: `1px solid ${color}33`,
+            border: `1px solid ${displayColor}33`,
           }}>
             {segment.name}
           </div>
