@@ -6,10 +6,12 @@ import { getSewageForDistrict, getSewageForRegion, sewageColor } from '@/lib/sew
 import {
   INDICATORS,
   DemographicIndicator,
+  CsvData,
   loadIndicatorData,
   lookupByShapeName,
   lookupByRegionName,
-  getMaxForYear,
+  regionHasDistrictData,
+  getGlobalMax,
   getIndicatorColor,
   getIndicatorHeight,
 } from '@/lib/demographic-data';
@@ -100,23 +102,77 @@ function buildSideWalls(ring: number[][], converter: (lon: number, lat: number) 
   return verts;
 }
 
+function buildRegionMesh(
+  rings: number[][][],
+  converter: (lon: number, lat: number) => [number, number, number] | null,
+  data: { value: number; nameEn: string; nameRu: string; color: string; height: number; unit: string },
+  key: string,
+): RegionMesh | null {
+  const allTopVerts: number[] = [];
+  const allSideVerts: number[] = [];
+  const allBorderVerts: number[] = [];
+  const extrudeH = data.height * MAX_EXTRUDE;
+
+  for (const ring of rings) {
+    const topConverter = (lon: number, lat: number) => {
+      const p = converter(lon, lat);
+      if (!p) return null;
+      return [p[0], p[1] + extrudeH, p[2]] as [number, number, number];
+    };
+    allTopVerts.push(...fanTriangulate(ring, topConverter));
+
+    if (extrudeH > 0.01) {
+      allSideVerts.push(...buildSideWalls(ring, converter, extrudeH));
+    }
+
+    const borderPts = ring.map(([lon, lat]) => {
+      const p = converter(lon, lat);
+      return p ? [p[0], p[1] + extrudeH + 0.01, p[2]] : null;
+    }).filter(Boolean) as [number, number, number][];
+    for (const pt of borderPts) allBorderVerts.push(...pt);
+  }
+
+  if (allTopVerts.length === 0) return null;
+
+  const mainRing = rings[0];
+  const [clon, clat] = centroid(mainRing);
+  const labelP = converter(clon, clat);
+  const labelPos: [number, number, number] = labelP
+    ? [labelP[0], labelP[1] + extrudeH + 0.15, labelP[2]]
+    : [0, 0, 0];
+
+  return {
+    key,
+    nameEn: data.nameEn,
+    nameRu: data.nameRu,
+    value: data.value,
+    unit: data.unit,
+    color: data.color,
+    topVerts: new Float32Array(allTopVerts),
+    sideVerts: allSideVerts.length > 0 ? new Float32Array(allSideVerts) : null,
+    borderVerts: new Float32Array(allBorderVerts),
+    labelPos,
+    height: extrudeH,
+  };
+}
+
 const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage' }: ChoroplethLayerProps) => {
-  const [kkGeo, setKkGeo] = useState<GeoJSONCollection | null>(null);
-  const [regionGeo, setRegionGeo] = useState<GeoJSONCollection | null>(null);
+  const [adm2Geo, setAdm2Geo] = useState<GeoJSONCollection | null>(null);
+  const [adm1Geo, setAdm1Geo] = useState<GeoJSONCollection | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
-  const [csvData, setCsvData] = useState<any>(null);
+  const [csvData, setCsvData] = useState<CsvData | null>(null);
 
   const indicator = useMemo(() => INDICATORS.find(i => i.id === indicatorId) || INDICATORS[0], [indicatorId]);
   const isSewage = indicator.id === 'sewage';
 
-  // Load GeoJSON
+  // Load GeoJSON files
   useEffect(() => {
     Promise.all([
-      fetch('/data/karakalpakstan_adm2.geojson').then(r => r.json()),
-      fetch('/data/uzbekistan_regions.geojson').then(r => r.json()),
-    ]).then(([kk, reg]) => {
-      setKkGeo(kk);
-      setRegionGeo(reg);
+      fetch('/data/uzb_adm2.geojson').then(r => r.json()),
+      fetch('/data/uzb_adm1.geojson').then(r => r.json()),
+    ]).then(([a2, a1]) => {
+      setAdm2Geo(a2);
+      setAdm1Geo(a1);
     });
   }, []);
 
@@ -138,134 +194,111 @@ const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage' }
     [bounds, terrain, exaggeration, meshWidth, meshHeight]
   );
 
-  // Determine value/color for a feature
-  const getFeatureData = useCallback((shapeName: string, regionName: string | null, isDistrict: boolean) => {
-    if (isSewage) {
-      if (isDistrict) {
-        const d = getSewageForDistrict(shapeName, year);
-        if (d) return { value: d.value, nameEn: d.entry.nameEn, nameRu: d.entry.nameRu, color: sewageColor(d.value), height: d.value / 100, unit: '%' };
-      }
-      if (regionName) {
-        const r = getSewageForRegion(regionName, year);
-        if (r) return { value: r.value, nameEn: r.entry.nameEn, nameRu: r.entry.nameRu, color: sewageColor(r.value), height: r.value / 100, unit: '%' };
-      }
-      return null;
-    }
-
-    if (!csvData) return null;
-    const maxVal = getMaxForYear(csvData, year);
-
-    if (isDistrict) {
-      const d = lookupByShapeName(csvData, shapeName, year);
-      if (d) return {
-        value: d.value, nameEn: d.nameEn, nameRu: d.nameRu,
-        color: getIndicatorColor(indicator, d.value, maxVal),
-        height: getIndicatorHeight(indicator, d.value, maxVal),
-        unit: indicator.unit,
-      };
-    }
-    if (regionName) {
-      const r = lookupByRegionName(csvData, regionName, year);
-      if (r) return {
-        value: r.value, nameEn: r.nameEn, nameRu: r.nameRu,
-        color: getIndicatorColor(indicator, r.value, maxVal),
-        height: getIndicatorHeight(indicator, r.value, maxVal),
-        unit: indicator.unit,
-      };
-    }
-    return null;
-  }, [isSewage, csvData, indicator, year]);
-
   const regions = useMemo(() => {
-    if (!kkGeo || !regionGeo) return [];
+    if (!adm2Geo || !adm1Geo) return [];
     if (!isSewage && !csvData) return [];
 
     const result: RegionMesh[] = [];
+    const globalMax = csvData ? getGlobalMax(csvData) : 100;
 
-    const processFeature = (feat: GeoJSONFeature, isDistrict: boolean) => {
-      const shapeName = feat.properties.shapeName || feat.properties.ADM2_EN || feat.properties.ADM1_EN || '';
-      const regionName = feat.properties.ADM1_EN || '';
-      const data = getFeatureData(shapeName, regionName, isDistrict);
-      if (!data) return;
+    // Track which ADM1 regions have ADM2 district coverage
+    const regionsWithDistricts = new Set<string>();
 
+    // Helper to extract polygon rings from a feature
+    const getRings = (feat: GeoJSONFeature): number[][][] => {
       const rings: number[][][] = [];
       if (feat.geometry.type === 'Polygon') {
         rings.push(feat.geometry.coordinates[0]);
       } else if (feat.geometry.type === 'MultiPolygon') {
         for (const poly of feat.geometry.coordinates) rings.push(poly[0]);
       }
-
-      const allTopVerts: number[] = [];
-      const allSideVerts: number[] = [];
-      const allBorderVerts: number[] = [];
-      const extrudeH = data.height * MAX_EXTRUDE;
-
-      for (const ring of rings) {
-        // Top face at extruded height
-        const topConverter = (lon: number, lat: number) => {
-          const p = converter(lon, lat);
-          if (!p) return null;
-          return [p[0], p[1] + extrudeH, p[2]] as [number, number, number];
-        };
-        allTopVerts.push(...fanTriangulate(ring, topConverter));
-
-        // Side walls
-        if (extrudeH > 0.01) {
-          const sideConverter = (lon: number, lat: number) => converter(lon, lat);
-          allSideVerts.push(...buildSideWalls(ring, sideConverter, extrudeH));
-        }
-
-        // Border
-        const borderPts = ring.map(([lon, lat]) => {
-          const p = converter(lon, lat);
-          return p ? [p[0], p[1] + extrudeH + 0.01, p[2]] : null;
-        }).filter(Boolean) as [number, number, number][];
-        for (const pt of borderPts) allBorderVerts.push(...pt);
-      }
-
-      if (allTopVerts.length === 0) return;
-
-      // Label position
-      const mainRing = rings[0];
-      const [clon, clat] = centroid(mainRing);
-      const labelP = converter(clon, clat);
-      const labelPos: [number, number, number] = labelP
-        ? [labelP[0], labelP[1] + extrudeH + 0.15, labelP[2]]
-        : [0, 0, 0];
-
-      result.push({
-        key: shapeName || regionName,
-        nameEn: data.nameEn,
-        nameRu: data.nameRu,
-        value: data.value,
-        unit: data.unit,
-        color: data.color,
-        topVerts: new Float32Array(allTopVerts),
-        sideVerts: allSideVerts.length > 0 ? new Float32Array(allSideVerts) : null,
-        borderVerts: new Float32Array(allBorderVerts),
-        labelPos,
-        height: extrudeH,
-      });
+      return rings;
     };
 
-    // KK districts
-    for (const feat of kkGeo.features) {
-      processFeature(feat, true);
+    // Phase 1: Process ADM2 districts
+    for (const feat of adm2Geo.features) {
+      const shapeName = feat.properties.shapeName || '';
+      if (!shapeName) continue;
+
+      let data: { value: number; nameEn: string; nameRu: string; color: string; height: number; unit: string } | null = null;
+
+      if (isSewage) {
+        const d = getSewageForDistrict(shapeName, year);
+        if (d && d.value > 0) {
+          data = { value: d.value, nameEn: d.entry.nameEn, nameRu: d.entry.nameRu, color: sewageColor(d.value), height: d.value / 100, unit: '%' };
+        }
+      } else if (csvData) {
+        const d = lookupByShapeName(csvData, shapeName, year);
+        if (d && d.value > 0) {
+          data = {
+            value: d.value, nameEn: d.nameEn, nameRu: d.nameRu,
+            color: getIndicatorColor(indicator, d.value, globalMax),
+            height: getIndicatorHeight(indicator, d.value, globalMax),
+            unit: indicator.unit,
+          };
+        }
+      }
+
+      if (!data) continue;
+
+      const rings = getRings(feat);
+      if (rings.length === 0) continue;
+
+      const mesh = buildRegionMesh(rings, converter, data, `adm2-${shapeName}`);
+      if (mesh) {
+        result.push(mesh);
+        // Mark the parent region as having district coverage
+        // We determine parent by checking centroid overlap with ADM1
+        // For simplicity, mark all regions if ANY district matched
+        regionsWithDistricts.add(shapeName);
+      }
     }
 
-    // Regions (skip KK and Khorezm since they have district data)
-    for (const feat of regionGeo.features) {
-      const name = feat.properties.ADM1_EN || '';
-      if (/karakalpakstan/i.test(name)) continue;
-      if (/khorezm/i.test(name)) {
-        // For Khorezm, if we had district geojson we'd use it. For now render region-level.
-        // Actually we skip and handle separately if district data exists.
+    // Phase 2: Process ADM1 regions (only if no district data matched for that region)
+    for (const feat of adm1Geo.features) {
+      const shapeName = feat.properties.shapeName || '';
+      if (!shapeName) continue;
+
+      // Check if this region has district-level data in the CSV
+      if (!isSewage && csvData && regionHasDistrictData(csvData, shapeName)) {
+        continue; // Skip - districts rendered above
       }
-      processFeature(feat, false);
+
+      // For sewage, skip regions that are known to have district data (KK & Khorezm)
+      if (isSewage && /karakalpakstan|khorezm/i.test(shapeName)) {
+        continue;
+      }
+
+      let data: { value: number; nameEn: string; nameRu: string; color: string; height: number; unit: string } | null = null;
+
+      if (isSewage) {
+        const r = getSewageForRegion(shapeName, year);
+        if (r && r.value > 0) {
+          data = { value: r.value, nameEn: r.entry.nameEn, nameRu: r.entry.nameRu, color: sewageColor(r.value), height: r.value / 100, unit: '%' };
+        }
+      } else if (csvData) {
+        const r = lookupByRegionName(csvData, shapeName, year);
+        if (r && r.value > 0) {
+          data = {
+            value: r.value, nameEn: r.nameEn, nameRu: r.nameRu,
+            color: getIndicatorColor(indicator, r.value, globalMax),
+            height: getIndicatorHeight(indicator, r.value, globalMax),
+            unit: indicator.unit,
+          };
+        }
+      }
+
+      if (!data) continue;
+
+      const rings = getRings(feat);
+      if (rings.length === 0) continue;
+
+      const mesh = buildRegionMesh(rings, converter, data, `adm1-${shapeName}`);
+      if (mesh) result.push(mesh);
     }
 
     return result;
-  }, [kkGeo, regionGeo, converter, year, getFeatureData, isSewage, csvData]);
+  }, [adm2Geo, adm1Geo, converter, year, isSewage, csvData, indicator]);
 
   const handleClick = useCallback((key: string) => {
     setSelected(prev => prev === key ? null : key);
