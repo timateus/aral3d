@@ -8,20 +8,18 @@ export interface SewageEntry {
   values: Record<number, number>;
 }
 
-/** Color scale: red (0%) → yellow (50%) → green (100%) */
+/** Color scale using rich palette: dark red (0%) → warm orange → green (100%) */
 export function sewageColor(value: number): string {
+  const palette = ['#800026', '#a12044', '#c93a5e', '#e06070', '#f09080', '#f4c0a0', '#f0e0c0', '#d0e8a0', '#90c860', '#40a030'];
   const t = Math.max(0, Math.min(100, value)) / 100;
-  if (t < 0.5) {
-    const r = 220;
-    const g = Math.round(60 + t * 2 * 160);
-    const b = 50;
-    return `rgb(${r},${g},${b})`;
-  } else {
-    const r = Math.round(220 - (t - 0.5) * 2 * 180);
-    const g = 200;
-    const b = 50;
-    return `rgb(${r},${g},${b})`;
-  }
+  const idx = t * (palette.length - 1);
+  const lo = Math.floor(idx);
+  const hi = Math.min(lo + 1, palette.length - 1);
+  const frac = idx - lo;
+  const hex2rgb = (h: string) => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
+  const [r1,g1,b1] = hex2rgb(palette[lo]);
+  const [r2,g2,b2] = hex2rgb(palette[hi]);
+  return `rgb(${Math.round(r1+(r2-r1)*frac)},${Math.round(g1+(g2-g1)*frac)},${Math.round(b1+(b2-b1)*frac)})`;
 }
 
 function mkEntry(nameEn: string, nameRu: string, vals: number[]): SewageEntry {
