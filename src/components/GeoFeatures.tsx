@@ -331,22 +331,37 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
       if (!outerRing || outerRing.length < 3) return;
       
       const points3d: [number, number, number][] = [];
-      const points2d: THREE.Vector2[] = [];
       let avgY = 0;
       for (const coord of outerRing) {
         const pos = geoToMeshPos(coord[1], coord[0], bounds, terrain, exaggeration, meshWidth, meshHeight);
         if (pos) {
           points3d.push([pos[0], pos[1] + 0.04, pos[2]]);
-          points2d.push(new THREE.Vector2(pos[0], pos[2]));
           avgY += pos[1] + 0.04;
         }
       }
-      if (points2d.length >= 3) {
-        avgY /= points2d.length;
-        const shape = new THREE.Shape(points2d);
-        const geo = new THREE.ShapeGeometry(shape);
-        geo.rotateX(-Math.PI / 2);
-        geo.translate(0, avgY, 0);
+      if (points3d.length >= 3) {
+        avgY /= points3d.length;
+        
+        // Build geometry directly from 3D points as a fan triangulation
+        const vertices: number[] = [];
+        const center = points3d.reduce(
+          (acc, p) => [acc[0] + p[0], acc[1] + avgY, acc[2] + p[2]],
+          [0, 0, 0]
+        );
+        center[0] /= points3d.length;
+        center[2] /= points3d.length;
+        
+        for (let j = 0; j < points3d.length; j++) {
+          const curr = points3d[j];
+          const next = points3d[(j + 1) % points3d.length];
+          vertices.push(center[0], avgY, center[2]);
+          vertices.push(curr[0], avgY, curr[2]);
+          vertices.push(next[0], avgY, next[2]);
+        }
+        
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+        geo.computeVertexNormals();
         results.push({ outline: points3d, geometry: geo });
       }
     };
