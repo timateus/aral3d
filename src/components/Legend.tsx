@@ -30,13 +30,15 @@ interface LegendProps {
   onToggleChoropleth: (val: boolean) => void;
   choroplethIndicator: string;
   onChoroplethIndicatorChange: (val: string) => void;
+  choroplethExaggeration: number;
+  onChoroplethExaggerationChange: (val: number) => void;
   popHexSize: number;
   onPopHexSizeChange: (val: number) => void;
   popHexHeight: number;
   onPopHexHeightChange: (val: number) => void;
 }
 
-const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin, show21stBasin, onToggle21stBasin, showKhorezm, onToggleKhorezm, showWatershed, onToggleWatershed, showLakes, onToggleLakes, show21cLakes, onToggle21cLakes, showPopDensity, onTogglePopDensity, popHexSize, onPopHexSizeChange, popHexHeight, onPopHexHeightChange, showMigration, onToggleMigration, showChoropleth, onToggleChoropleth, choroplethIndicator, onChoroplethIndicatorChange }: LegendProps) => {
+const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin, show21stBasin, onToggle21stBasin, showKhorezm, onToggleKhorezm, showWatershed, onToggleWatershed, showLakes, onToggleLakes, show21cLakes, onToggle21cLakes, showPopDensity, onTogglePopDensity, popHexSize, onPopHexSizeChange, popHexHeight, onPopHexHeightChange, showMigration, onToggleMigration, showChoropleth, onToggleChoropleth, choroplethIndicator, onChoroplethIndicatorChange, choroplethExaggeration, onChoroplethExaggerationChange }: LegendProps) => {
   return (
     <div className="glass-panel p-3 space-y-2 w-72">
       <label className="flex items-center justify-between cursor-pointer">
@@ -130,7 +132,7 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
       </label>
 
       {showChoropleth && (
-        <div className="ml-5">
+        <div className="ml-5 space-y-2">
           <Select value={choroplethIndicator} onValueChange={onChoroplethIndicatorChange}>
             <SelectTrigger className="h-7 text-[10px] bg-background/50 border-border/50">
               <SelectValue />
@@ -143,6 +145,19 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
               ))}
             </SelectContent>
           </Select>
+          <div className="space-y-1">
+            <label className="text-[10px] text-muted-foreground font-mono">
+              Height: {choroplethExaggeration.toFixed(1)}×
+            </label>
+            <Slider
+              value={[choroplethExaggeration]}
+              onValueChange={(v) => onChoroplethExaggerationChange(v[0])}
+              min={0}
+              max={3}
+              step={0.1}
+              className="w-full"
+            />
+          </div>
         </div>
       )}
 

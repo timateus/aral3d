@@ -21,6 +21,7 @@ interface ChoroplethLayerProps {
   exaggeration: number;
   year: number;
   indicatorId?: string;
+  choroplethExaggeration?: number;
 }
 
 interface GeoJSONFeature {
@@ -48,7 +49,7 @@ interface RegionMesh {
   height: number;
 }
 
-const MAX_EXTRUDE = 1.5;
+const MAX_EXTRUDE = 2.0;
 
 /**
  * Project lon/lat to the SAME coordinate system as the terrain mesh.
@@ -149,7 +150,7 @@ function buildRegionMesh(
   };
 }
 
-const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage' }: ChoroplethLayerProps) => {
+const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage', choroplethExaggeration = 1.0 }: ChoroplethLayerProps) => {
   const [adm2Geo, setAdm2Geo] = useState<GeoJSONCollection | null>(null);
   const [adm1Geo, setAdm1Geo] = useState<GeoJSONCollection | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -190,6 +191,34 @@ const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage' }
     const result: RegionMesh[] = [];
     const globalMax = csvData ? getGlobalMax(csvData) : 100;
 
+    // First pass: collect all non-zero values to find the minimum
+    const allValues: number[] = [];
+    const collectValue = (shapeName: string, isAdm2: boolean) => {
+      if (isSewage) {
+        const d = isAdm2 ? getSewageForDistrict(shapeName, year) : getSewageForRegion(shapeName, year);
+        if (d && d.value > 0) allValues.push(d.value);
+      } else if (csvData) {
+        const d = isAdm2 ? lookupByShapeName(csvData, shapeName, year) : lookupByRegionName(csvData, shapeName, year);
+        if (d && d.value > 0) allValues.push(d.value);
+      }
+    };
+    for (const feat of adm2Geo.features) {
+      const sn = feat.properties.shapeName || '';
+      if (sn) collectValue(sn, true);
+    }
+    for (const feat of adm1Geo.features) {
+      const sn = feat.properties.shapeName || '';
+      if (sn) collectValue(sn, false);
+    }
+    const globalMin = allValues.length > 0 ? Math.min(...allValues) : 0;
+    const range = isSewage ? (100 - globalMin) : (globalMax - globalMin);
+
+    const getNormalizedHeight = (value: number): number => {
+      if (range <= 0 || value <= 0) return 0;
+      const normalized = (value - globalMin) / range;
+      return Math.sqrt(Math.max(0, normalized)) * choroplethExaggeration;
+    };
+
     const getRings = (feat: GeoJSONFeature): number[][][] => {
       const rings: number[][][] = [];
       if (feat.geometry.type === 'Polygon') {
@@ -211,7 +240,7 @@ const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage' }
       if (isSewage) {
         const d = getSewageForDistrict(shapeName, year);
         if (d && d.value > 0) {
-          data = { value: d.value, nameEn: d.entry.nameEn, nameRu: d.entry.nameRu, color: sewageColor(d.value), height: d.value / 100, unit: '%' };
+          data = { value: d.value, nameEn: d.entry.nameEn, nameRu: d.entry.nameRu, color: sewageColor(d.value), height: getNormalizedHeight(d.value), unit: '%' };
         }
       } else if (csvData) {
         const d = lookupByShapeName(csvData, shapeName, year);
@@ -219,7 +248,7 @@ const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage' }
           data = {
             value: d.value, nameEn: d.nameEn, nameRu: d.nameRu,
             color: getIndicatorColor(indicator, d.value, globalMax),
-            height: getIndicatorHeight(indicator, d.value, globalMax),
+            height: getNormalizedHeight(d.value),
             unit: indicator.unit,
           };
         }
@@ -232,7 +261,6 @@ const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage' }
       const mesh = buildRegionMesh(rings, converter, data, `adm2-${shapeName}`);
       if (mesh) {
         result.push(mesh);
-        // Track parent ADM1 region name from feature properties
         const parent = feat.properties.shapeGroup || feat.properties.ADM1 || '';
         if (parent) matchedAdm1Regions.add(parent);
       }
@@ -251,7 +279,7 @@ const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage' }
       if (isSewage) {
         const r = getSewageForRegion(shapeName, year);
         if (r && r.value > 0) {
-          data = { value: r.value, nameEn: r.entry.nameEn, nameRu: r.entry.nameRu, color: sewageColor(r.value), height: r.value / 100, unit: '%' };
+          data = { value: r.value, nameEn: r.entry.nameEn, nameRu: r.entry.nameRu, color: sewageColor(r.value), height: getNormalizedHeight(r.value), unit: '%' };
         }
       } else if (csvData) {
         const r = lookupByRegionName(csvData, shapeName, year);
@@ -259,7 +287,7 @@ const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage' }
           data = {
             value: r.value, nameEn: r.nameEn, nameRu: r.nameRu,
             color: getIndicatorColor(indicator, r.value, globalMax),
-            height: getIndicatorHeight(indicator, r.value, globalMax),
+            height: getNormalizedHeight(r.value),
             unit: indicator.unit,
           };
         }
@@ -275,7 +303,7 @@ const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage' }
 
     console.log('[Choropleth] Built regions:', result.length, 'indicator:', indicatorId, 'globalMax:', globalMax);
     return result;
-  }, [adm2Geo, adm1Geo, converter, year, isSewage, csvData, indicator]);
+  }, [adm2Geo, adm1Geo, converter, year, isSewage, csvData, indicator, choroplethExaggeration]);
 
   const handleClick = useCallback((key: string) => {
     setSelected(prev => prev === key ? null : key);
