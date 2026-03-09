@@ -320,6 +320,30 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
     return extractMultiLineStrings(basin21Data, bounds, terrain, exaggeration, meshWidth, meshHeight);
   }, [terrain, exaggeration, bounds, meshWidth, meshHeight, basin21Data]);
 
+  const lakes21cOutlines = useMemo(() => {
+    if (!bounds || !lakes21cData) return [];
+    const segments: [number, number, number][][] = [];
+    for (const feature of lakes21cData.features) {
+      let rings: number[][][] = [];
+      if (feature.geometry.type === 'Polygon') {
+        rings = feature.geometry.coordinates as number[][][];
+      } else if (feature.geometry.type === 'MultiPolygon') {
+        for (const poly of feature.geometry.coordinates as number[][][][]) {
+          rings.push(...poly);
+        }
+      }
+      for (const ring of rings) {
+        const points: [number, number, number][] = [];
+        for (const coord of ring) {
+          const pos = geoToMeshPos(coord[1], coord[0], bounds, terrain, exaggeration, meshWidth, meshHeight);
+          if (pos) points.push([pos[0], pos[1] + 0.04, pos[2]]);
+        }
+        if (points.length >= 2) segments.push(points);
+      }
+    }
+    return segments;
+  }, [terrain, exaggeration, bounds, meshWidth, meshHeight, lakes21cData]);
+
   if (!bounds) return null;
 
   return (
