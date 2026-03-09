@@ -427,7 +427,7 @@ const Index = () => {
             showMigration={showMigration}
             migrationYear={waterExtentYear}
             showChoropleth={showChoropleth}
-          />
+            choroplethIndicator={choroplethIndicator}
         )}
         {!terrain && !loading && error && (
           <div className="flex items-center justify-center h-full">
