@@ -240,7 +240,7 @@ const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage', 
       if (isSewage) {
         const d = getSewageForDistrict(shapeName, year);
         if (d && d.value > 0) {
-          data = { value: d.value, nameEn: d.entry.nameEn, nameRu: d.entry.nameRu, color: sewageColor(d.value), height: d.value / 100, unit: '%' };
+          data = { value: d.value, nameEn: d.entry.nameEn, nameRu: d.entry.nameRu, color: sewageColor(d.value), height: getNormalizedHeight(d.value), unit: '%' };
         }
       } else if (csvData) {
         const d = lookupByShapeName(csvData, shapeName, year);
@@ -248,7 +248,7 @@ const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage', 
           data = {
             value: d.value, nameEn: d.nameEn, nameRu: d.nameRu,
             color: getIndicatorColor(indicator, d.value, globalMax),
-            height: getIndicatorHeight(indicator, d.value, globalMax),
+            height: getNormalizedHeight(d.value),
             unit: indicator.unit,
           };
         }
@@ -261,7 +261,6 @@ const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage', 
       const mesh = buildRegionMesh(rings, converter, data, `adm2-${shapeName}`);
       if (mesh) {
         result.push(mesh);
-        // Track parent ADM1 region name from feature properties
         const parent = feat.properties.shapeGroup || feat.properties.ADM1 || '';
         if (parent) matchedAdm1Regions.add(parent);
       }
@@ -280,7 +279,7 @@ const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage', 
       if (isSewage) {
         const r = getSewageForRegion(shapeName, year);
         if (r && r.value > 0) {
-          data = { value: r.value, nameEn: r.entry.nameEn, nameRu: r.entry.nameRu, color: sewageColor(r.value), height: r.value / 100, unit: '%' };
+          data = { value: r.value, nameEn: r.entry.nameEn, nameRu: r.entry.nameRu, color: sewageColor(r.value), height: getNormalizedHeight(r.value), unit: '%' };
         }
       } else if (csvData) {
         const r = lookupByRegionName(csvData, shapeName, year);
@@ -288,7 +287,7 @@ const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage', 
           data = {
             value: r.value, nameEn: r.nameEn, nameRu: r.nameRu,
             color: getIndicatorColor(indicator, r.value, globalMax),
-            height: getIndicatorHeight(indicator, r.value, globalMax),
+            height: getNormalizedHeight(r.value),
             unit: indicator.unit,
           };
         }
