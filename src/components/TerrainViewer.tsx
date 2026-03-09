@@ -37,6 +37,7 @@ interface TerrainViewerProps {
   show19thBasin: boolean;
   show21stBasin: boolean;
   showLakes: boolean;
+  show21cLakes?: boolean;
   showWaterExtent: boolean;
   waterExtentYear: number;
   showPopDensity?: boolean;
@@ -223,7 +224,7 @@ function VideoAnimator({
   return null;
 }
 
-const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, showWaterExtent, waterExtentYear, showPopDensity, popHexSize, popHexHeight, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone, riverInflow, userLocation, inspectorEnabled, damToolActive, onDamPlace, waterFlowActive, onWaterFlowClick, flowState, flowRenderKey, terrainVersion, raisedPixels }, ref) => {
+const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, showWaterExtent, waterExtentYear, showPopDensity, popHexSize, popHexHeight, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone, riverInflow, userLocation, inspectorEnabled, damToolActive, onDamPlace, waterFlowActive, onWaterFlowClick, flowState, flowRenderKey, terrainVersion, raisedPixels }, ref) => {
   const screenshotFn = useRef<(() => void) | null>(null);
   const orbitRef = useRef<any>(null);
   const [flyoverAnimating, setFlyoverAnimating] = useState(false);
@@ -251,7 +252,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
       {flowState && flowRenderKey !== undefined && (
         <WaterFlowOverlay terrain={terrain} exaggeration={exaggeration} flowState={flowState} renderKey={flowRenderKey} />
       )}
-      <GeoFeatures terrain={terrain} exaggeration={exaggeration} showBorders={showBorders} showRivers={showRivers} show13thBasin={show13thBasin} show19thBasin={show19thBasin} show21stBasin={show21stBasin} showLakes={showLakes} riverInflow={riverInflow} userLocation={userLocation} />
+      <GeoFeatures terrain={terrain} exaggeration={exaggeration} showBorders={showBorders} showRivers={showRivers} show13thBasin={show13thBasin} show19thBasin={show19thBasin} show21stBasin={show21stBasin} showLakes={showLakes} show21cLakes={show21cLakes} riverInflow={riverInflow} userLocation={userLocation} />
       {showWaterExtent && <WaterExtentLayer terrain={terrain} exaggeration={exaggeration} year={waterExtentYear} />}
       {showPopDensity && <PopulationDensityLayer terrain={terrain} exaggeration={exaggeration} onDataLoaded={setPopData} hexSize={popHexSize} hexHeightExag={popHexHeight} />}
       {scenarioActions && scenarioActions.length > 0 && (

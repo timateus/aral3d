@@ -42,6 +42,7 @@ const Index = () => {
   const [show21stBasin, setShow21stBasin] = useState(true);
   const [showKhorezm, setShowKhorezm] = useState(false);
   const [showLakes, setShowLakes] = useState(false);
+  const [show21cLakes, setShow21cLakes] = useState(false);
   const [showWatershed, setShowWatershed] = useState(false);
   const [watershedTerrain, setWatershedTerrain] = useState<TerrainData | null>(null);
   const [showPopDensity, setShowPopDensity] = useState(false);
@@ -390,6 +391,7 @@ const Index = () => {
             show19thBasin={show19thBasin}
             show21stBasin={show21stBasin}
             showLakes={showLakes}
+            show21cLakes={show21cLakes}
             showWaterExtent={showWaterExtent}
             waterExtentYear={waterExtentYear}
             showPopDensity={showPopDensity}
@@ -510,6 +512,8 @@ const Index = () => {
             onToggleWatershed={setShowWatershed}
             showLakes={showLakes}
             onToggleLakes={setShowLakes}
+            show21cLakes={show21cLakes}
+            onToggle21cLakes={setShow21cLakes}
             showPopDensity={showPopDensity}
             onTogglePopDensity={setShowPopDensity}
             popHexSize={popHexSize}
