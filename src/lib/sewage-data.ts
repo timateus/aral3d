@@ -58,7 +58,7 @@ export const KK_DISTRICT_SEWAGE: Record<string, SewageEntry> = {
   'Muynak': mkEntry('Muynak district', 'Муйнакский район', [0,0,0,0,0,0,2.3,2.3,2.2,0,6.8,8.8,28.7,30.4,32.2]),
   'Nukus District': mkEntry('Nukus district', 'Нукусский район', [0,0,0,0,0,0,0.4,0.4,0.4,0.8,4.0,5.1,25.1,28.3,30.9]),
   'Takhiatash': mkEntry('Takhiatash district', 'Тахиаташский район', [0,0,0,0,0,0,0,0,30.1,23.8,23.4,23.3,34.9,40.3,41.3]),
-  'Takhtakupyr': mkEntry('Takhtakupyr district', 'Тахтакупырский район', [0,0,0,0,0,0,0.1,0.1,0.1,0.5,5.1,6.7,28.3,28.4,31.4]),
+  'Takhtakupir': mkEntry('Takhtakupir district', 'Тахтакупырский район', [0,0,0,0,0,0,0.1,0.1,0.1,0.5,5.1,6.7,28.3,28.4,31.4]),
   'Turtkul': mkEntry('Turtkul district', 'Турткульский район', [0,0,0,0,0,0,5.9,5.5,5.5,5.4,5.3,7.1,25.6,29.3,33.3]),
   'Khojeyli': mkEntry('Khojeyli district', 'Ходжейлийский район', [0,0,0,0,0,0,15.4,15.1,7.5,0,1.0,1.9,32.2,33.3,34.3]),
   'Chimbay': mkEntry('Chimbay district', 'Чимбайский район', [0,0,0,0,0,0,0.1,0.5,0.4,0.5,2.9,3.7,27.7,32.9,34.3]),
