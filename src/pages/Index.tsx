@@ -533,7 +533,10 @@ const Index = () => {
             popHexHeight={popHexHeight}
             onPopHexHeightChange={setPopHexHeight}
             showChoropleth={showChoropleth}
-            onToggleChoropleth={setShowChoropleth}
+            onToggleChoropleth={(val: boolean) => {
+              setShowChoropleth(val);
+              if (val) setExaggeration(1);
+            }}
           />
           {terrain && (
             <WaterVolumeDisplay
