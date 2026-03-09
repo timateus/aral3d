@@ -1,5 +1,7 @@
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { INDICATORS } from '@/lib/demographic-data';
 
 interface LegendProps {
   showBorders: boolean;
@@ -26,13 +28,15 @@ interface LegendProps {
   onToggleMigration: (val: boolean) => void;
   showChoropleth: boolean;
   onToggleChoropleth: (val: boolean) => void;
+  choroplethIndicator: string;
+  onChoroplethIndicatorChange: (val: string) => void;
   popHexSize: number;
   onPopHexSizeChange: (val: number) => void;
   popHexHeight: number;
   onPopHexHeightChange: (val: number) => void;
 }
 
-const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin, show21stBasin, onToggle21stBasin, showKhorezm, onToggleKhorezm, showWatershed, onToggleWatershed, showLakes, onToggleLakes, show21cLakes, onToggle21cLakes, showPopDensity, onTogglePopDensity, popHexSize, onPopHexSizeChange, popHexHeight, onPopHexHeightChange, showMigration, onToggleMigration, showChoropleth, onToggleChoropleth }: LegendProps) => {
+const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin, show21stBasin, onToggle21stBasin, showKhorezm, onToggleKhorezm, showWatershed, onToggleWatershed, showLakes, onToggleLakes, show21cLakes, onToggle21cLakes, showPopDensity, onTogglePopDensity, popHexSize, onPopHexSizeChange, popHexHeight, onPopHexHeightChange, showMigration, onToggleMigration, showChoropleth, onToggleChoropleth, choroplethIndicator, onChoroplethIndicatorChange }: LegendProps) => {
   return (
     <div className="glass-panel p-3 space-y-2 w-72">
       <label className="flex items-center justify-between cursor-pointer">
@@ -120,10 +124,27 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
       <label className="flex items-center justify-between cursor-pointer">
         <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
           <span className="inline-block w-3 h-3 rounded-sm" style={{ background: 'linear-gradient(135deg, rgb(220,60,50), rgb(220,220,50), rgb(40,200,50))' }} />
-          Sewage Coverage
+          Demographics
         </span>
         <Switch className="scale-75" checked={showChoropleth} onCheckedChange={onToggleChoropleth} />
       </label>
+
+      {showChoropleth && (
+        <div className="ml-5">
+          <Select value={choroplethIndicator} onValueChange={onChoroplethIndicatorChange}>
+            <SelectTrigger className="h-7 text-[10px] bg-background/50 border-border/50">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {INDICATORS.map(ind => (
+                <SelectItem key={ind.id} value={ind.id} className="text-[11px]">
+                  {ind.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {showPopDensity && (
         <div className="ml-5 space-y-2">

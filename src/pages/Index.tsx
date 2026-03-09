@@ -48,6 +48,7 @@ const Index = () => {
   const [showPopDensity, setShowPopDensity] = useState(false);
   const [showMigration, setShowMigration] = useState(false);
   const [showChoropleth, setShowChoropleth] = useState(false);
+  const [choroplethIndicator, setChoroplethIndicator] = useState('sewage');
   const [popHexSize, setPopHexSize] = useState(0.15);
   const [popHexHeight, setPopHexHeight] = useState(1.0);
   const [showWaterExtent, setShowWaterExtent] = useState(true);
@@ -426,6 +427,7 @@ const Index = () => {
             showMigration={showMigration}
             migrationYear={waterExtentYear}
             showChoropleth={showChoropleth}
+            choroplethIndicator={choroplethIndicator}
           />
         )}
         {!terrain && !loading && error && (
@@ -537,6 +539,8 @@ const Index = () => {
               setShowChoropleth(val);
               if (val) setExaggeration(1);
             }}
+            choroplethIndicator={choroplethIndicator}
+            onChoroplethIndicatorChange={setChoroplethIndicator}
           />
           {terrain && (
             <WaterVolumeDisplay
