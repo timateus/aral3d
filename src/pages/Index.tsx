@@ -422,6 +422,8 @@ const Index = () => {
             flowRenderKey={flowRenderKey}
             terrainVersion={terrainVersion}
             raisedPixels={raiseEnabled ? raisedPixelsRef.current : undefined}
+            showMigration={showMigration}
+            migrationYear={waterExtentYear}
           />
         )}
         {!terrain && !loading && error && (
