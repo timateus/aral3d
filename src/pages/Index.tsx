@@ -484,6 +484,15 @@ const Index = () => {
         />
       )}
 
+      {/* Canal Tour Overlay */}
+      {canalTourActive && (
+        <CanalTourOverlay
+          step={canalTourStep}
+          onStepChange={handleCanalTourStepChange}
+          onExit={exitCanalTour}
+        />
+      )}
+
       {/* Scenario Chat */}
       {started && !narrativeActive && !isMobile && (
         <ScenarioChat
