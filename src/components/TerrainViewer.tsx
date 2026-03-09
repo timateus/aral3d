@@ -8,6 +8,7 @@ import PopulationDensityLayer, { PopData } from './PopulationDensityLayer';
 import NarrativeCameraController from './NarrativeCameraController';
 import ScenarioOverlay from './ScenarioOverlay';
 import WaterFlowOverlay from './WaterFlowOverlay';
+import MigrationLayer from './MigrationLayer';
 import RiverFlyover from './RiverFlyover';
 import MapControls from './MapControls';
 import { TerrainData } from '@/lib/geotiff-loader';
