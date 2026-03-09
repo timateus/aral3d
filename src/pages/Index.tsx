@@ -438,9 +438,17 @@ const Index = () => {
             onRecordingDone={() => setRecording(false)}
             scenarioActions={scenarioActions}
             currentMetrics={currentMetrics}
-            narrativeActive={narrativeActive}
-            narrativeCameraPosition={narrativeActive ? NARRATIVE_STEPS[narrativeStep]?.camera.position : undefined}
-            narrativeCameraTarget={narrativeActive ? NARRATIVE_STEPS[narrativeStep]?.camera.target : undefined}
+            narrativeActive={narrativeActive || canalTourActive}
+            narrativeCameraPosition={
+              narrativeActive ? NARRATIVE_STEPS[narrativeStep]?.camera.position :
+              canalTourActive ? CANAL_TOUR_STEPS[canalTourStep]?.camera.position :
+              undefined
+            }
+            narrativeCameraTarget={
+              narrativeActive ? NARRATIVE_STEPS[narrativeStep]?.camera.target :
+              canalTourActive ? CANAL_TOUR_STEPS[canalTourStep]?.camera.target :
+              undefined
+            }
             riverFlyover={riverFlyover}
             onRiverFlyoverDone={() => setRiverFlyover(false)}
             riverInflow={currentRiverInflow}
