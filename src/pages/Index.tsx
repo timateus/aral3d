@@ -537,7 +537,8 @@ const Index = () => {
             showChoropleth={showChoropleth}
             onToggleChoropleth={(val: boolean) => {
               setShowChoropleth(val);
-              if (val) setExaggeration(1);
+              if (val) setExaggeration(0);
+              else setExaggeration(10);
             }}
             choroplethIndicator={choroplethIndicator}
             onChoroplethIndicatorChange={setChoroplethIndicator}
