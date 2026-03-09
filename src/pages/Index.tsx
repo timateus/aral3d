@@ -582,6 +582,13 @@ const Index = () => {
             {showDataPanel ? 'Hide Data Panel' : 'Show Data Panel'}
           </button>
           <button
+            onClick={() => setShowChoropleth(v => !v)}
+            className="glass-panel p-2.5 w-72 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+          >
+            <BarChart3 className="w-3.5 h-3.5" />
+            {showChoropleth ? 'Hide Choropleth' : 'Sewage Choropleth'}
+          </button>
+          <button
             onClick={startNarrative}
             className="glass-panel p-2.5 w-72 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
