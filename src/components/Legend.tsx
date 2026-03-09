@@ -18,6 +18,8 @@ interface LegendProps {
   onToggleWatershed: (val: boolean) => void;
   showLakes: boolean;
   onToggleLakes: (val: boolean) => void;
+  show21cLakes?: boolean;
+  onToggle21cLakes?: (val: boolean) => void;
   showPopDensity: boolean;
   onTogglePopDensity: (val: boolean) => void;
   popHexSize: number;
