@@ -50,23 +50,36 @@ interface RegionMesh {
 
 const MAX_EXTRUDE = 1.5;
 
+/** Full Uzbekistan geographic bounds */
+const UZB_BOUNDS = { minLon: 55.9, maxLon: 73.2, minLat: 37.1, maxLat: 45.6 };
+
 function geoToMeshPos(
   lon: number, lat: number,
-  bounds: { minLon: number; maxLon: number; minLat: number; maxLat: number },
+  terrainBounds: { minLon: number; maxLon: number; minLat: number; maxLat: number },
   terrain: TerrainData, exaggeration: number,
   meshWidth: number, meshHeight: number,
 ): [number, number, number] | null {
-  const nx = (lon - bounds.minLon) / (bounds.maxLon - bounds.minLon);
-  const ny = (lat - bounds.minLat) / (bounds.maxLat - bounds.minLat);
+  // Project using full Uzbekistan bounds so all regions are visible
+  const uzbAspect = (UZB_BOUNDS.maxLon - UZB_BOUNDS.minLon) / (UZB_BOUNDS.maxLat - UZB_BOUNDS.minLat);
+  const uzbWidth = meshWidth * 1.8; // Scale to cover wider area
+  const uzbHeight = uzbWidth / uzbAspect;
 
-  const x = (nx - 0.5) * meshWidth;
-  const planeY = (ny - 0.5) * meshHeight;
+  const nx = (lon - UZB_BOUNDS.minLon) / (UZB_BOUNDS.maxLon - UZB_BOUNDS.minLon);
+  const ny = (lat - UZB_BOUNDS.minLat) / (UZB_BOUNDS.maxLat - UZB_BOUNDS.minLat);
 
-  const col = Math.floor(nx * (terrain.width - 1));
-  const row = Math.floor((1 - ny) * (terrain.height - 1));
+  const x = (nx - 0.5) * uzbWidth;
+  const planeY = (ny - 0.5) * uzbHeight;
+
+  // Sample elevation from terrain if coordinate falls within terrain bounds
+  const tnx = (lon - terrainBounds.minLon) / (terrainBounds.maxLon - terrainBounds.minLon);
+  const tny = (lat - terrainBounds.minLat) / (terrainBounds.maxLat - terrainBounds.minLat);
   let elev = 0;
-  if (row >= 0 && row < terrain.height && col >= 0 && col < terrain.width) {
-    elev = terrain.elevations[row * terrain.width + col];
+  if (tnx >= 0 && tnx <= 1 && tny >= 0 && tny <= 1) {
+    const col = Math.floor(tnx * (terrain.width - 1));
+    const row = Math.floor((1 - tny) * (terrain.height - 1));
+    if (row >= 0 && row < terrain.height && col >= 0 && col < terrain.width) {
+      elev = terrain.elevations[row * terrain.width + col];
+    }
   }
   const y = (elev / (terrain.maxElevation - terrain.minElevation)) * exaggeration;
 
