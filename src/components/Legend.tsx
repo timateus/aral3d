@@ -24,6 +24,8 @@ interface LegendProps {
   onTogglePopDensity: (val: boolean) => void;
   showMigration: boolean;
   onToggleMigration: (val: boolean) => void;
+  showChoropleth: boolean;
+  onToggleChoropleth: (val: boolean) => void;
   popHexSize: number;
   onPopHexSizeChange: (val: number) => void;
   popHexHeight: number;
