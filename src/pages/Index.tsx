@@ -14,7 +14,9 @@ import { Camera, Video, BarChart3, Navigation, MapPin, Loader2, Crosshair, Downl
 import { exportTerrainSTL } from '@/lib/stl-exporter';
 import type { ScenarioAction } from '@/types/scenario';
 import { NARRATIVE_STEPS } from '@/lib/narrative-steps';
+import { CANAL_TOUR_STEPS } from '@/lib/canal-tour-steps';
 import NarrativeOverlay from '@/components/NarrativeOverlay';
+import CanalTourOverlay from '@/components/CanalTourOverlay';
 import DamToolPanel from '@/components/DamToolPanel';
 import WaterFlowPanel from '@/components/WaterFlowPanel';
 import { BookOpen } from 'lucide-react';
@@ -63,6 +65,8 @@ const Index = () => {
   const [narrativeActive, setNarrativeActive] = useState(false);
   const [showInspector, setShowInspector] = useState(false);
   const [narrativeStep, setNarrativeStep] = useState(0);
+  const [canalTourActive, setCanalTourActive] = useState(false);
+  const [canalTourStep, setCanalTourStep] = useState(0);
   const [damToolActive, setDamToolActive] = useState(false);
   const [raiseBrushRadius, setRaiseBrushRadius] = useState(5);
   const [raiseAmount, setRaiseAmount] = useState(10);
@@ -169,6 +173,31 @@ const Index = () => {
 
   const exitNarrative = useCallback(() => {
     setNarrativeActive(false);
+  }, []);
+
+  // Canal tour handlers
+  const handleCanalTourStepChange = useCallback((newStep: number) => {
+    setCanalTourStep(newStep);
+    const step = CANAL_TOUR_STEPS[newStep];
+    if (!step) return;
+    setWaterExtentYear(step.year);
+    setShowBorders(step.layers.showBorders);
+    setShowRivers(step.layers.showRivers);
+    setShow13thBasin(step.layers.show13thBasin);
+    setShow19thBasin(step.layers.show19thBasin);
+    setShow21stBasin(step.layers.show21stBasin);
+    setShowWaterExtent(step.layers.showWaterExtent);
+  }, []);
+
+  const startCanalTour = useCallback(() => {
+    setStarted(true);
+    setCanalTourActive(true);
+    setCanalTourStep(0);
+    handleCanalTourStepChange(0);
+  }, [handleCanalTourStepChange]);
+
+  const exitCanalTour = useCallback(() => {
+    setCanalTourActive(false);
   }, []);
 
   useEffect(() => {
@@ -409,9 +438,17 @@ const Index = () => {
             onRecordingDone={() => setRecording(false)}
             scenarioActions={scenarioActions}
             currentMetrics={currentMetrics}
-            narrativeActive={narrativeActive}
-            narrativeCameraPosition={narrativeActive ? NARRATIVE_STEPS[narrativeStep]?.camera.position : undefined}
-            narrativeCameraTarget={narrativeActive ? NARRATIVE_STEPS[narrativeStep]?.camera.target : undefined}
+            narrativeActive={narrativeActive || canalTourActive}
+            narrativeCameraPosition={
+              narrativeActive ? NARRATIVE_STEPS[narrativeStep]?.camera.position :
+              canalTourActive ? CANAL_TOUR_STEPS[canalTourStep]?.camera.position :
+              undefined
+            }
+            narrativeCameraTarget={
+              narrativeActive ? NARRATIVE_STEPS[narrativeStep]?.camera.target :
+              canalTourActive ? CANAL_TOUR_STEPS[canalTourStep]?.camera.target :
+              undefined
+            }
             riverFlyover={riverFlyover}
             onRiverFlyoverDone={() => setRiverFlyover(false)}
             riverInflow={currentRiverInflow}
@@ -443,7 +480,7 @@ const Index = () => {
 
       {/* Intro Overlay */}
       {!started && !loading && terrain && (
-        <IntroOverlay onStart={() => setStarted(true)} onGuidedTour={startNarrative} />
+        <IntroOverlay onStart={() => setStarted(true)} onGuidedTour={startNarrative} onCanalTour={startCanalTour} />
       )}
 
       {/* Narrative Overlay */}
@@ -455,8 +492,17 @@ const Index = () => {
         />
       )}
 
+      {/* Canal Tour Overlay */}
+      {canalTourActive && (
+        <CanalTourOverlay
+          step={canalTourStep}
+          onStepChange={handleCanalTourStepChange}
+          onExit={exitCanalTour}
+        />
+      )}
+
       {/* Scenario Chat */}
-      {started && !narrativeActive && !isMobile && (
+      {started && !narrativeActive && !canalTourActive && !isMobile && (
         <ScenarioChat
           onActions={handleScenarioActions}
           onClear={() => setScenarioActions([])}
@@ -464,7 +510,7 @@ const Index = () => {
       )}
 
       {/* Data Panel - positioned left */}
-      {started && !narrativeActive && showDataPanel && !isMobile && (
+      {started && !narrativeActive && !canalTourActive && showDataPanel && !isMobile && (
         <div className="absolute top-16 left-4 z-10">
           <DataPanel
             currentYear={waterExtentYear}
@@ -479,7 +525,7 @@ const Index = () => {
       )}
 
       {/* Header */}
-      {started && !narrativeActive && !isMobile && (
+      {started && !narrativeActive && !canalTourActive && !isMobile && (
         <div className="absolute top-4 left-4 z-10">
           <h1 className="text-lg font-semibold text-foreground tracking-tight">
             Aral Sea Terrain Viewer
@@ -491,7 +537,7 @@ const Index = () => {
       )}
 
       {/* Controls - desktop only */}
-      {started && !narrativeActive && !isMobile && (
+      {started && !narrativeActive && !canalTourActive && !isMobile && (
         <div className="absolute top-4 right-4 z-10 space-y-3 max-h-[calc(100vh-2rem)] overflow-y-auto w-[280px] scrollbar-thin pr-1">
           <ControlPanel
             terrain={terrain}
@@ -654,7 +700,7 @@ const Index = () => {
       )}
 
       {/* Mobile locate button */}
-      {started && !narrativeActive && isMobile && (
+      {started && !narrativeActive && !canalTourActive && isMobile && (
         <button
           onClick={requestLocation}
           disabled={locating}
@@ -665,7 +711,7 @@ const Index = () => {
       )}
 
       {/* Timeline Slider - bottom bar */}
-      {started && !narrativeActive && (
+      {started && !narrativeActive && !canalTourActive && (
         <TimelineSlider
           year={waterExtentYear}
           onYearChange={setWaterExtentYear}

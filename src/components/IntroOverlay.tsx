@@ -1,9 +1,12 @@
+import { Droplets } from 'lucide-react';
+
 interface IntroOverlayProps {
   onStart: () => void;
   onGuidedTour: () => void;
+  onCanalTour: () => void;
 }
 
-const IntroOverlay = ({ onStart, onGuidedTour }: IntroOverlayProps) => {
+const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour }: IntroOverlayProps) => {
   return (
     <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50 animate-fade-in">
       <div className="glass-panel px-8 py-5 text-center space-y-3 max-w-sm">
@@ -13,12 +16,19 @@ const IntroOverlay = ({ onStart, onGuidedTour }: IntroOverlayProps) => {
         <p className="text-xs text-muted-foreground leading-relaxed">
           Once the world's fourth-largest lake — now a stark reminder of environmental change.
         </p>
-        <div className="flex items-center justify-center gap-3">
+        <div className="flex items-center justify-center gap-2 flex-wrap">
           <button
             onClick={onGuidedTour}
-            className="px-5 py-1.5 rounded-md border border-primary/40 text-primary text-xs font-medium hover:bg-primary/10 transition-colors"
+            className="px-4 py-1.5 rounded-md border border-primary/40 text-primary text-xs font-medium hover:bg-primary/10 transition-colors"
           >
             Guided Tour
+          </button>
+          <button
+            onClick={onCanalTour}
+            className="px-4 py-1.5 rounded-md border border-primary/40 text-primary text-xs font-medium hover:bg-primary/10 transition-colors flex items-center gap-1.5"
+          >
+            <Droplets className="w-3 h-3" />
+            Canal History
           </button>
           <button
             onClick={onStart}
