@@ -42,6 +42,7 @@ const Index = () => {
   const [show21stBasin, setShow21stBasin] = useState(true);
   const [showKhorezm, setShowKhorezm] = useState(false);
   const [showLakes, setShowLakes] = useState(false);
+  const [show21cLakes, setShow21cLakes] = useState(false);
   const [showWatershed, setShowWatershed] = useState(false);
   const [watershedTerrain, setWatershedTerrain] = useState<TerrainData | null>(null);
   const [showPopDensity, setShowPopDensity] = useState(false);
