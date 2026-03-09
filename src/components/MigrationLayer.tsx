@@ -168,11 +168,10 @@ const MigrationLayer = ({ terrain, exaggeration, year }: MigrationLayerProps) =>
         // Close the loop
         points3d.push(points3d[0].clone());
 
-        const lineGeo = new THREE.BufferGeometry().setFromPoints(points3d);
+        const lineMat = new THREE.LineBasicMaterial({ color: '#ffffff', opacity: 0.6, transparent: true });
+        const lineObj = new THREE.Line(lineGeo, lineMat);
         lines.push(
-          <line key={`border-${fi}-${ring === rings[0] ? 0 : 1}`} geometry={lineGeo}>
-            <lineBasicMaterial color="#ffffff" opacity={0.6} transparent linewidth={1} />
-          </line>
+          <primitive key={`border-${fi}-${ring === rings[0] ? 0 : 1}`} object={lineObj} />
         );
       }
 
