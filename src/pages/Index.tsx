@@ -65,6 +65,8 @@ const Index = () => {
   const [narrativeActive, setNarrativeActive] = useState(false);
   const [showInspector, setShowInspector] = useState(false);
   const [narrativeStep, setNarrativeStep] = useState(0);
+  const [canalTourActive, setCanalTourActive] = useState(false);
+  const [canalTourStep, setCanalTourStep] = useState(0);
   const [damToolActive, setDamToolActive] = useState(false);
   const [raiseBrushRadius, setRaiseBrushRadius] = useState(5);
   const [raiseAmount, setRaiseAmount] = useState(10);
