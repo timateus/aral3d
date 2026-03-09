@@ -129,7 +129,23 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
         <Switch className="scale-75" checked={showChoropleth} onCheckedChange={onToggleChoropleth} />
       </label>
 
-      {showPopDensity && (
+      {showChoropleth && (
+        <div className="ml-5">
+          <Select value={choroplethIndicator} onValueChange={onChoroplethIndicatorChange}>
+            <SelectTrigger className="h-7 text-[10px] bg-background/50 border-border/50">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {INDICATORS.map(ind => (
+                <SelectItem key={ind.id} value={ind.id} className="text-[11px]">
+                  {ind.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
         <div className="ml-5 space-y-2">
           <div className="flex items-center gap-1">
             <div
