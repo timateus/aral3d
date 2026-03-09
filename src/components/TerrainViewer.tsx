@@ -77,6 +77,7 @@ interface TerrainViewerProps {
   choroplethExaggeration?: number;
   canalHighlights?: { canal: string; lat: number; lon: number; ethnicity: string; color: string }[];
   highlightedCanalNames?: Set<string>;
+  canalTourActive?: boolean;
 }
 
 function CameraAnimator({ started }: { started: boolean }) {
