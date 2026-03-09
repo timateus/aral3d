@@ -72,6 +72,7 @@ interface TerrainViewerProps {
   raisedPixels?: Set<number>;
   showMigration?: boolean;
   migrationYear?: number;
+  showChoropleth?: boolean;
 }
 
 function CameraAnimator({ started }: { started: boolean }) {
