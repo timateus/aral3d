@@ -303,7 +303,7 @@ const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage', 
 
     console.log('[Choropleth] Built regions:', result.length, 'indicator:', indicatorId, 'globalMax:', globalMax);
     return result;
-  }, [adm2Geo, adm1Geo, converter, year, isSewage, csvData, indicator]);
+  }, [adm2Geo, adm1Geo, converter, year, isSewage, csvData, indicator, choroplethExaggeration]);
 
   const handleClick = useCallback((key: string) => {
     setSelected(prev => prev === key ? null : key);

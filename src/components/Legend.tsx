@@ -132,7 +132,7 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
       </label>
 
       {showChoropleth && (
-        <div className="ml-5">
+        <div className="ml-5 space-y-2">
           <Select value={choroplethIndicator} onValueChange={onChoroplethIndicatorChange}>
             <SelectTrigger className="h-7 text-[10px] bg-background/50 border-border/50">
               <SelectValue />
@@ -145,6 +145,19 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
               ))}
             </SelectContent>
           </Select>
+          <div className="space-y-1">
+            <label className="text-[10px] text-muted-foreground font-mono">
+              Height: {choroplethExaggeration.toFixed(1)}×
+            </label>
+            <Slider
+              value={[choroplethExaggeration]}
+              onValueChange={(v) => onChoroplethExaggerationChange(v[0])}
+              min={0}
+              max={3}
+              step={0.1}
+              className="w-full"
+            />
+          </div>
         </div>
       )}
 

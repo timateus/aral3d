@@ -49,6 +49,7 @@ const Index = () => {
   const [showMigration, setShowMigration] = useState(false);
   const [showChoropleth, setShowChoropleth] = useState(false);
   const [choroplethIndicator, setChoroplethIndicator] = useState('sewage');
+  const [choroplethExaggeration, setChoroplethExaggeration] = useState(1.0);
   const [popHexSize, setPopHexSize] = useState(0.15);
   const [popHexHeight, setPopHexHeight] = useState(1.0);
   const [showWaterExtent, setShowWaterExtent] = useState(true);
