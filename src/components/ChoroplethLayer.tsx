@@ -150,7 +150,7 @@ function buildRegionMesh(
   };
 }
 
-const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage' }: ChoroplethLayerProps) => {
+const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage', choroplethExaggeration = 1.0 }: ChoroplethLayerProps) => {
   const [adm2Geo, setAdm2Geo] = useState<GeoJSONCollection | null>(null);
   const [adm1Geo, setAdm1Geo] = useState<GeoJSONCollection | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
