@@ -321,9 +321,9 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
     return extractMultiLineStrings(basin21Data, bounds, terrain, exaggeration, meshWidth, meshHeight);
   }, [terrain, exaggeration, bounds, meshWidth, meshHeight, basin21Data]);
 
-  const lakes21cOutlines = useMemo(() => {
+  const lakes21cPolygons = useMemo(() => {
     if (!bounds || !lakes21cData) return [];
-    const segments: [number, number, number][][] = [];
+    const results: { outline: [number, number, number][]; geometry: THREE.BufferGeometry }[] = [];
     for (const feature of lakes21cData.features) {
       let rings: number[][][] = [];
       if (feature.geometry.type === 'Polygon') {
@@ -334,15 +334,29 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
         }
       }
       for (const ring of rings) {
-        const points: [number, number, number][] = [];
+        const points3d: [number, number, number][] = [];
+        const points2d: THREE.Vector2[] = [];
+        let avgY = 0;
         for (const coord of ring) {
           const pos = geoToMeshPos(coord[1], coord[0], bounds, terrain, exaggeration, meshWidth, meshHeight);
-          if (pos) points.push([pos[0], pos[1] + 0.04, pos[2]]);
+          if (pos) {
+            points3d.push([pos[0], pos[1] + 0.04, pos[2]]);
+            points2d.push(new THREE.Vector2(pos[0], pos[2]));
+            avgY += pos[1] + 0.04;
+          }
         }
-        if (points.length >= 2) segments.push(points);
+        if (points2d.length >= 3) {
+          avgY /= points2d.length;
+          const shape = new THREE.Shape(points2d);
+          const geo = new THREE.ShapeGeometry(shape);
+          // Rotate from XY plane to XZ plane and position at avgY
+          geo.rotateX(-Math.PI / 2);
+          geo.translate(0, avgY, 0);
+          results.push({ outline: points3d, geometry: geo });
+        }
       }
     }
-    return segments;
+    return results;
   }, [terrain, exaggeration, bounds, meshWidth, meshHeight, lakes21cData]);
 
   if (!bounds) return null;
