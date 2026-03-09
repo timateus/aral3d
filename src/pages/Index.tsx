@@ -175,6 +175,31 @@ const Index = () => {
     setNarrativeActive(false);
   }, []);
 
+  // Canal tour handlers
+  const handleCanalTourStepChange = useCallback((newStep: number) => {
+    setCanalTourStep(newStep);
+    const step = CANAL_TOUR_STEPS[newStep];
+    if (!step) return;
+    setWaterExtentYear(step.year);
+    setShowBorders(step.layers.showBorders);
+    setShowRivers(step.layers.showRivers);
+    setShow13thBasin(step.layers.show13thBasin);
+    setShow19thBasin(step.layers.show19thBasin);
+    setShow21stBasin(step.layers.show21stBasin);
+    setShowWaterExtent(step.layers.showWaterExtent);
+  }, []);
+
+  const startCanalTour = useCallback(() => {
+    setStarted(true);
+    setCanalTourActive(true);
+    setCanalTourStep(0);
+    handleCanalTourStepChange(0);
+  }, [handleCanalTourStepChange]);
+
+  const exitCanalTour = useCallback(() => {
+    setCanalTourActive(false);
+  }, []);
+
   useEffect(() => {
     Promise.all([
       loadGeoTiff('/data/aral_region.tif'),
