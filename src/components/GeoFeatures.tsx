@@ -855,7 +855,7 @@ const LakeMarker = ({ lake, pos, radius }: { lake: Lake; pos: [number, number, n
   );
 };
 
-// Pulsing canal highlight marker
+// Pulsing canal highlight marker (fallback for canals without GeoJSON line match)
 const CanalHighlightMarker = ({ pos, canal, color }: { pos: [number, number, number]; canal: string; color: string }) => {
   const ringRef = useRef<THREE.Mesh>(null);
   const [time, setTime] = useState(0);
@@ -871,32 +871,33 @@ const CanalHighlightMarker = ({ pos, canal, color }: { pos: [number, number, num
   }, []);
 
   const scale = 1 + 0.3 * Math.sin(time * 2);
-  const opacity = 0.6 + 0.3 * Math.sin(time * 2);
+  const opacity = 0.7 + 0.3 * Math.sin(time * 2);
 
   return (
-    <group position={[pos[0], pos[1] + 0.08, pos[2]]}>
+    <group position={[pos[0], pos[1] + 0.1, pos[2]]}>
       {/* Pulsing ring */}
       <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]} scale={[scale, scale, 1]}>
-        <ringGeometry args={[0.08, 0.12, 24]} />
-        <meshBasicMaterial color={color} transparent opacity={opacity} side={THREE.DoubleSide} depthWrite={false} />
+        <ringGeometry args={[0.12, 0.18, 24]} />
+        <meshBasicMaterial color={HIGHLIGHT_COLOR} transparent opacity={opacity} side={THREE.DoubleSide} depthWrite={false} />
       </mesh>
       {/* Inner dot */}
       <mesh>
-        <sphereGeometry args={[0.035, 10, 10]} />
-        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.8} />
+        <sphereGeometry args={[0.05, 10, 10]} />
+        <meshStandardMaterial color={HIGHLIGHT_COLOR} emissive={HIGHLIGHT_COLOR} emissiveIntensity={0.9} />
       </mesh>
       {/* Label */}
-      <Html position={[0, 0.18, 0]} center distanceFactor={8} style={{ pointerEvents: 'none' }}>
+      <Html position={[0, 0.25, 0]} center distanceFactor={7} style={{ pointerEvents: 'none' }}>
         <div style={{
-          color,
-          padding: '1px 5px',
-          fontSize: '8px',
+          color: HIGHLIGHT_COLOR,
+          padding: '2px 8px',
+          fontSize: '11px',
           fontFamily: "'Inter', system-ui, sans-serif",
-          fontWeight: 600,
+          fontWeight: 700,
           whiteSpace: 'nowrap',
-          textShadow: '0 1px 6px rgba(0,0,0,0.9), 0 0px 2px rgba(0,0,0,0.7)',
-          background: 'rgba(0,0,0,0.5)',
-          borderRadius: '3px',
+          textShadow: `0 0 8px ${HIGHLIGHT_COLOR}, 0 1px 6px rgba(0,0,0,0.9)`,
+          background: 'rgba(0,0,0,0.6)',
+          borderRadius: '4px',
+          border: `1px solid ${HIGHLIGHT_COLOR}66`,
         }}>
           {canal}
         </div>
