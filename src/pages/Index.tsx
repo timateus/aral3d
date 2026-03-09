@@ -425,6 +425,7 @@ const Index = () => {
             raisedPixels={raiseEnabled ? raisedPixelsRef.current : undefined}
             showMigration={showMigration}
             migrationYear={waterExtentYear}
+            showChoropleth={showChoropleth}
           />
         )}
         {!terrain && !loading && error && (
