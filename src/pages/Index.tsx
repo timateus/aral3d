@@ -16,6 +16,7 @@ import type { ScenarioAction } from '@/types/scenario';
 import { NARRATIVE_STEPS } from '@/lib/narrative-steps';
 import NarrativeOverlay from '@/components/NarrativeOverlay';
 import DamToolPanel from '@/components/DamToolPanel';
+import ChoroplethPanel from '@/components/ChoroplethPanel';
 import WaterFlowPanel from '@/components/WaterFlowPanel';
 import { BookOpen } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -47,6 +48,7 @@ const Index = () => {
   const [watershedTerrain, setWatershedTerrain] = useState<TerrainData | null>(null);
   const [showPopDensity, setShowPopDensity] = useState(false);
   const [showMigration, setShowMigration] = useState(false);
+  const [showChoropleth, setShowChoropleth] = useState(false);
   const [popHexSize, setPopHexSize] = useState(0.15);
   const [popHexHeight, setPopHexHeight] = useState(1.0);
   const [showWaterExtent, setShowWaterExtent] = useState(true);
@@ -472,6 +474,16 @@ const Index = () => {
         </div>
       )}
 
+      {/* Choropleth Panel */}
+      {started && !narrativeActive && showChoropleth && !isMobile && (
+        <div className="absolute top-16 left-4 z-10" style={{ top: showDataPanel ? '420px' : '64px' }}>
+          <ChoroplethPanel
+            year={waterExtentYear}
+            onClose={() => setShowChoropleth(false)}
+          />
+        </div>
+      )}
+
       {/* Header */}
       {started && !narrativeActive && !isMobile && (
         <div className="absolute top-4 left-4 z-10">
@@ -568,6 +580,13 @@ const Index = () => {
           >
             <BarChart3 className="w-3.5 h-3.5" />
             {showDataPanel ? 'Hide Data Panel' : 'Show Data Panel'}
+          </button>
+          <button
+            onClick={() => setShowChoropleth(v => !v)}
+            className="glass-panel p-2.5 w-72 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+          >
+            <BarChart3 className="w-3.5 h-3.5" />
+            {showChoropleth ? 'Hide Choropleth' : 'Sewage Choropleth'}
           </button>
           <button
             onClick={startNarrative}
