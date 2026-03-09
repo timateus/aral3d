@@ -46,6 +46,7 @@ const Index = () => {
   const [showWatershed, setShowWatershed] = useState(false);
   const [watershedTerrain, setWatershedTerrain] = useState<TerrainData | null>(null);
   const [showPopDensity, setShowPopDensity] = useState(false);
+  const [showMigration, setShowMigration] = useState(false);
   const [popHexSize, setPopHexSize] = useState(0.15);
   const [popHexHeight, setPopHexHeight] = useState(1.0);
   const [showWaterExtent, setShowWaterExtent] = useState(true);
@@ -421,6 +422,8 @@ const Index = () => {
             flowRenderKey={flowRenderKey}
             terrainVersion={terrainVersion}
             raisedPixels={raiseEnabled ? raisedPixelsRef.current : undefined}
+            showMigration={showMigration}
+            migrationYear={waterExtentYear}
           />
         )}
         {!terrain && !loading && error && (
@@ -516,6 +519,8 @@ const Index = () => {
             onToggle21cLakes={setShow21cLakes}
             showPopDensity={showPopDensity}
             onTogglePopDensity={setShowPopDensity}
+            showMigration={showMigration}
+            onToggleMigration={setShowMigration}
             popHexSize={popHexSize}
             onPopHexSizeChange={setPopHexSize}
             popHexHeight={popHexHeight}

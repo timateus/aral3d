@@ -22,13 +22,15 @@ interface LegendProps {
   onToggle21cLakes?: (val: boolean) => void;
   showPopDensity: boolean;
   onTogglePopDensity: (val: boolean) => void;
+  showMigration: boolean;
+  onToggleMigration: (val: boolean) => void;
   popHexSize: number;
   onPopHexSizeChange: (val: number) => void;
   popHexHeight: number;
   onPopHexHeightChange: (val: number) => void;
 }
 
-const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin, show21stBasin, onToggle21stBasin, showKhorezm, onToggleKhorezm, showWatershed, onToggleWatershed, showLakes, onToggleLakes, show21cLakes, onToggle21cLakes, showPopDensity, onTogglePopDensity, popHexSize, onPopHexSizeChange, popHexHeight, onPopHexHeightChange }: LegendProps) => {
+const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin, show21stBasin, onToggle21stBasin, showKhorezm, onToggleKhorezm, showWatershed, onToggleWatershed, showLakes, onToggleLakes, show21cLakes, onToggle21cLakes, showPopDensity, onTogglePopDensity, popHexSize, onPopHexSizeChange, popHexHeight, onPopHexHeightChange, showMigration, onToggleMigration }: LegendProps) => {
   return (
     <div className="glass-panel p-3 space-y-2 w-72">
       <label className="flex items-center justify-between cursor-pointer">
@@ -103,6 +105,14 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
           Population Density
         </span>
         <Switch className="scale-75" checked={showPopDensity} onCheckedChange={onTogglePopDensity} />
+      </label>
+
+      <label className="flex items-center justify-between cursor-pointer">
+        <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
+          <span className="inline-block w-3 h-3 rounded-sm" style={{ background: 'linear-gradient(135deg, #4caf50, #ff5722)' }} />
+          Migration (Karakalpakstan)
+        </span>
+        <Switch className="scale-75" checked={showMigration} onCheckedChange={onToggleMigration} />
       </label>
 
       {showPopDensity && (
