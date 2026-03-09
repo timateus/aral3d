@@ -50,40 +50,23 @@ interface RegionMesh {
 
 const MAX_EXTRUDE = 1.5;
 
-/** Full Uzbekistan geographic bounds */
-const UZB_BOUNDS = { minLon: 55.9, maxLon: 73.2, minLat: 37.1, maxLat: 45.6 };
-
+/**
+ * Project lon/lat to the SAME coordinate system as the terrain mesh.
+ * Terrain mesh center = origin, x spans [-meshWidth/2, meshWidth/2], z spans [-meshHeight/2, meshHeight/2].
+ * Coordinates outside terrain bounds extrapolate naturally.
+ */
 function geoToMeshPos(
   lon: number, lat: number,
   terrainBounds: { minLon: number; maxLon: number; minLat: number; maxLat: number },
-  terrain: TerrainData, exaggeration: number,
   meshWidth: number, meshHeight: number,
-): [number, number, number] | null {
-  // Project using full Uzbekistan bounds so all regions are visible
-  const uzbAspect = (UZB_BOUNDS.maxLon - UZB_BOUNDS.minLon) / (UZB_BOUNDS.maxLat - UZB_BOUNDS.minLat);
-  const uzbWidth = meshWidth * 1.8; // Scale to cover wider area
-  const uzbHeight = uzbWidth / uzbAspect;
+): [number, number, number] {
+  const nx = (lon - terrainBounds.minLon) / (terrainBounds.maxLon - terrainBounds.minLon);
+  const ny = (lat - terrainBounds.minLat) / (terrainBounds.maxLat - terrainBounds.minLat);
 
-  const nx = (lon - UZB_BOUNDS.minLon) / (UZB_BOUNDS.maxLon - UZB_BOUNDS.minLon);
-  const ny = (lat - UZB_BOUNDS.minLat) / (UZB_BOUNDS.maxLat - UZB_BOUNDS.minLat);
+  const x = (nx - 0.5) * meshWidth;
+  const z = -(ny - 0.5) * meshHeight;
 
-  const x = (nx - 0.5) * uzbWidth;
-  const planeY = (ny - 0.5) * uzbHeight;
-
-  // Sample elevation from terrain if coordinate falls within terrain bounds
-  const tnx = (lon - terrainBounds.minLon) / (terrainBounds.maxLon - terrainBounds.minLon);
-  const tny = (lat - terrainBounds.minLat) / (terrainBounds.maxLat - terrainBounds.minLat);
-  let elev = 0;
-  if (tnx >= 0 && tnx <= 1 && tny >= 0 && tny <= 1) {
-    const col = Math.floor(tnx * (terrain.width - 1));
-    const row = Math.floor((1 - tny) * (terrain.height - 1));
-    if (row >= 0 && row < terrain.height && col >= 0 && col < terrain.width) {
-      elev = terrain.elevations[row * terrain.width + col];
-    }
-  }
-  const y = (elev / (terrain.maxElevation - terrain.minElevation)) * exaggeration;
-
-  return [x, y + 0.02, -planeY];
+  return [x, 0.02, z];
 }
 
 function centroid(ring: number[][]): [number, number] {
@@ -92,8 +75,8 @@ function centroid(ring: number[][]): [number, number] {
   return [cx / ring.length, cy / ring.length];
 }
 
-function fanTriangulate(ring: number[][], converter: (lon: number, lat: number) => [number, number, number] | null): number[] {
-  const pts = ring.map(([lon, lat]) => converter(lon, lat)).filter(Boolean) as [number, number, number][];
+function fanTriangulate(ring: number[][], converter: (lon: number, lat: number) => [number, number, number]): number[] {
+  const pts = ring.map(([lon, lat]) => converter(lon, lat));
   if (pts.length < 3) return [];
   const verts: number[] = [];
   for (let i = 1; i < pts.length - 1; i++) {
@@ -102,8 +85,8 @@ function fanTriangulate(ring: number[][], converter: (lon: number, lat: number) 
   return verts;
 }
 
-function buildSideWalls(ring: number[][], converter: (lon: number, lat: number) => [number, number, number] | null, offset: number): number[] {
-  const pts = ring.map(([lon, lat]) => converter(lon, lat)).filter(Boolean) as [number, number, number][];
+function buildSideWalls(ring: number[][], converter: (lon: number, lat: number) => [number, number, number], offset: number): number[] {
+  const pts = ring.map(([lon, lat]) => converter(lon, lat));
   if (pts.length < 2) return [];
   const verts: number[] = [];
   for (let i = 0; i < pts.length - 1; i++) {
@@ -117,7 +100,7 @@ function buildSideWalls(ring: number[][], converter: (lon: number, lat: number) 
 
 function buildRegionMesh(
   rings: number[][][],
-  converter: (lon: number, lat: number) => [number, number, number] | null,
+  converter: (lon: number, lat: number) => [number, number, number],
   data: { value: number; nameEn: string; nameRu: string; color: string; height: number; unit: string },
   key: string,
 ): RegionMesh | null {
@@ -129,7 +112,6 @@ function buildRegionMesh(
   for (const ring of rings) {
     const topConverter = (lon: number, lat: number) => {
       const p = converter(lon, lat);
-      if (!p) return null;
       return [p[0], p[1] + extrudeH, p[2]] as [number, number, number];
     };
     allTopVerts.push(...fanTriangulate(ring, topConverter));
@@ -140,8 +122,8 @@ function buildRegionMesh(
 
     const borderPts = ring.map(([lon, lat]) => {
       const p = converter(lon, lat);
-      return p ? [p[0], p[1] + extrudeH + 0.01, p[2]] : null;
-    }).filter(Boolean) as [number, number, number][];
+      return [p[0], p[1] + extrudeH + 0.01, p[2]] as [number, number, number];
+    });
     for (const pt of borderPts) allBorderVerts.push(...pt);
   }
 
@@ -150,9 +132,7 @@ function buildRegionMesh(
   const mainRing = rings[0];
   const [clon, clat] = centroid(mainRing);
   const labelP = converter(clon, clat);
-  const labelPos: [number, number, number] = labelP
-    ? [labelP[0], labelP[1] + extrudeH + 0.15, labelP[2]]
-    : [0, 0, 0];
+  const labelPos: [number, number, number] = [labelP[0], labelP[1] + extrudeH + 0.15, labelP[2]];
 
   return {
     key,
@@ -178,7 +158,6 @@ const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage' }
   const indicator = useMemo(() => INDICATORS.find(i => i.id === indicatorId) || INDICATORS[0], [indicatorId]);
   const isSewage = indicator.id === 'sewage';
 
-  // Load GeoJSON files
   useEffect(() => {
     Promise.all([
       fetch('/data/geoBoundaries-UZB-ADM2.geojson').then(r => r.json()),
@@ -190,12 +169,8 @@ const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage' }
     });
   }, []);
 
-  // Load CSV data for non-sewage indicators
   useEffect(() => {
-    if (isSewage) {
-      setCsvData(null);
-      return;
-    }
+    if (isSewage) { setCsvData(null); return; }
     loadIndicatorData(indicator).then(d => setCsvData(d));
   }, [indicator, isSewage]);
 
@@ -204,8 +179,8 @@ const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage' }
   const safeBounds = terrain.bounds || { minLon: 56, maxLon: 62, minLat: 42, maxLat: 47 };
 
   const converter = useCallback((lon: number, lat: number) =>
-    geoToMeshPos(lon, lat, safeBounds, terrain, exaggeration, meshWidth, meshHeight),
-    [safeBounds, terrain, exaggeration, meshWidth, meshHeight]
+    geoToMeshPos(lon, lat, safeBounds, meshWidth, meshHeight),
+    [safeBounds, meshWidth, meshHeight]
   );
 
   const regions = useMemo(() => {
@@ -215,10 +190,6 @@ const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage' }
     const result: RegionMesh[] = [];
     const globalMax = csvData ? getGlobalMax(csvData) : 100;
 
-    // Track which ADM1 regions have ADM2 district coverage
-    const regionsWithDistricts = new Set<string>();
-
-    // Helper to extract polygon rings from a feature
     const getRings = (feat: GeoJSONFeature): number[][][] => {
       const rings: number[][][] = [];
       if (feat.geometry.type === 'Polygon') {
@@ -229,7 +200,8 @@ const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage' }
       return rings;
     };
 
-    // Phase 1: Process ADM2 districts
+    // Phase 1: ADM2 districts
+    const matchedAdm1Regions = new Set<string>();
     for (const feat of adm2Geo.features) {
       const shapeName = feat.properties.shapeName || '';
       if (!shapeName) continue;
@@ -254,34 +226,25 @@ const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage' }
       }
 
       if (!data) continue;
-
       const rings = getRings(feat);
       if (rings.length === 0) continue;
 
       const mesh = buildRegionMesh(rings, converter, data, `adm2-${shapeName}`);
       if (mesh) {
         result.push(mesh);
-        // Mark the parent region as having district coverage
-        // We determine parent by checking centroid overlap with ADM1
-        // For simplicity, mark all regions if ANY district matched
-        regionsWithDistricts.add(shapeName);
+        // Track parent ADM1 region name from feature properties
+        const parent = feat.properties.shapeGroup || feat.properties.ADM1 || '';
+        if (parent) matchedAdm1Regions.add(parent);
       }
     }
 
-    // Phase 2: Process ADM1 regions (only if no district data matched for that region)
+    // Phase 2: ADM1 regions (fallback)
     for (const feat of adm1Geo.features) {
       const shapeName = feat.properties.shapeName || '';
       if (!shapeName) continue;
 
-      // Check if this region has district-level data in the CSV
-      if (!isSewage && csvData && regionHasDistrictData(csvData, shapeName)) {
-        continue; // Skip - districts rendered above
-      }
-
-      // For sewage, skip regions that are known to have district data (KK & Khorezm)
-      if (isSewage && /karakalpakstan|khorezm/i.test(shapeName)) {
-        continue;
-      }
+      if (!isSewage && csvData && regionHasDistrictData(csvData, shapeName)) continue;
+      if (isSewage && /karakalpakstan|khorezm/i.test(shapeName)) continue;
 
       let data: { value: number; nameEn: string; nameRu: string; color: string; height: number; unit: string } | null = null;
 
@@ -303,7 +266,6 @@ const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage' }
       }
 
       if (!data) continue;
-
       const rings = getRings(feat);
       if (rings.length === 0) continue;
 
@@ -323,52 +285,29 @@ const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage' }
     <group>
       {regions.map(r => (
         <group key={r.key}>
-          {/* Top face */}
           <mesh onClick={() => handleClick(r.key)}>
             <bufferGeometry>
-              <bufferAttribute
-                attach="attributes-position"
-                args={[r.topVerts, 3]}
-              />
+              <bufferAttribute attach="attributes-position" args={[r.topVerts, 3]} />
             </bufferGeometry>
-            <meshStandardMaterial
-              color={r.color}
-              transparent
-              opacity={0.85}
-              side={THREE.DoubleSide}
-            />
+            <meshStandardMaterial color={r.color} transparent opacity={0.85} side={THREE.DoubleSide} />
           </mesh>
 
-          {/* Side walls */}
           {r.sideVerts && (
             <mesh>
               <bufferGeometry>
-                <bufferAttribute
-                  attach="attributes-position"
-                  args={[r.sideVerts, 3]}
-                />
+                <bufferAttribute attach="attributes-position" args={[r.sideVerts, 3]} />
               </bufferGeometry>
-              <meshStandardMaterial
-                color={r.color}
-                transparent
-                opacity={0.6}
-                side={THREE.DoubleSide}
-              />
+              <meshStandardMaterial color={r.color} transparent opacity={0.6} side={THREE.DoubleSide} />
             </mesh>
           )}
 
-          {/* Border */}
           <line>
             <bufferGeometry>
-              <bufferAttribute
-                attach="attributes-position"
-                args={[r.borderVerts, 3]}
-              />
+              <bufferAttribute attach="attributes-position" args={[r.borderVerts, 3]} />
             </bufferGeometry>
             <lineBasicMaterial color="#ffffff" transparent opacity={0.4} />
           </line>
 
-          {/* Label */}
           {selected === r.key && (
             <group position={r.labelPos}>
               <Html center distanceFactor={10} style={{ pointerEvents: 'none' }}>

@@ -536,13 +536,13 @@ export function colorPctBad(value: number, maxVal: number): string {
   return `rgb(220,${g},50)`;
 }
 
-/** Color for count data: light blue → dark blue */
+/** Color for count data: light blue → dark blue (sqrt scaled for low-value differentiation) */
 export function colorCount(value: number, maxVal: number): string {
   if (maxVal <= 0) return 'rgb(100,150,220)';
-  const t = Math.max(0, Math.min(1, value / maxVal));
-  const r = Math.round(100 - t * 70);
-  const g = Math.round(150 - t * 80);
-  const b = Math.round(220 - t * 60);
+  const t = Math.sqrt(Math.max(0, Math.min(1, value / maxVal)));
+  const r = Math.round(140 - t * 110);
+  const g = Math.round(180 - t * 110);
+  const b = Math.round(230 - t * 70);
   return `rgb(${r},${g},${b})`;
 }
 
@@ -567,8 +567,11 @@ export function getIndicatorColor(indicator: DemographicIndicator, value: number
   }
 }
 
-/** Get normalized height (0-1) for a given indicator and value, proportional to global max */
+/** Get normalized height (0-1) for a given indicator and value.
+ *  Uses sqrt scaling so low-value datasets still show visible differences. */
 export function getIndicatorHeight(indicator: DemographicIndicator, value: number, maxVal: number = 100): number {
   if (maxVal <= 0 || value <= 0) return 0;
-  return Math.max(0, Math.min(1, value / maxVal));
+  const linear = Math.max(0, Math.min(1, value / maxVal));
+  // sqrt scaling: amplifies differences among low values
+  return Math.sqrt(linear);
 }
