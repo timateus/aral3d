@@ -395,6 +395,13 @@ export async function loadIndicatorData(indicator: DemographicIndicator): Promis
   }
 }
 
+/** Find the closest available year in the data */
+function closestYear(values: Record<number, number>, targetYear: number): number {
+  const years = Object.keys(values).map(Number).filter(y => values[y] > 0);
+  if (years.length === 0) return targetYear;
+  return years.reduce((best, y) => Math.abs(y - targetYear) < Math.abs(best - targetYear) ? y : best);
+}
+
 /** Look up a CSV row by GeoJSON shapeName (district-level) */
 export function lookupByShapeName(
   data: CsvData, shapeName: string, year: number
@@ -446,7 +453,12 @@ export function lookupByShapeName(
   }
 
   if (!row) return null;
-  const val = row.values[year] ?? 0;
+  // Use exact year or closest available year
+  let val = row.values[year] ?? 0;
+  if (val === 0) {
+    const cy = closestYear(row.values, year);
+    val = row.values[cy] ?? 0;
+  }
   return { nameEn: row.nameEn, nameRu: row.nameRu, value: val };
 }
 
