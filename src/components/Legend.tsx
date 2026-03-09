@@ -30,6 +30,8 @@ interface LegendProps {
   onToggleChoropleth: (val: boolean) => void;
   choroplethIndicator: string;
   onChoroplethIndicatorChange: (val: string) => void;
+  choroplethExaggeration: number;
+  onChoroplethExaggerationChange: (val: number) => void;
   popHexSize: number;
   onPopHexSizeChange: (val: number) => void;
   popHexHeight: number;
