@@ -74,6 +74,7 @@ interface TerrainViewerProps {
   migrationYear?: number;
   showChoropleth?: boolean;
   choroplethIndicator?: string;
+  choroplethExaggeration?: number;
 }
 
 function CameraAnimator({ started }: { started: boolean }) {
