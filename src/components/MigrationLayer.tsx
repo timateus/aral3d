@@ -1,8 +1,7 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
 import { Html } from '@react-three/drei';
 import { TerrainData, GeoBounds } from '@/lib/geotiff-loader';
-import { DISTRICT_MIGRATIONS, getMaxMigration } from '@/lib/migration-data';
 
 interface MigrationLayerProps {
   terrain: TerrainData;
@@ -21,33 +20,13 @@ interface GeoJSONCollection {
   features: GeoJSONFeature[];
 }
 
-/** Map from GeoJSON shapeName → migration data district name */
-const SHAPE_TO_DISTRICT: Record<string, string> = {
-  // These will be matched by checking centroid proximity since shapeNames
-  // in the GeoJSON may differ from our district names.
-  // We'll use centroid-based matching instead.
-};
-
-/** Known district centroids (approximate lon, lat) for matching */
-const DISTRICT_CENTROIDS: Record<string, [number, number]> = {
-  'Nukus city':      [59.60, 42.46],
-  'Amudarya':        [61.00, 41.60],
-  'Beruniy':         [60.75, 41.70],
-  'Bozatau':         [57.80, 42.80],
-  'Karauzak':        [60.00, 42.10],
-  'Kegeyli':         [59.60, 42.08],
-  'Kungrad':         [58.70, 43.00],
-  'Kanlykul':        [60.35, 41.85],
-  'Muynak':          [58.70, 43.80],
-  'Nukus district':  [59.30, 42.50],
-  'Takhiatash':      [59.70, 42.35],
-  'Takhtakupyr':     [58.50, 42.50],
-  'Turtkul':         [60.95, 41.55],
-  'Khojeyli':        [59.45, 42.30],
-  'Chimbay':         [59.80, 42.95],
-  'Shumanai':        [59.90, 41.90],
-  'Ellikkala':       [60.70, 41.40],
-};
+/** Distinct colors for districts */
+const DISTRICT_COLORS = [
+  '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231',
+  '#911eb4', '#42d4f4', '#f032e6', '#bfef45', '#fabed4',
+  '#469990', '#dcbeff', '#9A6324', '#fffac8', '#800000',
+  '#aaffc3', '#808000', '#ffd8b1', '#000075', '#a9a9a9',
+];
 
 /** Karakalpakstan approximate bounding box */
 const KK_BOUNDS = { minLon: 56, maxLon: 62, minLat: 41, maxLat: 46 };
@@ -59,6 +38,7 @@ function geoToMeshPos(
 ): [number, number, number] | null {
   const nx = (lon - bounds.minLon) / (bounds.maxLon - bounds.minLon);
   const ny = (lat - bounds.minLat) / (bounds.maxLat - bounds.minLat);
+  if (nx < -0.5 || nx > 1.5 || ny < -0.5 || ny > 1.5) return null;
   const x = (nx - 0.5) * meshWidth;
   const planeY = (ny - 0.5) * meshHeight;
   const inBounds = nx >= 0 && nx <= 1 && ny >= 0 && ny <= 1;
@@ -91,30 +71,34 @@ function isInKarakalpakstan(feature: GeoJSONFeature): boolean {
          cLat >= KK_BOUNDS.minLat && cLat <= KK_BOUNDS.maxLat;
 }
 
-/** Find closest district by centroid distance */
-function matchDistrict(featureCentroid: [number, number]): string | null {
-  const [fLon, fLat] = featureCentroid;
-  let bestDist = Infinity;
-  let bestName: string | null = null;
-  for (const [name, [dLon, dLat]] of Object.entries(DISTRICT_CENTROIDS)) {
-    const dist = Math.sqrt((fLon - dLon) ** 2 + (fLat - dLat) ** 2);
-    if (dist < bestDist) {
-      bestDist = dist;
-      bestName = name;
-    }
+/** Fan-triangulate a ring of 3D points into triangles */
+function fanTriangulate(points: [number, number, number][]): number[] {
+  if (points.length < 3) return [];
+  const vertices: number[] = [];
+  // Use centroid as fan center
+  let cx = 0, cy = 0, cz = 0;
+  for (const p of points) { cx += p[0]; cy += p[1]; cz += p[2]; }
+  cx /= points.length; cy /= points.length; cz /= points.length;
+  
+  for (let i = 0; i < points.length; i++) {
+    const curr = points[i];
+    const next = points[(i + 1) % points.length];
+    vertices.push(cx, cy, cz, curr[0], curr[1], curr[2], next[0], next[1], next[2]);
   }
-  // Only match if reasonably close (< 1.5 degrees)
-  return bestDist < 1.5 ? bestName : null;
+  return vertices;
 }
 
-function migrationColor(t: number): THREE.Color {
-  const r = t < 0.5 ? t * 2 : 1;
-  const g = t < 0.5 ? 1 : 1 - (t - 0.5) * 2;
-  return new THREE.Color(r, g * 0.8, 0.05);
+interface DistrictData {
+  name: string;
+  color: string;
+  borderPoints: THREE.Vector3[];
+  fillVertices: Float32Array;
+  labelPos: [number, number, number];
 }
 
 const MigrationLayer = ({ terrain, exaggeration, year }: MigrationLayerProps) => {
   const [geojson, setGeojson] = useState<GeoJSONCollection | null>(null);
+  const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/data/karakalpakstan_adm2.geojson')
@@ -123,8 +107,8 @@ const MigrationLayer = ({ terrain, exaggeration, year }: MigrationLayerProps) =>
       .catch(err => console.warn('Migration GeoJSON load failed:', err));
   }, []);
 
-  const { borders, labels } = useMemo(() => {
-    if (!geojson || !terrain.bounds) return { borders: [] as JSX.Element[], labels: [] as { pos: [number, number, number]; name: string }[] };
+  const districts = useMemo(() => {
+    if (!geojson || !terrain.bounds) return [];
 
     const bounds = terrain.bounds;
     const tw = terrain.width;
@@ -136,76 +120,113 @@ const MigrationLayer = ({ terrain, exaggeration, year }: MigrationLayerProps) =>
       (f.geometry.type === 'Polygon' || f.geometry.type === 'MultiPolygon') && isInKarakalpakstan(f)
     );
 
-    const lines: JSX.Element[] = [];
-    const lbls: { pos: [number, number, number]; name: string }[] = [];
-    const usedDistricts = new Set<string>();
+    const result: DistrictData[] = [];
 
     kkFeatures.forEach((feature, fi) => {
+      // Get name from properties
+      const name = feature.properties?.shapeName 
+        || feature.properties?.NAME_2 
+        || feature.properties?.name 
+        || feature.properties?.ADM2_EN
+        || `District ${fi + 1}`;
+
+      // Get outer ring
       const outerRing = feature.geometry.type === 'MultiPolygon'
         ? feature.geometry.coordinates[0][0]
         : feature.geometry.coordinates[0];
 
       if (!outerRing || outerRing.length < 3) return;
 
-      const [cLon, cLat] = centroid(outerRing);
-      const districtName = matchDistrict([cLon, cLat]);
-      if (!districtName || usedDistricts.has(districtName)) return;
-      usedDistricts.add(districtName);
-
-      // Get all rings for border rendering
-      const rings = feature.geometry.type === 'MultiPolygon'
-        ? feature.geometry.coordinates.flatMap((p: number[][][][]) => p.map((r: number[][][]) => r[0]))
-        : [feature.geometry.coordinates[0]];
-
-      for (const ring of rings) {
-        const points3d: THREE.Vector3[] = [];
-        for (const coord of ring) {
-          const p = geoToMeshPos(coord[1], coord[0], bounds, terrain, exaggeration, meshW, meshH);
-          if (p) points3d.push(new THREE.Vector3(p[0], p[1] + 0.05, p[2]));
+      // Convert to 3D positions
+      const points3d: [number, number, number][] = [];
+      const borderPts: THREE.Vector3[] = [];
+      
+      for (const coord of outerRing) {
+        const p = geoToMeshPos(coord[1], coord[0], bounds, terrain, exaggeration, meshW, meshH);
+        if (p) {
+          points3d.push([p[0], p[1] + 0.06, p[2]]);
+          borderPts.push(new THREE.Vector3(p[0], p[1] + 0.07, p[2]));
         }
-        if (points3d.length < 3) continue;
-
-        // Close the loop
-        points3d.push(points3d[0].clone());
-
-        const lineGeo = new THREE.BufferGeometry().setFromPoints(points3d);
-        const lineMat = new THREE.LineBasicMaterial({ color: '#ffffff', opacity: 0.6, transparent: true });
-        const lineObj = new THREE.Line(lineGeo, lineMat);
-        lines.push(
-          <primitive key={`border-${fi}-${ring === rings[0] ? 0 : 1}`} object={lineObj} />
-        );
       }
+      if (points3d.length < 3) return;
 
-      // Label at centroid
-      const labelPos = geoToMeshPos(cLat, cLon, bounds, terrain, exaggeration, meshW, meshH);
-      if (labelPos) {
-        lbls.push({
-          pos: [labelPos[0], labelPos[1] + 0.15, labelPos[2]],
-          name: districtName,
-        });
-      }
+      // Close border loop
+      borderPts.push(borderPts[0].clone());
+
+      // Triangulate fill
+      const verts = fanTriangulate(points3d);
+      if (verts.length === 0) return;
+
+      // Centroid for label
+      const [cLon, cLat] = centroid(outerRing);
+      const labelP = geoToMeshPos(cLat, cLon, bounds, terrain, exaggeration, meshW, meshH);
+      if (!labelP) return;
+
+      result.push({
+        name,
+        color: DISTRICT_COLORS[fi % DISTRICT_COLORS.length],
+        borderPoints: borderPts,
+        fillVertices: new Float32Array(verts),
+        labelPos: [labelP[0], labelP[1] + 0.2, labelP[2]],
+      });
     });
 
-    return { borders: lines, labels: lbls };
+    return result;
   }, [geojson, terrain, exaggeration]);
 
-  if (borders.length === 0) return null;
+  const handleClick = useCallback((name: string) => {
+    setSelectedDistrict(prev => prev === name ? null : name);
+  }, []);
+
+  if (districts.length === 0) return null;
 
   return (
     <group>
-      {borders}
-      {labels.map((lbl, i) => (
-        <Html key={`lbl-${i}`} position={lbl.pos} center distanceFactor={12} style={{ pointerEvents: 'none' }}>
-          <div style={{
-            textAlign: 'center',
-            whiteSpace: 'nowrap',
-            textShadow: '0 1px 6px rgba(0,0,0,0.9)',
-            fontFamily: "'Inter', system-ui, sans-serif",
-          }}>
-            <div style={{ fontSize: '10px', fontWeight: 600, color: '#fff' }}>{lbl.name}</div>
-          </div>
-        </Html>
-      ))}
+      {districts.map((d, i) => {
+        const fillGeo = new THREE.BufferGeometry();
+        fillGeo.setAttribute('position', new THREE.Float32BufferAttribute(d.fillVertices, 3));
+        fillGeo.computeVertexNormals();
+
+        const borderGeo = new THREE.BufferGeometry().setFromPoints(d.borderPoints);
+
+        return (
+          <group key={`district-${i}`}>
+            {/* Filled polygon */}
+            <mesh
+              geometry={fillGeo}
+              onClick={(e) => { e.stopPropagation(); handleClick(d.name); }}
+              onPointerOver={(e) => { (e.object as THREE.Mesh).material = new THREE.MeshBasicMaterial({ color: d.color, opacity: 0.7, transparent: true, side: THREE.DoubleSide }); document.body.style.cursor = 'pointer'; }}
+              onPointerOut={(e) => { (e.object as THREE.Mesh).material = new THREE.MeshBasicMaterial({ color: d.color, opacity: 0.45, transparent: true, side: THREE.DoubleSide }); document.body.style.cursor = 'auto'; }}
+            >
+              <meshBasicMaterial color={d.color} opacity={0.45} transparent side={THREE.DoubleSide} />
+            </mesh>
+
+            {/* Border outline */}
+            <line geometry={borderGeo}>
+              <lineBasicMaterial color="#ffffff" opacity={0.8} transparent linewidth={1} />
+            </line>
+
+            {/* Label on click */}
+            {selectedDistrict === d.name && (
+              <Html position={d.labelPos} center distanceFactor={10} style={{ pointerEvents: 'none' }}>
+                <div style={{
+                  background: 'rgba(0,0,0,0.85)',
+                  color: '#fff',
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                  border: `2px solid ${d.color}`,
+                  textShadow: '0 1px 3px rgba(0,0,0,0.8)',
+                }}>
+                  {d.name}
+                </div>
+              </Html>
+            )}
+          </group>
+        );
+      })}
     </group>
   );
 };
