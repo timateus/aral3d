@@ -14,7 +14,7 @@ import { Camera, Video, BarChart3, Navigation, MapPin, Loader2, Crosshair, Downl
 import { exportTerrainSTL } from '@/lib/stl-exporter';
 import type { ScenarioAction } from '@/types/scenario';
 import { NARRATIVE_STEPS } from '@/lib/narrative-steps';
-import { CANAL_TOUR_STEPS } from '@/lib/canal-tour-steps';
+import { CANAL_TOUR_STEPS, getEthnicityColor } from '@/lib/canal-tour-steps';
 import NarrativeOverlay from '@/components/NarrativeOverlay';
 import CanalTourOverlay from '@/components/CanalTourOverlay';
 import DamToolPanel from '@/components/DamToolPanel';
