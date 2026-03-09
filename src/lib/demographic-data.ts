@@ -7,10 +7,6 @@ export interface DemographicIndicator {
   unit: string;
   file: string;
   colorMode: 'pct-good' | 'pct-bad' | 'count' | 'years';
-  // pct-good: higher % is green (water, gas, sewage)
-  // pct-bad: higher rate is red (childbirth)
-  // count: blue gradient normalized per-year
-  // years: life expectancy scale
 }
 
 export const INDICATORS: DemographicIndicator[] = [
@@ -29,54 +25,297 @@ export const INDICATORS: DemographicIndicator[] = [
 
 export const YEARS = [2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024] as const;
 
-interface CsvRow {
+export interface CsvRow {
   code: string;
   nameEn: string;
   nameRu: string;
   values: Record<number, number>;
 }
 
-interface CsvData {
+export interface CsvData {
   rows: CsvRow[];
   byNormName: Map<string, CsvRow>;
+  byCode: Map<string, CsvRow>;
   maxByYear: Record<number, number>;
+  globalMax: number;
+  /** Region codes that have at least one district with non-zero data for any year */
+  regionsWithDistrictData: Set<string>;
 }
 
-// Cache loaded CSVs
 const csvCache = new Map<string, CsvData>();
 
+/** Aggressively normalize a name for matching */
 function normalizeName(name: string): string {
   return name.toLowerCase()
-    .replace(/\s+(district|city|region|province|republic of|respublikasi)$/i, '')
+    .replace(/\s+/g, ' ')
+    .replace(/\s*(district|city|region|province|republic of|respublikasi|tumani|viloyati|shahri|shahar)\s*/gi, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
-// Hard-coded alias map for mismatches between GeoJSON shapeName and CSV Klassifikator_en
-const ALIASES: Record<string, string> = {
-  'takhtakupir': 'takhtakupyr',
-  'nukus district': 'nukus',  // CSV has "Nukus district" which normalizes to "nukus"
-  'urgench district': 'urgench', // same pattern
-  'khiva city': 'khiva',
-  'tuprakkala': 'tuprakkala',
-  'shumanai': 'shumanay', // CSV has "Shumanai" vs GeoJSON "Shumanay"
+/** Even more aggressive: strip all non-alpha and collapse */
+function superNormalize(name: string): string {
+  return normalizeName(name).replace(/[^a-z]/g, '');
+}
+
+/**
+ * Comprehensive alias map: GeoJSON shapeName (normalized) → CSV Klassifikator_en (normalized)
+ * Handles transliteration differences between GeoJSON and CSV sources
+ */
+const ALIASES: Record<string, string[]> = {
+  // Karakalpakstan
+  'takhtakupir': ['takhtakupyr'],
+  'shumanai': ['shumanay'],
+  'kungrad': ['qongirot', 'kungrad'],
+  'chimbay': ['chimboy'],
+  'khojeyli': ['khojayli', 'xojayli'],
+  'ellikkala': ['ellikqala'],
+  'turtkul': ['tortkol', 'turtkul'],
+  'bozatau': ['bozatov'],
+  'karauzak': ['qarauzak'],
+  'kanlykul': ['qanlikol'],
+  'takhiatash': ['taxiatosh'],
+  
+  // Andijan
+  'altinkul': ['altynkul'],
+  'izboskan': ['izbaskan'],
+  'paxtaabad': ['pakhtaabad'],
+  'khanabad': ['xonobod', 'khanabad'],
+  'bustan': ['boston'],
+  'bulakbashi': ['buloqboshi'],
+  'jalaquduk': ['jalakuduk'],
+  'ulugnor': ['ulugnar'],
+  'kurgantepa': ['qorgontepa'],
+  'shakhrikhan': ['shaxrixon'],
+  'khojaabad': ['xojaobod'],
+  'balykchi': ['baliqchi'],
+  
+  // Bukhara
+  'alat': ['olot'],
+  'gijduvan': ['gijduvon', 'ghijduvon'],
+  'kagan': ['kogon'],
+  'karakul': ['qarakol', 'qarakul'],
+  'qorovulbozor': ['qarovulbozor'],
+  'peshkun': ['peshku'],
+  'shafirkan': ['shofirkon'],
+  
+  // Jizzakh
+  'jizzakh': ['jizzax'],
+  'arnasay': ['arnasoy'],
+  'bakhmal': ['baxmal'],
+  'gallaaral': ['gallaorol'],
+  'sharofrashidov': ['sharofrashidov'],
+  'dustlik': ['dostlik'],
+  'zomin': ['zamin'],
+  'zarbdar': ['zarbdor'],
+  'mirzachul': ['mirzachol'],
+  'zafarabad': ['zafarobod'],
+  'pakhtakor': ['paxtakor'],
+  'farish': ['forish'],
+  'yangiabad': ['yangiobod'],
+  
+  // Kashkadarya
+  'karshi': ['qarshi'],
+  'shakhrisabz': ['shahrisabz'],
+  'gissar': ['guzor', 'ghuzor'],
+  'dehkanabad': ['dehqonobod'],
+  'kamashi': ['qamashi'],
+  'kasan': ['koson'],
+  'kitab': ['kitob'],
+  'mubarek': ['muborak'],
+  'nishon': ['nishon'],
+  'kasbi': ['kasbi'],
+  'chirakchi': ['chiroqchi'],
+  'yakkabag': ['yakkabog'],
+  'kukdala': ['kokdala'],
+  
+  // Navoi
+  'navoi': ['navoiy'],
+  'zarafshan': ['zarafshon'],
+  'gazgan': ['gozgon'],
+  'kanimekh': ['konimex'],
+  'kyzyltepa': ['qiziltepa'],
+  'navbahor': ['navbahor'],
+  'nurota': ['nurata'],
+  'tomdy': ['tomdi'],
+  'uchkuduk': ['uchquduq'],
+  'khatyrchi': ['xatirchi'],
+  
+  // Namangan
+  'mingbulak': ['mingbuloq'],
+  'kasansay': ['kosonsoy'],
+  'naryn': ['norin'],
+  'turakurgan': ['toraqorgon'],
+  'uchkurgan': ['uchqorgon'],
+  'chartak': ['chortoq'],
+  'chust': ['chust'],
+  'yangikurgan': ['yangiqqorgon'],
+  
+  // Samarkand
+  'akdarya': ['oqdaryo'],
+  'bulungur': ['bulungur'],
+  'jomboy': ['jomboy'],
+  'ishtykhan': ['ishtixon'],
+  'kattakurgan': ['kattaqorgon'],
+  'koshrabad': ['qoshrabot'],
+  'narpai': ['narpay'],
+  'payaryk': ['payariq'],
+  'pastdargom': ['pastdargom'],
+  'pakhtachi': ['paxtachi'],
+  'nurabad': ['nurobod'],
+  'urgut': ['urgut'],
+  'tailak': ['tayloq'],
+  
+  // Surkhandarya
+  'termez': ['termiz'],
+  'altynsay': ['oltinsoy'],
+  'angor': ['angor'],
+  'bandykhan': ['bandixon'],
+  'baysun': ['boysun'],
+  'muzrabad': ['muzrabot'],
+  'denau': ['denov'],
+  'jarkurgan': ['jarqorgon'],
+  'kumkurgan': ['qumqorgon'],
+  'kizirik': ['qiziriq'],
+  'sariosia': ['sariosiyo'],
+  'uzun': ['uzun'],
+  'sherabad': ['sherobod'],
+  'shurchi': ['shorchi'],
+  
+  // Syrdarya
+  'gulistan': ['guliston'],
+  'shirin': ['shirin'],
+  'yangier': ['yangiyer'],
+  'akaltyn': ['oqoltin'],
+  'bayaut': ['boyovut'],
+  'saykhunabad': ['sayxunobod'],
+  'sardoba': ['sardoba'],
+  'mirzaabad': ['mirzaobod'],
+  'khovos': ['xovos'],
+  
+  // Tashkent region
+  'nurafshon': ['nurafshan'],
+  'almalyk': ['olmaliq'],
+  'angren': ['angren'],
+  'bekabad': ['bekobod'],
+  'chirchik': ['chirchiq'],
+  'akhangaran': ['ohangaron'],
+  'yangiyul': ['yangiyo l', 'yangiyol'],
+  'akkurgan': ['oqqorgon'],
+  'bostanlyk': ['bostonliq'],
+  'buka': ['boka'],
+  'kuyichirchik': ['quyichirchiq'],
+  'zangiata': ['zangiota'],
+  'yukorichirchik': ['yuqorichirchiq'],
+  'kibray': ['qibray'],
+  'parkent': ['parkent'],
+  'piskent': ['piskent'],
+  'urtachirchik': ['ortachirchiq'],
+  'chinaz': ['chinoz'],
+  
+  // Fergana
+  'fergana': ['fargona'],
+  'kokand': ['qoqon'],
+  'kuvasay': ['quvasoy'],
+  'margilan': ['margilon'],
+  'altyaryk': ['oltiariq'],
+  'kushtepa': ['qoshtepa'],
+  'baghdad': ['bogdod'],
+  'besharik': ['beshariq'],
+  'kuva': ['quva'],
+  'uchkuprik': ['uchkoprik'],
+  'rishtan': ['rishton'],
+  'sokh': ['sox'],
+  'tashlak': ['toshloq'],
+  'dangara': ['dangara'],
+  'furkat': ['furqat'],
+  'yazyavan': ['yozyovon'],
+  
+  // Khorezm
+  'urgench': ['urganch'],
+  'khiva': ['xiva'],
+  'bagat': ['bogot'],
+  'gurlan': ['gurlan'],
+  'kushkupyr': ['qoshkopir'],
+  'khazarasp': ['xazarasp'],
+  'tuprakkala': ['tuproqqala', 'tuprakkala'],
+  'khanka': ['xonqa'],
+  'shavat': ['shovot'],
+  'yangiaryk': ['yangiariaq'],
+  'yangibazar': ['yangibozor'],
+  
+  // Tashkent city districts
+  'uchtepa': ['uchtepa'],
+  'bektemir': ['bektemir'],
+  'yunusabad': ['yunusobod'],
+  'mirzoulugbek': ['mirzoulugbek'],
+  'mirabad': ['mirobod'],
+  'shaykhantakhur': ['shayxontoxur'],
+  'almazar': ['olmazor'],
+  'sergeli': ['sirgali'],
+  'yakkasaray': ['yakkasaroy'],
+  'yashnabad': ['yashnobod'],
+  'yangikhayot': ['yangihayot'],
+  'chilanzar': ['chilonzor'],
 };
 
-// Region name mapping: GeoJSON ADM1_EN → CSV Klassifikator_en (normalized)
-const REGION_ALIASES: Record<string, string> = {
-  'kashkadarya province': 'kashkadarya',
+// Build reverse alias map for fast lookup
+const reverseAliases = new Map<string, string>();
+for (const [key, aliases] of Object.entries(ALIASES)) {
+  for (const alias of aliases) {
+    const normAlias = alias.replace(/[^a-z]/g, '');
+    reverseAliases.set(normAlias, key);
+  }
+}
+
+/** Region code → ADM1 shapeName mapping for hierarchy detection */
+const REGION_CODE_PREFIX: Record<string, string> = {
+  '1735': 'karakalpakstan',
+  '1703': 'andijan',
+  '1706': 'bukhara',
+  '1708': 'jizzakh',
+  '1710': 'kashkadarya',
+  '1712': 'navoi',
+  '1714': 'namangan',
+  '1718': 'samarkand',
+  '1722': 'surkhandarya',
+  '1724': 'syrdarya',
+  '1727': 'tashkent',
+  '1730': 'fergana',
+  '1733': 'khorezm',
+  '1726': 'tashkent city',
+};
+
+/** Map ADM1 shapeName (normalized) → region code prefix */
+const ADM1_TO_CODE: Record<string, string> = {
+  'karakalpakstan': '1735',
+  'andijan': '1703',
+  'bukhara': '1706',
+  'jizzakh': '1708',
+  'kashkadarya': '1710',
+  'navoi': '1712',
+  'namangan': '1714',
+  'samarkand': '1718',
+  'surkhandarya': '1722',
+  'syrdarya': '1724',
+  'tashkent': '1727',
+  'fergana': '1730',
+  'khorezm': '1733',
 };
 
 function parseCsv(text: string): CsvData {
   const lines = text.replace(/^\uFEFF/, '').split('\n').filter(l => l.trim());
-  if (lines.length < 2) return { rows: [], byNormName: new Map(), maxByYear: {} };
+  if (lines.length < 2) return { rows: [], byNormName: new Map(), byCode: new Map(), maxByYear: {}, globalMax: 0, regionsWithDistrictData: new Set() };
 
   const header = lines[0].split(',');
   const yearCols = header.slice(5).map(h => parseInt(h.trim()));
 
   const rows: CsvRow[] = [];
   const byNormName = new Map<string, CsvRow>();
+  const byCode = new Map<string, CsvRow>();
   const maxByYear: Record<number, number> = {};
+  let globalMax = 0;
+  const regionsWithDistrictData = new Set<string>();
 
   for (let i = 1; i < lines.length; i++) {
     const cols = lines[i].split(',');
@@ -85,22 +324,37 @@ function parseCsv(text: string): CsvData {
     const nameEn = cols[3].trim();
     const nameRu = cols[2].trim();
     const values: Record<number, number> = {};
+    let hasNonZero = false;
     for (let j = 0; j < yearCols.length; j++) {
       const v = parseFloat(cols[5 + j]);
       values[yearCols[j]] = isNaN(v) ? 0 : v;
       if (!isNaN(v) && v > 0) {
+        hasNonZero = true;
         maxByYear[yearCols[j]] = Math.max(maxByYear[yearCols[j]] || 0, v);
+        globalMax = Math.max(globalMax, v);
       }
     }
     const row: CsvRow = { code, nameEn, nameRu, values };
     rows.push(row);
 
-    // Index by normalized name (strip "district"/"city"/"region" suffix)
+    // Index by normalized name
     const norm = normalizeName(nameEn);
     byNormName.set(norm, row);
+    // Also index by super-normalized
+    const sn = superNormalize(nameEn);
+    if (!byNormName.has(sn)) byNormName.set(sn, row);
+
+    // Index by code
+    byCode.set(code, row);
+
+    // Track regions with district data
+    if (code.length >= 7 && hasNonZero) {
+      const regionCode = code.substring(0, 4);
+      regionsWithDistrictData.add(regionCode);
+    }
   }
 
-  return { rows, byNormName, maxByYear };
+  return { rows, byNormName, byCode, maxByYear, globalMax, regionsWithDistrictData };
 }
 
 export async function loadIndicatorData(indicator: DemographicIndicator): Promise<CsvData | null> {
@@ -119,55 +373,103 @@ export async function loadIndicatorData(indicator: DemographicIndicator): Promis
   }
 }
 
-/** Look up a value by GeoJSON shapeName (for KK/Khorezm districts) */
+/** Look up a CSV row by GeoJSON shapeName (district-level) */
 export function lookupByShapeName(
   data: CsvData, shapeName: string, year: number
 ): { nameEn: string; nameRu: string; value: number } | null {
-  let norm = normalizeName(shapeName);
+  const norm = normalizeName(shapeName);
+  const sn = superNormalize(shapeName);
 
-  // Check aliases
-  const alias = ALIASES[norm];
+  // Direct lookup
+  let row = data.byNormName.get(norm) || data.byNormName.get(sn);
 
-  // Try direct lookup
-  let row = data.byNormName.get(norm);
-  if (!row && alias) row = data.byNormName.get(alias);
-
-  // Try appending common suffixes
+  // Try with suffixes
   if (!row) {
     for (const suffix of ['district', 'city']) {
-      const candidate = data.byNormName.get(norm + ' ' + suffix) ||
-                         data.byNormName.get((alias || norm) + ' ' + suffix);
-      if (candidate) { row = candidate; break; }
+      row = data.byNormName.get(norm + ' ' + suffix) ||
+            data.byNormName.get(sn + suffix);
+      if (row) break;
+    }
+  }
+
+  // Try aliases
+  if (!row) {
+    const aliasTarget = reverseAliases.get(sn);
+    if (aliasTarget) {
+      row = data.byNormName.get(aliasTarget);
+      if (!row) {
+        for (const suffix of ['district', 'city']) {
+          row = data.byNormName.get(aliasTarget + ' ' + suffix) ||
+                data.byNormName.get(aliasTarget + suffix);
+          if (row) break;
+        }
+      }
+    }
+    // Also try the shapeName as an alias key
+    const directAliases = ALIASES[sn];
+    if (!row && directAliases) {
+      for (const alias of directAliases) {
+        const aSn = alias.replace(/[^a-z]/g, '');
+        row = data.byNormName.get(aSn);
+        if (!row) {
+          for (const suffix of ['district', 'city']) {
+            row = data.byNormName.get(aSn + suffix) ||
+                  data.byNormName.get(alias + ' ' + suffix);
+            if (row) break;
+          }
+        }
+        if (row) break;
+      }
     }
   }
 
   if (!row) return null;
-  return { nameEn: row.nameEn, nameRu: row.nameRu, value: row.values[year] ?? 0 };
+  const val = row.values[year] ?? 0;
+  return { nameEn: row.nameEn, nameRu: row.nameRu, value: val };
 }
 
-/** Look up a value by region ADM1_EN name */
+/** Look up a region-level CSV row by ADM1 shapeName */
 export function lookupByRegionName(
   data: CsvData, regionName: string, year: number
 ): { nameEn: string; nameRu: string; value: number } | null {
-  let norm = normalizeName(regionName);
-  const alias = REGION_ALIASES[norm];
+  const norm = normalizeName(regionName);
+  const sn = superNormalize(regionName);
 
-  let row = data.byNormName.get(norm);
-  if (!row && alias) row = data.byNormName.get(alias);
-
-  // Try with "region" suffix
+  let row = data.byNormName.get(norm) || data.byNormName.get(sn);
   if (!row) {
-    row = data.byNormName.get(norm + ' region') ||
-          data.byNormName.get((alias || norm) + ' region');
+    row = data.byNormName.get(norm + ' region') || data.byNormName.get(sn + 'region');
+  }
+  // Try "republic of" prefix for Karakalpakstan
+  if (!row && /karakalpakstan/i.test(regionName)) {
+    row = data.byNormName.get('republic of karakalpakstan') ||
+          data.byNormName.get('republicofkarakalpakstan');
+    // Also try by code
+    if (!row) row = data.byCode.get('1735');
+  }
+  // Try by code
+  if (!row) {
+    const code = ADM1_TO_CODE[sn];
+    if (code) row = data.byCode.get(code);
   }
 
   if (!row) return null;
   return { nameEn: row.nameEn, nameRu: row.nameRu, value: row.values[year] ?? 0 };
 }
 
-/** Get max value for a year (for normalizing count data) */
+/** Check if a region has district-level data in this dataset */
+export function regionHasDistrictData(data: CsvData, regionName: string): boolean {
+  const sn = superNormalize(regionName);
+  const code = ADM1_TO_CODE[sn];
+  if (!code) return false;
+  return data.regionsWithDistrictData.has(code);
+}
+
 export function getMaxForYear(data: CsvData, year: number): number {
   return data.maxByYear[year] || 1;
+}
+
+export function getGlobalMax(data: CsvData): number {
+  return data.globalMax || 1;
 }
 
 /** Color for percentage data (higher = better): red→yellow→green */
@@ -226,13 +528,8 @@ export function getIndicatorColor(indicator: DemographicIndicator, value: number
   }
 }
 
-/** Get normalized height (0-1) for a given indicator and value */
+/** Get normalized height (0-1) for a given indicator and value, proportional to global max */
 export function getIndicatorHeight(indicator: DemographicIndicator, value: number, maxVal: number = 100): number {
-  switch (indicator.colorMode) {
-    case 'pct-good': return Math.max(0, Math.min(1, value / 100));
-    case 'pct-bad': return maxVal > 0 ? Math.max(0, Math.min(1, value / maxVal)) : 0;
-    case 'count': return maxVal > 0 ? Math.max(0, Math.min(1, value / maxVal)) : 0;
-    case 'years': return value > 0 ? Math.max(0, Math.min(1, (value - 60) / 20)) : 0;
-    default: return 0;
-  }
+  if (maxVal <= 0 || value <= 0) return 0;
+  return Math.max(0, Math.min(1, value / maxVal));
 }
