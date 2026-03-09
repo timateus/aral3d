@@ -16,7 +16,6 @@ import type { ScenarioAction } from '@/types/scenario';
 import { NARRATIVE_STEPS } from '@/lib/narrative-steps';
 import NarrativeOverlay from '@/components/NarrativeOverlay';
 import DamToolPanel from '@/components/DamToolPanel';
-import ChoroplethPanel from '@/components/ChoroplethPanel';
 import WaterFlowPanel from '@/components/WaterFlowPanel';
 import { BookOpen } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -426,6 +425,7 @@ const Index = () => {
             raisedPixels={raiseEnabled ? raisedPixelsRef.current : undefined}
             showMigration={showMigration}
             migrationYear={waterExtentYear}
+            showChoropleth={showChoropleth}
           />
         )}
         {!terrain && !loading && error && (
@@ -470,16 +470,6 @@ const Index = () => {
             onToggleSeries={toggleSeries}
             enabledClimate={enabledClimate}
             onToggleClimate={toggleClimate}
-          />
-        </div>
-      )}
-
-      {/* Choropleth Panel */}
-      {started && !narrativeActive && showChoropleth && !isMobile && (
-        <div className="absolute top-16 left-4 z-10" style={{ top: showDataPanel ? '420px' : '64px' }}>
-          <ChoroplethPanel
-            year={waterExtentYear}
-            onClose={() => setShowChoropleth(false)}
           />
         </div>
       )}
@@ -542,6 +532,8 @@ const Index = () => {
             onPopHexSizeChange={setPopHexSize}
             popHexHeight={popHexHeight}
             onPopHexHeightChange={setPopHexHeight}
+            showChoropleth={showChoropleth}
+            onToggleChoropleth={setShowChoropleth}
           />
           {terrain && (
             <WaterVolumeDisplay
@@ -580,13 +572,6 @@ const Index = () => {
           >
             <BarChart3 className="w-3.5 h-3.5" />
             {showDataPanel ? 'Hide Data Panel' : 'Show Data Panel'}
-          </button>
-          <button
-            onClick={() => setShowChoropleth(v => !v)}
-            className="glass-panel p-2.5 w-72 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-          >
-            <BarChart3 className="w-3.5 h-3.5" />
-            {showChoropleth ? 'Hide Choropleth' : 'Sewage Choropleth'}
           </button>
           <button
             onClick={startNarrative}
