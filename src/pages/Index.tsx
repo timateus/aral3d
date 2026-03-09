@@ -391,6 +391,7 @@ const Index = () => {
             show19thBasin={show19thBasin}
             show21stBasin={show21stBasin}
             showLakes={showLakes}
+            show21cLakes={show21cLakes}
             showWaterExtent={showWaterExtent}
             waterExtentYear={waterExtentYear}
             showPopDensity={showPopDensity}
