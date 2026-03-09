@@ -414,6 +414,18 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
         <HoverLabel key={`label21-${i}`} label={label} />
       ))}
 
+      {/* 21c Lakes (Robert) */}
+      {show21cLakes && lakes21cOutlines.map((points, i) => (
+        <Line
+          key={`lake21c-${i}`}
+          points={points}
+          color="#00e5ff"
+          lineWidth={1.5}
+          transparent
+          opacity={0.8}
+        />
+      ))}
+
       {/* Rivers from GeoJSON */}
       {showRivers && riverLines.map((seg, i) => (
         <Line

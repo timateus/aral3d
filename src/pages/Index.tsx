@@ -512,6 +512,8 @@ const Index = () => {
             onToggleWatershed={setShowWatershed}
             showLakes={showLakes}
             onToggleLakes={setShowLakes}
+            show21cLakes={show21cLakes}
+            onToggle21cLakes={setShow21cLakes}
             showPopDensity={showPopDensity}
             onTogglePopDensity={setShowPopDensity}
             popHexSize={popHexSize}
