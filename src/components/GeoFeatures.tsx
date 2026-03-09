@@ -706,55 +706,27 @@ const CanalLineWithLabel = ({ segment, color, highlighted }: { segment: CanalSeg
           <meshBasicMaterial transparent opacity={0} />
         </mesh>
       )}
-      {/* Always-visible name along canal */}
-      {segment.name && segment.midPos && (
+      {/* Label: always visible when highlighted, hover-only otherwise */}
+      {segment.name && segment.midPos && (highlighted || hovered) && (
         <Html
-          position={[segment.midPos[0], segment.midPos[1] + (highlighted ? 0.15 : 0.06), segment.midPos[2]]}
+          position={[segment.midPos[0], segment.midPos[1] + 0.18, segment.midPos[2]]}
           center
-          distanceFactor={highlighted ? 7 : 10}
+          distanceFactor={highlighted ? 6 : 8}
           style={{ pointerEvents: 'none' }}
         >
           <div style={{
             color: displayColor,
-            fontSize: highlighted ? '11px' : '7px',
+            fontSize: highlighted ? '11px' : '10px',
             fontFamily: "'Inter', system-ui, sans-serif",
-            fontWeight: highlighted ? 700 : 400,
-            fontStyle: highlighted ? 'normal' : 'italic',
+            fontWeight: 600,
             whiteSpace: 'nowrap',
             textShadow: highlighted
               ? `0 0 8px ${HIGHLIGHT_COLOR}, 0 1px 4px rgba(0,0,0,0.9)`
               : '0 1px 3px rgba(0,0,0,0.9)',
-            opacity: highlighted ? 1 : (hovered ? 1 : 0.6),
-            transform: `rotate(${segment.angle}deg) scale(${glowScale})`,
-            transition: 'opacity 0.2s',
-            background: highlighted ? 'rgba(0,0,0,0.6)' : 'transparent',
-            padding: highlighted ? '2px 6px' : '0',
-            borderRadius: highlighted ? '4px' : '0',
-            border: highlighted ? `1px solid ${HIGHLIGHT_COLOR}66` : 'none',
-          }}>
-            {segment.name}
-          </div>
-        </Html>
-      )}
-      {/* Larger tooltip on hover */}
-      {hovered && segment.name && segment.midPos && (
-        <Html
-          position={[segment.midPos[0], segment.midPos[1] + 0.2, segment.midPos[2]]}
-          center
-          distanceFactor={6}
-          style={{ pointerEvents: 'none' }}
-        >
-          <div style={{
-            color: displayColor,
-            padding: '3px 8px',
-            fontSize: '11px',
-            fontFamily: "'Inter', system-ui, sans-serif",
-            fontWeight: 600,
-            whiteSpace: 'nowrap',
-            background: 'rgba(0,0,0,0.8)',
+            background: 'rgba(0,0,0,0.7)',
+            padding: '2px 6px',
             borderRadius: '4px',
-            textShadow: '0 1px 3px rgba(0,0,0,0.9)',
-            border: `1px solid ${displayColor}33`,
+            border: highlighted ? `1px solid ${HIGHLIGHT_COLOR}66` : `1px solid ${displayColor}33`,
           }}>
             {segment.name}
           </div>
