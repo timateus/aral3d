@@ -711,7 +711,7 @@ const Index = () => {
       )}
 
       {/* Timeline Slider - bottom bar */}
-      {started && !narrativeActive && (
+      {started && !narrativeActive && !canalTourActive && (
         <TimelineSlider
           year={waterExtentYear}
           onYearChange={setWaterExtentYear}
