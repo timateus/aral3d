@@ -191,6 +191,11 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
       .then((r) => r.json())
       .then((data) => setBasin21Data(data))
       .catch((err) => console.warn('Failed to load 21st century basin GeoJSON:', err));
+
+    fetch('/data/21c_lakes_robert.geojson')
+      .then((r) => r.json())
+      .then((data) => setLakes21cData(data))
+      .catch((err) => console.warn('Failed to load 21c lakes GeoJSON:', err));
   }, []);
 
   const cityMarkers = useMemo(() => {
