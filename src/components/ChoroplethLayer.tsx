@@ -181,9 +181,10 @@ const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage' }
   // Load GeoJSON files
   useEffect(() => {
     Promise.all([
-      fetch('/data/uzb_adm2.geojson').then(r => r.json()),
-      fetch('/data/uzb_adm1.geojson').then(r => r.json()),
+      fetch('/data/geoBoundaries-UZB-ADM2.geojson').then(r => r.json()),
+      fetch('/data/geoBoundaries-UZB-ADM1.geojson').then(r => r.json()),
     ]).then(([a2, a1]) => {
+      console.log('[Choropleth] Loaded ADM2 features:', a2.features.length, 'ADM1 features:', a1.features.length);
       setAdm2Geo(a2);
       setAdm1Geo(a1);
     });
