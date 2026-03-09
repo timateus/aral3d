@@ -538,6 +538,13 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
           </group>
         );
       })()}
+
+      {/* Canal tour highlights */}
+      {canalHighlights && canalHighlights.map((ch, i) => {
+        const pos = geoToMeshPos(ch.lat, ch.lon, bounds, terrain, exaggeration, meshWidth, meshHeight);
+        if (!pos) return null;
+        return <CanalHighlightMarker key={`canal-hl-${i}`} pos={pos} canal={ch.canal} color={ch.color} />;
+      })}
     </group>
   );
 };
