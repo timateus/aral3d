@@ -22,6 +22,8 @@ interface LegendProps {
   onToggle21cLakes?: (val: boolean) => void;
   showPopDensity: boolean;
   onTogglePopDensity: (val: boolean) => void;
+  showMigration: boolean;
+  onToggleMigration: (val: boolean) => void;
   popHexSize: number;
   onPopHexSizeChange: (val: number) => void;
   popHexHeight: number;
