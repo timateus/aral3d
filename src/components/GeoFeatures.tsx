@@ -794,4 +794,54 @@ const LakeMarker = ({ lake, pos, radius }: { lake: Lake; pos: [number, number, n
   );
 };
 
+// Pulsing canal highlight marker
+const CanalHighlightMarker = ({ pos, canal, color }: { pos: [number, number, number]; canal: string; color: string }) => {
+  const ringRef = useRef<THREE.Mesh>(null);
+  const [time, setTime] = useState(0);
+
+  useEffect(() => {
+    let id: number;
+    const tick = () => {
+      setTime(t => t + 0.03);
+      id = requestAnimationFrame(tick);
+    };
+    id = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  const scale = 1 + 0.3 * Math.sin(time * 2);
+  const opacity = 0.6 + 0.3 * Math.sin(time * 2);
+
+  return (
+    <group position={[pos[0], pos[1] + 0.08, pos[2]]}>
+      {/* Pulsing ring */}
+      <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]} scale={[scale, scale, 1]}>
+        <ringGeometry args={[0.08, 0.12, 24]} />
+        <meshBasicMaterial color={color} transparent opacity={opacity} side={THREE.DoubleSide} depthWrite={false} />
+      </mesh>
+      {/* Inner dot */}
+      <mesh>
+        <sphereGeometry args={[0.035, 10, 10]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.8} />
+      </mesh>
+      {/* Label */}
+      <Html position={[0, 0.18, 0]} center distanceFactor={8} style={{ pointerEvents: 'none' }}>
+        <div style={{
+          color,
+          padding: '1px 5px',
+          fontSize: '8px',
+          fontFamily: "'Inter', system-ui, sans-serif",
+          fontWeight: 600,
+          whiteSpace: 'nowrap',
+          textShadow: '0 1px 6px rgba(0,0,0,0.9), 0 0px 2px rgba(0,0,0,0.7)',
+          background: 'rgba(0,0,0,0.5)',
+          borderRadius: '3px',
+        }}>
+          {canal}
+        </div>
+      </Html>
+    </group>
+  );
+};
+
 export default GeoFeatures;
