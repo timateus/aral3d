@@ -251,8 +251,8 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
           const inflowScale = riverInflow != null
             ? Math.max(0.2, (riverInflow / 30) ** 0.7)
             : 1;
-          const baseWidth = sorder <= 2 ? 0.15 : sorder * 1.2;
-          const lineWidth = Math.max(0.1, baseWidth * inflowScale);
+          const baseWidth = sorder * 0.4;
+          const lineWidth = Math.max(0.05, baseWidth * inflowScale);
           segments.push({ points, width: lineWidth, color });
         }
       }
