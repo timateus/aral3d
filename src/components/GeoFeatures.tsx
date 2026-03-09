@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { Html, Line } from '@react-three/drei';
 import { TerrainData, GeoBounds } from '@/lib/geotiff-loader';
+import * as THREE from 'three';
 
 interface GeoFeaturesProps {
   terrain: TerrainData;
