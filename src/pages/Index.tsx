@@ -478,6 +478,7 @@ const Index = () => {
               color: getEthnicityColor(c.ethnicity),
             })) : undefined}
             highlightedCanalNames={canalTourActive ? new Set(CANAL_TOUR_STEPS[canalTourStep]?.canals.map(c => c.canal)) : undefined}
+            canalTourActive={canalTourActive}
           />
         )}
         {!terrain && !loading && error && (
