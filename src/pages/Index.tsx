@@ -520,7 +520,12 @@ const Index = () => {
             showPopDensity={showPopDensity}
             onTogglePopDensity={setShowPopDensity}
             showMigration={showMigration}
-            onToggleMigration={setShowMigration}
+            onToggleMigration={(val: boolean) => {
+              setShowMigration(val);
+              if (val) {
+                setExaggeration(1);
+              }
+            }}
             popHexSize={popHexSize}
             onPopHexSizeChange={setPopHexSize}
             popHexHeight={popHexHeight}
