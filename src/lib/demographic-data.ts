@@ -340,12 +340,16 @@ function parseCsv(text: string): CsvData {
     const row: CsvRow = { code, nameEn, nameRu, values };
     rows.push(row);
 
-    // Index by normalized name
+    // Index by normalized name (with suffix stripped)
     const norm = normalizeName(nameEn);
     byNormName.set(norm, row);
-    // Also index by super-normalized
+    // Also index by super-normalized (alpha-only)
     const sn = superNormalize(nameEn);
     if (!byNormName.has(sn)) byNormName.set(sn, row);
+    
+    // Also index by the raw English name lowercased for direct matching
+    const rawLower = nameEn.toLowerCase().trim();
+    if (!byNormName.has(rawLower)) byNormName.set(rawLower, row);
 
     // Index by code
     byCode.set(code, row);
