@@ -700,7 +700,7 @@ const Index = () => {
       )}
 
       {/* Mobile locate button */}
-      {started && !narrativeActive && isMobile && (
+      {started && !narrativeActive && !canalTourActive && isMobile && (
         <button
           onClick={requestLocation}
           disabled={locating}
