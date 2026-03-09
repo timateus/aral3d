@@ -3,6 +3,14 @@ import { Html, Line } from '@react-three/drei';
 import { TerrainData, GeoBounds } from '@/lib/geotiff-loader';
 import * as THREE from 'three';
 
+interface CanalHighlight {
+  canal: string;
+  lat: number;
+  lon: number;
+  ethnicity: string;
+  color: string;
+}
+
 interface GeoFeaturesProps {
   terrain: TerrainData;
   exaggeration: number;
@@ -15,6 +23,7 @@ interface GeoFeaturesProps {
   show21cLakes?: boolean;
   riverInflow?: number;
   userLocation?: { lat: number; lon: number } | null;
+  canalHighlights?: CanalHighlight[];
 }
 
 interface City {
