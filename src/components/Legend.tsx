@@ -1,5 +1,7 @@
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { INDICATORS } from '@/lib/demographic-data';
 
 interface LegendProps {
   showBorders: boolean;
@@ -26,6 +28,8 @@ interface LegendProps {
   onToggleMigration: (val: boolean) => void;
   showChoropleth: boolean;
   onToggleChoropleth: (val: boolean) => void;
+  choroplethIndicator: string;
+  onChoroplethIndicatorChange: (val: string) => void;
   popHexSize: number;
   onPopHexSizeChange: (val: number) => void;
   popHexHeight: number;
