@@ -25,6 +25,7 @@ interface GeoFeaturesProps {
   userLocation?: { lat: number; lon: number } | null;
   canalHighlights?: CanalHighlight[];
   highlightedCanalNames?: Set<string>;
+  canalTourActive?: boolean;
 }
 
 interface City {
