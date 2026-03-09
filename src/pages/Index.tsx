@@ -502,7 +502,7 @@ const Index = () => {
       )}
 
       {/* Scenario Chat */}
-      {started && !narrativeActive && !isMobile && (
+      {started && !narrativeActive && !canalTourActive && !isMobile && (
         <ScenarioChat
           onActions={handleScenarioActions}
           onClear={() => setScenarioActions([])}
