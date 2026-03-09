@@ -123,14 +123,8 @@ const MigrationLayer = ({ terrain, exaggeration, year }: MigrationLayerProps) =>
       .catch(err => console.warn('Migration GeoJSON load failed:', err));
   }, []);
 
-  const activeYear = useMemo(() => {
-    if (year >= 2010 && year <= 2024) return year;
-    if (year < 2010) return 2010;
-    return 2024;
-  }, [year]);
-
-  const { polygons, labels } = useMemo(() => {
-    if (!geojson || !terrain.bounds) return { polygons: [] as JSX.Element[], labels: [] as { pos: [number, number, number]; name: string; value: number }[] };
+  const { borders, labels } = useMemo(() => {
+    if (!geojson || !terrain.bounds) return { borders: [] as JSX.Element[], labels: [] as { pos: [number, number, number]; name: string }[] };
 
     const bounds = terrain.bounds;
     const tw = terrain.width;
@@ -142,9 +136,8 @@ const MigrationLayer = ({ terrain, exaggeration, year }: MigrationLayerProps) =>
       (f.geometry.type === 'Polygon' || f.geometry.type === 'MultiPolygon') && isInKarakalpakstan(f)
     );
 
-    const maxMig = getMaxMigration(activeYear);
-    const polys: JSX.Element[] = [];
-    const lbls: { pos: [number, number, number]; name: string; value: number }[] = [];
+    const lines: JSX.Element[] = [];
+    const lbls: { pos: [number, number, number]; name: string }[] = [];
     const usedDistricts = new Set<string>();
 
     kkFeatures.forEach((feature, fi) => {
@@ -155,112 +148,52 @@ const MigrationLayer = ({ terrain, exaggeration, year }: MigrationLayerProps) =>
       if (!outerRing || outerRing.length < 3) return;
 
       const [cLon, cLat] = centroid(outerRing);
-      
-      // Match to district by centroid proximity
       const districtName = matchDistrict([cLon, cLat]);
       if (!districtName || usedDistricts.has(districtName)) return;
       usedDistricts.add(districtName);
 
-      const district = DISTRICT_MIGRATIONS.find(d => d.name === districtName);
-      if (!district) return;
-
-      const value = district.values[activeYear] ?? 0;
-      const t = maxMig > 0 ? Math.min(1, value / maxMig) : 0;
-
-      // Elevation offset proportional to migration value
-      const maxElevOffset = 0.8; // max height in scene units
-      const elevOffset = t * maxElevOffset;
-
+      // Get all rings for border rendering
       const rings = feature.geometry.type === 'MultiPolygon'
         ? feature.geometry.coordinates.flatMap((p: number[][][][]) => p.map((r: number[][][]) => r[0]))
         : [feature.geometry.coordinates[0]];
 
       for (const ring of rings) {
-        const points3d: [number, number, number][] = [];
+        const points3d: THREE.Vector3[] = [];
         for (const coord of ring) {
           const p = geoToMeshPos(coord[1], coord[0], bounds, terrain, exaggeration, meshW, meshH);
-          if (p) points3d.push(p);
+          if (p) points3d.push(new THREE.Vector3(p[0], p[1] + 0.05, p[2]));
         }
         if (points3d.length < 3) continue;
 
-        let sumX = 0, sumY = 0, sumZ = 0;
-        for (const p of points3d) { sumX += p[0]; sumY += p[1]; sumZ += p[2]; }
-        const cx = sumX / points3d.length;
-        const avgY = sumY / points3d.length + 0.06 + elevOffset;
-        const cz = sumZ / points3d.length;
+        // Close the loop
+        points3d.push(points3d[0].clone());
 
-        // Build top face
-        const topVerts: number[] = [];
-        for (let j = 0; j < points3d.length; j++) {
-          const curr = points3d[j];
-          const next = points3d[(j + 1) % points3d.length];
-          topVerts.push(cx, avgY, cz);
-          topVerts.push(curr[0], avgY, curr[2]);
-          topVerts.push(next[0], avgY, next[2]);
-        }
-
-        // Build side walls for the extrusion
-        const baseY = (sumY / points3d.length) + 0.02;
-        const sideVerts: number[] = [];
-        for (let j = 0; j < points3d.length; j++) {
-          const curr = points3d[j];
-          const next = points3d[(j + 1) % points3d.length];
-          // Two triangles per edge
-          sideVerts.push(curr[0], baseY, curr[2]);
-          sideVerts.push(next[0], baseY, next[2]);
-          sideVerts.push(curr[0], avgY, curr[2]);
-
-          sideVerts.push(next[0], baseY, next[2]);
-          sideVerts.push(next[0], avgY, next[2]);
-          sideVerts.push(curr[0], avgY, curr[2]);
-        }
-
-        const color = migrationColor(t);
-
-        // Top face
-        const topGeo = new THREE.BufferGeometry();
-        topGeo.setAttribute('position', new THREE.Float32BufferAttribute(topVerts, 3));
-        topGeo.computeVertexNormals();
-
-        polys.push(
-          <mesh key={`top-${fi}-${ring === rings[0] ? 0 : 1}`} geometry={topGeo}>
-            <meshStandardMaterial color={color} transparent opacity={0.7} side={THREE.DoubleSide} depthWrite={false} />
-          </mesh>
+        const lineGeo = new THREE.BufferGeometry().setFromPoints(points3d);
+        const lineMat = new THREE.LineBasicMaterial({ color: '#ffffff', opacity: 0.6, transparent: true });
+        const lineObj = new THREE.Line(lineGeo, lineMat);
+        lines.push(
+          <primitive key={`border-${fi}-${ring === rings[0] ? 0 : 1}`} object={lineObj} />
         );
-
-        // Side walls (only if there's meaningful elevation)
-        if (elevOffset > 0.05) {
-          const sideGeo = new THREE.BufferGeometry();
-          sideGeo.setAttribute('position', new THREE.Float32BufferAttribute(sideVerts, 3));
-          sideGeo.computeVertexNormals();
-
-          polys.push(
-            <mesh key={`side-${fi}-${ring === rings[0] ? 0 : 1}`} geometry={sideGeo}>
-              <meshStandardMaterial color={color} transparent opacity={0.5} side={THREE.DoubleSide} depthWrite={false} />
-            </mesh>
-          );
-        }
       }
 
       // Label at centroid
       const labelPos = geoToMeshPos(cLat, cLon, bounds, terrain, exaggeration, meshW, meshH);
       if (labelPos) {
         lbls.push({
-          pos: [labelPos[0], labelPos[1] + 0.3 + elevOffset, labelPos[2]],
-          name: district.name,
-          value,
+          pos: [labelPos[0], labelPos[1] + 0.15, labelPos[2]],
+          name: districtName,
         });
       }
     });
 
-    return { polygons: polys, labels: lbls };
-  }, [geojson, terrain, exaggeration, activeYear]);
+    return { borders: lines, labels: lbls };
+  }, [geojson, terrain, exaggeration]);
 
-  if (polygons.length === 0) return null;
+  if (borders.length === 0) return null;
 
   return (
     <group>
-      {polygons}
+      {borders}
       {labels.map((lbl, i) => (
         <Html key={`lbl-${i}`} position={lbl.pos} center distanceFactor={12} style={{ pointerEvents: 'none' }}>
           <div style={{
@@ -270,9 +203,6 @@ const MigrationLayer = ({ terrain, exaggeration, year }: MigrationLayerProps) =>
             fontFamily: "'Inter', system-ui, sans-serif",
           }}>
             <div style={{ fontSize: '10px', fontWeight: 600, color: '#fff' }}>{lbl.name}</div>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: '#ff6b6b' }}>
-              {lbl.value.toLocaleString()}
-            </div>
           </div>
         </Html>
       ))}
