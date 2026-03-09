@@ -11,6 +11,7 @@ interface GeoFeaturesProps {
   show19thBasin: boolean;
   show21stBasin: boolean;
   showLakes: boolean;
+  show21cLakes?: boolean;
   riverInflow?: number;
   userLocation?: { lat: number; lon: number } | null;
 }
