@@ -202,9 +202,7 @@ const MigrationLayer = ({ terrain, exaggeration, year }: MigrationLayerProps) =>
             </mesh>
 
             {/* Border outline */}
-            <line geometry={borderGeo}>
-              <lineBasicMaterial color="#ffffff" opacity={0.8} transparent linewidth={1} />
-            </line>
+            <primitive object={new THREE.Line(borderGeo, new THREE.LineBasicMaterial({ color: '#ffffff', opacity: 0.8, transparent: true }))} />
 
             {/* Label on click */}
             {selectedDistrict === d.name && (
