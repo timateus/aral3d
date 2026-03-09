@@ -75,8 +75,8 @@ const ALIASES: Record<string, string[]> = {
   'ellikkala': ['ellikqala'],
   'turtkul': ['tortkol', 'turtkul'],
   'bozatau': ['bozatov'],
-  'karauzak': ['qarauzak'],
-  'kanlykul': ['qanlikol'],
+  'karauzak': ['qarauzak', 'karauzyak'],
+  'kanlykul': ['qanlikol', 'kanlikul'],
   'takhiatash': ['taxiatosh'],
   
   // Andijan
@@ -511,49 +511,57 @@ export function getGlobalMax(data: CsvData): number {
   return data.globalMax || 1;
 }
 
-/** Color for percentage data (higher = better): red→yellow→green */
-export function colorPctGood(value: number): string {
-  const t = Math.max(0, Math.min(100, value)) / 100;
-  if (t < 0.5) {
-    const r = 220;
-    const g = Math.round(60 + t * 2 * 160);
-    return `rgb(${r},${g},50)`;
-  }
-  const r = Math.round(220 - (t - 0.5) * 2 * 180);
-  return `rgb(${r},200,50)`;
+// ── Color palettes from reference image ──
+// Each palette is an array of hex stops, interpolated across the normalized range [0,1]
+const PALETTE_PCT_GOOD: string[] = ['#800026', '#a12044', '#c93a5e', '#e06070', '#f09080', '#f4c0a0', '#f0e0c0', '#d0e8a0', '#90c860', '#40a030'];
+const PALETTE_PCT_BAD: string[] = ['#2a9d8f', '#48b8a0', '#7dd3b0', '#c8e8a0', '#f0e070', '#f0b050', '#e87040', '#d03020'];
+const PALETTE_COUNT: string[] = ['#3b528b', '#5e4fa2', '#9e42a2', '#c83070', '#e85040', '#f0a020', '#f0e040'];
+const PALETTE_YEARS: string[] = ['#4292c6', '#70d0b0', '#c0e880', '#f0e060', '#f0b050', '#c83060'];
+
+function hexToRgb(hex: string): [number, number, number] {
+  const n = parseInt(hex.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
-/** Color for rate data (higher = worse): green→yellow→red */
-export function colorPctBad(value: number, maxVal: number): string {
-  if (maxVal <= 0) return 'rgb(40,200,50)';
-  const t = Math.max(0, Math.min(1, value / maxVal));
-  if (t < 0.5) {
-    const r = Math.round(40 + t * 2 * 180);
-    const g = 200;
-    return `rgb(${r},${g},50)`;
-  }
-  const g = Math.round(200 - (t - 0.5) * 2 * 140);
-  return `rgb(220,${g},50)`;
-}
-
-/** Color for count data: light blue → dark blue (sqrt scaled for low-value differentiation) */
-export function colorCount(value: number, maxVal: number): string {
-  if (maxVal <= 0) return 'rgb(100,150,220)';
-  const t = Math.sqrt(Math.max(0, Math.min(1, value / maxVal)));
-  const r = Math.round(140 - t * 110);
-  const g = Math.round(180 - t * 110);
-  const b = Math.round(230 - t * 70);
+function interpolatePalette(palette: string[], t: number): string {
+  const clamped = Math.max(0, Math.min(1, t));
+  const idx = clamped * (palette.length - 1);
+  const lo = Math.floor(idx);
+  const hi = Math.min(lo + 1, palette.length - 1);
+  const frac = idx - lo;
+  const [r1, g1, b1] = hexToRgb(palette[lo]);
+  const [r2, g2, b2] = hexToRgb(palette[hi]);
+  const r = Math.round(r1 + (r2 - r1) * frac);
+  const g = Math.round(g1 + (g2 - g1) * frac);
+  const b = Math.round(b1 + (b2 - b1) * frac);
   return `rgb(${r},${g},${b})`;
 }
 
-/** Color for life expectancy: 60-80 years scale, blue→green */
+/** Color for percentage data (higher = better) */
+export function colorPctGood(value: number): string {
+  const t = Math.max(0, Math.min(100, value)) / 100;
+  return interpolatePalette(PALETTE_PCT_GOOD, t);
+}
+
+/** Color for rate data (higher = worse) */
+export function colorPctBad(value: number, maxVal: number): string {
+  if (maxVal <= 0) return interpolatePalette(PALETTE_PCT_BAD, 0);
+  const t = Math.sqrt(Math.max(0, Math.min(1, value / maxVal)));
+  return interpolatePalette(PALETTE_PCT_BAD, t);
+}
+
+/** Color for count data */
+export function colorCount(value: number, maxVal: number): string {
+  if (maxVal <= 0) return interpolatePalette(PALETTE_COUNT, 0);
+  const t = Math.sqrt(Math.max(0, Math.min(1, value / maxVal)));
+  return interpolatePalette(PALETTE_COUNT, t);
+}
+
+/** Color for life expectancy: 60-80 years scale */
 export function colorYears(value: number): string {
   if (value <= 0) return 'rgb(80,80,80)';
   const t = Math.max(0, Math.min(1, (value - 60) / 20));
-  const r = Math.round(60 - t * 30);
-  const g = Math.round(100 + t * 120);
-  const b = Math.round(200 - t * 100);
-  return `rgb(${r},${g},${b})`;
+  return interpolatePalette(PALETTE_YEARS, t);
 }
 
 /** Get the color for a given indicator and value */

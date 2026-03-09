@@ -8,20 +8,18 @@ export interface SewageEntry {
   values: Record<number, number>;
 }
 
-/** Color scale: red (0%) → yellow (50%) → green (100%) */
+/** Color scale using rich palette: dark red (0%) → warm orange → green (100%) */
 export function sewageColor(value: number): string {
+  const palette = ['#800026', '#a12044', '#c93a5e', '#e06070', '#f09080', '#f4c0a0', '#f0e0c0', '#d0e8a0', '#90c860', '#40a030'];
   const t = Math.max(0, Math.min(100, value)) / 100;
-  if (t < 0.5) {
-    const r = 220;
-    const g = Math.round(60 + t * 2 * 160);
-    const b = 50;
-    return `rgb(${r},${g},${b})`;
-  } else {
-    const r = Math.round(220 - (t - 0.5) * 2 * 180);
-    const g = 200;
-    const b = 50;
-    return `rgb(${r},${g},${b})`;
-  }
+  const idx = t * (palette.length - 1);
+  const lo = Math.floor(idx);
+  const hi = Math.min(lo + 1, palette.length - 1);
+  const frac = idx - lo;
+  const hex2rgb = (h: string) => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
+  const [r1,g1,b1] = hex2rgb(palette[lo]);
+  const [r2,g2,b2] = hex2rgb(palette[hi]);
+  return `rgb(${Math.round(r1+(r2-r1)*frac)},${Math.round(g1+(g2-g1)*frac)},${Math.round(b1+(b2-b1)*frac)})`;
 }
 
 function mkEntry(nameEn: string, nameRu: string, vals: number[]): SewageEntry {
@@ -88,6 +86,25 @@ function normSewage(name: string): string {
   return name.toLowerCase().replace(/\s*(district|city|region|province)\s*/gi, ' ').replace(/\s+/g, ' ').trim();
 }
 
+/** Alias map for sewage district names: GeoJSON variant → sewage key */
+const SEWAGE_ALIASES: Record<string, string> = {
+  'karauzyak': 'karauzak',
+  'kanlikul': 'kanlykul',
+  'qanlikol': 'kanlykul',
+  'qarauzak': 'karauzak',
+  'kungirot': 'kungrad',
+  'qongirot': 'kungrad',
+  'chimboy': 'chimbay',
+  'khojayli': 'khojeyli',
+  'xojayli': 'khojeyli',
+  'ellikqala': 'ellikkala',
+  'tortkol': 'turtkul',
+  'bozatov': 'bozatau',
+  'taxiatosh': 'takhiatash',
+  'shumanay': 'shumanai',
+  'takhtakupyr': 'takhtakupir',
+};
+
 // Build normalized lookup maps
 const normKK = new Map<string, SewageEntry>();
 for (const [k, v] of Object.entries(KK_DISTRICT_SEWAGE)) normKK.set(normSewage(k), v);
@@ -98,12 +115,25 @@ for (const [k, v] of Object.entries(KHOREZM_DISTRICT_SEWAGE)) normKH.set(normSew
 const normRegion = new Map<string, SewageEntry>();
 for (const [k, v] of Object.entries(REGION_SEWAGE)) normRegion.set(normSewage(k), v);
 
+function resolveAlias(n: string): string {
+  const stripped = n.replace(/[^a-z]/g, '');
+  return SEWAGE_ALIASES[stripped] || n;
+}
+
 /** Lookup sewage value: tries district maps first, then region */
 export function getSewageForDistrict(shapeName: string, year: number): { entry: SewageEntry; value: number } | null {
-  const n = normSewage(shapeName);
-  const kk = normKK.get(n);
+  let n = normSewage(shapeName);
+  let kk = normKK.get(n);
+  if (!kk) {
+    const alias = resolveAlias(n);
+    kk = normKK.get(alias);
+  }
   if (kk) return { entry: kk, value: kk.values[year] ?? 0 };
-  const kh = normKH.get(n);
+  let kh = normKH.get(n);
+  if (!kh) {
+    const alias = resolveAlias(n);
+    kh = normKH.get(alias);
+  }
   if (kh) return { entry: kh, value: kh.values[year] ?? 0 };
   return null;
 }

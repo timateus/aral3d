@@ -153,7 +153,7 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
               value={[choroplethExaggeration]}
               onValueChange={(v) => onChoroplethExaggerationChange(v[0])}
               min={0}
-              max={3}
+              max={15}
               step={0.1}
               className="w-full"
             />
