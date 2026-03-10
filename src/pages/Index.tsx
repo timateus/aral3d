@@ -76,6 +76,13 @@ const Index = () => {
   const originalElevationsRef = useRef<Float32Array | null>(null);
   const raisedPixelsRef = useRef<Set<number>>(new Set());
   const [terrainVersion, setTerrainVersion] = useState(0);
+  // Canal dig tool state
+  const [canalToolActive, setCanalToolActive] = useState(false);
+  const [canalBrushRadius, setCanalBrushRadius] = useState(3);
+  const [canalDigDepth, setCanalDigDepth] = useState(10);
+  const [canalEditCount, setCanalEditCount] = useState(0);
+  const [canalDigEnabled, setCanalDigEnabled] = useState(true);
+  const dugPixelsRef = useRef<Set<number>>(new Set());
   const [waterFlowActive, setWaterFlowActive] = useState(false);
   const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
   const [flowRenderKey, setFlowRenderKey] = useState(0);
