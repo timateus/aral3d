@@ -84,6 +84,7 @@ const Index = () => {
   const [canalDigEnabled, setCanalDigEnabled] = useState(true);
   const dugPixelsRef = useRef<Set<number>>(new Set());
   const [waterFlowActive, setWaterFlowActive] = useState(false);
+  const [terrainShiftX, setTerrainShiftX] = useState(-1.5);
   const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
   const [flowRenderKey, setFlowRenderKey] = useState(0);
   const [flowAnimating, setFlowAnimating] = useState(false);
