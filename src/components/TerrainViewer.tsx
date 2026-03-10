@@ -72,6 +72,7 @@ interface TerrainViewerProps {
   flowRenderKey?: number;
   terrainVersion?: number;
   raisedPixels?: Set<number>;
+  dugPixels?: Set<number>;
   showMigration?: boolean;
   migrationYear?: number;
   showChoropleth?: boolean;
