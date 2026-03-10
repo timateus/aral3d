@@ -59,7 +59,7 @@ export const CANAL_TOUR_STEPS: CanalTourStep[] = [
     id: 1,
     title: 'Ancient Waterways',
     subtitle: '17th Century — Qaraqalpaq Floodplains',
-    description: 'The earliest canals followed the shifting paths of the Amu Darya. Qaraqalpaqs practiced semi-nomadic livelihoods along these ancient floodplains.',
+    description: 'The earliest canals followed the shifting paths of the Amu Darya. Qaraqalpaqs practiced semi-nomadic livelihoods along these floodplains to the north of Nukus.',
     canals: [
       { canal: 'Kegeyli Canal', otherName: 'Kerder', geography: 'Nukus-Kegeyli-Chimbay', ancientIrrigation: 'Yes - was Amu Darya', event: 'An ancient riverbank revived as a canal when the Amu Darya shifted westwards in the 9th century.', date: '17-18 cent', ethnicity: 'Qaraqalpaqs', lat: 42.78, lon: 59.61 },
       { canal: 'Qizketken Canal', otherName: 'Kok Ózák, Dosliq', geography: 'Kokuzak, Nukus, Tawkara', ancientIrrigation: 'Yes - was Amu Darya', event: 'A floodplain where Qaraqalpaqs conducted semi-nomadic livelihoods.', date: '17th cent', ethnicity: 'Qaraqalpaqs', lat: 42.50, lon: 59.30 },
