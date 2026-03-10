@@ -407,6 +407,60 @@ const Index = () => {
     setTerrainVersion(v => v + 1);
   }, [terrain, raiseEnabled]);
 
+  // Canal dig click handler
+  const handleDigCanalClick = useCallback((row: number, col: number) => {
+    if (!terrain) return;
+    if (!originalElevationsRef.current) {
+      originalElevationsRef.current = new Float32Array(terrain.elevations);
+    }
+    const { width, height, elevations } = terrain;
+    for (let dr = -canalBrushRadius; dr <= canalBrushRadius; dr++) {
+      for (let dc = -canalBrushRadius; dc <= canalBrushRadius; dc++) {
+        const r = row + dr;
+        const c = col + dc;
+        if (r < 0 || r >= height || c < 0 || c >= width) continue;
+        const dist = Math.sqrt(dr * dr + dc * dc);
+        if (dist > canalBrushRadius) continue;
+        const falloff = 1 - dist / (canalBrushRadius + 1);
+        const idx = r * width + c;
+        elevations[idx] -= canalDigDepth * falloff;
+        dugPixelsRef.current.add(idx);
+      }
+    }
+    let newMin = terrain.maxElevation;
+    for (let i = 0; i < elevations.length; i++) {
+      if (elevations[i] < newMin) newMin = elevations[i];
+    }
+    terrain.minElevation = newMin;
+    setCanalEditCount(c => c + 1);
+    setTerrainVersion(v => v + 1);
+  }, [terrain, canalBrushRadius, canalDigDepth]);
+
+  const handleResetCanal = useCallback(() => {
+    if (!terrain || !originalElevationsRef.current) return;
+    for (const idx of dugPixelsRef.current) {
+      terrain.elevations[idx] = originalElevationsRef.current[idx];
+    }
+    dugPixelsRef.current = new Set();
+    setCanalEditCount(0);
+    setCanalDigEnabled(true);
+    setTerrainVersion(v => v + 1);
+    if (raisedPixelsRef.current.size === 0) {
+      originalElevationsRef.current = null;
+    }
+  }, [terrain]);
+
+  const handleToggleDig = useCallback(() => {
+    if (!terrain || !originalElevationsRef.current) return;
+    for (const idx of dugPixelsRef.current) {
+      const tmp = terrain.elevations[idx];
+      terrain.elevations[idx] = originalElevationsRef.current[idx];
+      originalElevationsRef.current[idx] = tmp;
+    }
+    setCanalDigEnabled(v => !v);
+    setTerrainVersion(v => v + 1);
+  }, [terrain, canalDigEnabled]);
+
   const handleScenarioActions = useCallback((actions: ScenarioAction[]) => {
     for (const a of actions) {
       if (a.type === 'water_level') {
