@@ -475,6 +475,7 @@ const Index = () => {
             flowRenderKey={flowRenderKey}
             terrainVersion={terrainVersion}
             raisedPixels={raiseEnabled ? raisedPixelsRef.current : undefined}
+            dugPixels={canalDigEnabled ? dugPixelsRef.current : undefined}
             showMigration={showMigration}
             migrationYear={waterExtentYear}
             showChoropleth={showChoropleth}
