@@ -59,7 +59,7 @@ export const CANAL_TOUR_STEPS: CanalTourStep[] = [
     id: 1,
     title: 'Ancient Waterways',
     subtitle: '17th Century — Qaraqalpaq Floodplains',
-    description: 'The earliest canals followed the shifting paths of the Amu Darya. Qaraqalpaqs practiced semi-nomadic livelihoods along these ancient floodplains.',
+    description: 'The earliest canals followed the shifting paths of the Amu Darya. Qaraqalpaqs practiced semi-nomadic livelihoods along these floodplains to the north of Nukus.',
     canals: [
       { canal: 'Kegeyli Canal', otherName: 'Kerder', geography: 'Nukus-Kegeyli-Chimbay', ancientIrrigation: 'Yes - was Amu Darya', event: 'An ancient riverbank revived as a canal when the Amu Darya shifted westwards in the 9th century.', date: '17-18 cent', ethnicity: 'Qaraqalpaqs', lat: 42.78, lon: 59.61 },
       { canal: 'Qizketken Canal', otherName: 'Kok Ózák, Dosliq', geography: 'Kokuzak, Nukus, Tawkara', ancientIrrigation: 'Yes - was Amu Darya', event: 'A floodplain where Qaraqalpaqs conducted semi-nomadic livelihoods.', date: '17th cent', ethnicity: 'Qaraqalpaqs', lat: 42.50, lon: 59.30 },
@@ -90,7 +90,7 @@ export const CANAL_TOUR_STEPS: CanalTourStep[] = [
     id: 3,
     title: '18th Century Expansion',
     subtitle: 'Qaraqalpaqs & Turkmens Push Northward',
-    description: 'New canals extended irrigation into previously unfarmed territory. The Ghazavat Canal encouraged Turkmen sedentary life.',
+    description: 'New canals extended irrigation into previously unused land. The Khivan government sought to control populations via these canals. The Ghazavat Canal encouraged Turkmen sedentary life. The Eshim canal supported Qaraqalpaq semi-nomadic migrations.',
     canals: [
       { canal: 'Quwanishjarma', otherName: '', geography: 'Chimbay, Qarauzak', ancientIrrigation: 'No', event: 'Named after a Qaraqalpaq Quwanish. An extension of the Kok Uzak.', date: '18th cent', ethnicity: 'Qaraqalpaqs', lat: 42.93, lon: 59.65 },
       { canal: 'Ghazavat Canal', otherName: '', geography: "Qo'shko'pir", ancientIrrigation: 'No', event: 'Built in the 17th cent. Turkmens were settled here in the 18th century to encourage their loyalty and sedentary life.', date: '18th cent', ethnicity: 'Turkmens', lat: 41.52, lon: 60.32 },
