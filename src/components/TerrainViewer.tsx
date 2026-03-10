@@ -81,7 +81,6 @@ interface TerrainViewerProps {
   canalHighlights?: { canal: string; lat: number; lon: number; ethnicity: string; color: string }[];
   highlightedCanalNames?: Set<string>;
   canalTourActive?: boolean;
-  terrainShiftX?: number;
 }
 
 function CameraAnimator({ started }: { started: boolean }) {
@@ -238,7 +237,7 @@ function VideoAnimator({
   return null;
 }
 
-const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, showWaterExtent, waterExtentYear, showPopDensity, popHexSize, popHexHeight, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone, riverInflow, userLocation, inspectorEnabled, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, flowState, flowRenderKey, terrainVersion, raisedPixels, dugPixels, showMigration, migrationYear, showChoropleth, choroplethIndicator, choroplethExaggeration, canalHighlights, highlightedCanalNames, canalTourActive, terrainShiftX = 0 }, ref) => {
+const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, showWaterExtent, waterExtentYear, showPopDensity, popHexSize, popHexHeight, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone, riverInflow, userLocation, inspectorEnabled, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, flowState, flowRenderKey, terrainVersion, raisedPixels, dugPixels, showMigration, migrationYear, showChoropleth, choroplethIndicator, choroplethExaggeration, canalHighlights, highlightedCanalNames, canalTourActive }, ref) => {
   const screenshotFn = useRef<(() => void) | null>(null);
   const orbitRef = useRef<any>(null);
   const [flyoverAnimating, setFlyoverAnimating] = useState(false);
@@ -262,7 +261,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
       <directionalLight position={[5, 10, 5]} intensity={1.2} castShadow />
       <directionalLight position={[-3, 5, -3]} intensity={0.4} color="#8ec8e8" />
 
-      <group position={[terrainShiftX, 0, 0]}>
+      <group>
         <TerrainMesh terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} hideNoData={hideNoData} waterBounds={waterBounds} inspectorEnabled={inspectorEnabled} popData={showPopDensity ? popData : null} damToolActive={damToolActive} onDamPlace={onDamPlace} canalToolActive={canalToolActive} onCanalDig={onCanalDig} waterFlowActive={waterFlowActive} onWaterFlowClick={onWaterFlowClick} terrainVersion={terrainVersion} raisedPixels={raisedPixels} dugPixels={dugPixels} />
         {flowState && flowRenderKey !== undefined && (
           <WaterFlowOverlay terrain={terrain} exaggeration={exaggeration} flowState={flowState} renderKey={flowRenderKey} />
