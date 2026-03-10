@@ -466,7 +466,65 @@ const Index = () => {
     setTerrainVersion(v => v + 1);
   }, [terrain, canalDigEnabled]);
 
-  const handleScenarioActions = useCallback((actions: ScenarioAction[]) => {
+  const handleAutoDigCanals = useCallback(async () => {
+    if (!terrain) return;
+    const anyBasin = show13thBasin || show19thBasin || show21stBasin;
+    if (!anyBasin) return;
+
+    if (autoDigActive) {
+      // Undo auto-dig: restore original elevations for auto-dug pixels
+      if (originalElevationsRef.current) {
+        for (const idx of autoDigPixelsRef.current) {
+          terrain.elevations[idx] = originalElevationsRef.current[idx];
+        }
+        // Remove from dugPixels visual set too
+        for (const idx of autoDigPixelsRef.current) {
+          dugPixelsRef.current.delete(idx);
+        }
+        autoDigPixelsRef.current = new Set();
+        // Recalc min
+        let newMin = terrain.maxElevation;
+        for (let i = 0; i < terrain.elevations.length; i++) {
+          if (terrain.elevations[i] < newMin) newMin = terrain.elevations[i];
+        }
+        terrain.minElevation = newMin;
+        if (raisedPixelsRef.current.size === 0 && dugPixelsRef.current.size === 0) {
+          originalElevationsRef.current = null;
+        }
+      }
+      setAutoDigActive(false);
+      setCanalEditCount(c => Math.max(0, c - autoDigPixelsRef.current.size));
+      setTerrainVersion(v => v + 1);
+      return;
+    }
+
+    // Save original elevations if not yet saved
+    if (!originalElevationsRef.current) {
+      originalElevationsRef.current = new Float32Array(terrain.elevations);
+    }
+
+    setAutoDigging(true);
+    const newDugPixels = await digCanalsFromBasins(
+      terrain,
+      { show13th: show13thBasin, show19th: show19thBasin, show21st: show21stBasin },
+      canalDigDepth,
+      canalBrushRadius
+    );
+
+    // Merge into visual sets
+    for (const idx of newDugPixels) {
+      dugPixelsRef.current.add(idx);
+    }
+    autoDigPixelsRef.current = newDugPixels;
+
+    setAutoDigActive(true);
+    setAutoDigging(false);
+    setCanalEditCount(c => c + newDugPixels.size);
+    setCanalDigEnabled(true);
+    setTerrainVersion(v => v + 1);
+  }, [terrain, show13thBasin, show19thBasin, show21stBasin, autoDigActive, canalDigDepth, canalBrushRadius]);
+
+
     for (const a of actions) {
       if (a.type === 'water_level') {
         setWaterLevel(a.value);
