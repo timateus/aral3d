@@ -809,7 +809,20 @@ const Index = () => {
             digEnabled={canalDigEnabled}
             onToggleDig={handleToggleDig}
           />
-          <WaterFlowPanel
+          {(show13thBasin || show19thBasin || show21stBasin) && (
+            <button
+              onClick={handleAutoDigCanals}
+              disabled={autoDigging}
+              className={`glass-panel p-2.5 w-full flex items-center justify-center gap-2 text-xs transition-colors cursor-pointer ${
+                autoDigActive
+                  ? 'text-foreground bg-primary/10 ring-1 ring-primary/30'
+                  : 'text-muted-foreground hover:text-foreground'
+              } disabled:opacity-50`}
+            >
+              <Waves className="w-3.5 h-3.5" />
+              {autoDigging ? 'Digging…' : autoDigActive ? 'Undo Auto-Dig Canals' : 'Auto-Dig Visible Canals'}
+            </button>
+          )}
             active={waterFlowActive}
             onToggle={() => { setWaterFlowActive(v => !v); setDamToolActive(false); setCanalToolActive(false); }}
             isPlaced={!!flowState}
