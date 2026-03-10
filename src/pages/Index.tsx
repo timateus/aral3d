@@ -84,6 +84,7 @@ const Index = () => {
   const [canalDigEnabled, setCanalDigEnabled] = useState(true);
   const dugPixelsRef = useRef<Set<number>>(new Set());
   const [waterFlowActive, setWaterFlowActive] = useState(false);
+  const [terrainShiftX, setTerrainShiftX] = useState(-1.5);
   const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
   const [flowRenderKey, setFlowRenderKey] = useState(0);
   const [flowAnimating, setFlowAnimating] = useState(false);
@@ -544,6 +545,7 @@ const Index = () => {
             })) : undefined}
             highlightedCanalNames={canalTourActive ? new Set(CANAL_TOUR_STEPS[canalTourStep]?.canals.map(c => c.canal)) : undefined}
             canalTourActive={canalTourActive}
+            terrainShiftX={terrainShiftX}
           />
         )}
         {!terrain && !loading && error && (
@@ -627,6 +629,21 @@ const Index = () => {
             onDataSourceChange={() => {}}
             hasSeabed={false}
           />
+          <div className="glass-panel p-3 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs text-muted-foreground">Terrain Shift</label>
+              <span className="text-xs font-mono text-foreground">{terrainShiftX.toFixed(1)}</span>
+            </div>
+            <input
+              type="range"
+              min={-5}
+              max={5}
+              step={0.1}
+              value={terrainShiftX}
+              onChange={(e) => setTerrainShiftX(parseFloat(e.target.value))}
+              className="w-full accent-primary h-1.5"
+            />
+          </div>
           <Legend
             showBorders={showBorders}
             onToggleBorders={setShowBorders}
