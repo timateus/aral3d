@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { loadGeoTiff, TerrainData } from '@/lib/geotiff-loader';
 import { mergeTerrains, mergeExpandTerrains } from '@/lib/terrain-merger';
 import { createFlowState, addWaterAt, stepFlow, WaterFlowState } from '@/lib/water-flow-simulation';
+import { digCanalsFromBasins } from '@/lib/canal-auto-dig';
 import TerrainViewer, { TerrainViewerHandle } from '@/components/TerrainViewer';
 import ControlPanel from '@/components/ControlPanel';
 import Legend from '@/components/Legend';
@@ -84,6 +85,9 @@ const Index = () => {
   const [canalDigEnabled, setCanalDigEnabled] = useState(true);
   const dugPixelsRef = useRef<Set<number>>(new Set());
   const [waterFlowActive, setWaterFlowActive] = useState(false);
+  const [autoDigActive, setAutoDigActive] = useState(false);
+  const [autoDigging, setAutoDigging] = useState(false);
+  const autoDigPixelsRef = useRef<Set<number>>(new Set());
   
   const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
   const [flowRenderKey, setFlowRenderKey] = useState(0);
@@ -462,6 +466,64 @@ const Index = () => {
     setTerrainVersion(v => v + 1);
   }, [terrain, canalDigEnabled]);
 
+  const handleAutoDigCanals = useCallback(async () => {
+    if (!terrain) return;
+    const anyBasin = show13thBasin || show19thBasin || show21stBasin;
+    if (!anyBasin) return;
+
+    if (autoDigActive) {
+      // Undo auto-dig: restore original elevations for auto-dug pixels
+      if (originalElevationsRef.current) {
+        for (const idx of autoDigPixelsRef.current) {
+          terrain.elevations[idx] = originalElevationsRef.current[idx];
+        }
+        // Remove from dugPixels visual set too
+        for (const idx of autoDigPixelsRef.current) {
+          dugPixelsRef.current.delete(idx);
+        }
+        autoDigPixelsRef.current = new Set();
+        // Recalc min
+        let newMin = terrain.maxElevation;
+        for (let i = 0; i < terrain.elevations.length; i++) {
+          if (terrain.elevations[i] < newMin) newMin = terrain.elevations[i];
+        }
+        terrain.minElevation = newMin;
+        if (raisedPixelsRef.current.size === 0 && dugPixelsRef.current.size === 0) {
+          originalElevationsRef.current = null;
+        }
+      }
+      setAutoDigActive(false);
+      setCanalEditCount(c => Math.max(0, c - autoDigPixelsRef.current.size));
+      setTerrainVersion(v => v + 1);
+      return;
+    }
+
+    // Save original elevations if not yet saved
+    if (!originalElevationsRef.current) {
+      originalElevationsRef.current = new Float32Array(terrain.elevations);
+    }
+
+    setAutoDigging(true);
+    const newDugPixels = await digCanalsFromBasins(
+      terrain,
+      { show13th: show13thBasin, show19th: show19thBasin, show21st: show21stBasin },
+      canalDigDepth,
+      canalBrushRadius
+    );
+
+    // Merge into visual sets
+    for (const idx of newDugPixels) {
+      dugPixelsRef.current.add(idx);
+    }
+    autoDigPixelsRef.current = newDugPixels;
+
+    setAutoDigActive(true);
+    setAutoDigging(false);
+    setCanalEditCount(c => c + newDugPixels.size);
+    setCanalDigEnabled(true);
+    setTerrainVersion(v => v + 1);
+  }, [terrain, show13thBasin, show19thBasin, show21stBasin, autoDigActive, canalDigDepth, canalBrushRadius]);
+
   const handleScenarioActions = useCallback((actions: ScenarioAction[]) => {
     for (const a of actions) {
       if (a.type === 'water_level') {
@@ -747,6 +809,20 @@ const Index = () => {
             digEnabled={canalDigEnabled}
             onToggleDig={handleToggleDig}
           />
+          {(show13thBasin || show19thBasin || show21stBasin) && (
+            <button
+              onClick={handleAutoDigCanals}
+              disabled={autoDigging}
+              className={`glass-panel p-2.5 w-full flex items-center justify-center gap-2 text-xs transition-colors cursor-pointer ${
+                autoDigActive
+                  ? 'text-foreground bg-primary/10 ring-1 ring-primary/30'
+                  : 'text-muted-foreground hover:text-foreground'
+              } disabled:opacity-50`}
+            >
+              <Waves className="w-3.5 h-3.5" />
+              {autoDigging ? 'Digging…' : autoDigActive ? 'Undo Auto-Dig Canals' : 'Auto-Dig Visible Canals'}
+            </button>
+          )}
           <WaterFlowPanel
             active={waterFlowActive}
             onToggle={() => { setWaterFlowActive(v => !v); setDamToolActive(false); setCanalToolActive(false); }}
