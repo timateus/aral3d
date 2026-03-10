@@ -629,6 +629,21 @@ const Index = () => {
             onDataSourceChange={() => {}}
             hasSeabed={false}
           />
+          <div className="glass-panel p-3 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs text-muted-foreground">Terrain Shift</label>
+              <span className="text-xs font-mono text-foreground">{terrainShiftX.toFixed(1)}</span>
+            </div>
+            <input
+              type="range"
+              min={-5}
+              max={5}
+              step={0.1}
+              value={terrainShiftX}
+              onChange={(e) => setTerrainShiftX(parseFloat(e.target.value))}
+              className="w-full accent-primary h-1.5"
+            />
+          </div>
           <Legend
             showBorders={showBorders}
             onToggleBorders={setShowBorders}
