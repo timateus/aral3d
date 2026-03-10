@@ -524,7 +524,7 @@ const Index = () => {
     setTerrainVersion(v => v + 1);
   }, [terrain, show13thBasin, show19thBasin, show21stBasin, autoDigActive, canalDigDepth, canalBrushRadius]);
 
-
+  const handleScenarioActions = useCallback((actions: ScenarioAction[]) => {
     for (const a of actions) {
       if (a.type === 'water_level') {
         setWaterLevel(a.value);
