@@ -356,7 +356,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
         <GizmoViewport labelColor="white" axisHeadScale={0.8} />
       </GizmoHelper>
 
-      <gridHelper args={[20, 20, '#1a2332', '#1a2332']} position={[-1.5, -0.01, 0]} />
+      <gridHelper args={[20, 20, '#1a2332', '#1a2332']} position={[0, -0.01, 0]} />
     </Canvas>
   );
 });
