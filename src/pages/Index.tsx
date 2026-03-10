@@ -670,7 +670,7 @@ const Index = () => {
           </button>
           <DamToolPanel
             active={damToolActive}
-            onToggle={() => { setDamToolActive(v => !v); setWaterFlowActive(false); }}
+            onToggle={() => { setDamToolActive(v => !v); setWaterFlowActive(false); setCanalToolActive(false); }}
             onClear={handleResetTerrain}
             brushRadius={raiseBrushRadius}
             onBrushRadiusChange={setRaiseBrushRadius}
@@ -679,6 +679,18 @@ const Index = () => {
             editCount={raiseEditCount}
             raiseEnabled={raiseEnabled}
             onToggleRaise={handleToggleRaise}
+          />
+          <CanalToolPanel
+            active={canalToolActive}
+            onToggle={() => { setCanalToolActive(v => !v); setDamToolActive(false); setWaterFlowActive(false); }}
+            onClear={handleResetCanal}
+            brushRadius={canalBrushRadius}
+            onBrushRadiusChange={setCanalBrushRadius}
+            digDepth={canalDigDepth}
+            onDigDepthChange={setCanalDigDepth}
+            editCount={canalEditCount}
+            digEnabled={canalDigEnabled}
+            onToggleDig={handleToggleDig}
           />
           <WaterFlowPanel
             active={waterFlowActive}

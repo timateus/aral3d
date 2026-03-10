@@ -214,7 +214,14 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
       onDamPlace(pixelY, pixelX);
       return;
     }
-  }, [damToolActive, onDamPlace, waterFlowActive, onWaterFlowClick, terrain]);
+
+    if (canalToolActive && onCanalDig) {
+      const pixelX = Math.floor(uv.x * (width - 1));
+      const pixelY = Math.floor((1 - uv.y) * (height - 1));
+      onCanalDig(pixelY, pixelX);
+      return;
+    }
+  }, [damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, terrain]);
 
   return (
     <group>
