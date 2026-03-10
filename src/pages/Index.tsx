@@ -85,6 +85,9 @@ const Index = () => {
   const [canalDigEnabled, setCanalDigEnabled] = useState(true);
   const dugPixelsRef = useRef<Set<number>>(new Set());
   const [waterFlowActive, setWaterFlowActive] = useState(false);
+  const [autoDigActive, setAutoDigActive] = useState(false);
+  const [autoDigging, setAutoDigging] = useState(false);
+  const autoDigPixelsRef = useRef<Set<number>>(new Set());
   
   const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
   const [flowRenderKey, setFlowRenderKey] = useState(0);
