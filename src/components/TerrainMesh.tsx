@@ -136,6 +136,14 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
             Math.min(1, base[1] * 0.3 + 0.26 * 0.7),
             Math.min(1, base[2] * 0.3 + 0.58 * 0.7),
           ];
+        } else if (dugPixels && dugPixels.has(idx)) {
+          // Cyan for dug canal pixels
+          const base = getElevationColor(normalized, elev);
+          color = [
+            Math.min(1, base[0] * 0.3 + 0.0 * 0.7),
+            Math.min(1, base[1] * 0.3 + 0.71 * 0.7),
+            Math.min(1, base[2] * 0.3 + 0.85 * 0.7),
+          ];
         } else {
           color = getElevationColor(normalized, elev);
         }
