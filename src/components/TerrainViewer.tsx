@@ -64,6 +64,8 @@ interface TerrainViewerProps {
   inspectorEnabled?: boolean;
   damToolActive?: boolean;
   onDamPlace?: (row: number, col: number) => void;
+  canalToolActive?: boolean;
+  onCanalDig?: (row: number, col: number) => void;
   waterFlowActive?: boolean;
   onWaterFlowClick?: (row: number, col: number) => void;
   flowState?: WaterFlowState | null;
