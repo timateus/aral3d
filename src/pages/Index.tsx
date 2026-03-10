@@ -467,6 +467,8 @@ const Index = () => {
             inspectorEnabled={showInspector}
             damToolActive={damToolActive}
             onDamPlace={handleRaiseTerrainClick}
+            canalToolActive={canalToolActive}
+            onCanalDig={handleDigCanalClick}
             waterFlowActive={waterFlowActive}
             onWaterFlowClick={handleWaterFlowClick}
             flowState={flowState}
