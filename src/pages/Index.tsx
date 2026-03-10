@@ -18,6 +18,7 @@ import { CANAL_TOUR_STEPS, getEthnicityColor } from '@/lib/canal-tour-steps';
 import NarrativeOverlay from '@/components/NarrativeOverlay';
 import CanalTourOverlay from '@/components/CanalTourOverlay';
 import DamToolPanel from '@/components/DamToolPanel';
+import CanalToolPanel from '@/components/CanalToolPanel';
 import WaterFlowPanel from '@/components/WaterFlowPanel';
 import { BookOpen } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
