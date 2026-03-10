@@ -15,10 +15,13 @@ interface TerrainMeshProps {
   popData?: PopData | null;
   damToolActive?: boolean;
   onDamPlace?: (row: number, col: number) => void;
+  canalToolActive?: boolean;
+  onCanalDig?: (row: number, col: number) => void;
   waterFlowActive?: boolean;
   onWaterFlowClick?: (row: number, col: number) => void;
   terrainVersion?: number;
   raisedPixels?: Set<number>;
+  dugPixels?: Set<number>;
 }
 
 const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, waterBounds, inspectorEnabled = false, popData, damToolActive = false, onDamPlace, waterFlowActive = false, onWaterFlowClick, terrainVersion = 0, raisedPixels }: TerrainMeshProps) => {
