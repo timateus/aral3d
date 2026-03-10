@@ -24,7 +24,7 @@ interface TerrainMeshProps {
   dugPixels?: Set<number>;
 }
 
-const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, waterBounds, inspectorEnabled = false, popData, damToolActive = false, onDamPlace, waterFlowActive = false, onWaterFlowClick, terrainVersion = 0, raisedPixels }: TerrainMeshProps) => {
+const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, waterBounds, inspectorEnabled = false, popData, damToolActive = false, onDamPlace, canalToolActive = false, onCanalDig, waterFlowActive = false, onWaterFlowClick, terrainVersion = 0, raisedPixels, dugPixels }: TerrainMeshProps) => {
   const [hoverInfo, setHoverInfo] = useState<{ position: THREE.Vector3; elevation: number; lat: number; lon: number; population: number | null } | null>(null);
   const meshRef = useRef<THREE.Mesh>(null);
 
