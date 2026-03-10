@@ -261,20 +261,21 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
       <directionalLight position={[5, 10, 5]} intensity={1.2} castShadow />
       <directionalLight position={[-3, 5, -3]} intensity={0.4} color="#8ec8e8" />
 
-      <TerrainMesh terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} hideNoData={hideNoData} waterBounds={waterBounds} inspectorEnabled={inspectorEnabled} popData={showPopDensity ? popData : null} damToolActive={damToolActive} onDamPlace={onDamPlace} canalToolActive={canalToolActive} onCanalDig={onCanalDig} waterFlowActive={waterFlowActive} onWaterFlowClick={onWaterFlowClick} terrainVersion={terrainVersion} raisedPixels={raisedPixels} dugPixels={dugPixels} />
-      {flowState && flowRenderKey !== undefined && (
-        <WaterFlowOverlay terrain={terrain} exaggeration={exaggeration} flowState={flowState} renderKey={flowRenderKey} />
-      )}
-      <GeoFeatures terrain={terrain} exaggeration={exaggeration} showBorders={showBorders} showRivers={showRivers} show13thBasin={show13thBasin} show19thBasin={show19thBasin} show21stBasin={show21stBasin} showLakes={showLakes} show21cLakes={show21cLakes} riverInflow={riverInflow} userLocation={userLocation} canalHighlights={canalHighlights} highlightedCanalNames={highlightedCanalNames} canalTourActive={canalTourActive} />
-      {showWaterExtent && <WaterExtentLayer terrain={terrain} exaggeration={exaggeration} year={waterExtentYear} />}
-      {showPopDensity && <PopulationDensityLayer terrain={terrain} exaggeration={exaggeration} onDataLoaded={setPopData} hexSize={popHexSize} hexHeightExag={popHexHeight} />}
-      {showMigration && <MigrationLayer terrain={terrain} exaggeration={exaggeration} year={migrationYear ?? waterExtentYear} />}
-      {showChoropleth && <ChoroplethLayer terrain={terrain} exaggeration={exaggeration} year={waterExtentYear} indicatorId={choroplethIndicator} choroplethExaggeration={choroplethExaggeration} />}
-      {scenarioActions && scenarioActions.length > 0 && (
-        <ScenarioOverlay actions={scenarioActions} terrain={terrain} exaggeration={exaggeration} />
-      )}
-      {showWaterExtent && (
-        <group position={[0, 6, -2]}>
+      <group position={[-1.5, 0, 0]}>
+        <TerrainMesh terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} hideNoData={hideNoData} waterBounds={waterBounds} inspectorEnabled={inspectorEnabled} popData={showPopDensity ? popData : null} damToolActive={damToolActive} onDamPlace={onDamPlace} canalToolActive={canalToolActive} onCanalDig={onCanalDig} waterFlowActive={waterFlowActive} onWaterFlowClick={onWaterFlowClick} terrainVersion={terrainVersion} raisedPixels={raisedPixels} dugPixels={dugPixels} />
+        {flowState && flowRenderKey !== undefined && (
+          <WaterFlowOverlay terrain={terrain} exaggeration={exaggeration} flowState={flowState} renderKey={flowRenderKey} />
+        )}
+        <GeoFeatures terrain={terrain} exaggeration={exaggeration} showBorders={showBorders} showRivers={showRivers} show13thBasin={show13thBasin} show19thBasin={show19thBasin} show21stBasin={show21stBasin} showLakes={showLakes} show21cLakes={show21cLakes} riverInflow={riverInflow} userLocation={userLocation} canalHighlights={canalHighlights} highlightedCanalNames={highlightedCanalNames} canalTourActive={canalTourActive} />
+        {showWaterExtent && <WaterExtentLayer terrain={terrain} exaggeration={exaggeration} year={waterExtentYear} />}
+        {showPopDensity && <PopulationDensityLayer terrain={terrain} exaggeration={exaggeration} onDataLoaded={setPopData} hexSize={popHexSize} hexHeightExag={popHexHeight} />}
+        {showMigration && <MigrationLayer terrain={terrain} exaggeration={exaggeration} year={migrationYear ?? waterExtentYear} />}
+        {showChoropleth && <ChoroplethLayer terrain={terrain} exaggeration={exaggeration} year={waterExtentYear} indicatorId={choroplethIndicator} choroplethExaggeration={choroplethExaggeration} />}
+        {scenarioActions && scenarioActions.length > 0 && (
+          <ScenarioOverlay actions={scenarioActions} terrain={terrain} exaggeration={exaggeration} />
+        )}
+        {showWaterExtent && (
+          <group position={[0, 6, -2]}>
           <Html center distanceFactor={15} style={{ pointerEvents: 'none' }}>
             <div style={{
               textAlign: 'center',
