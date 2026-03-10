@@ -748,7 +748,7 @@ const Index = () => {
           />
           <WaterFlowPanel
             active={waterFlowActive}
-            onToggle={() => { setWaterFlowActive(v => !v); setDamToolActive(false); }}
+            onToggle={() => { setWaterFlowActive(v => !v); setDamToolActive(false); setCanalToolActive(false); }}
             isPlaced={!!flowState}
             stepCount={flowState?.stepCount ?? 0}
             wetPixelCount={flowWetCount}
