@@ -90,7 +90,7 @@ export const CANAL_TOUR_STEPS: CanalTourStep[] = [
     id: 3,
     title: '18th Century Expansion',
     subtitle: 'Qaraqalpaqs & Turkmens Push Northward',
-    description: 'New canals extended irrigation into previously unfarmed territory. The Ghazavat Canal encouraged Turkmen sedentary life.',
+    description: 'New canals extended irrigation into previously unused land. The Khivan government sought to control populations via these canals. The Ghazavat Canal encouraged Turkmen sedentary life. The Eshim canal supported Qaraqalpaq semi-nomadic migrations.',
     canals: [
       { canal: 'Quwanishjarma', otherName: '', geography: 'Chimbay, Qarauzak', ancientIrrigation: 'No', event: 'Named after a Qaraqalpaq Quwanish. An extension of the Kok Uzak.', date: '18th cent', ethnicity: 'Qaraqalpaqs', lat: 42.93, lon: 59.65 },
       { canal: 'Ghazavat Canal', otherName: '', geography: "Qo'shko'pir", ancientIrrigation: 'No', event: 'Built in the 17th cent. Turkmens were settled here in the 18th century to encourage their loyalty and sedentary life.', date: '18th cent', ethnicity: 'Turkmens', lat: 41.52, lon: 60.32 },
