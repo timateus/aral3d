@@ -15,13 +15,16 @@ interface TerrainMeshProps {
   popData?: PopData | null;
   damToolActive?: boolean;
   onDamPlace?: (row: number, col: number) => void;
+  canalToolActive?: boolean;
+  onCanalDig?: (row: number, col: number) => void;
   waterFlowActive?: boolean;
   onWaterFlowClick?: (row: number, col: number) => void;
   terrainVersion?: number;
   raisedPixels?: Set<number>;
+  dugPixels?: Set<number>;
 }
 
-const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, waterBounds, inspectorEnabled = false, popData, damToolActive = false, onDamPlace, waterFlowActive = false, onWaterFlowClick, terrainVersion = 0, raisedPixels }: TerrainMeshProps) => {
+const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, waterBounds, inspectorEnabled = false, popData, damToolActive = false, onDamPlace, canalToolActive = false, onCanalDig, waterFlowActive = false, onWaterFlowClick, terrainVersion = 0, raisedPixels, dugPixels }: TerrainMeshProps) => {
   const [hoverInfo, setHoverInfo] = useState<{ position: THREE.Vector3; elevation: number; lat: number; lon: number; population: number | null } | null>(null);
   const meshRef = useRef<THREE.Mesh>(null);
 
@@ -133,6 +136,14 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
             Math.min(1, base[1] * 0.3 + 0.26 * 0.7),
             Math.min(1, base[2] * 0.3 + 0.58 * 0.7),
           ];
+        } else if (dugPixels && dugPixels.has(idx)) {
+          // Cyan for dug canal pixels
+          const base = getElevationColor(normalized, elev);
+          color = [
+            Math.min(1, base[0] * 0.3 + 0.0 * 0.7),
+            Math.min(1, base[1] * 0.3 + 0.71 * 0.7),
+            Math.min(1, base[2] * 0.3 + 0.85 * 0.7),
+          ];
         } else {
           color = getElevationColor(normalized, elev);
         }
@@ -144,7 +155,7 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
 
     geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
     geometry.attributes.color.needsUpdate = true;
-  }, [geometry, vertexMeta, waterLevel, waterBounds, terrain, terrainVersion, raisedPixels]);
+  }, [geometry, vertexMeta, waterLevel, waterBounds, terrain, terrainVersion, raisedPixels, dugPixels]);
 
   const material = useMemo(() => {
     return new THREE.MeshStandardMaterial({
@@ -203,7 +214,14 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
       onDamPlace(pixelY, pixelX);
       return;
     }
-  }, [damToolActive, onDamPlace, waterFlowActive, onWaterFlowClick, terrain]);
+
+    if (canalToolActive && onCanalDig) {
+      const pixelX = Math.floor(uv.x * (width - 1));
+      const pixelY = Math.floor((1 - uv.y) * (height - 1));
+      onCanalDig(pixelY, pixelX);
+      return;
+    }
+  }, [damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, terrain]);
 
   return (
     <group>

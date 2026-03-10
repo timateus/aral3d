@@ -18,6 +18,7 @@ import { CANAL_TOUR_STEPS, getEthnicityColor } from '@/lib/canal-tour-steps';
 import NarrativeOverlay from '@/components/NarrativeOverlay';
 import CanalTourOverlay from '@/components/CanalTourOverlay';
 import DamToolPanel from '@/components/DamToolPanel';
+import CanalToolPanel from '@/components/CanalToolPanel';
 import WaterFlowPanel from '@/components/WaterFlowPanel';
 import { BookOpen } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -75,6 +76,13 @@ const Index = () => {
   const originalElevationsRef = useRef<Float32Array | null>(null);
   const raisedPixelsRef = useRef<Set<number>>(new Set());
   const [terrainVersion, setTerrainVersion] = useState(0);
+  // Canal dig tool state
+  const [canalToolActive, setCanalToolActive] = useState(false);
+  const [canalBrushRadius, setCanalBrushRadius] = useState(3);
+  const [canalDigDepth, setCanalDigDepth] = useState(10);
+  const [canalEditCount, setCanalEditCount] = useState(0);
+  const [canalDigEnabled, setCanalDigEnabled] = useState(true);
+  const dugPixelsRef = useRef<Set<number>>(new Set());
   const [waterFlowActive, setWaterFlowActive] = useState(false);
   const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
   const [flowRenderKey, setFlowRenderKey] = useState(0);
@@ -399,6 +407,60 @@ const Index = () => {
     setTerrainVersion(v => v + 1);
   }, [terrain, raiseEnabled]);
 
+  // Canal dig click handler
+  const handleDigCanalClick = useCallback((row: number, col: number) => {
+    if (!terrain) return;
+    if (!originalElevationsRef.current) {
+      originalElevationsRef.current = new Float32Array(terrain.elevations);
+    }
+    const { width, height, elevations } = terrain;
+    for (let dr = -canalBrushRadius; dr <= canalBrushRadius; dr++) {
+      for (let dc = -canalBrushRadius; dc <= canalBrushRadius; dc++) {
+        const r = row + dr;
+        const c = col + dc;
+        if (r < 0 || r >= height || c < 0 || c >= width) continue;
+        const dist = Math.sqrt(dr * dr + dc * dc);
+        if (dist > canalBrushRadius) continue;
+        const falloff = 1 - dist / (canalBrushRadius + 1);
+        const idx = r * width + c;
+        elevations[idx] -= canalDigDepth * falloff;
+        dugPixelsRef.current.add(idx);
+      }
+    }
+    let newMin = terrain.maxElevation;
+    for (let i = 0; i < elevations.length; i++) {
+      if (elevations[i] < newMin) newMin = elevations[i];
+    }
+    terrain.minElevation = newMin;
+    setCanalEditCount(c => c + 1);
+    setTerrainVersion(v => v + 1);
+  }, [terrain, canalBrushRadius, canalDigDepth]);
+
+  const handleResetCanal = useCallback(() => {
+    if (!terrain || !originalElevationsRef.current) return;
+    for (const idx of dugPixelsRef.current) {
+      terrain.elevations[idx] = originalElevationsRef.current[idx];
+    }
+    dugPixelsRef.current = new Set();
+    setCanalEditCount(0);
+    setCanalDigEnabled(true);
+    setTerrainVersion(v => v + 1);
+    if (raisedPixelsRef.current.size === 0) {
+      originalElevationsRef.current = null;
+    }
+  }, [terrain]);
+
+  const handleToggleDig = useCallback(() => {
+    if (!terrain || !originalElevationsRef.current) return;
+    for (const idx of dugPixelsRef.current) {
+      const tmp = terrain.elevations[idx];
+      terrain.elevations[idx] = originalElevationsRef.current[idx];
+      originalElevationsRef.current[idx] = tmp;
+    }
+    setCanalDigEnabled(v => !v);
+    setTerrainVersion(v => v + 1);
+  }, [terrain, canalDigEnabled]);
+
   const handleScenarioActions = useCallback((actions: ScenarioAction[]) => {
     for (const a of actions) {
       if (a.type === 'water_level') {
@@ -459,12 +521,15 @@ const Index = () => {
             inspectorEnabled={showInspector}
             damToolActive={damToolActive}
             onDamPlace={handleRaiseTerrainClick}
+            canalToolActive={canalToolActive}
+            onCanalDig={handleDigCanalClick}
             waterFlowActive={waterFlowActive}
             onWaterFlowClick={handleWaterFlowClick}
             flowState={flowState}
             flowRenderKey={flowRenderKey}
             terrainVersion={terrainVersion}
             raisedPixels={raiseEnabled ? raisedPixelsRef.current : undefined}
+            dugPixels={canalDigEnabled ? dugPixelsRef.current : undefined}
             showMigration={showMigration}
             migrationYear={waterExtentYear}
             showChoropleth={showChoropleth}
@@ -659,7 +724,7 @@ const Index = () => {
           </button>
           <DamToolPanel
             active={damToolActive}
-            onToggle={() => { setDamToolActive(v => !v); setWaterFlowActive(false); }}
+            onToggle={() => { setDamToolActive(v => !v); setWaterFlowActive(false); setCanalToolActive(false); }}
             onClear={handleResetTerrain}
             brushRadius={raiseBrushRadius}
             onBrushRadiusChange={setRaiseBrushRadius}
@@ -669,9 +734,21 @@ const Index = () => {
             raiseEnabled={raiseEnabled}
             onToggleRaise={handleToggleRaise}
           />
+          <CanalToolPanel
+            active={canalToolActive}
+            onToggle={() => { setCanalToolActive(v => !v); setDamToolActive(false); setWaterFlowActive(false); }}
+            onClear={handleResetCanal}
+            brushRadius={canalBrushRadius}
+            onBrushRadiusChange={setCanalBrushRadius}
+            digDepth={canalDigDepth}
+            onDigDepthChange={setCanalDigDepth}
+            editCount={canalEditCount}
+            digEnabled={canalDigEnabled}
+            onToggleDig={handleToggleDig}
+          />
           <WaterFlowPanel
             active={waterFlowActive}
-            onToggle={() => { setWaterFlowActive(v => !v); setDamToolActive(false); }}
+            onToggle={() => { setWaterFlowActive(v => !v); setDamToolActive(false); setCanalToolActive(false); }}
             isPlaced={!!flowState}
             stepCount={flowState?.stepCount ?? 0}
             wetPixelCount={flowWetCount}
