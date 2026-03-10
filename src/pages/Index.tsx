@@ -823,6 +823,7 @@ const Index = () => {
               {autoDigging ? 'Digging…' : autoDigActive ? 'Undo Auto-Dig Canals' : 'Auto-Dig Visible Canals'}
             </button>
           )}
+          <WaterFlowPanel
             active={waterFlowActive}
             onToggle={() => { setWaterFlowActive(v => !v); setDamToolActive(false); setCanalToolActive(false); }}
             isPlaced={!!flowState}
