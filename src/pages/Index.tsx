@@ -13,6 +13,8 @@ import WaterVolumeDisplay from '@/components/WaterVolumeDisplay';
 import DataPanel, { AralAnnual, SEA_SERIES } from '@/components/DataPanel';
 import { Camera, Video, BarChart3, Navigation, MapPin, Loader2, Crosshair, Download, Waves, Gamepad2 } from 'lucide-react';
 import { exportTerrainSTL } from '@/lib/stl-exporter';
+import GameMissionHUD from '@/components/GameMissionHUD';
+import type { GameModeState } from '@/components/GameMode';
 import type { ScenarioAction } from '@/types/scenario';
 import { NARRATIVE_STEPS } from '@/lib/narrative-steps';
 import { CANAL_TOUR_STEPS, getEthnicityColor } from '@/lib/canal-tour-steps';
@@ -93,6 +95,7 @@ const Index = () => {
   const autoDigPixelsRef = useRef<Set<number>>(new Set());
   const [showObjectLibrary, setShowObjectLibrary] = useState(false);
   const [gameModeActive, setGameModeActive] = useState(false);
+  const [gameModeState, setGameModeState] = useState<GameModeState | null>(null);
   
   const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
   const [flowRenderKey, setFlowRenderKey] = useState(0);
@@ -262,6 +265,32 @@ const Index = () => {
     }
     return { terrain: result, hideNoData: expanded };
   }, [baseTerrain, seabedTerrain, khorezmTerrain, showKhorezm, watershedTerrain, showWatershed]);
+
+  // Listen for game mode state events
+  useEffect(() => {
+    const handler = (e: Event) => {
+      setGameModeState((e as CustomEvent<GameModeState>).detail);
+    };
+    window.addEventListener('game-mode-state', handler);
+    return () => window.removeEventListener('game-mode-state', handler);
+  }, []);
+
+  // Game mode water pouring handler
+  const handleGameAddWater = useCallback((row: number, col: number) => {
+    if (!terrain) return;
+    let state = flowStateRef.current;
+    if (!state) {
+      state = createFlowState(terrain);
+      flowStateRef.current = state;
+    }
+    addWaterAt(state, row, col, 3, 2);
+    setFlowState(state);
+    setFlowRenderKey(k => k + 1);
+    // Also auto-animate
+    if (!flowAnimRef.current) {
+      setFlowAnimating(true);
+    }
+  }, [terrain]);
 
   // --- Water flow simulation ---
   const handleWaterFlowClick = useCallback((row: number, col: number) => {
@@ -617,6 +646,7 @@ const Index = () => {
               console.log('Selected object:', obj.name, obj.lat, obj.lon);
             }}
             gameModeActive={gameModeActive}
+            onGameAddWater={handleGameAddWater}
             showLandcover={showLandcover}
             landcoverVisibleClasses={landcoverVisibleClasses}
             onLandcoverAvailableClasses={setLandcoverAvailableClasses}
@@ -912,13 +942,15 @@ const Index = () => {
       )}
 
       {/* Game Mode HUD */}
-      {started && gameModeActive && (
-        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10 bg-card/80 backdrop-blur-md border border-border/50 px-4 py-2 flex items-center gap-4">
-          <Gamepad2 className="w-4 h-4 text-primary" />
-          <span className="text-xs text-muted-foreground tracking-wider uppercase">
-            WASD to move · Collect objects on the terrain
-          </span>
-        </div>
+      {started && gameModeActive && gameModeState && (
+        <GameMissionHUD
+          currentMission={gameModeState.currentMission}
+          completedCount={gameModeState.completedCount}
+          totalCount={gameModeState.totalCount}
+          rewardMessage={gameModeState.rewardMessage}
+          collectMessage={gameModeState.collectMessage}
+          waterPouringActive={gameModeState.waterPouringActive}
+        />
       )}
 
       {/* Timeline Slider - bottom bar */}

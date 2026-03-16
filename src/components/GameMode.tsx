@@ -1,8 +1,9 @@
-import { useRef, useState, useEffect, useMemo } from 'react';
+import { useRef, useState, useEffect, useMemo, useCallback } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useGLTF, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { TerrainData } from '@/lib/geotiff-loader';
+import { buildMissions, Mission } from '@/lib/game-missions';
 
 interface Collectible {
   id: string;
@@ -10,10 +11,9 @@ interface Collectible {
   modelPath: string;
   lat: number;
   lon: number;
-  collected: boolean;
 }
 
-const COLLECTIBLES: Omit<Collectible, 'collected'>[] = [
+const COLLECTIBLES: Collectible[] = [
   { id: 'soap-1', name: 'Khorezm Soap', modelPath: '/models/soap-khorezm.glb', lat: 41.55, lon: 60.63 },
   { id: 'pumpkin-1', name: 'Suw Qabaq', modelPath: '/models/pumpkin.glb', lat: 42.46, lon: 59.6 },
   { id: 'soap-2', name: 'Khorezm Soap', modelPath: '/models/soap-khorezm.glb', lat: 43.0, lon: 59.0 },
@@ -70,65 +70,101 @@ function getTerrainHeightAt(
   return normalized * maxMeshHeight;
 }
 
-// Simple cute avatar — a bouncing sphere with eyes
-function Avatar({ position }: { position: [number, number, number] }) {
+/** World pos → terrain pixel row/col */
+function worldToPixel(
+  worldX: number, worldZ: number,
+  terrain: TerrainData,
+  meshWidth = 10, meshHeight = 10,
+): { row: number; col: number } | null {
+  const bounds = terrain.bounds;
+  if (!bounds) return null;
+  const nx = (worldX / meshWidth) + 0.5;
+  const ny = (-worldZ / meshHeight) + 0.5;
+  if (nx < 0 || nx > 1 || ny < 0 || ny > 1) return null;
+  const col = Math.floor(nx * (terrain.width - 1));
+  const row = Math.floor((1 - ny) * (terrain.height - 1));
+  return { row, col };
+}
+
+// Avatar with facing direction
+function Avatar({ position, facing }: { position: [number, number, number]; facing: number }) {
   const groupRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
     if (groupRef.current) {
-      // Gentle bounce
-      groupRef.current.position.y = position[1] + 0.15 + Math.sin(state.clock.elapsedTime * 4) * 0.03;
-      groupRef.current.position.x = position[0];
-      groupRef.current.position.z = position[2];
+      groupRef.current.position.set(position[0], position[1] + 0.15 + Math.sin(state.clock.elapsedTime * 4) * 0.03, position[2]);
+      groupRef.current.rotation.y = facing;
     }
   });
 
   return (
     <group ref={groupRef}>
-      {/* Body */}
       <mesh>
         <sphereGeometry args={[0.12, 16, 16]} />
         <meshStandardMaterial color="#f0c674" emissive="#f0c674" emissiveIntensity={0.3} />
       </mesh>
-      {/* Left eye */}
+      {/* Eyes face +Z local, so facing rotation orients them */}
       <mesh position={[-0.04, 0.03, 0.1]}>
         <sphereGeometry args={[0.025, 8, 8]} />
         <meshStandardMaterial color="#1a1a2e" />
       </mesh>
-      {/* Right eye */}
       <mesh position={[0.04, 0.03, 0.1]}>
         <sphereGeometry args={[0.025, 8, 8]} />
         <meshStandardMaterial color="#1a1a2e" />
       </mesh>
-      {/* Blush left */}
       <mesh position={[-0.07, -0.01, 0.09]}>
         <sphereGeometry args={[0.02, 8, 8]} />
         <meshStandardMaterial color="#e8a0bf" transparent opacity={0.6} />
       </mesh>
-      {/* Blush right */}
       <mesh position={[0.07, -0.01, 0.09]}>
         <sphereGeometry args={[0.02, 8, 8]} />
         <meshStandardMaterial color="#e8a0bf" transparent opacity={0.6} />
       </mesh>
-      {/* Little hat */}
       <mesh position={[0, 0.1, 0]}>
         <coneGeometry args={[0.06, 0.1, 8]} />
         <meshStandardMaterial color="#8ec8e8" />
       </mesh>
-      {/* Point light to glow */}
       <pointLight color="#f0c674" intensity={0.5} distance={1} />
     </group>
   );
 }
 
-function CollectibleObject({ 
-  modelPath, position, collected, onCollect, name 
-}: { 
-  modelPath: string; position: [number, number, number]; collected: boolean; onCollect: () => void; name: string;
+// Water pour particles effect
+function WaterPourEffect({ position, active }: { position: [number, number, number]; active: boolean }) {
+  const ref = useRef<THREE.Points>(null);
+  const particleCount = 30;
+  const positions = useMemo(() => new Float32Array(particleCount * 3), []);
+
+  useFrame((state) => {
+    if (!ref.current || !active) {
+      if (ref.current) ref.current.visible = false;
+      return;
+    }
+    ref.current.visible = true;
+    const arr = ref.current.geometry.attributes.position.array as Float32Array;
+    for (let i = 0; i < particleCount; i++) {
+      arr[i * 3] = position[0] + (Math.random() - 0.5) * 0.3;
+      arr[i * 3 + 1] = position[1] + Math.random() * 0.4;
+      arr[i * 3 + 2] = position[2] + (Math.random() - 0.5) * 0.3;
+    }
+    ref.current.geometry.attributes.position.needsUpdate = true;
+  });
+
+  return (
+    <points ref={ref}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" count={particleCount} array={positions} itemSize={3} />
+      </bufferGeometry>
+      <pointsMaterial color="#4fc3f7" size={0.03} transparent opacity={0.7} sizeAttenuation />
+    </points>
+  );
+}
+
+function CollectibleObject({ modelPath, position, collected, name }: {
+  modelPath: string; position: [number, number, number]; collected: boolean; name: string;
 }) {
   const { scene } = useGLTF(modelPath);
   const ref = useRef<THREE.Group>(null);
-  const [hovered, setHovered] = useState(false);
 
   useFrame((state) => {
     if (ref.current && !collected) {
@@ -144,46 +180,94 @@ function CollectibleObject({
       <group ref={ref} scale={[0.8, 0.8, 0.8]}>
         <primitive object={scene.clone()} />
       </group>
-      {/* Glow ring */}
       <mesh position={[0, position[1] + 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[0.15, 0.2, 24]} />
         <meshStandardMaterial color="#f0c674" emissive="#f0c674" emissiveIntensity={0.8} transparent opacity={0.5} side={THREE.DoubleSide} />
       </mesh>
-      {/* Label */}
       <Html position={[0, position[1] + 0.5, 0]} center style={{ pointerEvents: 'none' }}>
         <div style={{
-          fontSize: '10px',
-          color: '#f0c674',
-          textShadow: '0 1px 6px rgba(0,0,0,0.9)',
-          fontFamily: "'Inter', sans-serif",
-          fontWeight: 600,
-          letterSpacing: '0.05em',
-          textTransform: 'uppercase',
-          whiteSpace: 'nowrap',
-        }}>
-          {name}
-        </div>
+          fontSize: '10px', color: '#f0c674', textShadow: '0 1px 6px rgba(0,0,0,0.9)',
+          fontFamily: "'Inter', sans-serif", fontWeight: 600, letterSpacing: '0.05em',
+          textTransform: 'uppercase', whiteSpace: 'nowrap',
+        }}>{name}</div>
       </Html>
     </group>
   );
 }
 
-interface GameModeProps {
+// Mission target beacon
+function MissionBeacon({ position }: { position: [number, number, number] }) {
+  const ref = useRef<THREE.Mesh>(null);
+  useFrame((state) => {
+    if (ref.current) {
+      ref.current.position.y = position[1] + 0.5 + Math.sin(state.clock.elapsedTime * 2) * 0.15;
+      ref.current.rotation.y = state.clock.elapsedTime * 1.5;
+    }
+  });
+
+  return (
+    <group position={[position[0], 0, position[2]]}>
+      <mesh ref={ref}>
+        <octahedronGeometry args={[0.08, 0]} />
+        <meshStandardMaterial color="#ff6b6b" emissive="#ff6b6b" emissiveIntensity={1} />
+      </mesh>
+      {/* Beacon pillar */}
+      <mesh position={[0, position[1] + 0.25, 0]}>
+        <cylinderGeometry args={[0.005, 0.005, 0.5, 6]} />
+        <meshStandardMaterial color="#ff6b6b" emissive="#ff6b6b" emissiveIntensity={0.5} transparent opacity={0.4} />
+      </mesh>
+      {/* Ground ring */}
+      <mesh position={[0, position[1] + 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.2, 0.28, 24]} />
+        <meshStandardMaterial color="#ff6b6b" emissive="#ff6b6b" emissiveIntensity={0.6} transparent opacity={0.3} side={THREE.DoubleSide} />
+      </mesh>
+      <pointLight color="#ff6b6b" intensity={0.4} distance={1.5} />
+    </group>
+  );
+}
+
+export interface GameModeProps {
   terrain: TerrainData;
   exaggeration: number;
   active: boolean;
+  onAddWater?: (row: number, col: number) => void;
 }
 
-export default function GameMode({ terrain, exaggeration, active }: GameModeProps) {
+export interface GameModeState {
+  currentMission: Mission | null;
+  completedCount: number;
+  totalCount: number;
+  rewardMessage: string | null;
+  collectMessage: string | null;
+  waterPouringActive: boolean;
+}
+
+export default function GameMode({ terrain, exaggeration, active, onAddWater }: GameModeProps) {
   const [avatarPos, setAvatarPos] = useState<[number, number, number]>([0, 1, 0]);
+  const [facing, setFacing] = useState(0);
   const [collected, setCollected] = useState<Set<string>>(new Set());
-  const [showCollectMsg, setShowCollectMsg] = useState<string | null>(null);
+  const [completedMissions, setCompletedMissions] = useState<Set<string>>(new Set());
+  const [rewardMessage, setRewardMessage] = useState<string | null>(null);
+  const [collectMessage, setCollectMessage] = useState<string | null>(null);
+  const [waterPouring, setWaterPouring] = useState(false);
   const keysRef = useRef<Set<string>>(new Set());
-  const facingRef = useRef(0); // angle in radians
+  const facingRef = useRef(0);
   const { camera } = useThree();
   const avatarPosRef = useRef<[number, number, number]>([0, 1, 0]);
+  const waterCooldownRef = useRef(0);
 
-  // Compute collectible positions
+  // Build missions from terrain
+  const missions = useMemo(() => active ? buildMissions(terrain) : [], [terrain, active]);
+
+  const currentMission = useMemo(() => {
+    return missions.find(m => !completedMissions.has(m.id)) || null;
+  }, [missions, completedMissions]);
+
+  const missionTargetPos = useMemo(() => {
+    if (!currentMission) return null;
+    return geoToMeshPos(currentMission.targetLat, currentMission.targetLon, terrain, exaggeration);
+  }, [currentMission, terrain, exaggeration]);
+
   const collectiblePositions = useMemo(() => {
     return COLLECTIBLES.map(c => ({
       ...c,
@@ -191,7 +275,21 @@ export default function GameMode({ terrain, exaggeration, active }: GameModeProp
     }));
   }, [terrain, exaggeration]);
 
-  // Initialize avatar position at center of terrain
+  // Expose state for HUD (via custom event)
+  useEffect(() => {
+    if (!active) return;
+    const state: GameModeState = {
+      currentMission,
+      completedCount: completedMissions.size,
+      totalCount: missions.length,
+      rewardMessage,
+      collectMessage: collectMessage,
+      waterPouringActive: waterPouring,
+    };
+    window.dispatchEvent(new CustomEvent('game-mode-state', { detail: state }));
+  }, [active, currentMission, completedMissions.size, missions.length, rewardMessage, collectMessage, waterPouring]);
+
+  // Initialize
   useEffect(() => {
     if (active && terrain.bounds) {
       const centerLat = (terrain.bounds.minLat + terrain.bounds.maxLat) / 2;
@@ -202,15 +300,18 @@ export default function GameMode({ terrain, exaggeration, active }: GameModeProp
     }
   }, [active]);
 
-  // Reset collected when deactivated
+  // Reset on deactivate
   useEffect(() => {
     if (!active) {
       setCollected(new Set());
-      setShowCollectMsg(null);
+      setCompletedMissions(new Set());
+      setCollectMessage(null);
+      setRewardMessage(null);
+      setWaterPouring(false);
     }
   }, [active]);
 
-  // Keyboard listeners
+  // Keyboard
   useEffect(() => {
     if (!active) return;
     const onDown = (e: KeyboardEvent) => keysRef.current.add(e.key.toLowerCase());
@@ -224,7 +325,7 @@ export default function GameMode({ terrain, exaggeration, active }: GameModeProp
     };
   }, [active]);
 
-  // Movement + camera follow + collection detection
+  // Main loop
   useFrame((_, delta) => {
     if (!active) return;
     const keys = keysRef.current;
@@ -236,77 +337,98 @@ export default function GameMode({ terrain, exaggeration, active }: GameModeProp
     if (keys.has('a') || keys.has('arrowleft')) dx -= speed;
     if (keys.has('d') || keys.has('arrowright')) dx += speed;
 
+    // Update facing direction (smooth)
     if (dx !== 0 || dz !== 0) {
-      facingRef.current = Math.atan2(dx, dz);
+      const targetAngle = Math.atan2(dx, dz);
+      // Smooth rotation
+      let diff = targetAngle - facingRef.current;
+      while (diff > Math.PI) diff -= Math.PI * 2;
+      while (diff < -Math.PI) diff += Math.PI * 2;
+      facingRef.current += diff * 0.2;
+      setFacing(facingRef.current);
     }
 
     const [cx, , cz] = avatarPosRef.current;
     const newX = THREE.MathUtils.clamp(cx + dx, -5, 5);
     const newZ = THREE.MathUtils.clamp(cz + dz, -5, 5);
     const newY = getTerrainHeightAt(newX, newZ, terrain, exaggeration);
-    
     const newPos: [number, number, number] = [newX, newY, newZ];
     avatarPosRef.current = newPos;
     setAvatarPos(newPos);
 
-    // Camera follow — overhead third-person
+    // Camera follow
     const camOffset = new THREE.Vector3(0, 3, 4);
     const targetCamPos = new THREE.Vector3(newX + camOffset.x, newY + camOffset.y, newZ + camOffset.z);
     camera.position.lerp(targetCamPos, 0.05);
     camera.lookAt(newX, newY + 0.2, newZ);
 
-    // Check collection
+    // Water pouring (SPACE key)
+    const spaceHeld = keys.has(' ');
+    setWaterPouring(spaceHeld);
+    if (spaceHeld && onAddWater) {
+      waterCooldownRef.current -= delta;
+      if (waterCooldownRef.current <= 0) {
+        const pixel = worldToPixel(newX, newZ, terrain);
+        if (pixel) {
+          onAddWater(pixel.row, pixel.col);
+        }
+        waterCooldownRef.current = 0.15; // Pour every 150ms
+      }
+    } else {
+      waterCooldownRef.current = 0;
+    }
+
+    // Check collectibles
     collectiblePositions.forEach(c => {
       if (collected.has(c.id)) return;
-      const dist = Math.sqrt(
-        (newX - c.pos[0]) ** 2 + (newZ - c.pos[2]) ** 2
-      );
+      const dist = Math.sqrt((newX - c.pos[0]) ** 2 + (newZ - c.pos[2]) ** 2);
       if (dist < 0.3) {
         setCollected(prev => new Set([...prev, c.id]));
-        setShowCollectMsg(c.name);
-        setTimeout(() => setShowCollectMsg(null), 2000);
+        setCollectMessage(c.name);
+        setTimeout(() => setCollectMessage(null), 2000);
       }
     });
+
+    // Check mission completion
+    if (currentMission && missionTargetPos) {
+      const dist = Math.sqrt(
+        (newX - missionTargetPos[0]) ** 2 + (newZ - missionTargetPos[2]) ** 2
+      );
+      // For water mission, also require space to have been pressed
+      const isMet = currentMission.id === 'mission-5'
+        ? dist < currentMission.radius && spaceHeld
+        : dist < currentMission.radius;
+
+      if (isMet) {
+        setCompletedMissions(prev => new Set([...prev, currentMission.id]));
+        setRewardMessage(currentMission.reward);
+        setTimeout(() => setRewardMessage(null), 3000);
+      }
+    }
   });
 
   if (!active) return null;
 
   return (
     <>
-      <Avatar position={avatarPos} />
-      
+      <Avatar position={avatarPos} facing={facing} />
+      <WaterPourEffect position={avatarPos} active={waterPouring} />
+
+      {/* Mission beacon */}
+      {missionTargetPos && currentMission && (
+        <MissionBeacon position={missionTargetPos} />
+      )}
+
+      {/* Collectibles */}
       {collectiblePositions.map(c => (
         <CollectibleObject
           key={c.id}
           modelPath={c.modelPath}
           position={c.pos}
           collected={collected.has(c.id)}
-          onCollect={() => {}}
           name={c.name}
         />
       ))}
-
-      {/* HUD */}
-      <Html position={[avatarPos[0], avatarPos[1] + 2.5, avatarPos[2]]} center style={{ pointerEvents: 'none' }}>
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '4px',
-        }}>
-          {showCollectMsg && (
-            <div style={{
-              fontSize: '14px',
-              fontWeight: 700,
-              color: '#f0c674',
-              textShadow: '0 2px 8px rgba(0,0,0,0.9)',
-              animation: 'fadeInUp 0.3s ease-out',
-            }}>
-              ✨ {showCollectMsg} collected!
-            </div>
-          )}
-        </div>
-      </Html>
     </>
   );
 }
