@@ -942,13 +942,15 @@ const Index = () => {
       )}
 
       {/* Game Mode HUD */}
-      {started && gameModeActive && (
-        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10 bg-card/80 backdrop-blur-md border border-border/50 px-4 py-2 flex items-center gap-4">
-          <Gamepad2 className="w-4 h-4 text-primary" />
-          <span className="text-xs text-muted-foreground tracking-wider uppercase">
-            WASD to move · Collect objects on the terrain
-          </span>
-        </div>
+      {started && gameModeActive && gameModeState && (
+        <GameMissionHUD
+          currentMission={gameModeState.currentMission}
+          completedCount={gameModeState.completedCount}
+          totalCount={gameModeState.totalCount}
+          rewardMessage={gameModeState.rewardMessage}
+          collectMessage={gameModeState.collectMessage}
+          waterPouringActive={gameModeState.waterPouringActive}
+        />
       )}
 
       {/* Timeline Slider - bottom bar */}
