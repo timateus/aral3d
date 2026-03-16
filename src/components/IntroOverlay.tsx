@@ -39,6 +39,17 @@ const LIBRARY_ITEMS: LibraryItem[] = [
     is3D: true,
   },
   {
+    id: 'suw-qabaq',
+    name: 'Suw Qabaq',
+    modelPath: '/models/pumpkin.glb',
+    image: '',
+    description: 'Dried pumpkin vessel',
+    detailText: 'Dried pumpkins were used as water vessels in traditional times: women carried water-filled pumpkins from wells. At home women used dried pumpkins as a baby rattle. The pumpkin becomes a vessel for carrying, caring, building relations and learning how to exist together.',
+    lat: 42.46,
+    lon: 59.6,
+    is3D: true,
+  },
+  {
     id: 'aral-north',
     name: 'Aral Sea North',
     image: '',
