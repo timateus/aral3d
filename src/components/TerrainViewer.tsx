@@ -100,7 +100,7 @@ function CameraAnimator({ started }: { started: boolean }) {
   const animating = useRef(false);
   const hasStarted = useRef(false);
 
-  const start = new THREE.Vector3(18, 16, 18);
+  const start = new THREE.Vector3(0, 18, 8);
   const end = new THREE.Vector3(0, 10, 12);
   const startTarget = new THREE.Vector3(0, 0, 0);
   const endTarget = new THREE.Vector3(0, 0, -1);
