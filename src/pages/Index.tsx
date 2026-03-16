@@ -714,25 +714,40 @@ const Index = () => {
             onClick={() => { setStarted(false); setGameModeActive(false); }}
             className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground hover:text-primary transition-colors border border-border/50 px-3 py-1.5 bg-card/60 backdrop-blur-sm"
           >
-            Library
+            Menu
           </button>
-          <button
-            onClick={() => setGameModeActive(v => !v)}
-            className={`text-[10px] tracking-[0.15em] uppercase transition-colors border border-border/50 px-3 py-1.5 backdrop-blur-sm flex items-center gap-1.5 ${
-              gameModeActive 
-                ? 'text-primary bg-primary/10 ring-1 ring-primary/40' 
-                : 'text-muted-foreground hover:text-primary bg-card/60'
-            }`}
-          >
-            <Gamepad2 className="w-3 h-3" />
-            {gameModeActive ? 'Exit Game' : 'Game Mode'}
-          </button>
-          <h1 className="text-lg font-semibold text-foreground tracking-tight">
-            Aral Sea Terrain Viewer
-          </h1>
-          <p className="text-xs text-muted-foreground font-mono">
-            aral_region_30m.tif
-          </p>
+          {!gameModeActive && (
+            <button
+              onClick={() => {
+                setGameModeActive(true);
+                setWaterExtentYear(2024);
+                setFlowSpeed(20);
+              }}
+              className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground hover:text-primary transition-colors border border-border/50 px-3 py-1.5 bg-card/60 backdrop-blur-sm flex items-center gap-1.5"
+            >
+              <Gamepad2 className="w-3 h-3" />
+              Game Mode
+            </button>
+          )}
+          {gameModeActive && (
+            <button
+              onClick={() => setGameModeActive(false)}
+              className="text-[10px] tracking-[0.15em] uppercase text-primary transition-colors border border-primary/40 px-3 py-1.5 bg-primary/10 backdrop-blur-sm flex items-center gap-1.5"
+            >
+              <Gamepad2 className="w-3 h-3" />
+              Exit Game
+            </button>
+          )}
+          {!gameModeActive && (
+            <>
+              <h1 className="text-lg font-semibold text-foreground tracking-tight">
+                Aral Sea Terrain Viewer
+              </h1>
+              <p className="text-xs text-muted-foreground font-mono">
+                aral_region_30m.tif
+              </p>
+            </>
+          )}
         </div>
       )}
 
