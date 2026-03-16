@@ -360,6 +360,9 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
       </GizmoHelper>
 
       <gridHelper args={[20, 20, '#1a2332', '#1a2332']} position={[0, -0.01, 0]} />
+      {showObjectLibrary && onObjectSelect && (
+        <ObjectLibrary3D terrain={terrain} exaggeration={exaggeration} onSelect={onObjectSelect} />
+      )}
     </Canvas>
   );
 });
