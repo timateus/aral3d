@@ -613,6 +613,7 @@ const Index = () => {
             onObjectSelect={(obj) => {
               console.log('Selected object:', obj.name, obj.lat, obj.lon);
             }}
+            gameModeActive={gameModeActive}
           />
         )}
         {!terrain && !loading && error && (
