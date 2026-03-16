@@ -360,11 +360,13 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater }: 
     avatarPosRef.current = newPos;
     setAvatarPos(newPos);
 
-    // Camera follow
-    const camOffset = new THREE.Vector3(0, 3, 4);
-    const targetCamPos = new THREE.Vector3(newX + camOffset.x, newY + camOffset.y, newZ + camOffset.z);
-    camera.position.lerp(targetCamPos, 0.05);
-    camera.lookAt(newX, newY + 0.2, newZ);
+    // Camera follow only when moving with WASD (let mouse orbit work otherwise)
+    if (dx !== 0 || dz !== 0) {
+      const camOffset = new THREE.Vector3(0, 3, 4);
+      const targetCamPos = new THREE.Vector3(newX + camOffset.x, newY + camOffset.y, newZ + camOffset.z);
+      camera.position.lerp(targetCamPos, 0.05);
+      camera.lookAt(newX, newY + 0.2, newZ);
+    }
 
     // Water pouring (SPACE key)
     const spaceHeld = keys.has(' ');
