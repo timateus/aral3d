@@ -111,6 +111,14 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
 
       <label className="flex items-center justify-between cursor-pointer">
         <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
+          <span className="inline-block w-3 h-3 rounded-sm" style={{ background: 'linear-gradient(135deg, #2d6a4f, #95d5b2)' }} />
+          Landcover
+        </span>
+        <Switch className="scale-75" checked={showLandcover} onCheckedChange={onToggleLandcover} />
+      </label>
+
+      <label className="flex items-center justify-between cursor-pointer">
+        <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
           <span className="inline-block w-3 h-3 rounded-sm" style={{ background: 'linear-gradient(135deg, #440154, #31688e, #35b779, #fde725)' }} />
           Population Density
         </span>
