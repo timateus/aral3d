@@ -8,6 +8,7 @@ interface LandcoverLayerProps {
   exaggeration: number;
   visibleClasses?: Set<number>;
   onDataLoaded?: (data: LandcoverRasterData | null) => void;
+  onAvailableClasses?: (classes: number[]) => void;
 }
 
 export interface LandcoverRasterData {
