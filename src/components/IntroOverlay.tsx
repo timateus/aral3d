@@ -386,9 +386,6 @@ const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onObjectSelect, onSt
           >
             <div className="absolute inset-0 bg-gradient-to-br from-muted/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="relative z-10">
-              <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center mb-4 group-hover:bg-muted/70 transition-colors duration-300">
-                <Map className="w-6 h-6 text-muted-foreground" />
-              </div>
               <p className="text-base font-semibold text-foreground tracking-wide mb-1">Free Exploration</p>
               <p className="text-xs text-foreground/50 leading-relaxed">
                 Full map controls, data layers, and simulation tools

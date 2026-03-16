@@ -364,6 +364,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
       <MapControls
         enabled={!narrativeActive && !flyoverAnimating}
         orbitRef={orbitRef}
+        gameModeActive={gameModeActive}
       />
 
       <GizmoHelper alignment="bottom-right" margin={[60, 60]}>
