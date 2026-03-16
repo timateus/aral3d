@@ -11,7 +11,7 @@ import IntroOverlay from '@/components/IntroOverlay';
 import ScenarioChat from '@/components/ScenarioChat';
 import WaterVolumeDisplay from '@/components/WaterVolumeDisplay';
 import DataPanel, { AralAnnual, SEA_SERIES } from '@/components/DataPanel';
-import { Camera, Video, BarChart3, Navigation, MapPin, Loader2, Crosshair, Download, Waves } from 'lucide-react';
+import { Camera, Video, BarChart3, Navigation, MapPin, Loader2, Crosshair, Download, Waves, Gamepad2 } from 'lucide-react';
 import { exportTerrainSTL } from '@/lib/stl-exporter';
 import type { ScenarioAction } from '@/types/scenario';
 import { NARRATIVE_STEPS } from '@/lib/narrative-steps';
@@ -89,6 +89,7 @@ const Index = () => {
   const [autoDigging, setAutoDigging] = useState(false);
   const autoDigPixelsRef = useRef<Set<number>>(new Set());
   const [showObjectLibrary, setShowObjectLibrary] = useState(false);
+  const [gameModeActive, setGameModeActive] = useState(false);
   
   const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
   const [flowRenderKey, setFlowRenderKey] = useState(0);
@@ -612,6 +613,7 @@ const Index = () => {
             onObjectSelect={(obj) => {
               console.log('Selected object:', obj.name, obj.lat, obj.lon);
             }}
+            gameModeActive={gameModeActive}
           />
         )}
         {!terrain && !loading && error && (
@@ -673,10 +675,21 @@ const Index = () => {
       {started && !narrativeActive && !canalTourActive && !isMobile && (
         <div className="absolute top-4 left-4 z-10 flex items-center gap-3">
           <button
-            onClick={() => setStarted(false)}
+            onClick={() => { setStarted(false); setGameModeActive(false); }}
             className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground hover:text-primary transition-colors border border-border/50 px-3 py-1.5 bg-card/60 backdrop-blur-sm"
           >
             Library
+          </button>
+          <button
+            onClick={() => setGameModeActive(v => !v)}
+            className={`text-[10px] tracking-[0.15em] uppercase transition-colors border border-border/50 px-3 py-1.5 backdrop-blur-sm flex items-center gap-1.5 ${
+              gameModeActive 
+                ? 'text-primary bg-primary/10 ring-1 ring-primary/40' 
+                : 'text-muted-foreground hover:text-primary bg-card/60'
+            }`}
+          >
+            <Gamepad2 className="w-3 h-3" />
+            {gameModeActive ? 'Exit Game' : 'Game Mode'}
           </button>
           <h1 className="text-lg font-semibold text-foreground tracking-tight">
             Aral Sea Terrain Viewer
@@ -885,6 +898,16 @@ const Index = () => {
         >
           {locating ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
         </button>
+      )}
+
+      {/* Game Mode HUD */}
+      {started && gameModeActive && (
+        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10 bg-card/80 backdrop-blur-md border border-border/50 px-4 py-2 flex items-center gap-4">
+          <Gamepad2 className="w-4 h-4 text-primary" />
+          <span className="text-xs text-muted-foreground tracking-wider uppercase">
+            WASD to move · Collect objects on the terrain
+          </span>
+        </div>
       )}
 
       {/* Timeline Slider - bottom bar */}
