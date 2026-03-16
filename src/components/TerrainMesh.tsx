@@ -259,6 +259,11 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
             {hoverInfo.population !== null && (
               <div style={{ color: '#a8e06c', fontWeight: 500 }}>Pop: {hoverInfo.population.toFixed(1)} /km²</div>
             )}
+            {hoverInfo.landcover && (
+              <div style={{ color: hoverInfo.landcover.color, fontWeight: 500 }}>
+                LC: {hoverInfo.landcover.className}
+              </div>
+            )}
           </div>
         </Html>
       )}
