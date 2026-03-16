@@ -663,7 +663,19 @@ const Index = () => {
 
       {/* Intro Overlay */}
       {!started && !loading && terrain && (
-        <IntroOverlay onStart={() => setStarted(true)} onGuidedTour={startNarrative} onCanalTour={startCanalTour} onObjectSelect={(lat, lon, name) => { setStarted(true); }} />
+        <IntroOverlay
+          onStart={() => setStarted(true)}
+          onGuidedTour={startNarrative}
+          onCanalTour={startCanalTour}
+          onObjectSelect={(lat, lon, name) => { setStarted(true); }}
+          onStartGame={() => {
+            setStarted(true);
+            setGameModeActive(true);
+            setWaterExtentYear(2024);
+            setFlowSpeed(20);
+            setShowWaterExtent(true);
+          }}
+        />
       )}
 
       {/* Narrative Overlay */}
