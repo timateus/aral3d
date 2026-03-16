@@ -738,6 +738,7 @@ const Index = () => {
             showLandcover={showLandcover}
             onToggleLandcover={setShowLandcover}
             landcoverVisibleClasses={landcoverVisibleClasses}
+            landcoverAvailableClasses={landcoverAvailableClasses}
             onLandcoverVisibleClassesChange={setLandcoverVisibleClasses}
             showLakes={showLakes}
             onToggleLakes={setShowLakes}
