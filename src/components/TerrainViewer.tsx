@@ -83,6 +83,8 @@ interface TerrainViewerProps {
   canalHighlights?: { canal: string; lat: number; lon: number; ethnicity: string; color: string }[];
   highlightedCanalNames?: Set<string>;
   canalTourActive?: boolean;
+  showObjectLibrary?: boolean;
+  onObjectSelect?: (obj: LibraryObject) => void;
 }
 
 function CameraAnimator({ started }: { started: boolean }) {
