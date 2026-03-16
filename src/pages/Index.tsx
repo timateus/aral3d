@@ -625,7 +625,7 @@ const Index = () => {
 
       {/* Intro Overlay */}
       {!started && !loading && terrain && (
-        <IntroOverlay onStart={() => setStarted(true)} onGuidedTour={startNarrative} onCanalTour={startCanalTour} />
+        <IntroOverlay onStart={() => setStarted(true)} onGuidedTour={startNarrative} onCanalTour={startCanalTour} onObjectSelect={(lat, lon, name) => { setStarted(true); }} />
       )}
 
       {/* Narrative Overlay */}
