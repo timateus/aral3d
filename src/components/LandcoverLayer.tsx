@@ -103,7 +103,7 @@ function getClassColor(val: number): [number, number, number] | null {
   return [r, g, b];
 }
 
-const LandcoverLayer = ({ terrain, exaggeration, visibleClasses, onDataLoaded }: LandcoverLayerProps) => {
+const LandcoverLayer = ({ terrain, exaggeration, visibleClasses, onDataLoaded, onAvailableClasses }: LandcoverLayerProps) => {
   const [lcData, setLcData] = useState<LandcoverRasterData | null>(null);
 
   useEffect(() => {
