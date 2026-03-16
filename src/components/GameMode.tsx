@@ -310,6 +310,7 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater }: 
       setCompletedMissions(new Set());
       setCollectMessage(null);
       setRewardMessage(null);
+      setRewardFact(null);
       setWaterPouring(false);
     }
   }, [active]);
