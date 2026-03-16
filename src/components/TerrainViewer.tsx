@@ -90,6 +90,7 @@ interface TerrainViewerProps {
   gameModeActive?: boolean;
   showLandcover?: boolean;
   landcoverVisibleClasses?: Set<number>;
+  onLandcoverAvailableClasses?: (classes: number[]) => void;
 }
 
 function CameraAnimator({ started }: { started: boolean }) {
