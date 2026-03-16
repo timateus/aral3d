@@ -87,7 +87,7 @@ function RotatingModel({ modelPath }: { modelPath: string }) {
   });
 
   return (
-    <group ref={ref} scale={[4, 4, 4]}>
+    <group ref={ref} scale={[6, 6, 6]}>
       <primitive object={scene.clone()} />
     </group>
   );
