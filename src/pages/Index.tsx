@@ -975,8 +975,10 @@ const Index = () => {
           completedCount={gameModeState.completedCount}
           totalCount={gameModeState.totalCount}
           rewardMessage={gameModeState.rewardMessage}
+          rewardFact={gameModeState.rewardFact}
           collectMessage={gameModeState.collectMessage}
           waterPouringActive={gameModeState.waterPouringActive}
+          onShowAllControls={() => setGameModeActive(false)}
         />
       )}
 
