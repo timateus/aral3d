@@ -763,8 +763,8 @@ const Index = () => {
         </div>
       )}
 
-      {/* Controls - desktop only */}
-      {started && !narrativeActive && !canalTourActive && !isMobile && (
+      {/* Controls - desktop only, hide in game mode unless toggled */}
+      {started && !narrativeActive && !canalTourActive && !isMobile && !gameModeActive && (
         <div className="absolute top-4 right-4 z-10 space-y-3 max-h-[calc(100vh-2rem)] overflow-y-auto w-[280px] scrollbar-thin pr-1">
           <ControlPanel
             terrain={terrain}
