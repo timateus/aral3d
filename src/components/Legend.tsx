@@ -46,33 +46,8 @@ interface LegendProps {
 }
 
 const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin, show21stBasin, onToggle21stBasin, showKhorezm, onToggleKhorezm, showWatershed, onToggleWatershed, showLandcover, onToggleLandcover, landcoverVisibleClasses, onLandcoverVisibleClassesChange, showLakes, onToggleLakes, show21cLakes, onToggle21cLakes, showPopDensity, onTogglePopDensity, popHexSize, onPopHexSizeChange, popHexHeight, onPopHexHeightChange, showMigration, onToggleMigration, showChoropleth, onToggleChoropleth, choroplethIndicator, onChoroplethIndicatorChange, choroplethExaggeration, onChoroplethExaggerationChange }: LegendProps) => {
-  const [lcClasses, setLcClasses] = useState<number[]>([]);
-
-  // Load landcover classes from the tif when landcover is shown
-  useEffect(() => {
-    if (!showLandcover || lcClasses.length > 0) return;
-    (async () => {
-      try {
-        const resp = await fetch('/data/landcover.tif');
-        const buf = await resp.arrayBuffer();
-        const tiff = await fromArrayBuffer(buf);
-        const image = await tiff.getImage();
-        const fw = image.getWidth();
-        const fh = image.getHeight();
-        const maxDim = 256;
-        const sx = Math.max(1, Math.ceil(fw / maxDim));
-        const sy = Math.max(1, Math.ceil(fh / maxDim));
-        const rasters = await image.readRasters({ width: Math.floor(fw / sx), height: Math.floor(fh / sy), resampleMethod: 'nearest' });
-        const vals = rasters[0] as any;
-        const unique = new Set<number>();
-        for (let i = 0; i < vals.length; i++) {
-          if (vals[i] !== 0) unique.add(vals[i]);
-        }
-        const sorted = Array.from(unique).sort((a, b) => a - b);
-        setLcClasses(sorted);
-      } catch {}
-    })();
-  }, [showLandcover]);
+  // All 22 classes always shown
+  const lcClasses = Array.from({ length: 22 }, (_, i) => i + 1);
 
   const toggleLcClass = (cls: number) => {
     if (!onLandcoverVisibleClassesChange) return;
