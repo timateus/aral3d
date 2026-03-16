@@ -17,85 +17,55 @@ export interface LandcoverRasterData {
   bounds: GeoBounds;
 }
 
-// Distinct colors for landcover classes
+// GlobCover legend (values 1–22, 0 = no data)
 const CLASS_COLORS: Record<number, string> = {
-  10: '#a6cee3',  // Cropland, rainfed
-  11: '#b2df8a',  // Herbaceous cover
-  12: '#33a02c',  // Tree or shrub cover
-  20: '#fb9a99',  // Cropland, irrigated
-  30: '#e31a1c',  // Mosaic cropland
-  40: '#fdbf6f',  // Mosaic natural veg
-  50: '#1f78b4',  // Tree cover, broadleaved, evergreen
-  60: '#ff7f00',  // Tree cover, broadleaved, deciduous
-  61: '#cab2d6',  // Tree cover, broadleaved, deciduous, closed
-  62: '#6a3d9a',  // Tree cover, broadleaved, deciduous, open
-  70: '#8dd3c7',  // Tree cover, needleleaved, evergreen
-  71: '#ffffb3',  // Tree cover, needleleaved, evergreen, closed
-  72: '#bebada',  // Tree cover, needleleaved, evergreen, open
-  80: '#fb8072',  // Tree cover, needleleaved, deciduous
-  81: '#80b1d3',  // Tree cover, needleleaved, deciduous, closed
-  82: '#fdb462',  // Tree cover, needleleaved, deciduous, open
-  90: '#b3de69',  // Tree cover, mixed
-  100: '#fccde5', // Mosaic tree and shrub
-  110: '#d9d9d9', // Mosaic herbaceous
-  120: '#bc80bd', // Shrubland
-  121: '#ccebc5', // Shrubland evergreen
-  122: '#ffed6f', // Shrubland deciduous
-  130: '#e5d8bd', // Grassland
-  140: '#c7e9c0', // Lichens and mosses
-  150: '#fdd0a2', // Sparse vegetation
-  151: '#fdae6b', // Sparse tree
-  152: '#fd8d3c', // Sparse shrub
-  153: '#e6550d', // Sparse herbaceous
-  160: '#31a354', // Tree cover, flooded, fresh
-  170: '#006d2c', // Tree cover, flooded, saline
-  180: '#74c476', // Shrub/herb, flooded
-  190: '#de2d26', // Urban
-  200: '#d2b48c', // Bare areas
-  201: '#a0522d', // Consolidated bare
-  202: '#deb887', // Unconsolidated bare
-  210: '#4292c6', // Water bodies
-  220: '#f0f0f0', // Permanent snow/ice
+  1: '#006400',   // Tree Cover, broadleaved, evergreen
+  2: '#228b22',   // Tree Cover, broadleaved, deciduous, closed
+  3: '#32cd32',   // Tree Cover, broadleaved, deciduous, open
+  4: '#2e8b57',   // Tree Cover, needle-leaved, evergreen
+  5: '#3cb371',   // Tree Cover, needle-leaved, deciduous
+  6: '#66cdaa',   // Tree Cover, mixed leaf type
+  7: '#00ced1',   // Tree Cover, regularly flooded, fresh water
+  8: '#008b8b',   // Tree Cover, regularly flooded, saline water
+  9: '#9acd32',   // Mosaic: Tree cover / Other natural vegetation
+  10: '#8b0000',  // Tree Cover, burnt
+  11: '#a0522d',  // Shrub Cover, closed-open, evergreen
+  12: '#cd853f',  // Shrub Cover, closed-open, deciduous
+  13: '#bdb76b',  // Herbaceous Cover, closed-open
+  14: '#d2b48c',  // Sparse Herbaceous or sparse Shrub Cover
+  15: '#5f9ea0',  // Regularly flooded Shrub and/or Herbaceous Cover
+  16: '#daa520',  // Cultivated and managed areas (Cropland)
+  17: '#f4a460',  // Mosaic: Cropland / Tree Cover / Other natural vegetation
+  18: '#ffd700',  // Mosaic: Cropland / Shrub and/or Herbaceous cover
+  19: '#c2b280',  // Bare Areas
+  20: '#4169e1',  // Water Bodies
+  21: '#f0f8ff',  // Snow and Ice
+  22: '#dc143c',  // Artificial surfaces (Urban)
 };
 
 const CLASS_NAMES: Record<number, string> = {
-  10: 'Cropland, rainfed',
-  11: 'Herbaceous cover',
-  12: 'Tree/shrub cover',
-  20: 'Cropland, irrigated',
-  30: 'Mosaic cropland',
-  40: 'Mosaic natural vegetation',
-  50: 'Broadleaved evergreen',
-  60: 'Broadleaved deciduous',
-  61: 'Broadleaved deciduous (closed)',
-  62: 'Broadleaved deciduous (open)',
-  70: 'Needleleaved evergreen',
-  71: 'Needleleaved evergreen (closed)',
-  72: 'Needleleaved evergreen (open)',
-  80: 'Needleleaved deciduous',
-  81: 'Needleleaved deciduous (closed)',
-  82: 'Needleleaved deciduous (open)',
-  90: 'Mixed tree cover',
-  100: 'Mosaic tree/shrub',
-  110: 'Mosaic herbaceous',
-  120: 'Shrubland',
-  121: 'Shrubland evergreen',
-  122: 'Shrubland deciduous',
-  130: 'Grassland',
-  140: 'Lichens/mosses',
-  150: 'Sparse vegetation',
-  151: 'Sparse tree',
-  152: 'Sparse shrub',
-  153: 'Sparse herbaceous',
-  160: 'Flooded tree (fresh)',
-  170: 'Flooded tree (saline)',
-  180: 'Flooded shrub/herb',
-  190: 'Urban',
-  200: 'Bare areas',
-  201: 'Consolidated bare',
-  202: 'Unconsolidated bare',
-  210: 'Water bodies',
-  220: 'Snow/ice',
+  1: 'Tree Cover, broadleaved, evergreen',
+  2: 'Tree Cover, broadleaved, deciduous, closed',
+  3: 'Tree Cover, broadleaved, deciduous, open',
+  4: 'Tree Cover, needle-leaved, evergreen',
+  5: 'Tree Cover, needle-leaved, deciduous',
+  6: 'Tree Cover, mixed leaf type',
+  7: 'Tree Cover, regularly flooded, fresh water',
+  8: 'Tree Cover, regularly flooded, saline water',
+  9: 'Mosaic: Tree cover / Other natural vegetation',
+  10: 'Tree Cover, burnt',
+  11: 'Shrub Cover, closed-open, evergreen',
+  12: 'Shrub Cover, closed-open, deciduous',
+  13: 'Herbaceous Cover, closed-open',
+  14: 'Sparse Herbaceous or sparse Shrub Cover',
+  15: 'Regularly flooded Shrub and/or Herbaceous Cover',
+  16: 'Cultivated and managed areas (Cropland)',
+  17: 'Mosaic: Cropland / Tree Cover / Other natural vegetation',
+  18: 'Mosaic: Cropland / Shrub and/or Herbaceous cover',
+  19: 'Bare Areas',
+  20: 'Water Bodies',
+  21: 'Snow and Ice',
+  22: 'Artificial surfaces (Urban)',
 };
 
 export { CLASS_COLORS, CLASS_NAMES };
