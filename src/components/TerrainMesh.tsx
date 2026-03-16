@@ -4,6 +4,7 @@ import { Html } from '@react-three/drei';
 import { ThreeEvent } from '@react-three/fiber';
 import { TerrainData, GeoBounds, getElevationColor } from '@/lib/geotiff-loader';
 import { PopData, samplePopulation } from './PopulationDensityLayer';
+import { LandcoverRasterData, sampleLandcover } from './LandcoverLayer';
 
 interface TerrainMeshProps {
   terrain: TerrainData;
