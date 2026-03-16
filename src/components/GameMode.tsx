@@ -285,6 +285,7 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater }: 
       completedCount: completedMissions.size,
       totalCount: missions.length,
       rewardMessage,
+      rewardFact,
       collectMessage: collectMessage,
       waterPouringActive: waterPouring,
     };
