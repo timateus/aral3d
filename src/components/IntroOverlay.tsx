@@ -1,11 +1,16 @@
-import { useState } from 'react';
+import { useState, Suspense, useRef } from 'react';
 import { ArrowRight } from 'lucide-react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { useGLTF, OrbitControls, Environment } from '@react-three/drei';
+import * as THREE from 'three';
 
 interface LibraryItem {
   id: string;
   name: string;
   image: string;
+  modelPath?: string;
   description: string;
+  detailText: string;
   lat: number;
   lon: number;
   is3D?: boolean;
@@ -16,9 +21,21 @@ const LIBRARY_ITEMS: LibraryItem[] = [
     id: 'yarn-ball',
     name: 'Yarn Ball',
     image: '/images/objects/yarn-ball.png',
-    description: 'Traditional craft',
-    lat: 44.5,
-    lon: 59.0,
+    description: 'Camel wool craft',
+    detailText: 'In Shımbay, camel wool is hand-spun and dyed using pomegranate rinds, walnut husks, and indigo — techniques passed down through generations of Karakalpak women.',
+    lat: 42.05,
+    lon: 58.34,
+    is3D: false,
+  },
+  {
+    id: 'soap-khorezm',
+    name: 'Khorezm Soap',
+    modelPath: '/models/soap-khorezm.glb',
+    image: '',
+    description: 'Traditional soap',
+    detailText: 'Khorezm soap is crafted from cottonseed oil, animal fat, and alkaline ash — a centuries-old recipe. The region\'s soap-makers supply local bazaars with bars scented with dried herbs from the Amu Darya floodplain.',
+    lat: 41.55,
+    lon: 60.63,
     is3D: true,
   },
   {
@@ -26,6 +43,7 @@ const LIBRARY_ITEMS: LibraryItem[] = [
     name: 'Aral Sea North',
     image: '',
     description: 'Northern remnant',
+    detailText: 'The Small Aral Sea — a fragment sustained by the Kok-Aral Dam since 2005.',
     lat: 46.8,
     lon: 61.5,
   },
@@ -34,6 +52,7 @@ const LIBRARY_ITEMS: LibraryItem[] = [
     name: 'Muynak Harbor',
     image: '',
     description: 'Former fishing port',
+    detailText: 'Once a bustling Aral Sea port, Muynak now sits over 100 km from the nearest shoreline.',
     lat: 43.77,
     lon: 58.69,
   },
@@ -42,26 +61,37 @@ const LIBRARY_ITEMS: LibraryItem[] = [
     name: 'Nukus',
     image: '',
     description: 'Capital of Karakalpakstan',
+    detailText: 'Home to the Savitsky Museum — one of the world\'s most important collections of Soviet avant-garde art.',
     lat: 42.46,
     lon: 59.6,
-  },
-  {
-    id: 'vozrozhdeniya',
-    name: 'Vozrozhdeniya',
-    image: '',
-    description: 'Former island facility',
-    lat: 45.0,
-    lon: 59.0,
   },
   {
     id: 'amu-delta',
     name: 'Amu Darya Delta',
     image: '',
     description: 'River delta',
+    detailText: 'The delta once supported vast wetlands and fisheries before upstream irrigation diverted most of its flow.',
     lat: 43.5,
     lon: 58.8,
   },
 ];
+
+function RotatingModel({ modelPath }: { modelPath: string }) {
+  const { scene } = useGLTF(modelPath);
+  const ref = useRef<THREE.Group>(null);
+  
+  useFrame((state) => {
+    if (ref.current) {
+      ref.current.rotation.y = state.clock.elapsedTime * 0.5;
+    }
+  });
+
+  return (
+    <group ref={ref} scale={[2.5, 2.5, 2.5]}>
+      <primitive object={scene.clone()} />
+    </group>
+  );
+}
 
 interface IntroOverlayProps {
   onStart: () => void;
