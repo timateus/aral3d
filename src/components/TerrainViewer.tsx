@@ -100,7 +100,7 @@ function CameraAnimator({ started }: { started: boolean }) {
   const animating = useRef(false);
   const hasStarted = useRef(false);
 
-  const start = new THREE.Vector3(18, 16, 18);
+  const start = new THREE.Vector3(0, 18, 8);
   const end = new THREE.Vector3(0, 10, 12);
   const startTarget = new THREE.Vector3(0, 0, 0);
   const endTarget = new THREE.Vector3(0, 0, -1);
@@ -262,7 +262,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
 
   return (
     <Canvas
-      camera={{ position: [18, 16, 18], fov: 50, near: 0.1, far: 1000 }}
+      camera={{ position: [0, 18, 8], fov: 50, near: 0.1, far: 1000 }}
       className="w-full h-full"
       gl={{ antialias: true, toneMapping: 3, preserveDrawingBuffer: true }}
     >
@@ -364,6 +364,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
       <MapControls
         enabled={!narrativeActive && !flyoverAnimating}
         orbitRef={orbitRef}
+        gameModeActive={gameModeActive}
       />
 
       <GizmoHelper alignment="bottom-right" margin={[60, 60]}>

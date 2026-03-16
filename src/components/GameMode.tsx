@@ -1,25 +1,9 @@
 import { useRef, useState, useEffect, useMemo, useCallback } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { useGLTF, Html } from '@react-three/drei';
+import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { TerrainData } from '@/lib/geotiff-loader';
 import { buildMissions, Mission } from '@/lib/game-missions';
-
-interface Collectible {
-  id: string;
-  name: string;
-  modelPath: string;
-  lat: number;
-  lon: number;
-}
-
-const COLLECTIBLES: Collectible[] = [
-  { id: 'soap-1', name: 'Khorezm Soap', modelPath: '/models/soap-khorezm.glb', lat: 41.55, lon: 60.63 },
-  { id: 'pumpkin-1', name: 'Suw Qabaq', modelPath: '/models/pumpkin.glb', lat: 42.46, lon: 59.6 },
-  { id: 'soap-2', name: 'Khorezm Soap', modelPath: '/models/soap-khorezm.glb', lat: 43.0, lon: 59.0 },
-  { id: 'pumpkin-2', name: 'Suw Qabaq', modelPath: '/models/pumpkin.glb', lat: 42.0, lon: 60.0 },
-  { id: 'soap-3', name: 'Khorezm Soap', modelPath: '/models/soap-khorezm.glb', lat: 43.5, lon: 58.5 },
-];
 
 function geoToMeshPos(
   lat: number, lon: number,
@@ -70,7 +54,6 @@ function getTerrainHeightAt(
   return normalized * maxMeshHeight;
 }
 
-/** World pos → terrain pixel row/col */
 function worldToPixel(
   worldX: number, worldZ: number,
   terrain: TerrainData,
@@ -134,7 +117,7 @@ function WaterPourEffect({ position, active }: { position: [number, number, numb
   const particleCount = 30;
   const positions = useMemo(() => new Float32Array(particleCount * 3), []);
 
-  useFrame((state) => {
+  useFrame(() => {
     if (!ref.current || !active) {
       if (ref.current) ref.current.visible = false;
       return;
@@ -156,41 +139,6 @@ function WaterPourEffect({ position, active }: { position: [number, number, numb
       </bufferGeometry>
       <pointsMaterial color="#4fc3f7" size={0.03} transparent opacity={0.7} sizeAttenuation />
     </points>
-  );
-}
-
-function CollectibleObject({ modelPath, position, collected, name }: {
-  modelPath: string; position: [number, number, number]; collected: boolean; name: string;
-}) {
-  const { scene } = useGLTF(modelPath);
-  const ref = useRef<THREE.Group>(null);
-
-  useFrame((state) => {
-    if (ref.current && !collected) {
-      ref.current.rotation.y = state.clock.elapsedTime * 1.2;
-      ref.current.position.y = position[1] + 0.2 + Math.sin(state.clock.elapsedTime * 2) * 0.05;
-    }
-  });
-
-  if (collected) return null;
-
-  return (
-    <group position={[position[0], 0, position[2]]}>
-      <group ref={ref} scale={[0.8, 0.8, 0.8]}>
-        <primitive object={scene.clone()} />
-      </group>
-      <mesh position={[0, position[1] + 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[0.15, 0.2, 24]} />
-        <meshStandardMaterial color="#f0c674" emissive="#f0c674" emissiveIntensity={0.8} transparent opacity={0.5} side={THREE.DoubleSide} />
-      </mesh>
-      <Html position={[0, position[1] + 0.5, 0]} center style={{ pointerEvents: 'none' }}>
-        <div style={{
-          fontSize: '10px', color: '#f0c674', textShadow: '0 1px 6px rgba(0,0,0,0.9)',
-          fontFamily: "'Inter', sans-serif", fontWeight: 600, letterSpacing: '0.05em',
-          textTransform: 'uppercase', whiteSpace: 'nowrap',
-        }}>{name}</div>
-      </Html>
-    </group>
   );
 }
 
@@ -237,28 +185,25 @@ export interface GameModeState {
   totalCount: number;
   rewardMessage: string | null;
   rewardFact: string | null;
-  collectMessage: string | null;
   waterPouringActive: boolean;
+  requiresKhorezm: boolean;
+  requiresInspector: boolean;
 }
 
 export default function GameMode({ terrain, exaggeration, active, onAddWater, orbitRef }: GameModeProps) {
   const [avatarPos, setAvatarPos] = useState<[number, number, number]>([0, 1, 0]);
   const [facing, setFacing] = useState(0);
-  const [collected, setCollected] = useState<Set<string>>(new Set());
   const [completedMissions, setCompletedMissions] = useState<Set<string>>(new Set());
   const [rewardMessage, setRewardMessage] = useState<string | null>(null);
   const [rewardFact, setRewardFact] = useState<string | null>(null);
-  const [collectMessage, setCollectMessage] = useState<string | null>(null);
   const [waterPouring, setWaterPouring] = useState(false);
   const keysRef = useRef<Set<string>>(new Set());
   const facingRef = useRef(0);
   const { camera } = useThree();
   const avatarPosRef = useRef<[number, number, number]>([0, 1, 0]);
   const waterCooldownRef = useRef(0);
-  const cameraOffsetRef = useRef(new THREE.Vector3(0, 3, 4));
   const initializedRef = useRef(false);
 
-  // Build missions from terrain
   const missions = useMemo(() => active ? buildMissions(terrain) : [], [terrain, active]);
 
   const currentMission = useMemo(() => {
@@ -270,14 +215,7 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater, or
     return geoToMeshPos(currentMission.targetLat, currentMission.targetLon, terrain, exaggeration);
   }, [currentMission, terrain, exaggeration]);
 
-  const collectiblePositions = useMemo(() => {
-    return COLLECTIBLES.map(c => ({
-      ...c,
-      pos: geoToMeshPos(c.lat, c.lon, terrain, exaggeration),
-    }));
-  }, [terrain, exaggeration]);
-
-  // Expose state for HUD (via custom event)
+  // Expose state for HUD
   useEffect(() => {
     if (!active) return;
     const state: GameModeState = {
@@ -286,11 +224,12 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater, or
       totalCount: missions.length,
       rewardMessage,
       rewardFact,
-      collectMessage: collectMessage,
       waterPouringActive: waterPouring,
+      requiresKhorezm: currentMission?.requiresKhorezm ?? false,
+      requiresInspector: currentMission?.requiresInspector ?? false,
     };
     window.dispatchEvent(new CustomEvent('game-mode-state', { detail: state }));
-  }, [active, currentMission, completedMissions.size, missions.length, rewardMessage, collectMessage, waterPouring]);
+  }, [active, currentMission, completedMissions.size, missions.length, rewardMessage, rewardFact, waterPouring]);
 
   // Initialize
   useEffect(() => {
@@ -302,12 +241,10 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater, or
       setAvatarPos(pos);
       avatarPosRef.current = pos;
       
-      // Set initial camera behind avatar
       const camPos = new THREE.Vector3(pos[0], pos[1] + 3, pos[2] + 4);
       camera.position.copy(camPos);
       camera.lookAt(pos[0], pos[1] + 0.2, pos[2]);
       
-      // Set orbit target to avatar
       if (orbitRef?.current) {
         orbitRef.current.target.set(pos[0], pos[1] + 0.2, pos[2]);
       }
@@ -318,9 +255,7 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater, or
   useEffect(() => {
     if (!active) {
       initializedRef.current = false;
-      setCollected(new Set());
       setCompletedMissions(new Set());
-      setCollectMessage(null);
       setRewardMessage(null);
       setRewardFact(null);
       setWaterPouring(false);
@@ -333,7 +268,6 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater, or
     const onDown = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
       keysRef.current.add(key);
-      // Prevent space from scrolling
       if (e.key === ' ') e.preventDefault();
     };
     const onUp = (e: KeyboardEvent) => keysRef.current.delete(e.key.toLowerCase());
@@ -352,7 +286,7 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater, or
     const keys = keysRef.current;
     const speed = 2 * delta;
     
-    // Get camera forward direction projected onto XZ plane for movement relative to camera view
+    // Get camera forward direction projected onto XZ plane
     const camForward = new THREE.Vector3();
     camera.getWorldDirection(camForward);
     camForward.y = 0;
@@ -370,7 +304,7 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater, or
       moveDir.normalize().multiplyScalar(speed);
     }
 
-    // Update facing direction based on movement (smooth)
+    // Update facing direction based on movement
     if (isMoving) {
       const targetAngle = Math.atan2(moveDir.x, moveDir.z);
       let diff = targetAngle - facingRef.current;
@@ -388,18 +322,19 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater, or
     avatarPosRef.current = newPos;
     setAvatarPos(newPos);
 
-    // Always keep orbit target on avatar so rotation orbits around avatar
+    // Keep orbit target on avatar so mouse rotation orbits around avatar
     if (orbitRef?.current) {
       orbitRef.current.target.set(newX, newY + 0.2, newZ);
     }
 
-    // When avatar moves with WASD, also update camera position to follow
+    // When avatar moves, translate camera to follow (preserving user's rotation)
     if (isMoving) {
-      // Compute desired offset from current camera position relative to avatar
-      const currentOffset = new THREE.Vector3().subVectors(camera.position, new THREE.Vector3(cx, avatarPosRef.current[1], cz));
-      // Smoothly move camera to maintain offset from new position
-      const targetCamPos = new THREE.Vector3(newX + currentOffset.x, newY + currentOffset.y, newZ + currentOffset.z);
-      camera.position.lerp(targetCamPos, 0.15);
+      const dx = newX - cx;
+      const dz = newZ - cz;
+      const dy = newY - avatarPosRef.current[1];
+      camera.position.x += dx;
+      camera.position.z += dz;
+      camera.position.y += dy;
     }
 
     // Water pouring (SPACE key)
@@ -417,17 +352,6 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater, or
     } else {
       waterCooldownRef.current = 0;
     }
-
-    // Check collectibles
-    collectiblePositions.forEach(c => {
-      if (collected.has(c.id)) return;
-      const dist = Math.sqrt((newX - c.pos[0]) ** 2 + (newZ - c.pos[2]) ** 2);
-      if (dist < 0.3) {
-        setCollected(prev => new Set([...prev, c.id]));
-        setCollectMessage(c.name);
-        setTimeout(() => setCollectMessage(null), 2000);
-      }
-    });
 
     // Check mission completion
     if (currentMission && missionTargetPos) {
@@ -458,17 +382,6 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater, or
       {missionTargetPos && currentMission && (
         <MissionBeacon position={missionTargetPos} />
       )}
-
-      {/* Collectibles */}
-      {collectiblePositions.map(c => (
-        <CollectibleObject
-          key={c.id}
-          modelPath={c.modelPath}
-          position={c.pos}
-          collected={collected.has(c.id)}
-          name={c.name}
-        />
-      ))}
     </>
   );
 }

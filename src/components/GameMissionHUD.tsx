@@ -8,7 +8,6 @@ interface GameMissionHUDProps {
   totalCount: number;
   rewardMessage: string | null;
   rewardFact: string | null;
-  collectMessage: string | null;
   waterPouringActive: boolean;
   onShowAllControls?: () => void;
 }
@@ -19,30 +18,22 @@ export default function GameMissionHUD({
   totalCount,
   rewardMessage,
   rewardFact,
-  collectMessage,
   waterPouringActive,
   onShowAllControls,
 }: GameMissionHUDProps) {
   const [showHint, setShowHint] = useState(false);
 
   return (
-    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-3 pointer-events-none max-w-xl w-full px-4">
+    <div className="absolute top-16 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-3 pointer-events-none max-w-xl w-full px-4">
       {/* Reward popup with fun fact */}
       {rewardMessage && (
-        <div className="bg-card/95 backdrop-blur-lg border border-primary/40 px-6 py-5 rounded-xl animate-in fade-in slide-in-from-bottom-3 duration-500 pointer-events-auto shadow-lg">
+        <div className="bg-card/95 backdrop-blur-lg border border-primary/40 px-6 py-5 rounded-xl animate-in fade-in slide-in-from-top-3 duration-500 pointer-events-auto shadow-lg">
           <p className="text-lg font-bold text-primary text-center mb-2">{rewardMessage}</p>
           {rewardFact && (
             <p className="text-sm text-foreground/80 leading-relaxed text-center max-w-md">
               📖 {rewardFact}
             </p>
           )}
-        </div>
-      )}
-
-      {/* Collect popup */}
-      {collectMessage && (
-        <div className="bg-card/95 backdrop-blur-md border border-accent/40 px-5 py-2 rounded-xl shadow-lg">
-          <p className="text-sm font-semibold text-foreground">✨ {collectMessage} collected!</p>
         </div>
       )}
 

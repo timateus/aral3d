@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, Suspense } from 'react';
-import { ArrowRight, Gamepad2, BookOpen, Map, Package } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useGLTF, OrbitControls, Environment } from '@react-three/drei';
 import * as THREE from 'three';
@@ -344,9 +344,6 @@ const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onObjectSelect, onSt
           >
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="relative z-10">
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors duration-300">
-                <Gamepad2 className="w-6 h-6 text-primary" />
-              </div>
               <p className="text-base font-semibold text-foreground tracking-wide mb-1">Start a Game</p>
               <p className="text-xs text-foreground/50 leading-relaxed">
                 Explore missions, pour water, and discover the region
@@ -361,9 +358,6 @@ const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onObjectSelect, onSt
           >
             <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="relative z-10">
-              <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4 group-hover:bg-accent/20 transition-colors duration-300">
-                <Package className="w-6 h-6 text-accent" />
-              </div>
               <p className="text-base font-semibold text-foreground tracking-wide mb-1">Explore Artifacts</p>
               <p className="text-xs text-foreground/50 leading-relaxed">
                 Browse 3D objects and cultural heritage items
@@ -378,9 +372,6 @@ const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onObjectSelect, onSt
           >
             <div className="absolute inset-0 bg-gradient-to-br from-secondary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="relative z-10">
-              <div className="w-12 h-12 rounded-xl bg-secondary/50 flex items-center justify-center mb-4 group-hover:bg-secondary/70 transition-colors duration-300">
-                <BookOpen className="w-6 h-6 text-secondary-foreground" />
-              </div>
               <p className="text-base font-semibold text-foreground tracking-wide mb-1">Guided Tours</p>
               <p className="text-xs text-foreground/50 leading-relaxed">
                 Narrated history of the Aral Sea & canal systems
@@ -395,9 +386,6 @@ const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onObjectSelect, onSt
           >
             <div className="absolute inset-0 bg-gradient-to-br from-muted/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="relative z-10">
-              <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center mb-4 group-hover:bg-muted/70 transition-colors duration-300">
-                <Map className="w-6 h-6 text-muted-foreground" />
-              </div>
               <p className="text-base font-semibold text-foreground tracking-wide mb-1">Free Exploration</p>
               <p className="text-xs text-foreground/50 leading-relaxed">
                 Full map controls, data layers, and simulation tools

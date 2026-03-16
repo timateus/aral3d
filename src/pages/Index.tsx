@@ -269,7 +269,11 @@ const Index = () => {
   // Listen for game mode state events
   useEffect(() => {
     const handler = (e: Event) => {
-      setGameModeState((e as CustomEvent<GameModeState>).detail);
+      const state = (e as CustomEvent<GameModeState>).detail;
+      setGameModeState(state);
+      // Toggle Khorezm DEM and inspector based on current mission
+      if (state.requiresKhorezm !== undefined) setShowKhorezm(state.requiresKhorezm);
+      if (state.requiresInspector !== undefined) setShowInspector(state.requiresInspector);
     };
     window.addEventListener('game-mode-state', handler);
     return () => window.removeEventListener('game-mode-state', handler);
@@ -976,14 +980,14 @@ const Index = () => {
           totalCount={gameModeState.totalCount}
           rewardMessage={gameModeState.rewardMessage}
           rewardFact={gameModeState.rewardFact}
-          collectMessage={gameModeState.collectMessage}
+          
           waterPouringActive={gameModeState.waterPouringActive}
           onShowAllControls={() => setGameModeActive(false)}
         />
       )}
 
-      {/* Timeline Slider - bottom bar */}
-      {started && !narrativeActive && !canalTourActive && (
+      {/* Timeline Slider - bottom bar (hide in game mode) */}
+      {started && !narrativeActive && !canalTourActive && !gameModeActive && (
         <TimelineSlider
           year={waterExtentYear}
           onYearChange={setWaterExtentYear}
