@@ -264,8 +264,12 @@ const Index = () => {
       result = mergeExpandTerrains(result, watershedTerrain, false);
       expanded = true;
     }
+    if (showLandcover && landcoverTerrain) {
+      result = mergeExpandTerrains(result, landcoverTerrain, false);
+      expanded = true;
+    }
     return { terrain: result, hideNoData: expanded };
-  }, [baseTerrain, seabedTerrain, khorezmTerrain, showKhorezm, watershedTerrain, showWatershed]);
+  }, [baseTerrain, seabedTerrain, khorezmTerrain, showKhorezm, watershedTerrain, showWatershed, landcoverTerrain, showLandcover]);
 
   // --- Water flow simulation ---
   const handleWaterFlowClick = useCallback((row: number, col: number) => {
