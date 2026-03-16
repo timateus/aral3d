@@ -266,6 +266,32 @@ const Index = () => {
     return { terrain: result, hideNoData: expanded };
   }, [baseTerrain, seabedTerrain, khorezmTerrain, showKhorezm, watershedTerrain, showWatershed]);
 
+  // Listen for game mode state events
+  useEffect(() => {
+    const handler = (e: Event) => {
+      setGameModeState((e as CustomEvent<GameModeState>).detail);
+    };
+    window.addEventListener('game-mode-state', handler);
+    return () => window.removeEventListener('game-mode-state', handler);
+  }, []);
+
+  // Game mode water pouring handler
+  const handleGameAddWater = useCallback((row: number, col: number) => {
+    if (!terrain) return;
+    let state = flowStateRef.current;
+    if (!state) {
+      state = createFlowState(terrain);
+      flowStateRef.current = state;
+    }
+    addWaterAt(state, row, col, 3, 2);
+    setFlowState(state);
+    setFlowRenderKey(k => k + 1);
+    // Also auto-animate
+    if (!flowAnimRef.current) {
+      setFlowAnimating(true);
+    }
+  }, [terrain]);
+
   // --- Water flow simulation ---
   const handleWaterFlowClick = useCallback((row: number, col: number) => {
     if (!terrain) return;
