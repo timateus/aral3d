@@ -3,15 +3,6 @@ import { useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 
-/**
- * Custom map-style controls:
- * - Left-click drag: pan (move map)
- * - Right-click drag: rotate/orbit
- * - Scroll: zoom
- * - WASD: pan parallel to ground
- * - Q/E: move up/down
- */
-
 function WASDHandler({ enabled }: { enabled: boolean }) {
   const { camera } = useThree();
   const keys = useRef({ w: false, a: false, s: false, d: false, q: false, e: false });
@@ -52,7 +43,6 @@ function WASDHandler({ enabled }: { enabled: boolean }) {
 
     if (delta.lengthSq() > 0) {
       camera.position.add(delta);
-      // Dispatch event so OrbitControls target moves in sync
       window.dispatchEvent(new CustomEvent('wasd-move', { detail: { x: delta.x, y: delta.y, z: delta.z } }));
     }
   });
@@ -60,8 +50,7 @@ function WASDHandler({ enabled }: { enabled: boolean }) {
   return null;
 }
 
-export default function MapControls({ enabled, orbitRef }: { enabled: boolean; orbitRef: React.MutableRefObject<any> }) {
-  // Listen for WASD moves to shift the orbit target
+export default function MapControls({ enabled, orbitRef, gameModeActive }: { enabled: boolean; orbitRef: React.MutableRefObject<any>; gameModeActive?: boolean }) {
   useEffect(() => {
     const handler = (e: Event) => {
       const { x, y, z } = (e as CustomEvent).detail;
@@ -77,11 +66,6 @@ export default function MapControls({ enabled, orbitRef }: { enabled: boolean; o
 
   return (
     <>
-      {/* 
-        OrbitControls with:
-        - mouseButtons: LEFT=PAN, RIGHT=ROTATE (map-style)
-        - touch: ONE=PAN, TWO=DOLLY_ROTATE
-      */}
       <OrbitControls
         ref={orbitRef}
         enabled={enabled}
@@ -90,17 +74,20 @@ export default function MapControls({ enabled, orbitRef }: { enabled: boolean; o
         minDistance={2}
         maxDistance={30}
         maxPolarAngle={Math.PI / 2.1}
+        enablePan={!gameModeActive}
+        enableKeys={false}
         mouseButtons={{
-          LEFT: THREE.MOUSE.PAN,
+          LEFT: gameModeActive ? THREE.MOUSE.ROTATE : THREE.MOUSE.PAN,
           MIDDLE: THREE.MOUSE.DOLLY,
           RIGHT: THREE.MOUSE.ROTATE,
         }}
         touches={{
-          ONE: THREE.TOUCH.PAN,
+          ONE: gameModeActive ? THREE.TOUCH.ROTATE : THREE.TOUCH.PAN,
           TWO: THREE.TOUCH.DOLLY_ROTATE,
         }}
       />
-      <WASDHandler enabled={enabled} />
+      {/* Disable WASD handler in game mode — GameMode handles its own movement */}
+      <WASDHandler enabled={enabled && !gameModeActive} />
     </>
   );
 }

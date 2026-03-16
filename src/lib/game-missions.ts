@@ -14,6 +14,8 @@ export interface Mission {
   emoji: string;
   funFact: string;
   requiresWater?: boolean;
+  requiresKhorezm?: boolean;
+  requiresInspector?: boolean;
 }
 
 export function findHighestPoint(terrain: TerrainData): { lat: number; lon: number; elev: number } {
@@ -42,52 +44,8 @@ export function findHighestPoint(terrain: TerrainData): { lat: number; lon: numb
   return { lat, lon, elev: maxElev };
 }
 
-/**
- * Find the lowest elevation inside the former Aral Sea basin.
- * The deepest areas are in the western basin around lat 44-45, lon 58-59.
- * We search broadly and pick the absolute minimum.
- */
-export function findLowestPoint(terrain: TerrainData): { lat: number; lon: number; elev: number } {
-  const { elevations, width, height, bounds, noDataValue } = terrain;
-  if (!bounds) return { lat: 0, lon: 0, elev: 0 };
-
-  let minElev = Infinity;
-  let minIdx = 0;
-  for (let i = 0; i < elevations.length; i++) {
-    const e = elevations[i];
-    if (noDataValue !== null && e === noDataValue) continue;
-    if (isNaN(e) || e <= -9999) continue;
-
-    const row = Math.floor(i / width);
-    const col = i % width;
-    const nx = col / (width - 1);
-    const ny = 1 - row / (height - 1);
-    const lat = bounds.minLat + ny * (bounds.maxLat - bounds.minLat);
-    const lon = bounds.minLon + nx * (bounds.maxLon - bounds.minLon);
-
-    // Search in the Aral Sea basin: the deep western basin
-    // Latitude between ~43.5 and ~46, longitude between ~57.5 and ~60
-    if (lat < 43.5 || lat > 46.5 || lon < 57.0 || lon > 60.5) continue;
-
-    if (e < minElev) {
-      minElev = e;
-      minIdx = i;
-    }
-  }
-
-  const row = Math.floor(minIdx / width);
-  const col = minIdx % width;
-  const nx = col / (width - 1);
-  const ny = 1 - row / (height - 1);
-  const lat = bounds.minLat + ny * (bounds.maxLat - bounds.minLat);
-  const lon = bounds.minLon + nx * (bounds.maxLon - bounds.minLon);
-
-  return { lat, lon, elev: minElev };
-}
-
 export function buildMissions(terrain: TerrainData): Mission[] {
   const highest = findHighestPoint(terrain);
-  const lowest = findLowestPoint(terrain);
 
   return [
     {
@@ -146,14 +104,15 @@ export function buildMissions(terrain: TerrainData): Mission[] {
       id: 'mission-5',
       level: 5,
       title: 'Into the Depths',
-      description: `Find the deepest point of the old seabed (${Math.round(lowest.elev)}m).`,
-      hint: `The deepest point is at ${lowest.lat.toFixed(1)}°N, ${lowest.lon.toFixed(1)}°E — in the western basin of the former Aral Sea.`,
-      targetLat: lowest.lat,
-      targetLon: lowest.lon,
+      description: 'Find the deepest point of the old seabed — around -8m elevation.',
+      hint: 'The deepest point is at 45.1°N, 58.5°E — in the western basin of the former Aral Sea.',
+      targetLat: 45.1098,
+      targetLon: 58.4530,
       radius: 0.6,
       reward: '🕳️ Seabed discovered!',
       emoji: '🕳️',
-      funFact: `The deepest point of the former Aral Sea reached about 68 meters below the original surface level. The exposed seabed has become a source of toxic dust storms carrying salt and pesticides across the region.`,
+      requiresInspector: true,
+      funFact: 'The deepest point of the former Aral Sea reached about 68 meters below the original surface level. The exposed seabed has become a source of toxic dust storms carrying salt and pesticides across the region.',
     },
     {
       id: 'mission-6',
@@ -172,11 +131,12 @@ export function buildMissions(terrain: TerrainData): Mission[] {
       id: 'mission-7',
       level: 7,
       title: 'Cotton Kingdom',
-      description: 'Visit the irrigated farmlands southeast of Nukus.',
+      description: 'Visit the irrigated farmlands southeast of Nukus — explore Khorezm.',
       hint: 'Head southeast — the flat lands along the river are intensively farmed.',
       targetLat: 41.8,
       targetLon: 60.2,
       radius: 0.5,
+      requiresKhorezm: true,
       reward: '🌾 Welcome to the cotton belt!',
       emoji: '🌾',
       funFact: 'Soviet planners diverted the Amu Darya and Syr Darya rivers to irrigate 7 million hectares of cotton. Uzbekistan became the world\'s 5th largest cotton producer — but at the cost of the Aral Sea.',
@@ -216,6 +176,7 @@ export function buildMissions(terrain: TerrainData): Mission[] {
       targetLat: 44.8,
       targetLon: 59.5,
       radius: 0.5,
+      requiresInspector: true,
       reward: '🧂 The white desert!',
       emoji: '🧂',
       funFact: 'The Aralkum — the desert that replaced the Aral Sea — is one of the youngest deserts on Earth. Wind carries an estimated 75 million tons of toxic salt and dust from the dried seabed each year, contaminating farmland up to 500 km away.',
@@ -278,8 +239,8 @@ export function buildMissions(terrain: TerrainData): Mission[] {
       title: 'Water Bringer',
       description: 'Pour water at the deepest basin to symbolically refill the Aral Sea!',
       hint: 'Go to the deepest point and hold SPACE to pour water.',
-      targetLat: lowest.lat,
-      targetLon: lowest.lon,
+      targetLat: 45.1098,
+      targetLon: 58.4530,
       radius: 0.6,
       requiresWater: true,
       reward: '💧 The waters return! You brought life back.',
