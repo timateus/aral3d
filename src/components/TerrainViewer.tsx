@@ -11,6 +11,7 @@ import WaterFlowOverlay from './WaterFlowOverlay';
 import MigrationLayer from './MigrationLayer';
 import ChoroplethLayer from './ChoroplethLayer';
 import RiverFlyover from './RiverFlyover';
+import LandcoverLayer from './LandcoverLayer';
 import MapControls from './MapControls';
 import ObjectLibrary3D from './ObjectLibrary3D';
 import type { LibraryObject } from './ObjectLibrary3D';
