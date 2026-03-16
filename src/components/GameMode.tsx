@@ -249,6 +249,7 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater }: 
   const [collected, setCollected] = useState<Set<string>>(new Set());
   const [completedMissions, setCompletedMissions] = useState<Set<string>>(new Set());
   const [rewardMessage, setRewardMessage] = useState<string | null>(null);
+  const [rewardFact, setRewardFact] = useState<string | null>(null);
   const [collectMessage, setCollectMessage] = useState<string | null>(null);
   const [waterPouring, setWaterPouring] = useState(false);
   const keysRef = useRef<Set<string>>(new Set());
