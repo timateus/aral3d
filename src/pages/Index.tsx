@@ -51,6 +51,7 @@ const Index = () => {
   const [watershedTerrain, setWatershedTerrain] = useState<TerrainData | null>(null);
   const [showLandcover, setShowLandcover] = useState(false);
   const [landcoverVisibleClasses, setLandcoverVisibleClasses] = useState<Set<number> | undefined>(undefined);
+  const [landcoverAvailableClasses, setLandcoverAvailableClasses] = useState<number[]>([]);
   const [showPopDensity, setShowPopDensity] = useState(false);
   const [showMigration, setShowMigration] = useState(false);
   const [showChoropleth, setShowChoropleth] = useState(false);
