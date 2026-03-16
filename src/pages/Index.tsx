@@ -269,7 +269,11 @@ const Index = () => {
   // Listen for game mode state events
   useEffect(() => {
     const handler = (e: Event) => {
-      setGameModeState((e as CustomEvent<GameModeState>).detail);
+      const state = (e as CustomEvent<GameModeState>).detail;
+      setGameModeState(state);
+      // Toggle Khorezm DEM and inspector based on current mission
+      if (state.requiresKhorezm !== undefined) setShowKhorezm(state.requiresKhorezm);
+      if (state.requiresInspector !== undefined) setShowInspector(state.requiresInspector);
     };
     window.addEventListener('game-mode-state', handler);
     return () => window.removeEventListener('game-mode-state', handler);
