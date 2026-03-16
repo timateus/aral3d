@@ -87,7 +87,7 @@ function RotatingModel({ modelPath }: { modelPath: string }) {
   });
 
   return (
-    <group ref={ref} scale={[4, 4, 4]}>
+    <group ref={ref} scale={[6, 6, 6]}>
       <primitive object={scene.clone()} />
     </group>
   );
@@ -143,15 +143,17 @@ const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onObjectSelect }: In
               >
                 {item.modelPath ? (
                   <div className="w-full h-full">
-                    <Canvas camera={{ position: [2, 1.5, 2], fov: 40 }}>
-                      <ambientLight intensity={0.6} />
-                      <directionalLight position={[5, 5, 5]} intensity={0.8} />
-                      <Suspense fallback={null}>
-                        <RotatingModel modelPath={item.modelPath} />
-                        <Environment preset="city" />
-                      </Suspense>
-                      <OrbitControls enableZoom={false} enablePan={false} autoRotate={false} />
-                    </Canvas>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <Canvas camera={{ position: [1.5, 1, 1.5], fov: 35 }}>
+                        <ambientLight intensity={0.6} />
+                        <directionalLight position={[5, 5, 5]} intensity={0.8} />
+                        <Suspense fallback={null}>
+                          <RotatingModel modelPath={item.modelPath} />
+                          <Environment preset="city" />
+                        </Suspense>
+                        <OrbitControls enableZoom={false} enablePan={false} autoRotate={false} />
+                      </Canvas>
+                    </div>
                   </div>
                 ) : item.image ? (
                   <img
