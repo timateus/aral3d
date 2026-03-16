@@ -608,6 +608,10 @@ const Index = () => {
             })) : undefined}
             highlightedCanalNames={canalTourActive ? new Set(CANAL_TOUR_STEPS[canalTourStep]?.canals.map(c => c.canal)) : undefined}
             canalTourActive={canalTourActive}
+            showObjectLibrary={showObjectLibrary}
+            onObjectSelect={(obj) => {
+              console.log('Selected object:', obj.name, obj.lat, obj.lon);
+            }}
           />
         )}
         {!terrain && !loading && error && (
