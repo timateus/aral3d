@@ -1,7 +1,10 @@
+import { useState, useEffect } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { INDICATORS } from '@/lib/demographic-data';
+import { CLASS_COLORS, CLASS_NAMES } from '@/components/LandcoverLayer';
+import { fromArrayBuffer } from 'geotiff';
 
 interface LegendProps {
   showBorders: boolean;
@@ -20,6 +23,8 @@ interface LegendProps {
   onToggleWatershed: (val: boolean) => void;
   showLandcover: boolean;
   onToggleLandcover: (val: boolean) => void;
+  landcoverVisibleClasses?: Set<number>;
+  onLandcoverVisibleClassesChange?: (classes: Set<number> | undefined) => void;
   showLakes: boolean;
   onToggleLakes: (val: boolean) => void;
   show21cLakes?: boolean;
@@ -40,9 +45,69 @@ interface LegendProps {
   onPopHexHeightChange: (val: number) => void;
 }
 
-const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin, show21stBasin, onToggle21stBasin, showKhorezm, onToggleKhorezm, showWatershed, onToggleWatershed, showLandcover, onToggleLandcover, showLakes, onToggleLakes, show21cLakes, onToggle21cLakes, showPopDensity, onTogglePopDensity, popHexSize, onPopHexSizeChange, popHexHeight, onPopHexHeightChange, showMigration, onToggleMigration, showChoropleth, onToggleChoropleth, choroplethIndicator, onChoroplethIndicatorChange, choroplethExaggeration, onChoroplethExaggerationChange }: LegendProps) => {
+const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin, show21stBasin, onToggle21stBasin, showKhorezm, onToggleKhorezm, showWatershed, onToggleWatershed, showLandcover, onToggleLandcover, landcoverVisibleClasses, onLandcoverVisibleClassesChange, showLakes, onToggleLakes, show21cLakes, onToggle21cLakes, showPopDensity, onTogglePopDensity, popHexSize, onPopHexSizeChange, popHexHeight, onPopHexHeightChange, showMigration, onToggleMigration, showChoropleth, onToggleChoropleth, choroplethIndicator, onChoroplethIndicatorChange, choroplethExaggeration, onChoroplethExaggerationChange }: LegendProps) => {
+  const [lcClasses, setLcClasses] = useState<number[]>([]);
+
+  // Load landcover classes from the tif when landcover is shown
+  useEffect(() => {
+    if (!showLandcover || lcClasses.length > 0) return;
+    (async () => {
+      try {
+        const resp = await fetch('/data/landcover.tif');
+        const buf = await resp.arrayBuffer();
+        const tiff = await fromArrayBuffer(buf);
+        const image = await tiff.getImage();
+        const fw = image.getWidth();
+        const fh = image.getHeight();
+        const maxDim = 256;
+        const sx = Math.max(1, Math.ceil(fw / maxDim));
+        const sy = Math.max(1, Math.ceil(fh / maxDim));
+        const rasters = await image.readRasters({ width: Math.floor(fw / sx), height: Math.floor(fh / sy), resampleMethod: 'nearest' });
+        const vals = rasters[0] as any;
+        const unique = new Set<number>();
+        for (let i = 0; i < vals.length; i++) {
+          if (vals[i] !== 0) unique.add(vals[i]);
+        }
+        const sorted = Array.from(unique).sort((a, b) => a - b);
+        setLcClasses(sorted);
+      } catch {}
+    })();
+  }, [showLandcover]);
+
+  const toggleLcClass = (cls: number) => {
+    if (!onLandcoverVisibleClassesChange) return;
+    if (!landcoverVisibleClasses) {
+      // Currently showing all — hide this one
+      const newSet = new Set(lcClasses);
+      newSet.delete(cls);
+      onLandcoverVisibleClassesChange(newSet);
+    } else {
+      const newSet = new Set(landcoverVisibleClasses);
+      if (newSet.has(cls)) {
+        newSet.delete(cls);
+      } else {
+        newSet.add(cls);
+      }
+      // If all are visible again, set to undefined (show all)
+      if (newSet.size === lcClasses.length) {
+        onLandcoverVisibleClassesChange(undefined);
+      } else {
+        onLandcoverVisibleClassesChange(newSet);
+      }
+    }
+  };
+
+  const isClassVisible = (cls: number) => {
+    if (!landcoverVisibleClasses) return true;
+    return landcoverVisibleClasses.has(cls);
+  };
+
+  const getClassColor = (cls: number): string => {
+    return CLASS_COLORS[cls] || `hsl(${(cls * 137) % 360}, 60%, 50%)`;
+  };
+
   return (
-    <div className="glass-panel p-3 space-y-2 w-72">
+    <div className="glass-panel p-3 space-y-2 w-72 max-h-[60vh] overflow-y-auto">
       <label className="flex items-center justify-between cursor-pointer">
         <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
           <span className="inline-block w-3 h-0.5 bg-white/40 rounded" />
@@ -116,6 +181,30 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
         </span>
         <Switch className="scale-75" checked={showLandcover} onCheckedChange={onToggleLandcover} />
       </label>
+
+      {showLandcover && lcClasses.length > 0 && (
+        <div className="ml-5 space-y-1 max-h-40 overflow-y-auto pr-1">
+          {lcClasses.map(cls => (
+            <label key={cls} className="flex items-center gap-2 cursor-pointer text-[10px] text-muted-foreground hover:text-foreground transition-colors">
+              <span
+                className="inline-block w-3 h-3 rounded-sm flex-shrink-0 border border-white/20"
+                style={{
+                  background: getClassColor(cls),
+                  opacity: isClassVisible(cls) ? 1 : 0.2,
+                }}
+                onClick={() => toggleLcClass(cls)}
+              />
+              <span
+                className="truncate"
+                style={{ opacity: isClassVisible(cls) ? 1 : 0.4 }}
+                onClick={() => toggleLcClass(cls)}
+              >
+                {CLASS_NAMES[cls] || `Class ${cls}`}
+              </span>
+            </label>
+          ))}
+        </div>
+      )}
 
       <label className="flex items-center justify-between cursor-pointer">
         <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
