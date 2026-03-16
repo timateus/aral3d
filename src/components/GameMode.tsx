@@ -238,6 +238,7 @@ export interface GameModeState {
   completedCount: number;
   totalCount: number;
   rewardMessage: string | null;
+  rewardFact: string | null;
   collectMessage: string | null;
   waterPouringActive: boolean;
 }
