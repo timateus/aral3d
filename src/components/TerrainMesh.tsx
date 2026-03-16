@@ -241,7 +241,6 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
         <Html
           position={[hoverInfo.position.x, hoverInfo.position.y + 0.15, hoverInfo.position.z]}
           center
-          distanceFactor={8}
           style={{ pointerEvents: 'none', zIndex: 9999 }}
         >
           <div style={{

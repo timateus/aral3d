@@ -8,6 +8,7 @@ interface LandcoverLayerProps {
   exaggeration: number;
   visibleClasses?: Set<number>;
   onDataLoaded?: (data: LandcoverRasterData | null) => void;
+  onAvailableClasses?: (classes: number[]) => void;
 }
 
 export interface LandcoverRasterData {
@@ -17,30 +18,30 @@ export interface LandcoverRasterData {
   bounds: GeoBounds;
 }
 
-// GlobCover legend (values 1–22, 0 = no data)
+// GlobCover legend (values 1–22, 0 = no data) — high-contrast distinct colors
 const CLASS_COLORS: Record<number, string> = {
-  1: '#006400',   // Tree Cover, broadleaved, evergreen
-  2: '#228b22',   // Tree Cover, broadleaved, deciduous, closed
-  3: '#32cd32',   // Tree Cover, broadleaved, deciduous, open
-  4: '#2e8b57',   // Tree Cover, needle-leaved, evergreen
-  5: '#3cb371',   // Tree Cover, needle-leaved, deciduous
-  6: '#66cdaa',   // Tree Cover, mixed leaf type
-  7: '#00ced1',   // Tree Cover, regularly flooded, fresh water
-  8: '#008b8b',   // Tree Cover, regularly flooded, saline water
-  9: '#9acd32',   // Mosaic: Tree cover / Other natural vegetation
-  10: '#8b0000',  // Tree Cover, burnt
-  11: '#a0522d',  // Shrub Cover, closed-open, evergreen
-  12: '#cd853f',  // Shrub Cover, closed-open, deciduous
-  13: '#bdb76b',  // Herbaceous Cover, closed-open
-  14: '#d2b48c',  // Sparse Herbaceous or sparse Shrub Cover
-  15: '#5f9ea0',  // Regularly flooded Shrub and/or Herbaceous Cover
-  16: '#daa520',  // Cultivated and managed areas (Cropland)
-  17: '#f4a460',  // Mosaic: Cropland / Tree Cover / Other natural vegetation
-  18: '#ffd700',  // Mosaic: Cropland / Shrub and/or Herbaceous cover
-  19: '#c2b280',  // Bare Areas
-  20: '#4169e1',  // Water Bodies
-  21: '#f0f8ff',  // Snow and Ice
-  22: '#dc143c',  // Artificial surfaces (Urban)
+  1: '#1a9641',   // Tree Cover, broadleaved, evergreen — vivid green
+  2: '#006837',   // Tree Cover, broadleaved, deciduous, closed — dark green
+  3: '#a6d96a',   // Tree Cover, broadleaved, deciduous, open — lime
+  4: '#1b7837',   // Tree Cover, needle-leaved, evergreen — forest green
+  5: '#78c679',   // Tree Cover, needle-leaved, deciduous — mid green
+  6: '#41ab5d',   // Tree Cover, mixed leaf type — teal green
+  7: '#00bcd4',   // Tree Cover, regularly flooded, fresh water — cyan
+  8: '#006064',   // Tree Cover, regularly flooded, saline water — dark teal
+  9: '#b2df8a',   // Mosaic: Tree cover / Other natural vegetation — pale lime
+  10: '#e31a1c',  // Tree Cover, burnt — red
+  11: '#ff7f00',  // Shrub Cover, closed-open, evergreen — orange
+  12: '#e6ab02',  // Shrub Cover, closed-open, deciduous — gold
+  13: '#c4e600',  // Herbaceous Cover, closed-open — yellow-green
+  14: '#f0e442',  // Sparse Herbaceous or sparse Shrub Cover — bright yellow
+  15: '#7570b3',  // Regularly flooded Shrub and/or Herbaceous Cover — purple
+  16: '#e7298a',  // Cultivated and managed areas (Cropland) — hot pink
+  17: '#d95f02',  // Mosaic: Cropland / Tree Cover / Other natural vegetation — burnt orange
+  18: '#e6ab02',  // Mosaic: Cropland / Shrub and/or Herbaceous cover — amber
+  19: '#c2b280',  // Bare Areas — tan
+  20: '#2b83ba',  // Water Bodies — blue
+  21: '#f0f0f0',  // Snow and Ice — near white
+  22: '#d62728',  // Artificial surfaces (Urban) — crimson
 };
 
 const CLASS_NAMES: Record<number, string> = {
@@ -102,7 +103,7 @@ function getClassColor(val: number): [number, number, number] | null {
   return [r, g, b];
 }
 
-const LandcoverLayer = ({ terrain, exaggeration, visibleClasses, onDataLoaded }: LandcoverLayerProps) => {
+const LandcoverLayer = ({ terrain, exaggeration, visibleClasses, onDataLoaded, onAvailableClasses }: LandcoverLayerProps) => {
   const [lcData, setLcData] = useState<LandcoverRasterData | null>(null);
 
   useEffect(() => {
@@ -137,13 +138,14 @@ const LandcoverLayer = ({ terrain, exaggeration, visibleClasses, onDataLoaded }:
         }
         if (!bounds) return;
 
-        // Log bounds + unique classes for verification
+        // Compute unique classes present in data
         const unique = new Set<number>();
         for (let i = 0; i < values.length; i++) {
           if (values[i] !== 0) unique.add(values[i]);
         }
-        console.log('Landcover loaded:', { w, h, bounds, uniqueClasses: Array.from(unique).sort((a, b) => a - b) });
-        console.log('Terrain bounds:', terrain.bounds);
+        const sortedClasses = Array.from(unique).sort((a, b) => a - b);
+        console.log('Landcover loaded:', { w, h, bounds, uniqueClasses: sortedClasses });
+        onAvailableClasses?.(sortedClasses);
 
         const data: LandcoverRasterData = { width: w, height: h, values, bounds };
         setLcData(data);
