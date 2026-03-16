@@ -50,7 +50,7 @@ const Index = () => {
   const [showWatershed, setShowWatershed] = useState(false);
   const [watershedTerrain, setWatershedTerrain] = useState<TerrainData | null>(null);
   const [showLandcover, setShowLandcover] = useState(false);
-  const [landcoverTerrain, setLandcoverTerrain] = useState<TerrainData | null>(null);
+  const [landcoverVisibleClasses, setLandcoverVisibleClasses] = useState<Set<number> | undefined>(undefined);
   const [showPopDensity, setShowPopDensity] = useState(false);
   const [showMigration, setShowMigration] = useState(false);
   const [showChoropleth, setShowChoropleth] = useState(false);
@@ -235,17 +235,12 @@ const Index = () => {
         console.warn('Lower Amu Darya DEM failed to load:', err);
         return null;
       }),
-      loadGeoTiff('/data/landcover.tif').catch((err) => {
-        console.warn('Landcover DEM failed to load:', err);
-        return null;
-      }),
     ])
-      .then(([base, seabed, khorezm, watershed, landcover]) => {
+      .then(([base, seabed, khorezm, watershed]) => {
         setBaseTerrain(base);
         if (seabed) setSeabedTerrain(seabed);
         if (khorezm) setKhorezmTerrain(khorezm);
         if (watershed) setWatershedTerrain(watershed);
-        if (landcover) setLandcoverTerrain(landcover);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -264,12 +259,8 @@ const Index = () => {
       result = mergeExpandTerrains(result, watershedTerrain, false);
       expanded = true;
     }
-    if (showLandcover && landcoverTerrain) {
-      result = mergeExpandTerrains(result, landcoverTerrain, false);
-      expanded = true;
-    }
     return { terrain: result, hideNoData: expanded };
-  }, [baseTerrain, seabedTerrain, khorezmTerrain, showKhorezm, watershedTerrain, showWatershed, landcoverTerrain, showLandcover]);
+  }, [baseTerrain, seabedTerrain, khorezmTerrain, showKhorezm, watershedTerrain, showWatershed]);
 
   // --- Water flow simulation ---
   const handleWaterFlowClick = useCallback((row: number, col: number) => {
@@ -625,6 +616,8 @@ const Index = () => {
               console.log('Selected object:', obj.name, obj.lat, obj.lon);
             }}
             gameModeActive={gameModeActive}
+            showLandcover={showLandcover}
+            landcoverVisibleClasses={landcoverVisibleClasses}
           />
         )}
         {!terrain && !loading && error && (
@@ -742,6 +735,8 @@ const Index = () => {
             onToggleWatershed={setShowWatershed}
             showLandcover={showLandcover}
             onToggleLandcover={setShowLandcover}
+            landcoverVisibleClasses={landcoverVisibleClasses}
+            onLandcoverVisibleClassesChange={setLandcoverVisibleClasses}
             showLakes={showLakes}
             onToggleLakes={setShowLakes}
             show21cLakes={show21cLakes}
