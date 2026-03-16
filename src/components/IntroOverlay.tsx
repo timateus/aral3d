@@ -1,4 +1,4 @@
-import { useState, Suspense, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { ArrowRight, Gamepad2, BookOpen, Map, Package } from 'lucide-react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useGLTF, OrbitControls, Environment } from '@react-three/drei';
@@ -33,7 +33,7 @@ const LIBRARY_ITEMS: LibraryItem[] = [
     modelPath: '/models/soap-khorezm.glb',
     image: '',
     description: 'Traditional soap',
-    detailText: 'Khorezm soap is crafted from cottonseed oil, animal fat, and alkaline ash — a centuries-old recipe. The region\'s soap-makers supply local bazaars with bars scented with dried herbs from the Amu Darya floodplain.',
+    detailText: 'Khorezm soap is crafted from cottonseed oil, animal fat, and alkaline ash — a centuries-old recipe.',
     lat: 41.55,
     lon: 60.63,
     is3D: true,
@@ -44,7 +44,7 @@ const LIBRARY_ITEMS: LibraryItem[] = [
     modelPath: '/models/pumpkin.glb',
     image: '',
     description: 'Dried pumpkin vessel',
-    detailText: 'Dried pumpkins were used as water vessels in traditional times: women carried water-filled pumpkins from wells. At home women used dried pumpkins as a baby rattle.',
+    detailText: 'Dried pumpkins were used as water vessels in traditional times.',
     lat: 42.46,
     lon: 59.6,
     is3D: true,
@@ -101,6 +101,96 @@ function RotatingModel({ modelPath }: { modelPath: string }) {
     <group ref={ref} scale={[6, 6, 6]} position={[0, -1.2, 0]}>
       <primitive object={scene.clone()} />
     </group>
+  );
+}
+
+// Generative particle field
+function ParticleField() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animRef = useRef<number>(0);
+  const particlesRef = useRef<{ x: number; y: number; vx: number; vy: number; size: number; opacity: number }[]>([]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const resize = () => {
+      canvas.width = window.innerWidth * 2;
+      canvas.height = window.innerHeight * 2;
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    // Init particles
+    const count = 120;
+    particlesRef.current = Array.from({ length: count }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 0.8,
+      vy: (Math.random() - 0.5) * 0.8,
+      size: Math.random() * 2 + 0.5,
+      opacity: Math.random() * 0.4 + 0.1,
+    }));
+
+    const animate = () => {
+      if (!ctx || !canvas) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const particles = particlesRef.current;
+      const connectionDist = 200;
+
+      // Update & draw particles
+      for (const p of particles) {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0) p.x = canvas.width;
+        if (p.x > canvas.width) p.x = 0;
+        if (p.y < 0) p.y = canvas.height;
+        if (p.y > canvas.height) p.y = 0;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(56, 189, 248, ${p.opacity})`;
+        ctx.fill();
+      }
+
+      // Draw connections
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < connectionDist) {
+            const alpha = (1 - dist / connectionDist) * 0.15;
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = `rgba(56, 189, 248, ${alpha})`;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+        }
+      }
+
+      animRef.current = requestAnimationFrame(animate);
+    };
+    animRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      cancelAnimationFrame(animRef.current);
+      window.removeEventListener('resize', resize);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 z-0 pointer-events-none"
+      style={{ mixBlendMode: 'screen' }}
+    />
   );
 }
 
@@ -225,87 +315,95 @@ const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onObjectSelect, onSt
     );
   }
 
-  // Main landing view
+  // Main landing view — translucent cards over the 3D map with generative particles
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center animate-fade-in">
-      <div className="absolute inset-0 bg-background/70 backdrop-blur-md" />
+      {/* Very subtle overlay to keep map visible */}
+      <div className="absolute inset-0 bg-background/30 backdrop-blur-[2px]" />
+      
+      {/* Generative particle effect */}
+      <ParticleField />
 
-      <div className="relative z-10 w-full max-w-lg px-6">
+      <div className="relative z-10 w-full max-w-2xl px-6">
         {/* Title */}
-        <div className="mb-12 text-center">
-          <h1 className="text-4xl font-light tracking-[0.25em] uppercase text-foreground">
+        <div className="mb-10 text-center">
+          <h1 className="text-5xl font-extralight tracking-[0.3em] uppercase text-foreground drop-shadow-lg">
             The Aral Sea
           </h1>
-          <div className="mt-3 h-px w-20 mx-auto bg-primary/40" />
-          <p className="mt-4 text-sm tracking-widest uppercase text-muted-foreground">
+          <div className="mt-4 h-px w-24 mx-auto bg-primary/50" />
+          <p className="mt-4 text-sm tracking-[0.2em] uppercase text-foreground/60">
             An interactive exploration
           </p>
         </div>
 
-        {/* Four main options */}
-        <div className="grid grid-cols-1 gap-3">
+        {/* Four cards in a 2x2 grid */}
+        <div className="grid grid-cols-2 gap-4">
           <button
             onClick={() => onStartGame?.()}
-            className="group flex items-center gap-4 bg-card/70 backdrop-blur-md border border-border/50 p-5 rounded-lg hover:bg-card hover:border-primary/40 transition-all duration-300 text-left"
+            className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-6 rounded-xl hover:bg-card/70 hover:border-primary/40 transition-all duration-500 text-left overflow-hidden"
           >
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
-              <Gamepad2 className="w-5 h-5 text-primary" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-foreground tracking-wide">Start a Game</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="relative z-10">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors duration-300">
+                <Gamepad2 className="w-6 h-6 text-primary" />
+              </div>
+              <p className="text-base font-semibold text-foreground tracking-wide mb-1">Start a Game</p>
+              <p className="text-xs text-foreground/50 leading-relaxed">
                 Explore missions, pour water, and discover the region
               </p>
             </div>
-            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+            <ArrowRight className="absolute bottom-4 right-4 w-4 h-4 text-foreground/20 group-hover:text-primary/60 transition-all duration-300 group-hover:translate-x-1" />
           </button>
 
           <button
             onClick={() => setView('artifacts')}
-            className="group flex items-center gap-4 bg-card/70 backdrop-blur-md border border-border/50 p-5 rounded-lg hover:bg-card hover:border-primary/40 transition-all duration-300 text-left"
+            className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-6 rounded-xl hover:bg-card/70 hover:border-accent/40 transition-all duration-500 text-left overflow-hidden"
           >
-            <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0 group-hover:bg-accent/20 transition-colors">
-              <Package className="w-5 h-5 text-accent-foreground" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-foreground tracking-wide">Explore Artifacts</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
+            <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="relative z-10">
+              <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4 group-hover:bg-accent/20 transition-colors duration-300">
+                <Package className="w-6 h-6 text-accent" />
+              </div>
+              <p className="text-base font-semibold text-foreground tracking-wide mb-1">Explore Artifacts</p>
+              <p className="text-xs text-foreground/50 leading-relaxed">
                 Browse 3D objects and cultural heritage items
               </p>
             </div>
-            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+            <ArrowRight className="absolute bottom-4 right-4 w-4 h-4 text-foreground/20 group-hover:text-accent/60 transition-all duration-300 group-hover:translate-x-1" />
           </button>
 
           <button
             onClick={onGuidedTour}
-            className="group flex items-center gap-4 bg-card/70 backdrop-blur-md border border-border/50 p-5 rounded-lg hover:bg-card hover:border-primary/40 transition-all duration-300 text-left"
+            className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-6 rounded-xl hover:bg-card/70 hover:border-secondary-foreground/30 transition-all duration-500 text-left overflow-hidden"
           >
-            <div className="w-10 h-10 rounded-lg bg-secondary/50 flex items-center justify-center flex-shrink-0 group-hover:bg-secondary/70 transition-colors">
-              <BookOpen className="w-5 h-5 text-secondary-foreground" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-foreground tracking-wide">Guided Tours</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
+            <div className="absolute inset-0 bg-gradient-to-br from-secondary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="relative z-10">
+              <div className="w-12 h-12 rounded-xl bg-secondary/50 flex items-center justify-center mb-4 group-hover:bg-secondary/70 transition-colors duration-300">
+                <BookOpen className="w-6 h-6 text-secondary-foreground" />
+              </div>
+              <p className="text-base font-semibold text-foreground tracking-wide mb-1">Guided Tours</p>
+              <p className="text-xs text-foreground/50 leading-relaxed">
                 Narrated history of the Aral Sea & canal systems
               </p>
             </div>
-            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+            <ArrowRight className="absolute bottom-4 right-4 w-4 h-4 text-foreground/20 group-hover:text-secondary-foreground/60 transition-all duration-300 group-hover:translate-x-1" />
           </button>
 
           <button
             onClick={onStart}
-            className="group flex items-center gap-4 bg-card/70 backdrop-blur-md border border-border/50 p-5 rounded-lg hover:bg-card hover:border-primary/40 transition-all duration-300 text-left"
+            className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-6 rounded-xl hover:bg-card/70 hover:border-muted-foreground/30 transition-all duration-500 text-left overflow-hidden"
           >
-            <div className="w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center flex-shrink-0 group-hover:bg-muted/70 transition-colors">
-              <Map className="w-5 h-5 text-muted-foreground" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-foreground tracking-wide">Free Exploration</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
+            <div className="absolute inset-0 bg-gradient-to-br from-muted/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="relative z-10">
+              <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center mb-4 group-hover:bg-muted/70 transition-colors duration-300">
+                <Map className="w-6 h-6 text-muted-foreground" />
+              </div>
+              <p className="text-base font-semibold text-foreground tracking-wide mb-1">Free Exploration</p>
+              <p className="text-xs text-foreground/50 leading-relaxed">
                 Full map controls, data layers, and simulation tools
               </p>
             </div>
-            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+            <ArrowRight className="absolute bottom-4 right-4 w-4 h-4 text-foreground/20 group-hover:text-muted-foreground/60 transition-all duration-300 group-hover:translate-x-1" />
           </button>
         </div>
       </div>
