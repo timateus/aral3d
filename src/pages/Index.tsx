@@ -646,6 +646,7 @@ const Index = () => {
               console.log('Selected object:', obj.name, obj.lat, obj.lon);
             }}
             gameModeActive={gameModeActive}
+            onGameAddWater={handleGameAddWater}
             showLandcover={showLandcover}
             landcoverVisibleClasses={landcoverVisibleClasses}
             onLandcoverAvailableClasses={setLandcoverAvailableClasses}
