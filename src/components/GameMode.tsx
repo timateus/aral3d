@@ -103,7 +103,6 @@ function Avatar({ position, facing }: { position: [number, number, number]; faci
         <sphereGeometry args={[0.12, 16, 16]} />
         <meshStandardMaterial color="#f0c674" emissive="#f0c674" emissiveIntensity={0.3} />
       </mesh>
-      {/* Eyes face +Z local, so facing rotation orients them */}
       <mesh position={[-0.04, 0.03, 0.1]}>
         <sphereGeometry args={[0.025, 8, 8]} />
         <meshStandardMaterial color="#1a1a2e" />
@@ -211,12 +210,10 @@ function MissionBeacon({ position }: { position: [number, number, number] }) {
         <octahedronGeometry args={[0.08, 0]} />
         <meshStandardMaterial color="#ff6b6b" emissive="#ff6b6b" emissiveIntensity={1} />
       </mesh>
-      {/* Beacon pillar */}
       <mesh position={[0, position[1] + 0.25, 0]}>
         <cylinderGeometry args={[0.005, 0.005, 0.5, 6]} />
         <meshStandardMaterial color="#ff6b6b" emissive="#ff6b6b" emissiveIntensity={0.5} transparent opacity={0.4} />
       </mesh>
-      {/* Ground ring */}
       <mesh position={[0, position[1] + 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[0.2, 0.28, 24]} />
         <meshStandardMaterial color="#ff6b6b" emissive="#ff6b6b" emissiveIntensity={0.6} transparent opacity={0.3} side={THREE.DoubleSide} />
@@ -231,6 +228,7 @@ export interface GameModeProps {
   exaggeration: number;
   active: boolean;
   onAddWater?: (row: number, col: number) => void;
+  orbitRef?: React.MutableRefObject<any>;
 }
 
 export interface GameModeState {
@@ -243,7 +241,7 @@ export interface GameModeState {
   waterPouringActive: boolean;
 }
 
-export default function GameMode({ terrain, exaggeration, active, onAddWater }: GameModeProps) {
+export default function GameMode({ terrain, exaggeration, active, onAddWater, orbitRef }: GameModeProps) {
   const [avatarPos, setAvatarPos] = useState<[number, number, number]>([0, 1, 0]);
   const [facing, setFacing] = useState(0);
   const [collected, setCollected] = useState<Set<string>>(new Set());
@@ -257,6 +255,8 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater }: 
   const { camera } = useThree();
   const avatarPosRef = useRef<[number, number, number]>([0, 1, 0]);
   const waterCooldownRef = useRef(0);
+  const cameraOffsetRef = useRef(new THREE.Vector3(0, 3, 4));
+  const initializedRef = useRef(false);
 
   // Build missions from terrain
   const missions = useMemo(() => active ? buildMissions(terrain) : [], [terrain, active]);
@@ -294,18 +294,30 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater }: 
 
   // Initialize
   useEffect(() => {
-    if (active && terrain.bounds) {
+    if (active && terrain.bounds && !initializedRef.current) {
+      initializedRef.current = true;
       const centerLat = (terrain.bounds.minLat + terrain.bounds.maxLat) / 2;
       const centerLon = (terrain.bounds.minLon + terrain.bounds.maxLon) / 2;
       const pos = geoToMeshPos(centerLat, centerLon, terrain, exaggeration);
       setAvatarPos(pos);
       avatarPosRef.current = pos;
+      
+      // Set initial camera behind avatar
+      const camPos = new THREE.Vector3(pos[0], pos[1] + 3, pos[2] + 4);
+      camera.position.copy(camPos);
+      camera.lookAt(pos[0], pos[1] + 0.2, pos[2]);
+      
+      // Set orbit target to avatar
+      if (orbitRef?.current) {
+        orbitRef.current.target.set(pos[0], pos[1] + 0.2, pos[2]);
+      }
     }
   }, [active]);
 
   // Reset on deactivate
   useEffect(() => {
     if (!active) {
+      initializedRef.current = false;
       setCollected(new Set());
       setCompletedMissions(new Set());
       setCollectMessage(null);
@@ -318,7 +330,12 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater }: 
   // Keyboard
   useEffect(() => {
     if (!active) return;
-    const onDown = (e: KeyboardEvent) => keysRef.current.add(e.key.toLowerCase());
+    const onDown = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+      keysRef.current.add(key);
+      // Prevent space from scrolling
+      if (e.key === ' ') e.preventDefault();
+    };
     const onUp = (e: KeyboardEvent) => keysRef.current.delete(e.key.toLowerCase());
     window.addEventListener('keydown', onDown);
     window.addEventListener('keyup', onUp);
@@ -334,17 +351,28 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater }: 
     if (!active) return;
     const keys = keysRef.current;
     const speed = 2 * delta;
-    let dx = 0, dz = 0;
+    
+    // Get camera forward direction projected onto XZ plane for movement relative to camera view
+    const camForward = new THREE.Vector3();
+    camera.getWorldDirection(camForward);
+    camForward.y = 0;
+    camForward.normalize();
+    const camRight = new THREE.Vector3().crossVectors(camForward, new THREE.Vector3(0, 1, 0)).normalize();
+    
+    let moveDir = new THREE.Vector3(0, 0, 0);
+    if (keys.has('w') || keys.has('arrowup')) moveDir.add(camForward);
+    if (keys.has('s') || keys.has('arrowdown')) moveDir.sub(camForward);
+    if (keys.has('a') || keys.has('arrowleft')) moveDir.sub(camRight);
+    if (keys.has('d') || keys.has('arrowright')) moveDir.add(camRight);
+    
+    const isMoving = moveDir.lengthSq() > 0;
+    if (isMoving) {
+      moveDir.normalize().multiplyScalar(speed);
+    }
 
-    if (keys.has('w') || keys.has('arrowup')) dz -= speed;
-    if (keys.has('s') || keys.has('arrowdown')) dz += speed;
-    if (keys.has('a') || keys.has('arrowleft')) dx -= speed;
-    if (keys.has('d') || keys.has('arrowright')) dx += speed;
-
-    // Update facing direction (smooth)
-    if (dx !== 0 || dz !== 0) {
-      const targetAngle = Math.atan2(dx, dz);
-      // Smooth rotation
+    // Update facing direction based on movement (smooth)
+    if (isMoving) {
+      const targetAngle = Math.atan2(moveDir.x, moveDir.z);
       let diff = targetAngle - facingRef.current;
       while (diff > Math.PI) diff -= Math.PI * 2;
       while (diff < -Math.PI) diff += Math.PI * 2;
@@ -353,19 +381,25 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater }: 
     }
 
     const [cx, , cz] = avatarPosRef.current;
-    const newX = THREE.MathUtils.clamp(cx + dx, -5, 5);
-    const newZ = THREE.MathUtils.clamp(cz + dz, -5, 5);
+    const newX = THREE.MathUtils.clamp(cx + moveDir.x, -5, 5);
+    const newZ = THREE.MathUtils.clamp(cz + moveDir.z, -5, 5);
     const newY = getTerrainHeightAt(newX, newZ, terrain, exaggeration);
     const newPos: [number, number, number] = [newX, newY, newZ];
     avatarPosRef.current = newPos;
     setAvatarPos(newPos);
 
-    // Camera follow only when moving with WASD (let mouse orbit work otherwise)
-    if (dx !== 0 || dz !== 0) {
-      const camOffset = new THREE.Vector3(0, 3, 4);
-      const targetCamPos = new THREE.Vector3(newX + camOffset.x, newY + camOffset.y, newZ + camOffset.z);
-      camera.position.lerp(targetCamPos, 0.05);
-      camera.lookAt(newX, newY + 0.2, newZ);
+    // Always keep orbit target on avatar so rotation orbits around avatar
+    if (orbitRef?.current) {
+      orbitRef.current.target.set(newX, newY + 0.2, newZ);
+    }
+
+    // When avatar moves with WASD, also update camera position to follow
+    if (isMoving) {
+      // Compute desired offset from current camera position relative to avatar
+      const currentOffset = new THREE.Vector3().subVectors(camera.position, new THREE.Vector3(cx, avatarPosRef.current[1], cz));
+      // Smoothly move camera to maintain offset from new position
+      const targetCamPos = new THREE.Vector3(newX + currentOffset.x, newY + currentOffset.y, newZ + currentOffset.z);
+      camera.position.lerp(targetCamPos, 0.15);
     }
 
     // Water pouring (SPACE key)
@@ -378,7 +412,7 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater }: 
         if (pixel) {
           onAddWater(pixel.row, pixel.col);
         }
-        waterCooldownRef.current = 0.15; // Pour every 150ms
+        waterCooldownRef.current = 0.15;
       }
     } else {
       waterCooldownRef.current = 0;
@@ -400,7 +434,6 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater }: 
       const dist = Math.sqrt(
         (newX - missionTargetPos[0]) ** 2 + (newZ - missionTargetPos[2]) ** 2
       );
-      // For water missions, also require space to have been pressed
       const isMet = currentMission.requiresWater
         ? dist < currentMission.radius && spaceHeld
         : dist < currentMission.radius;

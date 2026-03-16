@@ -12,15 +12,10 @@ export interface Mission {
   validate?: (terrain: TerrainData, avatarWorldX: number, avatarWorldZ: number) => boolean;
   reward: string;
   emoji: string;
-  /** Fun/educational fact shown on completion */
   funFact: string;
-  /** Whether this mission requires pouring water (SPACE) */
   requiresWater?: boolean;
 }
 
-/**
- * Find the pixel with the highest elevation in the terrain.
- */
 export function findHighestPoint(terrain: TerrainData): { lat: number; lon: number; elev: number } {
   const { elevations, width, height, bounds, noDataValue } = terrain;
   if (!bounds) return { lat: 0, lon: 0, elev: 0 };
@@ -48,8 +43,9 @@ export function findHighestPoint(terrain: TerrainData): { lat: number; lon: numb
 }
 
 /**
- * Find the lowest elevation inside the Aral Sea basin area (lat > 43.5, lon < 60)
- * to avoid islands and edge artifacts.
+ * Find the lowest elevation inside the former Aral Sea basin.
+ * The deepest areas are in the western basin around lat 44-45, lon 58-59.
+ * We search broadly and pick the absolute minimum.
  */
 export function findLowestPoint(terrain: TerrainData): { lat: number; lon: number; elev: number } {
   const { elevations, width, height, bounds, noDataValue } = terrain;
@@ -62,7 +58,6 @@ export function findLowestPoint(terrain: TerrainData): { lat: number; lon: numbe
     if (noDataValue !== null && e === noDataValue) continue;
     if (isNaN(e) || e <= -9999) continue;
 
-    // Convert pixel to lat/lon
     const row = Math.floor(i / width);
     const col = i % width;
     const nx = col / (width - 1);
@@ -70,8 +65,9 @@ export function findLowestPoint(terrain: TerrainData): { lat: number; lon: numbe
     const lat = bounds.minLat + ny * (bounds.maxLat - bounds.minLat);
     const lon = bounds.minLon + nx * (bounds.maxLon - bounds.minLon);
 
-    // Restrict search to the Aral Sea basin area (north of Nukus, west of 61°E)
-    if (lat < 43.0 || lon > 61.0) continue;
+    // Search in the Aral Sea basin: the deep western basin
+    // Latitude between ~43.5 and ~46, longitude between ~57.5 and ~60
+    if (lat < 43.5 || lat > 46.5 || lon < 57.0 || lon > 60.5) continue;
 
     if (e < minElev) {
       minElev = e;
@@ -94,7 +90,6 @@ export function buildMissions(terrain: TerrainData): Mission[] {
   const lowest = findLowestPoint(terrain);
 
   return [
-    // --- Level 1: Easy orientation ---
     {
       id: 'mission-1',
       level: 1,
@@ -108,7 +103,6 @@ export function buildMissions(terrain: TerrainData): Mission[] {
       emoji: '🏙️',
       funFact: 'Nukus is home to the Savitsky Museum, which houses one of the world\'s largest collections of banned Soviet avant-garde art — rescued from destruction by Igor Savitsky.',
     },
-    // --- Level 2: Geography ---
     {
       id: 'mission-2',
       level: 2,
@@ -122,7 +116,6 @@ export function buildMissions(terrain: TerrainData): Mission[] {
       emoji: '🏔️',
       funFact: `At ${Math.round(highest.elev)}m, this is the highest point in the dataset. The Ustyurt Plateau to the west of the Aral Sea rises to over 300m and was once an ancient seabed itself.`,
     },
-    // --- Level 3: Historical port ---
     {
       id: 'mission-3',
       level: 3,
@@ -136,7 +129,6 @@ export function buildMissions(terrain: TerrainData): Mission[] {
       emoji: '⚓',
       funFact: 'In the 1960s, Muynak was a thriving fishing port producing 1/6 of the Soviet fish catch. Today, rusting ship hulls sit in the desert over 100 km from the nearest water.',
     },
-    // --- Level 4: The dried sea ---
     {
       id: 'mission-4',
       level: 4,
@@ -150,21 +142,19 @@ export function buildMissions(terrain: TerrainData): Mission[] {
       emoji: '🏖️',
       funFact: 'The Aral Sea was once the 4th largest lake in the world at 68,000 km². By 2014, its eastern basin had completely dried up for the first time in 600 years.',
     },
-    // --- Level 5: The deepest point ---
     {
       id: 'mission-5',
       level: 5,
       title: 'Into the Depths',
-      description: 'Find the deepest point of the old seabed.',
-      hint: `Descend to ${Math.round(lowest.elev)}m — the deepest point in the basin.`,
+      description: `Find the deepest point of the old seabed (${Math.round(lowest.elev)}m).`,
+      hint: `The deepest point is at ${lowest.lat.toFixed(1)}°N, ${lowest.lon.toFixed(1)}°E — in the western basin of the former Aral Sea.`,
       targetLat: lowest.lat,
       targetLon: lowest.lon,
-      radius: 0.5,
+      radius: 0.6,
       reward: '🕳️ Seabed discovered!',
       emoji: '🕳️',
       funFact: `The deepest point of the former Aral Sea reached about 68 meters below the original surface level. The exposed seabed has become a source of toxic dust storms carrying salt and pesticides across the region.`,
     },
-    // --- Level 6: Amu Darya Delta ---
     {
       id: 'mission-6',
       level: 6,
@@ -178,7 +168,6 @@ export function buildMissions(terrain: TerrainData): Mission[] {
       emoji: '🌿',
       funFact: 'The Amu Darya delta once supported 500,000 hectares of wetlands and reed beds. Today, less than 10% remains. The delta\'s lakes were critical breeding grounds for dozens of fish and bird species.',
     },
-    // --- Level 7: Cotton fields ---
     {
       id: 'mission-7',
       level: 7,
@@ -192,7 +181,6 @@ export function buildMissions(terrain: TerrainData): Mission[] {
       emoji: '🌾',
       funFact: 'Soviet planners diverted the Amu Darya and Syr Darya rivers to irrigate 7 million hectares of cotton. Uzbekistan became the world\'s 5th largest cotton producer — but at the cost of the Aral Sea.',
     },
-    // --- Level 8: Kungrad ---
     {
       id: 'mission-8',
       level: 8,
@@ -206,7 +194,6 @@ export function buildMissions(terrain: TerrainData): Mission[] {
       emoji: '🚂',
       funFact: 'Kungrad is a key junction on the railway that once connected Aral Sea ports to the rest of the Soviet Union. The city has a large chemical plant that processes sodium sulfate from the dried seabed.',
     },
-    // --- Level 9: Ustyurt edge ---
     {
       id: 'mission-9',
       level: 9,
@@ -220,7 +207,6 @@ export function buildMissions(terrain: TerrainData): Mission[] {
       emoji: '🏜️',
       funFact: 'The Ustyurt Plateau is an ancient limestone tableland that extends between the Caspian and Aral Seas. Its dramatic "chink" (cliff edges) drop 100-200m and harbor rare species including the Ustyurt mouflon.',
     },
-    // --- Level 10: Salt flat ---
     {
       id: 'mission-10',
       level: 10,
@@ -234,7 +220,6 @@ export function buildMissions(terrain: TerrainData): Mission[] {
       emoji: '🧂',
       funFact: 'The Aralkum — the desert that replaced the Aral Sea — is one of the youngest deserts on Earth. Wind carries an estimated 75 million tons of toxic salt and dust from the dried seabed each year, contaminating farmland up to 500 km away.',
     },
-    // --- Level 11: Health crisis zone ---
     {
       id: 'mission-11',
       level: 11,
@@ -248,7 +233,6 @@ export function buildMissions(terrain: TerrainData): Mission[] {
       emoji: '🏥',
       funFact: 'Karakalpakstan has some of the highest rates of throat cancer, anemia, and kidney disease in the world. Infant mortality is 5x the European average. Pesticides from cotton farming accumulated in the seabed and are now airborne.',
     },
-    // --- Level 12: Migration origin ---
     {
       id: 'mission-12',
       level: 12,
@@ -262,7 +246,6 @@ export function buildMissions(terrain: TerrainData): Mission[] {
       emoji: '✈️',
       funFact: 'Over 30% of working-age adults in Karakalpakstan migrate seasonally to Kazakhstan and Russia for work. Many villages are left with only the elderly and children. Remittances make up a significant share of household income.',
     },
-    // --- Level 13: Natural gas ---
     {
       id: 'mission-13',
       level: 13,
@@ -276,7 +259,6 @@ export function buildMissions(terrain: TerrainData): Mission[] {
       emoji: '⛽',
       funFact: 'The Ustyurt Plateau contains the Surgil gas field, one of Central Asia\'s largest. A $4 billion processing plant was built here. Ironically, the region with destroyed water resources now exports fossil fuels.',
     },
-    // --- Level 14: Kok-Aral Dam site ---
     {
       id: 'mission-14',
       level: 14,
@@ -290,7 +272,6 @@ export function buildMissions(terrain: TerrainData): Mission[] {
       emoji: '🔧',
       funFact: 'Built in 2005 with World Bank funding, the Kok-Aral Dam separated the North Aral from the South. Within 2 years, water levels rose 4 meters, salinity dropped from 30 to 8 g/L, and fish returned. It\'s one of the few environmental success stories.',
     },
-    // --- Level 15: Water Bringer ---
     {
       id: 'mission-15',
       level: 15,
