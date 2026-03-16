@@ -88,6 +88,8 @@ interface TerrainViewerProps {
   showObjectLibrary?: boolean;
   onObjectSelect?: (obj: LibraryObject) => void;
   gameModeActive?: boolean;
+  showLandcover?: boolean;
+  landcoverVisibleClasses?: Set<number>;
 }
 
 function CameraAnimator({ started }: { started: boolean }) {
