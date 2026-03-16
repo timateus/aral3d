@@ -1,10 +1,8 @@
-import { useState, useEffect } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { INDICATORS } from '@/lib/demographic-data';
 import { CLASS_COLORS, CLASS_NAMES } from '@/components/LandcoverLayer';
-import { fromArrayBuffer } from 'geotiff';
 
 interface LegendProps {
   showBorders: boolean;
