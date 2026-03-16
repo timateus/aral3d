@@ -75,7 +75,7 @@ export default function MapControls({ enabled, orbitRef, gameModeActive }: { ena
         maxDistance={30}
         maxPolarAngle={Math.PI / 2.1}
         enablePan={!gameModeActive}
-        enableKeys={false}
+        
         mouseButtons={{
           LEFT: gameModeActive ? THREE.MOUSE.ROTATE : THREE.MOUSE.PAN,
           MIDDLE: THREE.MOUSE.DOLLY,
