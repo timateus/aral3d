@@ -671,7 +671,13 @@ const Index = () => {
 
       {/* Header */}
       {started && !narrativeActive && !canalTourActive && !isMobile && (
-        <div className="absolute top-4 left-4 z-10">
+        <div className="absolute top-4 left-4 z-10 flex items-center gap-3">
+          <button
+            onClick={() => setStarted(false)}
+            className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground hover:text-primary transition-colors border border-border/50 px-3 py-1.5 bg-card/60 backdrop-blur-sm"
+          >
+            Library
+          </button>
           <h1 className="text-lg font-semibold text-foreground tracking-tight">
             Aral Sea Terrain Viewer
           </h1>
