@@ -13,6 +13,8 @@ import WaterVolumeDisplay from '@/components/WaterVolumeDisplay';
 import DataPanel, { AralAnnual, SEA_SERIES } from '@/components/DataPanel';
 import { Camera, Video, BarChart3, Navigation, MapPin, Loader2, Crosshair, Download, Waves, Gamepad2 } from 'lucide-react';
 import { exportTerrainSTL } from '@/lib/stl-exporter';
+import GameMissionHUD from '@/components/GameMissionHUD';
+import type { GameModeState } from '@/components/GameMode';
 import type { ScenarioAction } from '@/types/scenario';
 import { NARRATIVE_STEPS } from '@/lib/narrative-steps';
 import { CANAL_TOUR_STEPS, getEthnicityColor } from '@/lib/canal-tour-steps';
