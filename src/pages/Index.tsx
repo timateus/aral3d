@@ -95,6 +95,7 @@ const Index = () => {
   const autoDigPixelsRef = useRef<Set<number>>(new Set());
   const [showObjectLibrary, setShowObjectLibrary] = useState(false);
   const [gameModeActive, setGameModeActive] = useState(false);
+  const [gameModeState, setGameModeState] = useState<GameModeState | null>(null);
   
   const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
   const [flowRenderKey, setFlowRenderKey] = useState(0);
