@@ -12,6 +12,8 @@ import MigrationLayer from './MigrationLayer';
 import ChoroplethLayer from './ChoroplethLayer';
 import RiverFlyover from './RiverFlyover';
 import MapControls from './MapControls';
+import ObjectLibrary3D from './ObjectLibrary3D';
+import type { LibraryObject } from './ObjectLibrary3D';
 import { TerrainData } from '@/lib/geotiff-loader';
 import type { ScenarioAction } from '@/types/scenario';
 import type { WaterFlowState } from '@/lib/water-flow-simulation';
