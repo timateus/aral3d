@@ -49,6 +49,8 @@ const Index = () => {
   const [show21cLakes, setShow21cLakes] = useState(false);
   const [showWatershed, setShowWatershed] = useState(false);
   const [watershedTerrain, setWatershedTerrain] = useState<TerrainData | null>(null);
+  const [showLandcover, setShowLandcover] = useState(false);
+  const [landcoverTerrain, setLandcoverTerrain] = useState<TerrainData | null>(null);
   const [showPopDensity, setShowPopDensity] = useState(false);
   const [showMigration, setShowMigration] = useState(false);
   const [showChoropleth, setShowChoropleth] = useState(false);
@@ -233,12 +235,17 @@ const Index = () => {
         console.warn('Lower Amu Darya DEM failed to load:', err);
         return null;
       }),
+      loadGeoTiff('/data/landcover.tif').catch((err) => {
+        console.warn('Landcover DEM failed to load:', err);
+        return null;
+      }),
     ])
-      .then(([base, seabed, khorezm, watershed]) => {
+      .then(([base, seabed, khorezm, watershed, landcover]) => {
         setBaseTerrain(base);
         if (seabed) setSeabedTerrain(seabed);
         if (khorezm) setKhorezmTerrain(khorezm);
         if (watershed) setWatershedTerrain(watershed);
+        if (landcover) setLandcoverTerrain(landcover);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -257,8 +264,12 @@ const Index = () => {
       result = mergeExpandTerrains(result, watershedTerrain, false);
       expanded = true;
     }
+    if (showLandcover && landcoverTerrain) {
+      result = mergeExpandTerrains(result, landcoverTerrain, false);
+      expanded = true;
+    }
     return { terrain: result, hideNoData: expanded };
-  }, [baseTerrain, seabedTerrain, khorezmTerrain, showKhorezm, watershedTerrain, showWatershed]);
+  }, [baseTerrain, seabedTerrain, khorezmTerrain, showKhorezm, watershedTerrain, showWatershed, landcoverTerrain, showLandcover]);
 
   // --- Water flow simulation ---
   const handleWaterFlowClick = useCallback((row: number, col: number) => {
@@ -729,6 +740,8 @@ const Index = () => {
             onToggleKhorezm={setShowKhorezm}
             showWatershed={showWatershed}
             onToggleWatershed={setShowWatershed}
+            showLandcover={showLandcover}
+            onToggleLandcover={setShowLandcover}
             showLakes={showLakes}
             onToggleLakes={setShowLakes}
             show21cLakes={show21cLakes}

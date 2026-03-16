@@ -18,6 +18,8 @@ interface LegendProps {
   onToggleKhorezm: (val: boolean) => void;
   showWatershed: boolean;
   onToggleWatershed: (val: boolean) => void;
+  showLandcover: boolean;
+  onToggleLandcover: (val: boolean) => void;
   showLakes: boolean;
   onToggleLakes: (val: boolean) => void;
   show21cLakes?: boolean;
@@ -38,7 +40,7 @@ interface LegendProps {
   onPopHexHeightChange: (val: number) => void;
 }
 
-const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin, show21stBasin, onToggle21stBasin, showKhorezm, onToggleKhorezm, showWatershed, onToggleWatershed, showLakes, onToggleLakes, show21cLakes, onToggle21cLakes, showPopDensity, onTogglePopDensity, popHexSize, onPopHexSizeChange, popHexHeight, onPopHexHeightChange, showMigration, onToggleMigration, showChoropleth, onToggleChoropleth, choroplethIndicator, onChoroplethIndicatorChange, choroplethExaggeration, onChoroplethExaggerationChange }: LegendProps) => {
+const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin, show21stBasin, onToggle21stBasin, showKhorezm, onToggleKhorezm, showWatershed, onToggleWatershed, showLandcover, onToggleLandcover, showLakes, onToggleLakes, show21cLakes, onToggle21cLakes, showPopDensity, onTogglePopDensity, popHexSize, onPopHexSizeChange, popHexHeight, onPopHexHeightChange, showMigration, onToggleMigration, showChoropleth, onToggleChoropleth, choroplethIndicator, onChoroplethIndicatorChange, choroplethExaggeration, onChoroplethExaggerationChange }: LegendProps) => {
   return (
     <div className="glass-panel p-3 space-y-2 w-72">
       <label className="flex items-center justify-between cursor-pointer">
@@ -105,6 +107,14 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
           Watershed DEM
         </span>
         <Switch className="scale-75" checked={showWatershed} onCheckedChange={onToggleWatershed} />
+      </label>
+
+      <label className="flex items-center justify-between cursor-pointer">
+        <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
+          <span className="inline-block w-3 h-3 rounded-sm" style={{ background: 'linear-gradient(135deg, #2d6a4f, #95d5b2)' }} />
+          Landcover
+        </span>
+        <Switch className="scale-75" checked={showLandcover} onCheckedChange={onToggleLandcover} />
       </label>
 
       <label className="flex items-center justify-between cursor-pointer">
