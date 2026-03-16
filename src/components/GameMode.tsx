@@ -398,15 +398,16 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater }: 
       const dist = Math.sqrt(
         (newX - missionTargetPos[0]) ** 2 + (newZ - missionTargetPos[2]) ** 2
       );
-      // For water mission, also require space to have been pressed
-      const isMet = currentMission.id === 'mission-5'
+      // For water missions, also require space to have been pressed
+      const isMet = currentMission.requiresWater
         ? dist < currentMission.radius && spaceHeld
         : dist < currentMission.radius;
 
       if (isMet) {
         setCompletedMissions(prev => new Set([...prev, currentMission.id]));
         setRewardMessage(currentMission.reward);
-        setTimeout(() => setRewardMessage(null), 3000);
+        setRewardFact(currentMission.funFact);
+        setTimeout(() => { setRewardMessage(null); setRewardFact(null); }, 6000);
       }
     }
   });
