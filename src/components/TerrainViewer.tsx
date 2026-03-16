@@ -252,6 +252,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
   const orbitRef = useRef<any>(null);
   const [flyoverAnimating, setFlyoverAnimating] = useState(false);
   const [popData, setPopData] = useState<PopData | null>(null);
+  const [lcData, setLcData] = useState<LandcoverRasterData | null>(null);
 
   useImperativeHandle(ref, () => ({
     screenshot: () => screenshotFn.current?.(),
