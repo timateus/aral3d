@@ -18,6 +18,8 @@ interface LegendProps {
   onToggleKhorezm: (val: boolean) => void;
   showWatershed: boolean;
   onToggleWatershed: (val: boolean) => void;
+  showLandcover: boolean;
+  onToggleLandcover: (val: boolean) => void;
   showLakes: boolean;
   onToggleLakes: (val: boolean) => void;
   show21cLakes?: boolean;
