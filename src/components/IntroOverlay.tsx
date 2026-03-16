@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, Suspense } from 'react';
-import { ArrowRight, Gamepad2, BookOpen, Map, Package } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useGLTF, OrbitControls, Environment } from '@react-three/drei';
 import * as THREE from 'three';
