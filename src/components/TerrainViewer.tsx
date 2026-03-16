@@ -88,6 +88,7 @@ interface TerrainViewerProps {
   showObjectLibrary?: boolean;
   onObjectSelect?: (obj: LibraryObject) => void;
   gameModeActive?: boolean;
+  onGameAddWater?: (row: number, col: number) => void;
   showLandcover?: boolean;
   landcoverVisibleClasses?: Set<number>;
   onLandcoverAvailableClasses?: (classes: number[]) => void;
