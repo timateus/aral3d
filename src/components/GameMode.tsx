@@ -238,6 +238,7 @@ export interface GameModeState {
   completedCount: number;
   totalCount: number;
   rewardMessage: string | null;
+  rewardFact: string | null;
   collectMessage: string | null;
   waterPouringActive: boolean;
 }
@@ -248,6 +249,7 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater }: 
   const [collected, setCollected] = useState<Set<string>>(new Set());
   const [completedMissions, setCompletedMissions] = useState<Set<string>>(new Set());
   const [rewardMessage, setRewardMessage] = useState<string | null>(null);
+  const [rewardFact, setRewardFact] = useState<string | null>(null);
   const [collectMessage, setCollectMessage] = useState<string | null>(null);
   const [waterPouring, setWaterPouring] = useState(false);
   const keysRef = useRef<Set<string>>(new Set());
@@ -283,6 +285,7 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater }: 
       completedCount: completedMissions.size,
       totalCount: missions.length,
       rewardMessage,
+      rewardFact,
       collectMessage: collectMessage,
       waterPouringActive: waterPouring,
     };
@@ -307,6 +310,7 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater }: 
       setCompletedMissions(new Set());
       setCollectMessage(null);
       setRewardMessage(null);
+      setRewardFact(null);
       setWaterPouring(false);
     }
   }, [active]);
@@ -356,11 +360,13 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater }: 
     avatarPosRef.current = newPos;
     setAvatarPos(newPos);
 
-    // Camera follow
-    const camOffset = new THREE.Vector3(0, 3, 4);
-    const targetCamPos = new THREE.Vector3(newX + camOffset.x, newY + camOffset.y, newZ + camOffset.z);
-    camera.position.lerp(targetCamPos, 0.05);
-    camera.lookAt(newX, newY + 0.2, newZ);
+    // Camera follow only when moving with WASD (let mouse orbit work otherwise)
+    if (dx !== 0 || dz !== 0) {
+      const camOffset = new THREE.Vector3(0, 3, 4);
+      const targetCamPos = new THREE.Vector3(newX + camOffset.x, newY + camOffset.y, newZ + camOffset.z);
+      camera.position.lerp(targetCamPos, 0.05);
+      camera.lookAt(newX, newY + 0.2, newZ);
+    }
 
     // Water pouring (SPACE key)
     const spaceHeld = keys.has(' ');
@@ -394,15 +400,16 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater }: 
       const dist = Math.sqrt(
         (newX - missionTargetPos[0]) ** 2 + (newZ - missionTargetPos[2]) ** 2
       );
-      // For water mission, also require space to have been pressed
-      const isMet = currentMission.id === 'mission-5'
+      // For water missions, also require space to have been pressed
+      const isMet = currentMission.requiresWater
         ? dist < currentMission.radius && spaceHeld
         : dist < currentMission.radius;
 
       if (isMet) {
         setCompletedMissions(prev => new Set([...prev, currentMission.id]));
         setRewardMessage(currentMission.reward);
-        setTimeout(() => setRewardMessage(null), 3000);
+        setRewardFact(currentMission.funFact);
+        setTimeout(() => { setRewardMessage(null); setRewardFact(null); }, 6000);
       }
     }
   });
