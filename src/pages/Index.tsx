@@ -89,6 +89,7 @@ const Index = () => {
   const [autoDigging, setAutoDigging] = useState(false);
   const autoDigPixelsRef = useRef<Set<number>>(new Set());
   const [showObjectLibrary, setShowObjectLibrary] = useState(false);
+  const [gameModeActive, setGameModeActive] = useState(false);
   
   const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
   const [flowRenderKey, setFlowRenderKey] = useState(0);
