@@ -235,17 +235,12 @@ const Index = () => {
         console.warn('Lower Amu Darya DEM failed to load:', err);
         return null;
       }),
-      loadGeoTiff('/data/landcover.tif').catch((err) => {
-        console.warn('Landcover DEM failed to load:', err);
-        return null;
-      }),
     ])
-      .then(([base, seabed, khorezm, watershed, landcover]) => {
+      .then(([base, seabed, khorezm, watershed]) => {
         setBaseTerrain(base);
         if (seabed) setSeabedTerrain(seabed);
         if (khorezm) setKhorezmTerrain(khorezm);
         if (watershed) setWatershedTerrain(watershed);
-        if (landcover) setLandcoverTerrain(landcover);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
