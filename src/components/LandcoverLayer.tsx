@@ -138,13 +138,14 @@ const LandcoverLayer = ({ terrain, exaggeration, visibleClasses, onDataLoaded, o
         }
         if (!bounds) return;
 
-        // Log bounds + unique classes for verification
+        // Compute unique classes present in data
         const unique = new Set<number>();
         for (let i = 0; i < values.length; i++) {
           if (values[i] !== 0) unique.add(values[i]);
         }
-        console.log('Landcover loaded:', { w, h, bounds, uniqueClasses: Array.from(unique).sort((a, b) => a - b) });
-        console.log('Terrain bounds:', terrain.bounds);
+        const sortedClasses = Array.from(unique).sort((a, b) => a - b);
+        console.log('Landcover loaded:', { w, h, bounds, uniqueClasses: sortedClasses });
+        onAvailableClasses?.(sortedClasses);
 
         const data: LandcoverRasterData = { width: w, height: h, values, bounds };
         setLcData(data);
