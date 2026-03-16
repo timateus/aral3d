@@ -22,6 +22,7 @@ interface LegendProps {
   showLandcover: boolean;
   onToggleLandcover: (val: boolean) => void;
   landcoverVisibleClasses?: Set<number>;
+  landcoverAvailableClasses?: number[];
   onLandcoverVisibleClassesChange?: (classes: Set<number> | undefined) => void;
   showLakes: boolean;
   onToggleLakes: (val: boolean) => void;
