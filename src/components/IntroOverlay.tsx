@@ -372,9 +372,6 @@ const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onObjectSelect, onSt
           >
             <div className="absolute inset-0 bg-gradient-to-br from-secondary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="relative z-10">
-              <div className="w-12 h-12 rounded-xl bg-secondary/50 flex items-center justify-center mb-4 group-hover:bg-secondary/70 transition-colors duration-300">
-                <BookOpen className="w-6 h-6 text-secondary-foreground" />
-              </div>
               <p className="text-base font-semibold text-foreground tracking-wide mb-1">Guided Tours</p>
               <p className="text-xs text-foreground/50 leading-relaxed">
                 Narrated history of the Aral Sea & canal systems
