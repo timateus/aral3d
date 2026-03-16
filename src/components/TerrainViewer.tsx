@@ -5,6 +5,7 @@ import TerrainMesh from './TerrainMesh';
 import GeoFeatures from './GeoFeatures';
 import WaterExtentLayer from './WaterExtentLayer';
 import PopulationDensityLayer, { PopData } from './PopulationDensityLayer';
+import LandcoverLayer, { LandcoverRasterData } from './LandcoverLayer';
 import NarrativeCameraController from './NarrativeCameraController';
 import ScenarioOverlay from './ScenarioOverlay';
 import WaterFlowOverlay from './WaterFlowOverlay';
