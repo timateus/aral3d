@@ -740,6 +740,8 @@ const Index = () => {
             onToggleKhorezm={setShowKhorezm}
             showWatershed={showWatershed}
             onToggleWatershed={setShowWatershed}
+            showLandcover={showLandcover}
+            onToggleLandcover={setShowLandcover}
             showLakes={showLakes}
             onToggleLakes={setShowLakes}
             show21cLakes={show21cLakes}
