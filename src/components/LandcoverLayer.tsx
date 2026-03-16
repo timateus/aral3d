@@ -7,14 +7,14 @@ interface LandcoverLayerProps {
   terrain: TerrainData;
   exaggeration: number;
   visibleClasses?: Set<number>;
+  onDataLoaded?: (data: LandcoverRasterData | null) => void;
 }
 
-interface LandcoverData {
+export interface LandcoverRasterData {
   width: number;
   height: number;
   values: Uint8Array | Uint16Array | Float32Array | Float64Array;
   bounds: GeoBounds;
-  classes: Map<number, string>;
 }
 
 // Distinct colors for landcover classes
@@ -100,11 +100,27 @@ const CLASS_NAMES: Record<number, string> = {
 
 export { CLASS_COLORS, CLASS_NAMES };
 
+export function sampleLandcover(data: LandcoverRasterData | null, lon: number, lat: number): { classId: number; className: string; color: string } | null {
+  if (!data) return null;
+  const { bounds, width, height, values } = data;
+  const nx = (lon - bounds.minLon) / (bounds.maxLon - bounds.minLon);
+  const ny = (bounds.maxLat - lat) / (bounds.maxLat - bounds.minLat);
+  if (nx < 0 || nx > 1 || ny < 0 || ny > 1) return null;
+  const px = Math.floor(nx * (width - 1));
+  const py = Math.floor(ny * (height - 1));
+  const val = values[py * width + px];
+  if (val === 0) return null;
+  return {
+    classId: val,
+    className: CLASS_NAMES[val] || `Class ${val}`,
+    color: CLASS_COLORS[val] || `hsl(${(val * 137) % 360}, 60%, 50%)`,
+  };
+}
+
 function getClassColor(val: number): [number, number, number] | null {
-  if (val === 0) return null; // no data
+  if (val === 0) return null;
   const hex = CLASS_COLORS[val];
   if (!hex) {
-    // Generate a deterministic color for unknown classes
     const r = ((val * 137) % 256) / 255;
     const g = ((val * 97 + 50) % 256) / 255;
     const b = ((val * 223 + 100) % 256) / 255;
@@ -116,8 +132,8 @@ function getClassColor(val: number): [number, number, number] | null {
   return [r, g, b];
 }
 
-const LandcoverLayer = ({ terrain, exaggeration, visibleClasses }: LandcoverLayerProps) => {
-  const [lcData, setLcData] = useState<LandcoverData | null>(null);
+const LandcoverLayer = ({ terrain, exaggeration, visibleClasses, onDataLoaded }: LandcoverLayerProps) => {
+  const [lcData, setLcData] = useState<LandcoverRasterData | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -151,21 +167,27 @@ const LandcoverLayer = ({ terrain, exaggeration, visibleClasses }: LandcoverLaye
         }
         if (!bounds) return;
 
-        // Collect unique classes
-        const classes = new Map<number, string>();
+        // Log bounds + unique classes for verification
+        const unique = new Set<number>();
         for (let i = 0; i < values.length; i++) {
-          const v = values[i];
-          if (v !== 0 && !classes.has(v)) {
-            classes.set(v, CLASS_NAMES[v] || `Class ${v}`);
-          }
+          if (values[i] !== 0) unique.add(values[i]);
         }
+        console.log('Landcover loaded:', { w, h, bounds, uniqueClasses: Array.from(unique).sort((a, b) => a - b) });
+        console.log('Terrain bounds:', terrain.bounds);
 
-        setLcData({ width: w, height: h, values, bounds, classes });
+        const data: LandcoverRasterData = { width: w, height: h, values, bounds };
+        setLcData(data);
+        onDataLoaded?.(data);
       } catch (e) {
         console.warn('Landcover load failed:', e);
       }
     })();
   }, []);
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => { onDataLoaded?.(null); };
+  }, [onDataLoaded]);
 
   const mesh = useMemo(() => {
     if (!lcData || !terrain.bounds) return null;
