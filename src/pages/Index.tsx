@@ -619,6 +619,7 @@ const Index = () => {
             gameModeActive={gameModeActive}
             showLandcover={showLandcover}
             landcoverVisibleClasses={landcoverVisibleClasses}
+            onLandcoverAvailableClasses={setLandcoverAvailableClasses}
           />
         )}
         {!terrain && !loading && error && (
