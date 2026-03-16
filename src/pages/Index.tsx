@@ -616,6 +616,8 @@ const Index = () => {
               console.log('Selected object:', obj.name, obj.lat, obj.lon);
             }}
             gameModeActive={gameModeActive}
+            showLandcover={showLandcover}
+            landcoverVisibleClasses={landcoverVisibleClasses}
           />
         )}
         {!terrain && !loading && error && (
