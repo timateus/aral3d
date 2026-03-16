@@ -50,7 +50,7 @@ const Index = () => {
   const [showWatershed, setShowWatershed] = useState(false);
   const [watershedTerrain, setWatershedTerrain] = useState<TerrainData | null>(null);
   const [showLandcover, setShowLandcover] = useState(false);
-  const [landcoverTerrain, setLandcoverTerrain] = useState<TerrainData | null>(null);
+  const [landcoverVisibleClasses, setLandcoverVisibleClasses] = useState<Set<number> | undefined>(undefined);
   const [showPopDensity, setShowPopDensity] = useState(false);
   const [showMigration, setShowMigration] = useState(false);
   const [showChoropleth, setShowChoropleth] = useState(false);
