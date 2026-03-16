@@ -86,6 +86,7 @@ interface TerrainViewerProps {
   canalTourActive?: boolean;
   showObjectLibrary?: boolean;
   onObjectSelect?: (obj: LibraryObject) => void;
+  gameModeActive?: boolean;
 }
 
 function CameraAnimator({ started }: { started: boolean }) {
