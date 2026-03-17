@@ -760,7 +760,7 @@ const Index = () => {
       )}
 
       {/* Data Panel - positioned left */}
-      {started && !narrativeActive && !canalTourActive && showDataPanel && !isMobile && (
+      {started && !narrativeActive && !canalTourActive && !agmarTourActive && showDataPanel && !isMobile && (
         <div className="absolute top-16 left-4 z-10">
           <DataPanel
             currentYear={waterExtentYear}
