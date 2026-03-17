@@ -169,14 +169,10 @@ export default function AryqWorld({ active, onComplete, orbitRef }: AryqWorldPro
 
   return (
     <group>
-      {/* Ground plane */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
-        <planeGeometry args={[6, 6]} />
-        <meshStandardMaterial color="#1a2332" roughness={0.9} />
-      </mesh>
-
       {/* Aryq model */}
-      <primitive object={scene} scale={[1, 1, 1]} position={[0, 0, 0]} />
+      <group ref={modelRef}>
+        <primitive object={scene} scale={[1, 1, 1]} position={[0, 0, 0]} />
+      </group>
 
       {/* Lighting */}
       <ambientLight intensity={0.5} />
