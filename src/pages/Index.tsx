@@ -652,6 +652,12 @@ const Index = () => {
             }}
             gameModeActive={gameModeActive}
             onGameAddWater={handleGameAddWater}
+            bowlWorldActive={bowlWorldActive}
+            onBowlWorldComplete={() => {
+              setBowlWorldActive(false);
+              // Complete the current mission after returning from bowl world
+              window.dispatchEvent(new CustomEvent('bowl-world-complete'));
+            }}
             showLandcover={showLandcover}
             landcoverVisibleClasses={landcoverVisibleClasses}
             onLandcoverAvailableClasses={setLandcoverAvailableClasses}
