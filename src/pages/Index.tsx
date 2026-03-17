@@ -22,6 +22,7 @@ import { AGMAR_TOUR_STEPS } from '@/lib/agmar-tour-steps';
 import NarrativeOverlay from '@/components/NarrativeOverlay';
 import CanalTourOverlay from '@/components/CanalTourOverlay';
 import AgmarTourOverlay from '@/components/AgmarTourOverlay';
+import QuadrantView from '@/components/QuadrantView';
 import DamToolPanel from '@/components/DamToolPanel';
 import CanalToolPanel from '@/components/CanalToolPanel';
 import WaterFlowPanel from '@/components/WaterFlowPanel';
