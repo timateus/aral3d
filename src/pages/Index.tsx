@@ -757,7 +757,7 @@ const Index = () => {
       </div>
 
       {/* Intro Overlay */}
-      {!started && !loading && terrain && (
+      {!started && !loading && terrain && !quadrantViewActive && (
         <IntroOverlay
           onStart={() => setStarted(true)}
           onGuidedTour={startNarrative}
@@ -771,6 +771,21 @@ const Index = () => {
             setFlowSpeed(20);
             setShowWaterExtent(true);
           }}
+          onQuadrants={() => setQuadrantViewActive(true)}
+        />
+      )}
+
+      {/* Quadrant View */}
+      {quadrantViewActive && !started && (
+        <QuadrantView
+          onSelectQuadrant={(id) => {
+            setQuadrantViewActive(false);
+            setStarted(true);
+            if (id === 'serious-small' || id === 'playful-small') {
+              setAryqWorldActive(true);
+            }
+          }}
+          onBack={() => setQuadrantViewActive(false)}
         />
       )}
 
