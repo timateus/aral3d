@@ -157,7 +157,7 @@ function RotatingModel({ modelPath, playful, rotationDir, scaleBase, brightLight
   );
 }
 
-function QuadrantCanvas({ type, rotationDir, label, terrain, onLabelClick, modelPath, modelScale, colorFn, cameraPos }: {
+function QuadrantCanvas({ type, rotationDir, label, terrain, onLabelClick, modelPath, modelScale, colorFn, cameraPos, brightLight, modelPosY }: {
   type: 'terrain' | 'model';
   rotationDir: [number, number];
   label: string;
@@ -167,6 +167,8 @@ function QuadrantCanvas({ type, rotationDir, label, terrain, onLabelClick, model
   modelScale?: number;
   colorFn?: (n: number) => [number, number, number];
   cameraPos?: [number, number, number];
+  brightLight?: boolean;
+  modelPosY?: number;
 }) {
   const camPos = cameraPos ?? (type === 'model' ? [4, 3.5, 4] : [3, 2.5, 3]);
   return (
@@ -179,15 +181,15 @@ function QuadrantCanvas({ type, rotationDir, label, terrain, onLabelClick, model
         {label} →
       </button>
       <Canvas camera={{ position: camPos as [number, number, number], fov: type === 'model' ? 40 : 45 }}>
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[5, 5, 5]} intensity={0.9} />
+        <ambientLight intensity={brightLight ? 1.2 : 0.6} />
+        <directionalLight position={[5, 5, 5]} intensity={brightLight ? 1.5 : 0.9} />
         <Suspense fallback={null}>
           {type === 'terrain' && terrain ? (
             <group>
               <DEMTerrain terrain={terrain} colorFn={colorFn ?? getPaleColor} />
             </group>
           ) : type === 'model' && modelPath ? (
-            <RotatingModel modelPath={modelPath} playful={false} rotationDir={rotationDir} scaleBase={modelScale} />
+            <RotatingModel modelPath={modelPath} playful={false} rotationDir={rotationDir} scaleBase={modelScale} brightLight={brightLight} positionY={modelPosY} />
           ) : null}
           <Environment preset="city" />
         </Suspense>
