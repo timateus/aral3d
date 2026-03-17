@@ -35,8 +35,7 @@ function getATColor(normalized: number): [number, number, number] {
 // DEM terrain mesh generated from actual data
 function DEMTerrain({ terrain, playful }: { terrain: TerrainData; playful: boolean }) {
   const geo = useMemo(() => {
-    const { width, height, elevation, minElev, maxElev, noDataValue } = terrain;
-    // Downsample for perf — max 128x128
+    const { width, height, elevations, minElevation, maxElevation, noDataValue } = terrain;
     const step = Math.max(1, Math.floor(Math.max(width, height) / 128));
     const w = Math.floor(width / step);
     const h = Math.floor(height / step);
@@ -44,17 +43,17 @@ function DEMTerrain({ terrain, playful }: { terrain: TerrainData; playful: boole
     const positions: number[] = [];
     const colors: number[] = [];
     const indices: number[] = [];
-    const scale = 4; // fit in view
+    const scale = 4;
     const elevScale = playful ? 3 : 1.5;
 
     for (let iy = 0; iy < h; iy++) {
       for (let ix = 0; ix < w; ix++) {
         const si = (iy * step) * width + (ix * step);
-        let elev = elevation[si];
-        const isNoData = noDataValue !== undefined && elev === noDataValue;
-        if (isNoData) elev = minElev;
+        let elev = elevations[si];
+        const isNoData = noDataValue !== null && elev === noDataValue;
+        if (isNoData) elev = minElevation;
 
-        const normalized = (elev - minElev) / (maxElev - minElev + 0.001);
+        const normalized = (elev - minElevation) / (maxElevation - minElevation + 0.001);
         const px = (ix / w - 0.5) * scale;
         const pz = (iy / h - 0.5) * scale;
         const py = normalized * elevScale - 0.5;
