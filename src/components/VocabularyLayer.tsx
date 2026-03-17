@@ -81,31 +81,59 @@ export default function VocabularyLayer({ terrain, exaggeration }: VocabularyLay
         const isSelected = selected === i;
         return (
           <group key={i} position={m.pos}>
-            {/* Diamond marker */}
-            <mesh
-              position={[0, 0.3, 0]}
-              rotation={[0, 0, Math.PI / 4]}
-              onClick={(e) => { e.stopPropagation(); setSelected(isSelected ? null : i); }}
-              onPointerOver={(e) => { e.stopPropagation(); (e.object as THREE.Mesh).scale.set(1.4, 1.4, 1.4); }}
-              onPointerOut={(e) => { (e.object as THREE.Mesh).scale.set(1, 1, 1); }}
-            >
-              <boxGeometry args={[0.07, 0.07, 0.07]} />
-              <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.6} />
-            </mesh>
-            {/* Stem */}
-            <mesh position={[0, 0.12, 0]}>
-              <cylinderGeometry args={[0.01, 0.01, 0.24, 4]} />
-              <meshStandardMaterial color={color} opacity={0.5} transparent />
-            </mesh>
+            {/* Floating photo thumbnail */}
+            <Html center distanceFactor={10} position={[0, 0.4, 0]} style={{ pointerEvents: 'auto' }}>
+              <div
+                onClick={(e) => { e.stopPropagation(); setSelected(isSelected ? null : i); }}
+                style={{
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s ease',
+                  transform: isSelected ? 'scale(1.15)' : 'scale(1)',
+                }}
+                onMouseEnter={(e) => { if (!isSelected) (e.currentTarget as HTMLDivElement).style.transform = 'scale(1.12)'; }}
+                onMouseLeave={(e) => { if (!isSelected) (e.currentTarget as HTMLDivElement).style.transform = 'scale(1)'; }}
+              >
+                <div style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '4px',
+                  overflow: 'hidden',
+                  border: isSelected ? `2px solid ${color}` : '2px solid rgba(255,255,255,0.3)',
+                  boxShadow: isSelected
+                    ? `0 0 12px ${color}88, 0 4px 16px rgba(0,0,0,0.6)`
+                    : '0 4px 12px rgba(0,0,0,0.5)',
+                }}>
+                  <img
+                    src={m.image}
+                    alt={m.term}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    draggable={false}
+                  />
+                </div>
+                <div style={{
+                  textAlign: 'center',
+                  marginTop: '2px',
+                  fontSize: '9px',
+                  fontWeight: 600,
+                  color: '#fff',
+                  textShadow: '0 1px 4px rgba(0,0,0,0.9)',
+                  fontFamily: "'Inter', system-ui, sans-serif",
+                  fontStyle: 'italic',
+                  maxWidth: '70px',
+                  lineHeight: 1.2,
+                }}>
+                  {m.term}
+                </div>
+              </div>
+            </Html>
 
-            {/* Popup with photo */}
+            {/* Expanded card on click */}
             {isSelected && (
-              <Html center distanceFactor={8} position={[0, 0.6, 0]} style={{ pointerEvents: 'auto' }}>
+              <Html center distanceFactor={8} position={[0, 1.2, 0]} style={{ pointerEvents: 'auto' }}>
                 <div
                   style={{
                     background: 'rgba(13,17,23,0.96)',
                     border: `1px solid ${color}33`,
-                    padding: '0',
                     width: '240px',
                     fontFamily: "'Inter', system-ui, sans-serif",
                     color: '#e6edf3',
@@ -115,71 +143,27 @@ export default function VocabularyLayer({ terrain, exaggeration }: VocabularyLay
                   }}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {/* Photo */}
                   <div style={{ width: '100%', height: '140px', overflow: 'hidden' }}>
-                    <img
-                      src={m.image}
-                      alt={m.term}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        display: 'block',
-                      }}
-                    />
+                    <img src={m.image} alt={m.term} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   </div>
-
                   <div style={{ padding: '10px 12px' }}>
-                    {/* Term */}
-                    <div style={{
-                      fontWeight: 700,
-                      fontSize: '14px',
-                      color: '#fff',
-                      fontStyle: 'italic',
-                      marginBottom: 2,
-                    }}>
+                    <div style={{ fontWeight: 700, fontSize: '14px', color: '#fff', fontStyle: 'italic', marginBottom: 2 }}>
                       {m.term}
                     </div>
-
-                    {/* Location & category */}
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: 6,
-                    }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                       <span style={{ color: '#8b949e', fontSize: '10px' }}>📍 {m.location}</span>
-                      <span style={{
-                        fontSize: '9px',
-                        padding: '1px 6px',
-                        background: `${color}22`,
-                        color: color,
-                        border: `1px solid ${color}44`,
-                      }}>
+                      <span style={{ fontSize: '9px', padding: '1px 6px', background: `${color}22`, color, border: `1px solid ${color}44` }}>
                         {m.category}
                       </span>
                     </div>
-
-                    {/* Description */}
-                    <div style={{
-                      color: '#c9d1d9',
-                      fontSize: '11px',
-                      lineHeight: 1.5,
-                    }}>
+                    <div style={{ color: '#c9d1d9', fontSize: '11px', lineHeight: 1.5 }}>
                       {m.description}
                     </div>
-
                     <button
                       onClick={() => setSelected(null)}
                       style={{
-                        marginTop: 8,
-                        background: 'rgba(255,255,255,0.08)',
-                        border: '1px solid rgba(255,255,255,0.15)',
-                        color: '#8b949e',
-                        padding: '2px 10px',
-                        fontSize: '10px',
-                        cursor: 'pointer',
-                        width: '100%',
+                        marginTop: 8, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)',
+                        color: '#8b949e', padding: '2px 10px', fontSize: '10px', cursor: 'pointer', width: '100%',
                       }}
                     >
                       Close
