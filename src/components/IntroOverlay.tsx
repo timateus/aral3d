@@ -211,6 +211,7 @@ interface IntroOverlayProps {
   onAgmarTour?: () => void;
   onObjectSelect?: (lat: number, lon: number, name: string) => void;
   onStartGame?: () => void;
+  onQuadrants?: () => void;
 }
 
 type LandingView = 'main' | 'artifacts';
