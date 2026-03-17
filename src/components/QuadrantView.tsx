@@ -125,9 +125,10 @@ function AutoRotate({ dir }: { dir: [number, number] }) {
   return null;
 }
 
-function RotatingAryq({ playful, rotationDir }: { playful: boolean; rotationDir: [number, number] }) {
-  const { scene } = useGLTF('/models/aryq.glb');
+function RotatingModel({ modelPath, playful, rotationDir, scaleBase }: { modelPath: string; playful: boolean; rotationDir: [number, number]; scaleBase?: number }) {
+  const { scene } = useGLTF(modelPath);
   const ref = useRef<THREE.Group>(null);
+  const s = scaleBase ?? 3;
 
   useFrame((state) => {
     if (ref.current) {
@@ -156,7 +157,7 @@ function RotatingAryq({ playful, rotationDir }: { playful: boolean; rotationDir:
   }, [scene, playful]);
 
   return (
-    <group ref={ref} scale={[3, playful ? 4.5 : 3, 3]} position={[0, -0.5, 0]}>
+    <group ref={ref} scale={[s, playful ? s * 1.5 : s, s]} position={[0, -0.5, 0]}>
       <primitive object={clonedScene} />
       {playful && (
         <>
