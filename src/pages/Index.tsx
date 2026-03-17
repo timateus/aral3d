@@ -711,6 +711,7 @@ const Index = () => {
           onStart={() => setStarted(true)}
           onGuidedTour={startNarrative}
           onCanalTour={startCanalTour}
+          onAgmarTour={startAgmarTour}
           onObjectSelect={(lat, lon, name) => { setStarted(true); }}
           onStartGame={() => {
             setStarted(true);
