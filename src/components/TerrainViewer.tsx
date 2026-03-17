@@ -90,6 +90,8 @@ interface TerrainViewerProps {
   onObjectSelect?: (obj: LibraryObject) => void;
   gameModeActive?: boolean;
   onGameAddWater?: (row: number, col: number) => void;
+  bowlWorldActive?: boolean;
+  onBowlWorldComplete?: () => void;
   showLandcover?: boolean;
   landcoverVisibleClasses?: Set<number>;
   onLandcoverAvailableClasses?: (classes: number[]) => void;
