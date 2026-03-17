@@ -961,6 +961,10 @@ const Index = () => {
             onToggleSchools={setShowSchools}
             showVocabulary={showVocabulary}
             onToggleVocabulary={setShowVocabulary}
+            showGroundwater={showGroundwater}
+            onToggleGroundwater={setShowGroundwater}
+            showPrecipitation={showPrecipitation}
+            onTogglePrecipitation={setShowPrecipitation}
           />
           {terrain && (
             <WaterVolumeDisplay
