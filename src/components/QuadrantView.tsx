@@ -255,30 +255,29 @@ export default function QuadrantView({ onSelectQuadrant, onBack }: QuadrantViewP
 
             {/* 2x2 grid of 3D canvases */}
             <div className="grid grid-cols-2 grid-rows-2 w-full h-full">
-              {/* Top-left: Serious × Large Scale */}
+              {/* Top-left: Serious × Large Scale — natural terrain */}
               <QuadrantCanvas
                 type="terrain"
-                playful={false}
                 rotationDir={[1, 1]}
                 label="ag (MAR): Water Hide-and-seek"
                 terrain={terrain}
+                colorFn={getNaturalColor}
                 onLabelClick={() => onSelectQuadrant('serious-large')}
               />
               {/* Top-right: Playful × Large Scale — Noah's Arc */}
               <QuadrantCanvas
                 type="model"
-                playful={true}
                 rotationDir={[-0.7, 1.3]}
                 label="Canal thinking?"
                 terrain={terrain}
                 modelPath="/models/noahs-arc.glb"
                 modelScale={2}
+                cameraPos={[3, 2.5, 3]}
                 onLabelClick={() => onSelectQuadrant('playful-large')}
               />
               {/* Bottom-left: Serious × Small Scale — Aryq */}
               <QuadrantCanvas
                 type="model"
-                playful={false}
                 rotationDir={[0.8, -1]}
                 label="Bodies of Water"
                 terrain={terrain}
@@ -289,14 +288,15 @@ export default function QuadrantView({ onSelectQuadrant, onBack }: QuadrantViewP
               {/* Bottom-right: Playful × Small Scale — Soap */}
               <QuadrantCanvas
                 type="model"
-                playful={true}
                 rotationDir={[-1.2, 0.8]}
                 label="Soap Opera"
                 terrain={terrain}
                 modelPath="/models/soap-khorezm.glb"
-                modelScale={3}
+                modelScale={5}
+                cameraPos={[2.5, 2, 2.5]}
                 onLabelClick={() => onSelectQuadrant('playful-small')}
               />
+            </div>
             </div>
           </div>
         </div>
