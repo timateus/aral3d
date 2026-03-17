@@ -89,8 +89,17 @@ export default function AryqWorld({ active, onComplete, orbitRef }: AryqWorldPro
 
   useEffect(() => {
     if (!active) return;
-    const onDown = (e: KeyboardEvent) => keysRef.current.add(e.key.toLowerCase());
-    const onUp = (e: KeyboardEvent) => keysRef.current.delete(e.key.toLowerCase());
+    const onDown = (e: KeyboardEvent) => {
+      keysRef.current.add(e.key.toLowerCase());
+      if (e.key === ' ') {
+        e.preventDefault();
+        spaceRef.current = true;
+      }
+    };
+    const onUp = (e: KeyboardEvent) => {
+      keysRef.current.delete(e.key.toLowerCase());
+      if (e.key === ' ') spaceRef.current = false;
+    };
     window.addEventListener('keydown', onDown);
     window.addEventListener('keyup', onUp);
     return () => {
