@@ -188,6 +188,7 @@ export interface GameModeState {
   waterPouringActive: boolean;
   requiresKhorezm: boolean;
   requiresInspector: boolean;
+  inBowlWorld: boolean;
 }
 
 export default function GameMode({ terrain, exaggeration, active, onAddWater, orbitRef }: GameModeProps) {
