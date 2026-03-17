@@ -67,6 +67,8 @@ const Index = () => {
   const [showWaterExtent, setShowWaterExtent] = useState(true);
   const [showSchools, setShowSchools] = useState(false);
   const [showVocabulary, setShowVocabulary] = useState(false);
+  const [showGroundwater, setShowGroundwater] = useState(false);
+  const [showPrecipitation, setShowPrecipitation] = useState(false);
   const [waterExtentYear, setWaterExtentYear] = useState(1960);
   
   const [started, setStarted] = useState(false);
@@ -750,6 +752,8 @@ const Index = () => {
             showVocabulary={showVocabulary}
             agmarShowProposalSites={agmarTourActive && !!AGMAR_TOUR_STEPS[agmarTourStep]?.proposalSites}
             showOverlayMetrics={isMapExploration}
+            showGroundwater={showGroundwater}
+            showPrecipitation={showPrecipitation}
           />
         )}
         {!terrain && !loading && error && (
@@ -959,6 +963,10 @@ const Index = () => {
             onToggleSchools={setShowSchools}
             showVocabulary={showVocabulary}
             onToggleVocabulary={setShowVocabulary}
+            showGroundwater={showGroundwater}
+            onToggleGroundwater={setShowGroundwater}
+            showPrecipitation={showPrecipitation}
+            onTogglePrecipitation={setShowPrecipitation}
           />
           {terrain && (
             <WaterVolumeDisplay
