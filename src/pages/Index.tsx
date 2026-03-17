@@ -775,7 +775,7 @@ const Index = () => {
       )}
 
       {/* Header */}
-      {started && !narrativeActive && !canalTourActive && !isMobile && (
+      {started && !narrativeActive && !canalTourActive && !agmarTourActive && !isMobile && (
         <div className="absolute top-4 left-4 z-10 flex items-center gap-3">
           <button
             onClick={() => { setStarted(false); setGameModeActive(false); }}
