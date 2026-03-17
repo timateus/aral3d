@@ -18,24 +18,19 @@ interface SalFeature {
 const MAX_EXTRUDE = 1.5;
 
 function salinityColor(t: number): string {
-  // Bubble gum palette: pink → magenta → hot pink → violet
-  if (t < 0.25) {
-    const s = t / 0.25;
-    const r = 255, g = Math.round(200 - s * 50), b = Math.round(210 + s * 30);
+  // Neon green → yellow-green → hot pink → deep pink
+  if (t < 0.33) {
+    const s = t / 0.33;
+    const r = Math.round(57 + s * 198), g = Math.round(255 - s * 80), b = Math.round(20 + s * 80);
     return `rgb(${r},${g},${b})`;
   }
-  if (t < 0.5) {
-    const s = (t - 0.25) / 0.25;
-    const r = Math.round(255 - s * 20), g = Math.round(150 - s * 60), b = Math.round(240 - s * 30);
+  if (t < 0.66) {
+    const s = (t - 0.33) / 0.33;
+    const r = 255, g = Math.round(175 - s * 105), b = Math.round(100 + s * 80);
     return `rgb(${r},${g},${b})`;
   }
-  if (t < 0.75) {
-    const s = (t - 0.5) / 0.25;
-    const r = Math.round(235 - s * 35), g = Math.round(90 - s * 30), b = Math.round(210 + s * 20);
-    return `rgb(${r},${g},${b})`;
-  }
-  const s = (t - 0.75) / 0.25;
-  const r = Math.round(200 - s * 40), g = Math.round(60 - s * 20), b = Math.round(230 - s * 10);
+  const s = (t - 0.66) / 0.34;
+  const r = Math.round(255 - s * 20), g = Math.round(70 - s * 30), b = Math.round(180 + s * 47);
   return `rgb(${r},${g},${b})`;
 }
 
