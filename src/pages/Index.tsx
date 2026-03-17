@@ -231,6 +231,29 @@ const Index = () => {
     setShowKhorezm(false);
   }, []);
 
+  // Ag-MAR tour handlers
+  const handleAgmarTourStepChange = useCallback((newStep: number) => {
+    setAgmarTourStep(newStep);
+    const step = AGMAR_TOUR_STEPS[newStep];
+    if (!step) return;
+    setWaterExtentYear(step.year);
+    setShowBorders(step.layers.showBorders);
+    setShowRivers(step.layers.showRivers);
+    setShowWaterExtent(step.layers.showWaterExtent);
+    setShowKhorezm(step.layers.showKhorezm);
+  }, []);
+
+  const startAgmarTour = useCallback(() => {
+    setStarted(true);
+    setAgmarTourActive(true);
+    setAgmarTourStep(0);
+    handleAgmarTourStepChange(0);
+  }, [handleAgmarTourStepChange]);
+
+  const exitAgmarTour = useCallback(() => {
+    setAgmarTourActive(false);
+  }, []);
+
   useEffect(() => {
     Promise.all([
       loadGeoTiff('/data/aral_region.tif'),
