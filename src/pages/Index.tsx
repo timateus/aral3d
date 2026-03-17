@@ -23,6 +23,7 @@ import NarrativeOverlay from '@/components/NarrativeOverlay';
 import CanalTourOverlay from '@/components/CanalTourOverlay';
 import AgmarTourOverlay from '@/components/AgmarTourOverlay';
 import QuadrantView from '@/components/QuadrantView';
+import SoapBubblesOverlay from '@/components/SoapBubblesOverlay';
 import DamToolPanel from '@/components/DamToolPanel';
 import CanalToolPanel from '@/components/CanalToolPanel';
 import WaterFlowPanel from '@/components/WaterFlowPanel';
@@ -112,7 +113,8 @@ const Index = () => {
   const [agMarMode, setAgMarMode] = useState(false);
   const [agMarActiveLayer, setAgMarActiveLayer] = useState<'none' | 'population' | 'groundwater'>('none');
   const [soapOperaMode, setSoapOperaMode] = useState(false);
-  const [soapActiveLayer, setSoapActiveLayer] = useState<'none' | 'salinity'>('none');
+  const [soapActiveLayer, setSoapActiveLayer] = useState<'none' | 'salinity' | 'soap'>('none');
+  const [showSoapBubbles, setShowSoapBubbles] = useState(false);
   const [agmarTourActive, setAgmarTourActive] = useState(false);
   const [agmarTourStep, setAgmarTourStep] = useState(0);
   
@@ -1278,6 +1280,7 @@ const Index = () => {
             onClick={() => {
               setSoapOperaMode(false);
               setShowSalinity(false);
+              setShowSoapBubbles(false);
               setSoapActiveLayer('none');
               setShowKhorezm(false);
             }}
@@ -1290,6 +1293,7 @@ const Index = () => {
               const next = soapActiveLayer === 'salinity' ? 'none' : 'salinity';
               setSoapActiveLayer(next);
               setShowSalinity(next === 'salinity');
+              if (next === 'salinity') setShowSoapBubbles(false);
             }}
             className={`text-[11px] tracking-[0.08em] uppercase font-mono px-4 py-2 border backdrop-blur-sm transition-all ${
               soapActiveLayer === 'salinity'
@@ -1299,8 +1303,25 @@ const Index = () => {
           >
             Salinity
           </button>
+          <button
+            onClick={() => {
+              const next = soapActiveLayer === 'soap' ? 'none' : 'soap';
+              setSoapActiveLayer(next);
+              setShowSoapBubbles(next === 'soap');
+              if (next === 'soap') setShowSalinity(false);
+            }}
+            className={`text-[11px] tracking-[0.08em] uppercase font-mono px-4 py-2 border backdrop-blur-sm transition-all ${
+              soapActiveLayer === 'soap'
+                ? 'bg-primary/20 border-primary/60 text-primary'
+                : 'bg-card/60 border-border/50 text-muted-foreground hover:text-primary hover:border-primary/40'
+            }`}
+          >
+            🫧 Soap
+          </button>
         </div>
       )}
+
+      <SoapBubblesOverlay active={showSoapBubbles} />
     </div>
   );
 };
