@@ -15,8 +15,9 @@ function geoToMeshPos(
   terrain: TerrainData, exaggeration: number
 ): [number, number, number] {
   const { bounds, width, height, elevations } = terrain;
-  const u = (lon - bounds.west) / (bounds.east - bounds.west);
-  const v = (lat - bounds.south) / (bounds.north - bounds.south);
+  if (!bounds) return [0, 0, 0];
+  const u = (lon - bounds.minLon) / (bounds.maxLon - bounds.minLon);
+  const v = (lat - bounds.minLat) / (bounds.maxLat - bounds.minLat);
   const col = Math.round(u * (width - 1));
   const row = Math.round((1 - v) * (height - 1));
   const idx = row * width + col;
