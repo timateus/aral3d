@@ -325,7 +325,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
           {scenarioActions && scenarioActions.length > 0 && (
             <ScenarioOverlay actions={scenarioActions} terrain={terrain} exaggeration={exaggeration} />
           )}
-          {showWaterExtent && (
+          {showWaterExtent && showOverlayMetrics !== false && (
             <group position={[0, 6, -2]}>
             <Html center distanceFactor={15} style={{ pointerEvents: 'none' }}>
               <div style={{
