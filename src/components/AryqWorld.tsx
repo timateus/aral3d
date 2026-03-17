@@ -63,6 +63,9 @@ export default function AryqWorld({ active, onComplete, orbitRef }: AryqWorldPro
   const initializedRef = useRef(false);
   const raycaster = useRef(new THREE.Raycaster());
   const modelRef = useRef<THREE.Group>(null);
+  const spaceRef = useRef(false);
+  const [waterDrops, setWaterDrops] = useState<{ id: number; pos: [number, number, number] }[]>([]);
+  const dropIdRef = useRef(0);
 
   const targetPos: [number, number, number] = [0, 0.1, 0];
 
