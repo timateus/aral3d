@@ -1280,6 +1280,7 @@ const Index = () => {
             onClick={() => {
               setSoapOperaMode(false);
               setShowSalinity(false);
+              setShowSoapBubbles(false);
               setSoapActiveLayer('none');
               setShowKhorezm(false);
             }}
