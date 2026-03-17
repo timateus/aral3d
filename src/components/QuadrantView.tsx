@@ -72,7 +72,7 @@ function DEMTerrain({ terrain, playful }: { terrain: TerrainData; playful: boole
         if (playful) {
           c = getATColor(normalized);
         } else {
-          c = getElevationColor(normalized, elev);
+          c = getPaleColor(normalized);
         }
         colors.push(c[0], c[1], c[2]);
       }
