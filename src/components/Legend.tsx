@@ -44,9 +44,11 @@ interface LegendProps {
   onPopHexHeightChange: (val: number) => void;
   showSchools: boolean;
   onToggleSchools: (val: boolean) => void;
+  showVocabulary: boolean;
+  onToggleVocabulary: (val: boolean) => void;
 }
 
-const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin, show21stBasin, onToggle21stBasin, showKhorezm, onToggleKhorezm, showWatershed, onToggleWatershed, showLandcover, onToggleLandcover, landcoverVisibleClasses, landcoverAvailableClasses, onLandcoverVisibleClassesChange, showLakes, onToggleLakes, show21cLakes, onToggle21cLakes, showPopDensity, onTogglePopDensity, popHexSize, onPopHexSizeChange, popHexHeight, onPopHexHeightChange, showMigration, onToggleMigration, showChoropleth, onToggleChoropleth, choroplethIndicator, onChoroplethIndicatorChange, choroplethExaggeration, onChoroplethExaggerationChange, showSchools, onToggleSchools }: LegendProps) => {
+const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin, show21stBasin, onToggle21stBasin, showKhorezm, onToggleKhorezm, showWatershed, onToggleWatershed, showLandcover, onToggleLandcover, landcoverVisibleClasses, landcoverAvailableClasses, onLandcoverVisibleClassesChange, showLakes, onToggleLakes, show21cLakes, onToggle21cLakes, showPopDensity, onTogglePopDensity, popHexSize, onPopHexSizeChange, popHexHeight, onPopHexHeightChange, showMigration, onToggleMigration, showChoropleth, onToggleChoropleth, choroplethIndicator, onChoroplethIndicatorChange, choroplethExaggeration, onChoroplethExaggerationChange, showSchools, onToggleSchools, showVocabulary, onToggleVocabulary }: LegendProps) => {
   // Only show classes present in data
   const lcClasses = landcoverAvailableClasses ?? [];
 
@@ -212,6 +214,14 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
           Schools (Water Quality)
         </span>
         <Switch className="scale-75" checked={showSchools} onCheckedChange={onToggleSchools} />
+      </label>
+
+      <label className="flex items-center justify-between cursor-pointer">
+        <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
+          <span className="inline-block w-3 h-3 rounded-sm" style={{ background: 'linear-gradient(135deg, #4fc3f7, #a5d6a7)' }} />
+          Vocabulary (Photos)
+        </span>
+        <Switch className="scale-75" checked={showVocabulary} onCheckedChange={onToggleVocabulary} />
       </label>
 
       {showChoropleth && (

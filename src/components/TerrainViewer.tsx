@@ -16,6 +16,7 @@ import MapControls from './MapControls';
 import ObjectLibrary3D from './ObjectLibrary3D';
 import type { LibraryObject } from './ObjectLibrary3D';
 import SchoolsLayer from './SchoolsLayer';
+import VocabularyLayer from './VocabularyLayer';
 import GameMode from './GameMode';
 import BowlWorld from './BowlWorld';
 import { TerrainData } from '@/lib/geotiff-loader';
@@ -97,6 +98,7 @@ interface TerrainViewerProps {
   landcoverVisibleClasses?: Set<number>;
   onLandcoverAvailableClasses?: (classes: number[]) => void;
   showSchools?: boolean;
+  showVocabulary?: boolean;
 }
 
 function CameraAnimator({ started }: { started: boolean }) {
@@ -272,7 +274,7 @@ function VideoAnimator({
   return null;
 }
 
-const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, showWaterExtent, waterExtentYear, showPopDensity, popHexSize, popHexHeight, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone, riverInflow, userLocation, inspectorEnabled, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, flowState, flowRenderKey, terrainVersion, raisedPixels, dugPixels, showMigration, migrationYear, showChoropleth, choroplethIndicator, choroplethExaggeration, canalHighlights, highlightedCanalNames, canalTourActive, showObjectLibrary, onObjectSelect, gameModeActive, onGameAddWater, bowlWorldActive, onBowlWorldComplete, showLandcover, landcoverVisibleClasses, onLandcoverAvailableClasses, showSchools }, ref) => {
+const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, showWaterExtent, waterExtentYear, showPopDensity, popHexSize, popHexHeight, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone, riverInflow, userLocation, inspectorEnabled, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, flowState, flowRenderKey, terrainVersion, raisedPixels, dugPixels, showMigration, migrationYear, showChoropleth, choroplethIndicator, choroplethExaggeration, canalHighlights, highlightedCanalNames, canalTourActive, showObjectLibrary, onObjectSelect, gameModeActive, onGameAddWater, bowlWorldActive, onBowlWorldComplete, showLandcover, landcoverVisibleClasses, onLandcoverAvailableClasses, showSchools, showVocabulary }, ref) => {
   const screenshotFn = useRef<(() => void) | null>(null);
   const orbitRef = useRef<any>(null);
   const [flyoverAnimating, setFlyoverAnimating] = useState(false);
@@ -310,6 +312,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
         {showChoropleth && <ChoroplethLayer terrain={terrain} exaggeration={exaggeration} year={waterExtentYear} indicatorId={choroplethIndicator} choroplethExaggeration={choroplethExaggeration} />}
         {showLandcover && <LandcoverLayer terrain={terrain} exaggeration={exaggeration} visibleClasses={landcoverVisibleClasses} onDataLoaded={setLcData} onAvailableClasses={onLandcoverAvailableClasses} />}
         {showSchools && <SchoolsLayer terrain={terrain} exaggeration={exaggeration} />}
+        {showVocabulary && <VocabularyLayer terrain={terrain} exaggeration={exaggeration} />}
         {scenarioActions && scenarioActions.length > 0 && (
           <ScenarioOverlay actions={scenarioActions} terrain={terrain} exaggeration={exaggeration} />
         )}

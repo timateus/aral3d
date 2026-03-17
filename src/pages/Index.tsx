@@ -63,6 +63,7 @@ const Index = () => {
   const [popHexHeight, setPopHexHeight] = useState(1.0);
   const [showWaterExtent, setShowWaterExtent] = useState(true);
   const [showSchools, setShowSchools] = useState(false);
+  const [showVocabulary, setShowVocabulary] = useState(false);
   const [waterExtentYear, setWaterExtentYear] = useState(1960);
   
   const [started, setStarted] = useState(false);
@@ -663,6 +664,7 @@ const Index = () => {
             landcoverVisibleClasses={landcoverVisibleClasses}
             onLandcoverAvailableClasses={setLandcoverAvailableClasses}
             showSchools={showSchools}
+            showVocabulary={showVocabulary}
           />
         )}
         {!terrain && !loading && error && (
@@ -839,6 +841,8 @@ const Index = () => {
             onChoroplethExaggerationChange={setChoroplethExaggeration}
             showSchools={showSchools}
             onToggleSchools={setShowSchools}
+            showVocabulary={showVocabulary}
+            onToggleVocabulary={setShowVocabulary}
           />
           {terrain && (
             <WaterVolumeDisplay
