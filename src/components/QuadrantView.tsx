@@ -51,7 +51,7 @@ function getNaturalColor(normalized: number): [number, number, number] {
 }
 
 // DEM terrain mesh generated from actual data
-function DEMTerrain({ terrain, playful }: { terrain: TerrainData; playful: boolean }) {
+function DEMTerrain({ terrain, colorFn }: { terrain: TerrainData; colorFn: (n: number) => [number, number, number] }) {
   const geo = useMemo(() => {
     const { width, height, elevations, minElevation, maxElevation, noDataValue } = terrain;
     const step = Math.max(1, Math.floor(Math.max(width, height) / 128));
@@ -62,7 +62,7 @@ function DEMTerrain({ terrain, playful }: { terrain: TerrainData; playful: boole
     const colors: number[] = [];
     const indices: number[] = [];
     const scale = 4;
-    const elevScale = playful ? 1.5 : 0.4;
+    const elevScale = 0.8;
 
     for (let iy = 0; iy < h; iy++) {
       for (let ix = 0; ix < w; ix++) {
@@ -77,13 +77,7 @@ function DEMTerrain({ terrain, playful }: { terrain: TerrainData; playful: boole
         const py = normalized * elevScale - 0.5;
 
         positions.push(px, py, pz);
-
-        let c: [number, number, number];
-        if (playful) {
-          c = getATColor(normalized);
-        } else {
-          c = getPaleColor(normalized);
-        }
+        const c = colorFn(normalized);
         colors.push(c[0], c[1], c[2]);
       }
     }
@@ -104,11 +98,11 @@ function DEMTerrain({ terrain, playful }: { terrain: TerrainData; playful: boole
     geometry.setIndex(indices);
     geometry.computeVertexNormals();
     return geometry;
-  }, [terrain, playful]);
+  }, [terrain, colorFn]);
 
   return (
     <mesh geometry={geo}>
-      <meshStandardMaterial vertexColors flatShading={playful} />
+      <meshStandardMaterial vertexColors />
     </mesh>
   );
 }
