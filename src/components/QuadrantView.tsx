@@ -22,14 +22,22 @@ const AT_COLORS = {
 };
 
 function getATColor(normalized: number): [number, number, number] {
-  // Adventure Time–style terrain colors: vibrant, candy-like
-  if (normalized < 0.15) return [0, 0.75, 1]; // bright cyan water
-  if (normalized < 0.25) return [0.49, 0.99, 0]; // lime green shore
-  if (normalized < 0.4) return [1, 0.84, 0]; // gold sand
-  if (normalized < 0.55) return [1, 0.41, 0.71]; // hot pink
-  if (normalized < 0.7) return [0.61, 0.35, 0.71]; // purple mountains
-  if (normalized < 0.85) return [0.4, 0.8, 1]; // light blue peaks
-  return [1, 1, 1]; // white snow
+  if (normalized < 0.15) return [0, 0.75, 1];
+  if (normalized < 0.25) return [0.49, 0.99, 0];
+  if (normalized < 0.4) return [1, 0.84, 0];
+  if (normalized < 0.55) return [1, 0.41, 0.71];
+  if (normalized < 0.7) return [0.61, 0.35, 0.71];
+  if (normalized < 0.85) return [0.4, 0.8, 1];
+  return [1, 1, 1];
+}
+
+function getPaleColor(normalized: number): [number, number, number] {
+  if (normalized < 0.15) return [0.75, 0.85, 0.9];
+  if (normalized < 0.3) return [0.85, 0.88, 0.82];
+  if (normalized < 0.5) return [0.9, 0.87, 0.78];
+  if (normalized < 0.7) return [0.88, 0.83, 0.76];
+  if (normalized < 0.85) return [0.82, 0.8, 0.78];
+  return [0.92, 0.92, 0.92];
 }
 
 // DEM terrain mesh generated from actual data
