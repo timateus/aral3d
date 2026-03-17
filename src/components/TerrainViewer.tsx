@@ -101,6 +101,9 @@ interface TerrainViewerProps {
   showSchools?: boolean;
   showVocabulary?: boolean;
   agmarShowProposalSites?: boolean;
+  aryqWorldActive?: boolean;
+  onAryqWorldComplete?: () => void;
+  onNukusClick?: () => void;
 }
 
 function CameraAnimator({ started }: { started: boolean }) {
