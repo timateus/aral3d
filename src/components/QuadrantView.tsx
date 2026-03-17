@@ -40,6 +40,16 @@ function getPaleColor(normalized: number): [number, number, number] {
   return [0.92, 0.92, 0.92];
 }
 
+function getNaturalColor(normalized: number): [number, number, number] {
+  if (normalized < 0.15) return [0.2, 0.5, 0.7];   // blue water
+  if (normalized < 0.25) return [0.3, 0.6, 0.35];   // green lowlands
+  if (normalized < 0.4) return [0.55, 0.7, 0.3];    // light green
+  if (normalized < 0.55) return [0.78, 0.72, 0.4];   // yellow-brown
+  if (normalized < 0.7) return [0.72, 0.6, 0.35];    // brown
+  if (normalized < 0.85) return [0.65, 0.55, 0.4];   // darker brown
+  return [0.9, 0.88, 0.82];                          // pale peaks
+}
+
 // DEM terrain mesh generated from actual data
 function DEMTerrain({ terrain, playful }: { terrain: TerrainData; playful: boolean }) {
   const geo = useMemo(() => {
