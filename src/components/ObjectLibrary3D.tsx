@@ -30,6 +30,14 @@ export const LIBRARY_OBJECTS: LibraryObject[] = [
     lat: 42.462,
     lon: 59.603,
   },
+  {
+    id: 'noahs-arc',
+    name: "Noah's Arc",
+    imagePath: '/images/vocabulary/keme.jpg',
+    description: 'A vessel for navigating the disappearing waters — canal thinking in action',
+    lat: 43.8,
+    lon: 58.5,
+  },
 ];
 
 function geoTo3D(lat: number, lon: number, terrain: TerrainData, exaggeration: number): THREE.Vector3 {

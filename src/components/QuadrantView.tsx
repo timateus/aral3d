@@ -276,40 +276,46 @@ export default function QuadrantView({ onSelectQuadrant, onBack }: QuadrantViewP
 
             {/* 2x2 grid of 3D canvases */}
             <div className="grid grid-cols-2 grid-rows-2 w-full h-full">
-              {/* Top-left: Serious × Large Scale → DEM terrain normal */}
+              {/* Top-left: Serious × Large Scale */}
               <QuadrantCanvas
                 type="terrain"
                 playful={false}
                 rotationDir={[1, 1]}
-                label="Explore Terrain"
+                label="ag (MAR): Water Hide-and-seek"
                 terrain={terrain}
                 onLabelClick={() => onSelectQuadrant('serious-large')}
               />
-              {/* Top-right: Playful × Large Scale → DEM terrain adventure time */}
+              {/* Top-right: Playful × Large Scale — Noah's Arc */}
               <QuadrantCanvas
-                type="terrain"
+                type="model"
                 playful={true}
                 rotationDir={[-0.7, 1.3]}
-                label="Adventure Mode"
+                label="Canal thinking?"
                 terrain={terrain}
+                modelPath="/models/noahs-arc.glb"
+                modelScale={2}
                 onLabelClick={() => onSelectQuadrant('playful-large')}
               />
-              {/* Bottom-left: Serious × Small Scale → aryq normal */}
+              {/* Bottom-left: Serious × Small Scale — Aryq */}
               <QuadrantCanvas
-                type="aryq"
+                type="model"
                 playful={false}
                 rotationDir={[0.8, -1]}
-                label="Explore Aryq"
+                label="Bodies of Water"
                 terrain={terrain}
+                modelPath="/models/aryq.glb"
+                modelScale={3}
                 onLabelClick={() => onSelectQuadrant('serious-small')}
               />
-              {/* Bottom-right: Playful × Small Scale → aryq adventure time */}
+              {/* Bottom-right: Playful × Small Scale — Soap */}
               <QuadrantCanvas
-                type="aryq"
+                type="model"
                 playful={true}
                 rotationDir={[-1.2, 0.8]}
-                label="Aryq Adventure"
+                label="Soap Opera"
                 terrain={terrain}
+                modelPath="/models/soap-khorezm.glb"
+                modelScale={3}
                 onLabelClick={() => onSelectQuadrant('playful-small')}
               />
             </div>
