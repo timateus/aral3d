@@ -694,6 +694,7 @@ const Index = () => {
             onLandcoverAvailableClasses={setLandcoverAvailableClasses}
             showSchools={showSchools}
             showVocabulary={showVocabulary}
+            agmarShowProposalSites={agmarTourActive && !!AGMAR_TOUR_STEPS[agmarTourStep]?.proposalSites}
           />
         )}
         {!terrain && !loading && error && (
