@@ -297,7 +297,6 @@ export default function QuadrantView({ onSelectQuadrant, onBack }: QuadrantViewP
                 onLabelClick={() => onSelectQuadrant('playful-small')}
               />
             </div>
-            </div>
           </div>
         </div>
       </div>
