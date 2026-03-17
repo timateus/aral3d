@@ -69,6 +69,7 @@ const Index = () => {
   const [showVocabulary, setShowVocabulary] = useState(false);
   const [showGroundwater, setShowGroundwater] = useState(false);
   const [showPrecipitation, setShowPrecipitation] = useState(false);
+  const [showSalinity, setShowSalinity] = useState(false);
   const [waterExtentYear, setWaterExtentYear] = useState(1960);
   
   const [started, setStarted] = useState(false);
