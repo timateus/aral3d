@@ -44,7 +44,7 @@ function DEMTerrain({ terrain, playful }: { terrain: TerrainData; playful: boole
     const colors: number[] = [];
     const indices: number[] = [];
     const scale = 4;
-    const elevScale = playful ? 3 : 1.5;
+    const elevScale = playful ? 1.5 : 0.4;
 
     for (let iy = 0; iy < h; iy++) {
       for (let ix = 0; ix < w; ix++) {
