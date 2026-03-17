@@ -115,7 +115,7 @@ export default function AryqWorld({ active, onComplete, orbitRef }: AryqWorldPro
   useFrame((_, delta) => {
     if (!active || completed) return;
     const keys = keysRef.current;
-    const speed = 0.4 * delta;
+    const speed = 2.0 * delta; // Much faster movement
 
     const camForward = new THREE.Vector3();
     camera.getWorldDirection(camForward);
