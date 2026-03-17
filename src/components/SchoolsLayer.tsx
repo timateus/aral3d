@@ -26,7 +26,7 @@ function geoToMeshPos(
   lon: number, lat: number,
   bounds: { minLon: number; maxLon: number; minLat: number; maxLat: number },
   width: number, height: number,
-  elevations: Float32Array,
+  elevations: Float32Array | Float64Array,
   meshW: number, meshH: number,
   exaggeration: number,
 ): [number, number, number] {
