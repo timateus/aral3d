@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle } from 'react';
+import { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle, Suspense } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { GizmoHelper, GizmoViewport, Html } from '@react-three/drei';
 import TerrainMesh from './TerrainMesh';
@@ -16,6 +16,7 @@ import MapControls from './MapControls';
 import ObjectLibrary3D from './ObjectLibrary3D';
 import type { LibraryObject } from './ObjectLibrary3D';
 import GameMode from './GameMode';
+import BowlWorld from './BowlWorld';
 import { TerrainData } from '@/lib/geotiff-loader';
 import type { ScenarioAction } from '@/types/scenario';
 import type { WaterFlowState } from '@/lib/water-flow-simulation';
