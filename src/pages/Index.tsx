@@ -108,6 +108,8 @@ const Index = () => {
   const [quadrantViewActive, setQuadrantViewActive] = useState(false);
   const [bodiesOfWaterMode, setBodiesOfWaterMode] = useState(false);
   const [bodiesActiveLayer, setBodiesActiveLayer] = useState<'none' | 'mortality' | 'landcover' | 'sewage'>('none');
+  const [agMarMode, setAgMarMode] = useState(false);
+  const [agMarActiveLayer, setAgMarActiveLayer] = useState<'none' | 'population' | 'groundwater'>('none');
   const [agmarTourActive, setAgmarTourActive] = useState(false);
   const [agmarTourStep, setAgmarTourStep] = useState(0);
   
@@ -652,7 +654,7 @@ const Index = () => {
     }
   }, [terrain]);
 
-  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode;
+  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode;
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
@@ -790,7 +792,14 @@ const Index = () => {
           onSelectQuadrant={(id) => {
             setQuadrantViewActive(false);
             setStarted(true);
-            if (id === 'serious-small') {
+            if (id === 'serious-large') {
+              setAgMarMode(true);
+              setAgMarActiveLayer('none');
+              setWaterExtentYear(2024);
+              setShowWaterExtent(true);
+              setShowPopDensity(false);
+              setShowGroundwater(false);
+            } else if (id === 'serious-small') {
               setBodiesOfWaterMode(true);
               setBodiesActiveLayer('none');
               setWaterExtentYear(2024);
@@ -1198,6 +1207,57 @@ const Index = () => {
             }`}
           >
             Sewage Coverage
+          </button>
+        </div>
+      )}
+
+      {/* ag MAR preset buttons */}
+      {agMarMode && started && (
+        <div className="absolute bottom-6 left-6 z-20 flex flex-col gap-2">
+          <button
+            onClick={() => {
+              setAgMarMode(false);
+              setShowPopDensity(false);
+              setShowGroundwater(false);
+              setAgMarActiveLayer('none');
+            }}
+            className="text-[10px] tracking-[0.12em] uppercase text-muted-foreground hover:text-primary transition-colors border border-border/50 px-3 py-1.5 bg-card/60 backdrop-blur-sm mb-2"
+          >
+            ← Back to explore
+          </button>
+          <button
+            onClick={() => {
+              const next = agMarActiveLayer === 'population' ? 'none' : 'population';
+              setAgMarActiveLayer(next);
+              setShowPopDensity(next === 'population');
+              if (next === 'population') {
+                setPopHexSize(0.01);
+                setPopHexHeight(0);
+              }
+              setShowGroundwater(false);
+            }}
+            className={`text-[11px] tracking-[0.08em] uppercase font-mono px-4 py-2 border backdrop-blur-sm transition-all ${
+              agMarActiveLayer === 'population'
+                ? 'bg-primary/20 border-primary/60 text-primary'
+                : 'bg-card/60 border-border/50 text-muted-foreground hover:text-primary hover:border-primary/40'
+            }`}
+          >
+            Population
+          </button>
+          <button
+            onClick={() => {
+              const next = agMarActiveLayer === 'groundwater' ? 'none' : 'groundwater';
+              setAgMarActiveLayer(next);
+              setShowGroundwater(next === 'groundwater');
+              setShowPopDensity(false);
+            }}
+            className={`text-[11px] tracking-[0.08em] uppercase font-mono px-4 py-2 border backdrop-blur-sm transition-all ${
+              agMarActiveLayer === 'groundwater'
+                ? 'bg-primary/20 border-primary/60 text-primary'
+                : 'bg-card/60 border-border/50 text-muted-foreground hover:text-primary hover:border-primary/40'
+            }`}
+          >
+            Ground Water
           </button>
         </div>
       )}
