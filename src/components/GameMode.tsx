@@ -254,6 +254,22 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater, or
     }
   }, [active]);
 
+  // Listen for bowl world completion
+  useEffect(() => {
+    if (!active) return;
+    const handler = () => {
+      if (currentMission?.enterBowlWorld) {
+        setInBowlWorld(false);
+        setCompletedMissions(prev => new Set([...prev, currentMission.id]));
+        setRewardMessage(currentMission.reward);
+        setRewardFact(currentMission.funFact);
+        setTimeout(() => { setRewardMessage(null); setRewardFact(null); }, 6000);
+      }
+    };
+    window.addEventListener('bowl-world-complete', handler);
+    return () => window.removeEventListener('bowl-world-complete', handler);
+  }, [active, currentMission]);
+
   // Reset on deactivate
   useEffect(() => {
     if (!active) {
@@ -262,6 +278,7 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater, or
       setRewardMessage(null);
       setRewardFact(null);
       setWaterPouring(false);
+      setInBowlWorld(false);
     }
   }, [active]);
 
