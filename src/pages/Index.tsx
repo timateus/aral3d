@@ -648,6 +648,8 @@ const Index = () => {
     }
   }, [terrain]);
 
+  const isMapExploration = started && !narrativeActive && !canalTourActive && !agmarTourActive && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary;
+
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
       {/* 3D Viewer */}
@@ -817,7 +819,7 @@ const Index = () => {
       )}
 
       {/* Scenario Chat */}
-      {started && !narrativeActive && !canalTourActive && !agmarTourActive && !isMobile && (
+      {isMapExploration && !isMobile && (
         <ScenarioChat
           onActions={handleScenarioActions}
           onClear={() => setScenarioActions([])}
@@ -825,7 +827,7 @@ const Index = () => {
       )}
 
       {/* Data Panel - positioned left */}
-      {started && !narrativeActive && !canalTourActive && !agmarTourActive && showDataPanel && !isMobile && (
+      {isMapExploration && showDataPanel && !isMobile && (
         <div className="absolute top-16 left-4 z-10">
           <DataPanel
             currentYear={waterExtentYear}
@@ -840,7 +842,7 @@ const Index = () => {
       )}
 
       {/* Header */}
-      {started && !narrativeActive && !canalTourActive && !agmarTourActive && !isMobile && (
+      {isMapExploration && !isMobile && (
         <div className="absolute top-4 left-4 z-10 flex items-center gap-3">
           <button
             onClick={() => { setStarted(false); setGameModeActive(false); }}
@@ -884,7 +886,7 @@ const Index = () => {
       )}
 
       {/* Controls - desktop only, hide in game mode unless toggled */}
-      {started && !narrativeActive && !canalTourActive && !agmarTourActive && !isMobile && !gameModeActive && (
+      {isMapExploration && !isMobile && (
         <div className="absolute top-4 right-4 z-10 space-y-3 max-h-[calc(100vh-2rem)] overflow-y-auto w-[280px] scrollbar-thin pr-1">
           <ControlPanel
             terrain={terrain}
@@ -1107,7 +1109,7 @@ const Index = () => {
       )}
 
       {/* Timeline Slider - bottom bar (hide in game mode) */}
-      {started && !narrativeActive && !canalTourActive && !agmarTourActive && !gameModeActive && (
+      {isMapExploration && (
         <TimelineSlider
           year={waterExtentYear}
           onYearChange={setWaterExtentYear}
