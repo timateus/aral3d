@@ -1270,6 +1270,37 @@ const Index = () => {
           </button>
         </div>
       )}
+
+      {/* Soap Opera preset buttons */}
+      {soapOperaMode && started && (
+        <div className="absolute bottom-6 left-6 z-20 flex flex-col gap-2">
+          <button
+            onClick={() => {
+              setSoapOperaMode(false);
+              setShowSalinity(false);
+              setSoapActiveLayer('none');
+              setShowKhorezm(false);
+            }}
+            className="text-[10px] tracking-[0.12em] uppercase text-muted-foreground hover:text-primary transition-colors border border-border/50 px-3 py-1.5 bg-card/60 backdrop-blur-sm mb-2"
+          >
+            ← Back to explore
+          </button>
+          <button
+            onClick={() => {
+              const next = soapActiveLayer === 'salinity' ? 'none' : 'salinity';
+              setSoapActiveLayer(next);
+              setShowSalinity(next === 'salinity');
+            }}
+            className={`text-[11px] tracking-[0.08em] uppercase font-mono px-4 py-2 border backdrop-blur-sm transition-all ${
+              soapActiveLayer === 'salinity'
+                ? 'bg-primary/20 border-primary/60 text-primary'
+                : 'bg-card/60 border-border/50 text-muted-foreground hover:text-primary hover:border-primary/40'
+            }`}
+          >
+            Salinity
+          </button>
+        </div>
+      )}
     </div>
   );
 };
