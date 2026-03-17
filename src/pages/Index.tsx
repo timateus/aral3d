@@ -1303,8 +1303,25 @@ const Index = () => {
           >
             Salinity
           </button>
+          <button
+            onClick={() => {
+              const next = soapActiveLayer === 'soap' ? 'none' : 'soap';
+              setSoapActiveLayer(next);
+              setShowSoapBubbles(next === 'soap');
+              if (next === 'soap') setShowSalinity(false);
+            }}
+            className={`text-[11px] tracking-[0.08em] uppercase font-mono px-4 py-2 border backdrop-blur-sm transition-all ${
+              soapActiveLayer === 'soap'
+                ? 'bg-primary/20 border-primary/60 text-primary'
+                : 'bg-card/60 border-border/50 text-muted-foreground hover:text-primary hover:border-primary/40'
+            }`}
+          >
+            🫧 Soap
+          </button>
         </div>
       )}
+
+      <SoapBubblesOverlay active={showSoapBubbles} />
     </div>
   );
 };
