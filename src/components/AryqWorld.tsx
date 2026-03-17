@@ -63,6 +63,9 @@ export default function AryqWorld({ active, onComplete, orbitRef }: AryqWorldPro
   const initializedRef = useRef(false);
   const raycaster = useRef(new THREE.Raycaster());
   const modelRef = useRef<THREE.Group>(null);
+  const spaceRef = useRef(false);
+  const [waterDrops, setWaterDrops] = useState<{ id: number; pos: [number, number, number] }[]>([]);
+  const dropIdRef = useRef(0);
 
   const targetPos: [number, number, number] = [0, 0.1, 0];
 
@@ -89,8 +92,17 @@ export default function AryqWorld({ active, onComplete, orbitRef }: AryqWorldPro
 
   useEffect(() => {
     if (!active) return;
-    const onDown = (e: KeyboardEvent) => keysRef.current.add(e.key.toLowerCase());
-    const onUp = (e: KeyboardEvent) => keysRef.current.delete(e.key.toLowerCase());
+    const onDown = (e: KeyboardEvent) => {
+      keysRef.current.add(e.key.toLowerCase());
+      if (e.key === ' ') {
+        e.preventDefault();
+        spaceRef.current = true;
+      }
+    };
+    const onUp = (e: KeyboardEvent) => {
+      keysRef.current.delete(e.key.toLowerCase());
+      if (e.key === ' ') spaceRef.current = false;
+    };
     window.addEventListener('keydown', onDown);
     window.addEventListener('keyup', onUp);
     return () => {
@@ -103,7 +115,7 @@ export default function AryqWorld({ active, onComplete, orbitRef }: AryqWorldPro
   useFrame((_, delta) => {
     if (!active || completed) return;
     const keys = keysRef.current;
-    const speed = 0.4 * delta;
+    const speed = 2.0 * delta; // Much faster movement
 
     const camForward = new THREE.Vector3();
     camera.getWorldDirection(camForward);
@@ -158,6 +170,19 @@ export default function AryqWorld({ active, onComplete, orbitRef }: AryqWorldPro
       camera.position.z += dz;
     }
 
+    // Space = pour water
+    if (spaceRef.current && !completed) {
+      // Add multiple water drops around avatar
+      const newDrops: { id: number; pos: [number, number, number] }[] = [];
+      for (let i = 0; i < 3; i++) {
+        const id = dropIdRef.current++;
+        const ox = (Math.random() - 0.5) * 0.3;
+        const oz = (Math.random() - 0.5) * 0.3;
+        newDrops.push({ id, pos: [newX + ox, newY + 0.15, newZ + oz] });
+      }
+      setWaterDrops(prev => [...prev.slice(-60), ...newDrops]); // keep max 60
+    }
+
     const dist = Math.sqrt((newX - targetPos[0]) ** 2 + (newZ - targetPos[2]) ** 2);
     if (dist < 0.2) {
       setCompleted(true);
@@ -180,6 +205,14 @@ export default function AryqWorld({ active, onComplete, orbitRef }: AryqWorldPro
       <pointLight position={[0, 1, 0]} intensity={0.4} color="#38bdf8" distance={3} />
 
       <MiniAvatar position={avatarPos} facing={facing} />
+
+      {/* Water drops from space key */}
+      {waterDrops.map(drop => (
+        <mesh key={drop.id} position={drop.pos}>
+          <sphereGeometry args={[0.015, 8, 8]} />
+          <meshStandardMaterial color="#38bdf8" emissive="#38bdf8" emissiveIntensity={0.6} transparent opacity={0.7} />
+        </mesh>
+      ))}
       {!completed && <AryqBeacon position={targetPos} />}
 
       {completed && (
@@ -212,7 +245,7 @@ export default function AryqWorld({ active, onComplete, orbitRef }: AryqWorldPro
             fontSize: '11px',
             whiteSpace: 'nowrap',
           }}>
-            💧 Walk along the aryq to explore it
+            💧 Walk along the aryq · Press SPACE to pour water
           </div>
         </Html>
       )}
