@@ -104,6 +104,8 @@ const Index = () => {
   const [bowlWorldActive, setBowlWorldActive] = useState(false);
   const [aryqWorldActive, setAryqWorldActive] = useState(false);
   const [quadrantViewActive, setQuadrantViewActive] = useState(false);
+  const [bodiesOfWaterMode, setBodiesOfWaterMode] = useState(false);
+  const [bodiesActiveLayer, setBodiesActiveLayer] = useState<'none' | 'mortality' | 'landcover' | 'sewage'>('none');
   const [agmarTourActive, setAgmarTourActive] = useState(false);
   const [agmarTourStep, setAgmarTourStep] = useState(0);
   
