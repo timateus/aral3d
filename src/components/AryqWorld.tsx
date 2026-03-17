@@ -245,7 +245,7 @@ export default function AryqWorld({ active, onComplete, orbitRef }: AryqWorldPro
             fontSize: '11px',
             whiteSpace: 'nowrap',
           }}>
-            💧 Walk along the aryq to explore it
+            💧 Walk along the aryq · Press SPACE to pour water
           </div>
         </Html>
       )}
