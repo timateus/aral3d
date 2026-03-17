@@ -22,17 +22,17 @@ const SoapBubblesOverlay = ({ active }: { active: boolean }) => {
     if (!active) { setBubbles([]); return; }
     startTime.current = Date.now();
 
-    const initial: Bubble[] = Array.from({ length: 25 }, (_, i) => ({
+    const initial: Bubble[] = Array.from({ length: 35 }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
       y: 100 + Math.random() * 40,
-      size: 30 + Math.random() * 80,
-      speed: 0.3 + Math.random() * 0.6,
+      size: 40 + Math.random() * 120,
+      speed: 0.2 + Math.random() * 0.5,
       wobble: 0,
-      wobbleSpeed: 0.5 + Math.random() * 1.5,
-      opacity: 0.15 + Math.random() * 0.25,
-      hue: 320 + Math.random() * 40,
-      delay: Math.random() * 3000,
+      wobbleSpeed: 0.3 + Math.random() * 2,
+      opacity: 0.4 + Math.random() * 0.4,
+      hue: 330 + Math.random() * 20,
+      delay: Math.random() * 2000,
     }));
     setBubbles(initial);
 
@@ -75,15 +75,17 @@ const SoapBubblesOverlay = ({ active }: { active: boolean }) => {
               width: b.size,
               height: b.size,
               opacity: b.opacity,
-              background: `radial-gradient(circle at 35% 30%, 
-                hsla(${b.hue}, 80%, 92%, 0.9),
-                hsla(${(b.hue + 40) % 360}, 70%, 80%, 0.4) 40%,
-                hsla(${(b.hue + 120) % 360}, 60%, 70%, 0.15) 70%,
+              background: `radial-gradient(circle at 30% 25%, 
+                rgba(255, 255, 255, 0.6),
+                hsla(340, 100%, 70%, 0.7) 30%,
+                hsla(320, 90%, 55%, 0.5) 55%,
+                hsla(300, 80%, 45%, 0.3) 80%,
                 transparent 100%)`,
-              boxShadow: `inset 0 0 ${b.size * 0.3}px hsla(${b.hue}, 60%, 85%, 0.3), 
-                          inset ${b.size * 0.15}px ${-b.size * 0.1}px ${b.size * 0.2}px hsla(0, 0%, 100%, 0.4),
-                          0 0 ${b.size * 0.4}px hsla(${b.hue}, 50%, 80%, 0.15)`,
-              border: `1px solid hsla(${b.hue}, 50%, 85%, 0.3)`,
+              boxShadow: `inset 0 0 ${b.size * 0.4}px hsla(330, 100%, 70%, 0.5), 
+                          inset ${b.size * 0.2}px ${-b.size * 0.15}px ${b.size * 0.25}px rgba(255, 255, 255, 0.6),
+                          0 0 ${b.size * 0.5}px hsla(340, 100%, 65%, 0.3),
+                          0 0 ${b.size}px hsla(330, 80%, 60%, 0.15)`,
+              border: `2px solid hsla(340, 100%, 80%, 0.5)`,
               transition: 'top 0.05s linear',
             }}
           />
