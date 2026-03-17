@@ -102,11 +102,21 @@ function CameraAnimator({ started }: { started: boolean }) {
   const progress = useRef(0);
   const animating = useRef(false);
   const hasStarted = useRef(false);
+  const autoRotateAngle = useRef(0);
+  const [autoRotate, setAutoRotate] = useState(false);
 
   const start = new THREE.Vector3(0, 18, 8);
   const end = new THREE.Vector3(0, 10, 12);
   const startTarget = new THREE.Vector3(0, 0, 0);
   const endTarget = new THREE.Vector3(0, 0, -1);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      setAutoRotate((e as CustomEvent).detail.active);
+    };
+    window.addEventListener('intro-auto-rotate', handler);
+    return () => window.removeEventListener('intro-auto-rotate', handler);
+  }, []);
 
   useEffect(() => {
     camera.position.copy(start);
@@ -122,14 +132,23 @@ function CameraAnimator({ started }: { started: boolean }) {
   }, [started]);
 
   useFrame((_, delta) => {
+    if (autoRotate && !started) {
+      autoRotateAngle.current += delta * 0.08;
+      const radius = 20;
+      camera.position.set(
+        Math.sin(autoRotateAngle.current) * radius,
+        18,
+        Math.cos(autoRotateAngle.current) * radius
+      );
+      camera.lookAt(0, 0, 0);
+      return;
+    }
     if (!animating.current) return;
     progress.current = Math.min(progress.current + delta * 0.15, 1);
     const t = 1 - Math.pow(1 - progress.current, 3);
-
     camera.position.lerpVectors(start, end, t);
     const target = new THREE.Vector3().lerpVectors(startTarget, endTarget, t);
     camera.lookAt(target);
-
     if (progress.current >= 1) animating.current = false;
   });
 
