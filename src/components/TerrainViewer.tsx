@@ -376,6 +376,12 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
         </Suspense>
       )}
 
+      {aryqWorldActive && onAryqWorldComplete && (
+        <Suspense fallback={null}>
+          <AryqWorld active={aryqWorldActive} onComplete={onAryqWorldComplete} orbitRef={orbitRef} />
+        </Suspense>
+      )}
+
       {!narrativeActive && !flyoverAnimating && !gameModeActive && <CameraAnimator started={started} />}
       {narrativeActive && narrativeCameraPosition && narrativeCameraTarget && (
         <NarrativeCameraController
