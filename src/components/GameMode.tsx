@@ -357,7 +357,7 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater, or
     }
 
     // Check mission completion
-    if (currentMission && missionTargetPos) {
+    if (currentMission && missionTargetPos && !inBowlWorld) {
       const dist = Math.sqrt(
         (newX - missionTargetPos[0]) ** 2 + (newZ - missionTargetPos[2]) ** 2
       );
@@ -366,6 +366,11 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater, or
         : dist < currentMission.radius;
 
       if (isMet) {
+        if (currentMission.enterBowlWorld) {
+          // Enter bowl world instead of completing immediately
+          setInBowlWorld(true);
+          return;
+        }
         setCompletedMissions(prev => new Set([...prev, currentMission.id]));
         setRewardMessage(currentMission.reward);
         setRewardFact(currentMission.funFact);
