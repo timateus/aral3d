@@ -662,6 +662,7 @@ const Index = () => {
             showLandcover={showLandcover}
             landcoverVisibleClasses={landcoverVisibleClasses}
             onLandcoverAvailableClasses={setLandcoverAvailableClasses}
+            showSchools={showSchools}
           />
         )}
         {!terrain && !loading && error && (
