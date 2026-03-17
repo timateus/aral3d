@@ -22,17 +22,17 @@ const SoapBubblesOverlay = ({ active }: { active: boolean }) => {
     if (!active) { setBubbles([]); return; }
     startTime.current = Date.now();
 
-    const initial: Bubble[] = Array.from({ length: 25 }, (_, i) => ({
+    const initial: Bubble[] = Array.from({ length: 35 }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
       y: 100 + Math.random() * 40,
-      size: 30 + Math.random() * 80,
-      speed: 0.3 + Math.random() * 0.6,
+      size: 40 + Math.random() * 120,
+      speed: 0.2 + Math.random() * 0.5,
       wobble: 0,
-      wobbleSpeed: 0.5 + Math.random() * 1.5,
-      opacity: 0.15 + Math.random() * 0.25,
-      hue: 320 + Math.random() * 40,
-      delay: Math.random() * 3000,
+      wobbleSpeed: 0.3 + Math.random() * 2,
+      opacity: 0.4 + Math.random() * 0.4,
+      hue: 330 + Math.random() * 20,
+      delay: Math.random() * 2000,
     }));
     setBubbles(initial);
 
