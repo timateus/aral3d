@@ -111,6 +111,7 @@ interface TerrainViewerProps {
   showOverlayMetrics?: boolean;
   showGroundwater?: boolean;
   showPrecipitation?: boolean;
+  showSalinity?: boolean;
 }
 
 function CameraAnimator({ started }: { started: boolean }) {
