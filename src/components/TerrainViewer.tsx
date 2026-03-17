@@ -384,7 +384,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
         </Suspense>
       )}
 
-      {!narrativeActive && !flyoverAnimating && !gameModeActive && <CameraAnimator started={started} />}
+      {!narrativeActive && !flyoverAnimating && !gameModeActive && !aryqWorldActive && <CameraAnimator started={started} />}
       {narrativeActive && narrativeCameraPosition && narrativeCameraTarget && (
         <NarrativeCameraController
           active={narrativeActive}
@@ -401,30 +401,34 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
         />
       )}
 
-      <RiverFlyover
-        recording={!!riverFlyover}
-        terrain={terrain}
-        exaggeration={exaggeration}
-        onDone={onRiverFlyoverDone || (() => {})}
-        onAnimatingChange={setFlyoverAnimating}
-      />
+      {!aryqWorldActive && (
+        <RiverFlyover
+          recording={!!riverFlyover}
+          terrain={terrain}
+          exaggeration={exaggeration}
+          onDone={onRiverFlyoverDone || (() => {})}
+          onAnimatingChange={setFlyoverAnimating}
+        />
+      )}
 
       <MapControls
         enabled={!narrativeActive && !flyoverAnimating}
         orbitRef={orbitRef}
-        gameModeActive={gameModeActive}
+        gameModeActive={gameModeActive || aryqWorldActive}
       />
 
-      <GizmoHelper alignment="bottom-right" margin={[60, 60]}>
-        <GizmoViewport labelColor="white" axisHeadScale={0.8} />
-      </GizmoHelper>
-
-      <gridHelper args={[20, 20, '#1a2332', '#1a2332']} position={[0, -0.01, 0]} />
-      {showObjectLibrary && onObjectSelect && (
-        <ObjectLibrary3D terrain={terrain} exaggeration={exaggeration} onSelect={onObjectSelect} />
-      )}
-      {agmarShowProposalSites && (
-        <AgmarProposalMarkers terrain={terrain} exaggeration={exaggeration} />
+      {!aryqWorldActive && (
+        <>
+          <GizmoHelper alignment="bottom-right" margin={[60, 60]}>
+            <GizmoViewport labelColor="white" axisHeadScale={0.8} />
+          </GizmoHelper>
+          {showObjectLibrary && onObjectSelect && (
+            <ObjectLibrary3D terrain={terrain} exaggeration={exaggeration} onSelect={onObjectSelect} />
+          )}
+          {agmarShowProposalSites && (
+            <AgmarProposalMarkers terrain={terrain} exaggeration={exaggeration} />
+          )}
+        </>
       )}
     </Canvas>
   );
