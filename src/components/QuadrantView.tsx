@@ -22,14 +22,22 @@ const AT_COLORS = {
 };
 
 function getATColor(normalized: number): [number, number, number] {
-  // Adventure Time–style terrain colors: vibrant, candy-like
-  if (normalized < 0.15) return [0, 0.75, 1]; // bright cyan water
-  if (normalized < 0.25) return [0.49, 0.99, 0]; // lime green shore
-  if (normalized < 0.4) return [1, 0.84, 0]; // gold sand
-  if (normalized < 0.55) return [1, 0.41, 0.71]; // hot pink
-  if (normalized < 0.7) return [0.61, 0.35, 0.71]; // purple mountains
-  if (normalized < 0.85) return [0.4, 0.8, 1]; // light blue peaks
-  return [1, 1, 1]; // white snow
+  if (normalized < 0.15) return [0, 0.75, 1];
+  if (normalized < 0.25) return [0.49, 0.99, 0];
+  if (normalized < 0.4) return [1, 0.84, 0];
+  if (normalized < 0.55) return [1, 0.41, 0.71];
+  if (normalized < 0.7) return [0.61, 0.35, 0.71];
+  if (normalized < 0.85) return [0.4, 0.8, 1];
+  return [1, 1, 1];
+}
+
+function getPaleColor(normalized: number): [number, number, number] {
+  if (normalized < 0.15) return [0.75, 0.85, 0.9];
+  if (normalized < 0.3) return [0.85, 0.88, 0.82];
+  if (normalized < 0.5) return [0.9, 0.87, 0.78];
+  if (normalized < 0.7) return [0.88, 0.83, 0.76];
+  if (normalized < 0.85) return [0.82, 0.8, 0.78];
+  return [0.92, 0.92, 0.92];
 }
 
 // DEM terrain mesh generated from actual data
@@ -44,7 +52,7 @@ function DEMTerrain({ terrain, playful }: { terrain: TerrainData; playful: boole
     const colors: number[] = [];
     const indices: number[] = [];
     const scale = 4;
-    const elevScale = playful ? 3 : 1.5;
+    const elevScale = playful ? 1.5 : 0.4;
 
     for (let iy = 0; iy < h; iy++) {
       for (let ix = 0; ix < w; ix++) {
@@ -64,7 +72,7 @@ function DEMTerrain({ terrain, playful }: { terrain: TerrainData; playful: boole
         if (playful) {
           c = getATColor(normalized);
         } else {
-          c = getElevationColor(normalized, elev);
+          c = getPaleColor(normalized);
         }
         colors.push(c[0], c[1], c[2]);
       }
@@ -148,7 +156,7 @@ function RotatingAryq({ playful, rotationDir }: { playful: boolean; rotationDir:
   }, [scene, playful]);
 
   return (
-    <group ref={ref} scale={[5, playful ? 7 : 5, 5]} position={[0, -0.8, 0]}>
+    <group ref={ref} scale={[3, playful ? 4.5 : 3, 3]} position={[0, -0.5, 0]}>
       <primitive object={clonedScene} />
       {playful && (
         <>
@@ -182,7 +190,7 @@ function QuadrantCanvas({ type, playful, rotationDir, label, terrain, onLabelCli
       >
         {label} →
       </button>
-      <Canvas camera={{ position: [3, 2.5, 3], fov: 45 }}>
+      <Canvas camera={{ position: type === 'aryq' ? [4, 3.5, 4] : [3, 2.5, 3], fov: type === 'aryq' ? 40 : 45 }}>
         <ambientLight intensity={playful ? 0.8 : 0.5} />
         <directionalLight position={[5, 5, 5]} intensity={playful ? 1.2 : 0.8} />
         {playful && <color attach="background" args={['#0d1117']} />}
@@ -203,7 +211,7 @@ function QuadrantCanvas({ type, playful, rotationDir, label, terrain, onLabelCli
           autoRotate
           autoRotateSpeed={rotationDir[0] * 1.5}
           minDistance={1.5}
-          maxDistance={8}
+          maxDistance={12}
         />
       </Canvas>
     </div>
