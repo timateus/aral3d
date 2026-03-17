@@ -108,6 +108,8 @@ interface TerrainViewerProps {
   onAryqWorldComplete?: () => void;
   onNukusClick?: () => void;
   showOverlayMetrics?: boolean;
+  showGroundwater?: boolean;
+  showPrecipitation?: boolean;
 }
 
 function CameraAnimator({ started }: { started: boolean }) {
