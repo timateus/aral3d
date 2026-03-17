@@ -132,7 +132,17 @@ export default function AryqWorld({ active, onComplete, orbitRef }: AryqWorldPro
     const [cx, , cz] = avatarPosRef.current;
     const newX = THREE.MathUtils.clamp(cx + moveDir.x, -2, 2);
     const newZ = THREE.MathUtils.clamp(cz + moveDir.z, -2, 2);
-    const newY = 0.1;
+
+    // Raycast down onto the aryq model to find surface height
+    let newY = 0.02;
+    if (modelRef.current) {
+      raycaster.current.set(new THREE.Vector3(newX, 5, newZ), new THREE.Vector3(0, -1, 0));
+      const hits = raycaster.current.intersectObject(modelRef.current, true);
+      if (hits.length > 0) {
+        newY = hits[0].point.y + 0.02;
+      }
+    }
+
     const newPos: [number, number, number] = [newX, newY, newZ];
     avatarPosRef.current = newPos;
     setAvatarPos(newPos);
