@@ -280,7 +280,7 @@ export default function QuadrantView({ onSelectQuadrant, onBack }: QuadrantViewP
                 terrain={terrain}
                 modelPath="/models/noahs-arc.glb"
                 modelScale={2}
-                cameraPos={[3, 2.5, 3]}
+                cameraPos={[2, 1.5, 2]}
                 brightLight
                 modelPosY={0.2}
                 onLabelClick={() => onSelectQuadrant('playful-large')}
@@ -292,7 +292,8 @@ export default function QuadrantView({ onSelectQuadrant, onBack }: QuadrantViewP
                 label="Bodies of Water"
                 terrain={terrain}
                 modelPath="/models/aryq.glb"
-                modelScale={3}
+                modelScale={2}
+                cameraPos={[5, 4, 5]}
                 onLabelClick={() => onSelectQuadrant('serious-small')}
               />
               {/* Bottom-right: Playful × Small Scale — Soap */}
@@ -302,8 +303,9 @@ export default function QuadrantView({ onSelectQuadrant, onBack }: QuadrantViewP
                 label="Soap Opera"
                 terrain={terrain}
                 modelPath="/models/soap-khorezm.glb"
-                modelScale={5}
-                cameraPos={[2.5, 2, 2.5]}
+                modelScale={6}
+                cameraPos={[1.8, 1.8, 1.8]}
+                modelPosY={0.3}
                 onLabelClick={() => onSelectQuadrant('playful-small')}
               />
             </div>
