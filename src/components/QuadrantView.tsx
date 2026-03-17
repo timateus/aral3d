@@ -145,18 +145,8 @@ function RotatingModel({ modelPath, playful, rotationDir, scaleBase }: { modelPa
   }, [scene]);
 
   return (
-    <group ref={ref} scale={[s, playful ? s * 1.5 : s, s]} position={[0, -0.5, 0]}>
+    <group ref={ref} scale={[s, s, s]} position={[0, -0.5, 0]}>
       <primitive object={clonedScene} />
-      {playful && (
-        <>
-          {[[0.12, 0.25, 0.05], [-0.1, 0.22, -0.04], [0.06, 0.28, -0.07]].map((p, i) => (
-            <mesh key={`drop-${i}`} position={p as [number, number, number]}>
-              <sphereGeometry args={[0.02, 8, 8]} />
-              <meshStandardMaterial color={AT_COLORS.water} emissive={AT_COLORS.water} emissiveIntensity={0.5} transparent opacity={0.8} />
-            </mesh>
-          ))}
-        </>
-      )}
     </group>
   );
 }
