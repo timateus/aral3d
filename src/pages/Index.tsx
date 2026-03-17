@@ -111,6 +111,8 @@ const Index = () => {
   const [bodiesActiveLayer, setBodiesActiveLayer] = useState<'none' | 'mortality' | 'landcover' | 'sewage'>('none');
   const [agMarMode, setAgMarMode] = useState(false);
   const [agMarActiveLayer, setAgMarActiveLayer] = useState<'none' | 'population' | 'groundwater'>('none');
+  const [soapOperaMode, setSoapOperaMode] = useState(false);
+  const [soapActiveLayer, setSoapActiveLayer] = useState<'none' | 'salinity'>('none');
   const [agmarTourActive, setAgmarTourActive] = useState(false);
   const [agmarTourStep, setAgmarTourStep] = useState(0);
   
