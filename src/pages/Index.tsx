@@ -786,10 +786,16 @@ const Index = () => {
           onSelectQuadrant={(id) => {
             setQuadrantViewActive(false);
             setStarted(true);
-            if (id === 'serious-small' || id === 'playful-small') {
+            if (id === 'serious-small') {
+              setBodiesOfWaterMode(true);
+              setBodiesActiveLayer('none');
+              setWaterExtentYear(2024);
+              setShowChoropleth(false);
+              setShowLandcover(false);
+            } else if (id === 'playful-small') {
               setAryqWorldActive(true);
             }
-          }}
+          }
           onBack={() => setQuadrantViewActive(false)}
         />
       )}
