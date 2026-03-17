@@ -1,134 +1,37 @@
 
 
-# Guided Narrative Tour for the Aral Sea
+## Ag-MAR Presentation Tour
 
-## The Story (7 Steps)
+### Overview
+Add a 5th card ("Learn") to the landing page that launches a narrated tour through the 7 slides of the Ag-MAR presentation, using the same narrative overlay pattern as the existing guided tour. The final step adds proposal site markers for Karauzyak and Taxtakupir.
 
-The narrative tells the story of the Aral Sea's transformation through a sequence of guided steps. Each step controls: the camera position, the timeline year, which data layers are visible, which metrics are highlighted, and displays a narration card.
+### Presentation Content (7 steps)
 
-### Step 1 -- "The Fourth-Largest Lake"
-- **Year**: 1960 | **Camera**: High wide shot (18, 16, 18)
-- **Layers**: Water extent ON, borders ON, rivers ON, basins OFF
-- **Metrics**: Sea Level, Surface Area, Volume
-- **Text**: "In 1960, the Aral Sea was the world's fourth-largest lake -- 68,000 km2 of water sustaining an entire region."
+| Step | Title | Camera Focus | Key Content |
+|------|-------|-------------|-------------|
+| 1 | Implementing Ag-MAR in Karakalpakstan | Overview of region | Title slide — sustainable water management intro |
+| 2 | The Challenge — Why Now? | Lower Amu Darya | Water scarcity, soil degradation, climate change |
+| 3 | The Mechanics | Zoom to farmland area | Infiltration basins, groundwater recharge, desalination |
+| 4 | Ag-MAR: How It Works | Canal systems | Winter flow banking, IoT monitoring, soil desalination |
+| 5 | Core Questions | Karauzyak/Taxtakupir area | Scale, stakeholders, mungbean irrigation |
+| 6 | Steps of Implementation | Region overview | Site selection, infrastructure, monitoring |
+| 7 | Proposal Sites | Zoom to markers | Karauzyak (~42.1°N, 58.7°E) and Taxtakupir (~42.5°N, 59.0°E) with pulsing markers |
 
-### Step 2 -- "The Rivers That Fed It"
-- **Year**: 1960 | **Camera**: Orbit to show river inflows from the south
-- **Layers**: Rivers highlighted, 13th/19th century basins ON
-- **Metrics**: River Inflow
-- **Text**: "The Amu Darya and Syr Darya rivers delivered ~55 km3 of water annually, following ancient basin paths carved over centuries."
+### Files to Create/Edit
 
-### Step 3 -- "The Soviet Cotton Plan"
-- **Year**: 1970 | **Camera**: Pull back to show irrigated land context
-- **Layers**: Water extent ON, rivers ON
-- **Metrics**: Cotton Harvest, Irrigated Area, River Inflow
-- **Text**: "In the 1960s, Soviet planners diverted river water to irrigate cotton fields. By 1970, inflow had dropped dramatically."
+1. **`src/lib/agmar-tour-steps.ts`** — New file defining `AgmarTourStep[]` with title, text, camera positions, and layer configs for each of the 7 slides. Last step includes `proposalSites` array with coordinates for Karauzyak and Taxtakupir.
 
-### Step 4 -- "The Shrinking Begins"
-- **Year**: 1990 | **Camera**: Zoom closer, lower angle to show exposed seabed
-- **Layers**: Water extent ON, 1960 extent outline for comparison
-- **Metrics**: Sea Level, Volume, Salinity
-- **Text**: "By 1990, the sea had lost 60% of its volume. Salinity tripled, devastating fisheries and ecosystems."
+2. **`src/components/AgmarTourOverlay.tsx`** — New overlay component (modeled on `NarrativeOverlay`). Shows slide title, narration text, step dots, and prev/next navigation. On the last step, renders proposal site labels. Includes slide-specific images copied from the parsed PPTX.
 
-### Step 5 -- "The Sea Splits"
-- **Year**: 2005 | **Camera**: Top-down view showing the split
-- **Layers**: Water extent ON, 21st century canals ON
-- **Metrics**: Sea Level, Surface Area, Volume
-- **Text**: "By 2005, the Aral Sea had split into separate bodies. The Eastern basin was nearly gone."
+3. **`src/components/IntroOverlay.tsx`** — Add a 5th card "Learn" to the landing grid (change from 2x2 to a layout accommodating 5 cards). The card says "Ag-MAR Technology — A proposal for sustainable water management". Clicking calls a new `onAgmarTour` prop.
 
-### Step 6 -- "Climate Consequences"
-- **Year**: 2015 | **Camera**: Slow orbit
-- **Layers**: Water extent ON
-- **Metrics**: Temp Anomaly, Salinity
-- **Text**: "The exposed seabed became a source of toxic dust storms. Regional temperatures shifted, rainfall patterns changed."
+4. **`src/pages/Index.tsx`** — Add state (`agmarTourActive`, `agmarTourStep`), handlers (`startAgmarTour`, `handleAgmarTourStepChange`, `exitAgmarTour`), pass camera positions to TerrainViewer when active, render `AgmarTourOverlay`, and pass `onAgmarTour` to IntroOverlay.
 
-### Step 7 -- "The Aral Sea Today"
-- **Year**: 2024 | **Camera**: Final resting position
-- **Layers**: All layers ON
-- **Metrics**: All key metrics
-- **Text**: "Today, only fragments remain. The Northern Aral has partially recovered thanks to the Kok-Aral Dam, but the Southern basin continues to shrink. Explore freely."
+5. **Copy slide images** — Copy key slide screenshots from the parsed document into `public/images/agmar/` for use in the overlay panels.
 
-## Architecture
+### Landing Page Layout
+Change the 2x2 grid to accommodate 5 cards. Top row: 3 cards (Play, Touch, Learn). Bottom row: 2 cards (Walk, Explore). The new "Learn" card uses a green/emerald accent.
 
-### Data Structure
+### Proposal Sites (Final Slide)
+The last tour step will show two pulsing markers on the 3D map at Karauzyak and Taxtakupir coordinates, rendered as `Html` overlays in the TerrainViewer (similar to vocabulary layer markers). These appear only when the Ag-MAR tour is on the final step.
 
-```text
-// src/lib/narrative-steps.ts
-
-interface NarrativeStep {
-  id: number;
-  title: string;
-  text: string;
-  year: number;
-  camera: { position: [x, y, z], target: [x, y, z] };
-  layers: {
-    showBorders: boolean;
-    showRivers: boolean;
-    show13thBasin: boolean;
-    show19thBasin: boolean;
-    show21stBasin: boolean;
-    showWaterExtent: boolean;
-  };
-  enabledSeries: string[];   // which metrics to highlight
-  duration?: number;          // seconds to hold before user can advance
-}
-```
-
-All 7 steps defined as a static array in this file.
-
-### New Components
-
-**`src/components/NarrativeOverlay.tsx`** -- The UI layer for the guided tour:
-- Bottom-center narration card (glass-panel) showing title, text, and step dots
-- "Next" / "Back" / "Skip Tour" buttons
-- Step indicator dots (1-7)
-- Fade-in/out transitions between steps
-
-**`src/components/NarrativeCameraController.tsx`** -- A Three.js component inside the Canvas:
-- Receives the target camera position/target for the current step
-- Smoothly animates the camera using `useFrame` with lerp
-- Disables OrbitControls during the narrative (re-enables on exit)
-
-### State Management (in Index.tsx)
-
-```text
-const [narrativeActive, setNarrativeActive] = useState(false);
-const [narrativeStep, setNarrativeStep] = useState(0);
-```
-
-When `narrativeActive` is true:
-- The current step drives: `waterExtentYear`, `showBorders`, `showRivers`, `show13thBasin`, `show19thBasin`, `show21stBasin`, `showWaterExtent`, `enabledSeries`
-- The timeline slider, control panel, legend, and data panel are hidden (clean cinematic view)
-- The NarrativeOverlay is shown at the bottom
-
-### Entry and Exit
-
-**Entry points:**
-1. The IntroOverlay gets a second button: "Guided Tour" alongside "Explore". Clicking it sets `narrativeActive = true` and `started = true`.
-2. A small "Guided Tour" button added to the controls area (top-right) for re-entering after free exploration.
-
-**Exit points:**
-1. "Skip Tour" button on the NarrativeOverlay -- exits immediately to free exploration mode
-2. Completing all 7 steps -- the final step's "Finish" button exits to free exploration
-3. Pressing Escape key
-
-On exit: `narrativeActive` is set to `false`, all UI panels reappear, OrbitControls re-enable, and the app state is left at the final step's year/layers (so the user continues from where the story ended).
-
-### Modified Files
-
-| File | Changes |
-|---|---|
-| `src/lib/narrative-steps.ts` | New file -- step definitions array |
-| `src/components/NarrativeOverlay.tsx` | New file -- narration card UI |
-| `src/components/NarrativeCameraController.tsx` | New file -- camera animation inside Canvas |
-| `src/components/IntroOverlay.tsx` | Add "Guided Tour" button |
-| `src/components/TerrainViewer.tsx` | Add NarrativeCameraController, accept narrative props, conditionally disable OrbitControls |
-| `src/pages/Index.tsx` | Add narrative state, wire step changes to all layer/year/metric state, conditionally hide panels during tour |
-
-### Camera Control During Narrative
-
-The `OrbitControls` component receives `enabled={!narrativeActive}` so users cannot manually rotate during the tour. The `NarrativeCameraController` uses `useFrame` to smoothly lerp camera position and lookAt target over ~2 seconds per transition.
-
-### No New Dependencies
-
-Everything uses existing libraries: React state, Three.js camera manipulation via R3F's `useFrame`, and Tailwind + glass-panel for the overlay UI.
