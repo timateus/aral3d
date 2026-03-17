@@ -151,16 +151,18 @@ function RotatingModel({ modelPath, playful, rotationDir, scaleBase }: { modelPa
   );
 }
 
-function QuadrantCanvas({ type, playful, rotationDir, label, terrain, onLabelClick, modelPath, modelScale }: {
+function QuadrantCanvas({ type, rotationDir, label, terrain, onLabelClick, modelPath, modelScale, colorFn, cameraPos }: {
   type: 'terrain' | 'model';
-  playful: boolean;
   rotationDir: [number, number];
   label: string;
   terrain: TerrainData | null;
   onLabelClick: () => void;
   modelPath?: string;
   modelScale?: number;
+  colorFn?: (n: number) => [number, number, number];
+  cameraPos?: [number, number, number];
 }) {
+  const camPos = cameraPos ?? (type === 'model' ? [4, 3.5, 4] : [3, 2.5, 3]);
   return (
     <div className="w-full h-full relative group">
       <div className="absolute inset-0 border border-border/20 z-10 pointer-events-none" />
@@ -170,19 +172,18 @@ function QuadrantCanvas({ type, playful, rotationDir, label, terrain, onLabelCli
       >
         {label} →
       </button>
-      <Canvas camera={{ position: type === 'model' ? [4, 3.5, 4] : [3, 2.5, 3], fov: type === 'model' ? 40 : 45 }}>
-        <ambientLight intensity={playful ? 0.8 : 0.5} />
-        <directionalLight position={[5, 5, 5]} intensity={playful ? 1.2 : 0.8} />
-        {playful && <color attach="background" args={['#0d1117']} />}
+      <Canvas camera={{ position: camPos as [number, number, number], fov: type === 'model' ? 40 : 45 }}>
+        <ambientLight intensity={0.6} />
+        <directionalLight position={[5, 5, 5]} intensity={0.9} />
         <Suspense fallback={null}>
           {type === 'terrain' && terrain ? (
             <group>
-              <DEMTerrain terrain={terrain} playful={playful} />
+              <DEMTerrain terrain={terrain} colorFn={colorFn ?? getPaleColor} />
             </group>
           ) : type === 'model' && modelPath ? (
-            <RotatingModel modelPath={modelPath} playful={playful} rotationDir={rotationDir} scaleBase={modelScale} />
+            <RotatingModel modelPath={modelPath} playful={false} rotationDir={rotationDir} scaleBase={modelScale} />
           ) : null}
-          <Environment preset={playful ? 'sunset' : 'city'} />
+          <Environment preset="city" />
         </Suspense>
         <OrbitControls
           enableZoom={true}
