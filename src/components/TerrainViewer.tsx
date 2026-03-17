@@ -411,6 +411,9 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
       {showObjectLibrary && onObjectSelect && (
         <ObjectLibrary3D terrain={terrain} exaggeration={exaggeration} onSelect={onObjectSelect} />
       )}
+      {agmarShowProposalSites && (
+        <AgmarProposalMarkers terrain={terrain} exaggeration={exaggeration} />
+      )}
     </Canvas>
   );
 });
