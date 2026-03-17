@@ -1293,6 +1293,7 @@ const Index = () => {
               const next = soapActiveLayer === 'salinity' ? 'none' : 'salinity';
               setSoapActiveLayer(next);
               setShowSalinity(next === 'salinity');
+              if (next === 'salinity') setShowSoapBubbles(false);
             }}
             className={`text-[11px] tracking-[0.08em] uppercase font-mono px-4 py-2 border backdrop-blur-sm transition-all ${
               soapActiveLayer === 'salinity'
