@@ -22,6 +22,7 @@ import { AGMAR_TOUR_STEPS } from '@/lib/agmar-tour-steps';
 import NarrativeOverlay from '@/components/NarrativeOverlay';
 import CanalTourOverlay from '@/components/CanalTourOverlay';
 import AgmarTourOverlay from '@/components/AgmarTourOverlay';
+import QuadrantView from '@/components/QuadrantView';
 import DamToolPanel from '@/components/DamToolPanel';
 import CanalToolPanel from '@/components/CanalToolPanel';
 import WaterFlowPanel from '@/components/WaterFlowPanel';
@@ -102,6 +103,7 @@ const Index = () => {
   const [gameModeState, setGameModeState] = useState<GameModeState | null>(null);
   const [bowlWorldActive, setBowlWorldActive] = useState(false);
   const [aryqWorldActive, setAryqWorldActive] = useState(false);
+  const [quadrantViewActive, setQuadrantViewActive] = useState(false);
   const [agmarTourActive, setAgmarTourActive] = useState(false);
   const [agmarTourStep, setAgmarTourStep] = useState(0);
   
@@ -755,7 +757,7 @@ const Index = () => {
       </div>
 
       {/* Intro Overlay */}
-      {!started && !loading && terrain && (
+      {!started && !loading && terrain && !quadrantViewActive && (
         <IntroOverlay
           onStart={() => setStarted(true)}
           onGuidedTour={startNarrative}
@@ -769,6 +771,21 @@ const Index = () => {
             setFlowSpeed(20);
             setShowWaterExtent(true);
           }}
+          onQuadrants={() => setQuadrantViewActive(true)}
+        />
+      )}
+
+      {/* Quadrant View */}
+      {quadrantViewActive && !started && (
+        <QuadrantView
+          onSelectQuadrant={(id) => {
+            setQuadrantViewActive(false);
+            setStarted(true);
+            if (id === 'serious-small' || id === 'playful-small') {
+              setAryqWorldActive(true);
+            }
+          }}
+          onBack={() => setQuadrantViewActive(false)}
         />
       )}
 

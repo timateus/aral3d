@@ -211,11 +211,12 @@ interface IntroOverlayProps {
   onAgmarTour?: () => void;
   onObjectSelect?: (lat: number, lon: number, name: string) => void;
   onStartGame?: () => void;
+  onQuadrants?: () => void;
 }
 
 type LandingView = 'main' | 'artifacts';
 
-const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onAgmarTour, onObjectSelect, onStartGame }: IntroOverlayProps) => {
+const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onAgmarTour, onObjectSelect, onStartGame, onQuadrants }: IntroOverlayProps) => {
   const [view, setView] = useState<LandingView>('main');
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
@@ -403,7 +404,7 @@ const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onAgmarTour, onObjec
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <button
               onClick={onGuidedTour}
               className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-5 hover:bg-card/70 hover:border-secondary-foreground/30 transition-all duration-500 text-left overflow-hidden"
@@ -412,10 +413,24 @@ const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onAgmarTour, onObjec
               <div className="relative z-10">
                 <p className="text-base font-semibold text-foreground tracking-wide mb-1">Walk</p>
                 <p className="text-[11px] text-foreground/50 leading-relaxed">
-                  Narrated history of the Aral Sea & canal systems
+                  Narrated history & canal systems
                 </p>
               </div>
               <ArrowRight className="absolute bottom-3 right-3 w-4 h-4 text-foreground/20 group-hover:text-secondary-foreground/60 transition-all duration-300 group-hover:translate-x-1" />
+            </button>
+
+            <button
+              onClick={() => onQuadrants?.()}
+              className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-5 hover:bg-card/70 hover:border-amber-500/40 transition-all duration-500 text-left overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="relative z-10">
+                <p className="text-base font-semibold text-foreground tracking-wide mb-1">Compare</p>
+                <p className="text-[11px] text-foreground/50 leading-relaxed">
+                  Four views across scale & tone
+                </p>
+              </div>
+              <ArrowRight className="absolute bottom-3 right-3 w-4 h-4 text-foreground/20 group-hover:text-amber-500/60 transition-all duration-300 group-hover:translate-x-1" />
             </button>
 
             <button
@@ -426,7 +441,7 @@ const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onAgmarTour, onObjec
               <div className="relative z-10">
                 <p className="text-base font-semibold text-foreground tracking-wide mb-1">Explore</p>
                 <p className="text-[11px] text-foreground/50 leading-relaxed">
-                  Full map controls, data layers, and simulation tools
+                  Full map controls & simulation
                 </p>
               </div>
               <ArrowRight className="absolute bottom-3 right-3 w-4 h-4 text-foreground/20 group-hover:text-muted-foreground/60 transition-all duration-300 group-hover:translate-x-1" />
