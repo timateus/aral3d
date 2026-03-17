@@ -648,6 +648,8 @@ const Index = () => {
     }
   }, [terrain]);
 
+  const isMapExploration = started && !narrativeActive && !canalTourActive && !agmarTourActive && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary;
+
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
       {/* 3D Viewer */}
