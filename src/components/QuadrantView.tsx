@@ -40,8 +40,18 @@ function getPaleColor(normalized: number): [number, number, number] {
   return [0.92, 0.92, 0.92];
 }
 
+function getNaturalColor(normalized: number): [number, number, number] {
+  if (normalized < 0.15) return [0.2, 0.5, 0.7];   // blue water
+  if (normalized < 0.25) return [0.3, 0.6, 0.35];   // green lowlands
+  if (normalized < 0.4) return [0.55, 0.7, 0.3];    // light green
+  if (normalized < 0.55) return [0.78, 0.72, 0.4];   // yellow-brown
+  if (normalized < 0.7) return [0.72, 0.6, 0.35];    // brown
+  if (normalized < 0.85) return [0.65, 0.55, 0.4];   // darker brown
+  return [0.9, 0.88, 0.82];                          // pale peaks
+}
+
 // DEM terrain mesh generated from actual data
-function DEMTerrain({ terrain, playful }: { terrain: TerrainData; playful: boolean }) {
+function DEMTerrain({ terrain, colorFn }: { terrain: TerrainData; colorFn: (n: number) => [number, number, number] }) {
   const geo = useMemo(() => {
     const { width, height, elevations, minElevation, maxElevation, noDataValue } = terrain;
     const step = Math.max(1, Math.floor(Math.max(width, height) / 128));
@@ -52,7 +62,7 @@ function DEMTerrain({ terrain, playful }: { terrain: TerrainData; playful: boole
     const colors: number[] = [];
     const indices: number[] = [];
     const scale = 4;
-    const elevScale = playful ? 1.5 : 0.4;
+    const elevScale = 0.8;
 
     for (let iy = 0; iy < h; iy++) {
       for (let ix = 0; ix < w; ix++) {
@@ -67,13 +77,7 @@ function DEMTerrain({ terrain, playful }: { terrain: TerrainData; playful: boole
         const py = normalized * elevScale - 0.5;
 
         positions.push(px, py, pz);
-
-        let c: [number, number, number];
-        if (playful) {
-          c = getATColor(normalized);
-        } else {
-          c = getPaleColor(normalized);
-        }
+        const c = colorFn(normalized);
         colors.push(c[0], c[1], c[2]);
       }
     }
@@ -94,11 +98,11 @@ function DEMTerrain({ terrain, playful }: { terrain: TerrainData; playful: boole
     geometry.setIndex(indices);
     geometry.computeVertexNormals();
     return geometry;
-  }, [terrain, playful]);
+  }, [terrain, colorFn]);
 
   return (
     <mesh geometry={geo}>
-      <meshStandardMaterial vertexColors flatShading={playful} />
+      <meshStandardMaterial vertexColors />
     </mesh>
   );
 }
@@ -137,52 +141,28 @@ function RotatingModel({ modelPath, playful, rotationDir, scaleBase }: { modelPa
   });
 
   const clonedScene = useMemo(() => {
-    const c = scene.clone();
-    if (playful) {
-      c.traverse((child) => {
-        if ((child as THREE.Mesh).isMesh) {
-          const mesh = child as THREE.Mesh;
-          const mat = (mesh.material as THREE.MeshStandardMaterial).clone();
-          mat.color.setHSL(
-            mat.color.getHSL({ h: 0, s: 0, l: 0 }).h,
-            1.0,
-            0.65
-          );
-          mat.flatShading = true;
-          mesh.material = mat;
-        }
-      });
-    }
-    return c;
-  }, [scene, playful]);
+    return scene.clone();
+  }, [scene]);
 
   return (
-    <group ref={ref} scale={[s, playful ? s * 1.5 : s, s]} position={[0, -0.5, 0]}>
+    <group ref={ref} scale={[s, s, s]} position={[0, -0.5, 0]}>
       <primitive object={clonedScene} />
-      {playful && (
-        <>
-          {[[0.12, 0.25, 0.05], [-0.1, 0.22, -0.04], [0.06, 0.28, -0.07]].map((p, i) => (
-            <mesh key={`drop-${i}`} position={p as [number, number, number]}>
-              <sphereGeometry args={[0.02, 8, 8]} />
-              <meshStandardMaterial color={AT_COLORS.water} emissive={AT_COLORS.water} emissiveIntensity={0.5} transparent opacity={0.8} />
-            </mesh>
-          ))}
-        </>
-      )}
     </group>
   );
 }
 
-function QuadrantCanvas({ type, playful, rotationDir, label, terrain, onLabelClick, modelPath, modelScale }: {
+function QuadrantCanvas({ type, rotationDir, label, terrain, onLabelClick, modelPath, modelScale, colorFn, cameraPos }: {
   type: 'terrain' | 'model';
-  playful: boolean;
   rotationDir: [number, number];
   label: string;
   terrain: TerrainData | null;
   onLabelClick: () => void;
   modelPath?: string;
   modelScale?: number;
+  colorFn?: (n: number) => [number, number, number];
+  cameraPos?: [number, number, number];
 }) {
+  const camPos = cameraPos ?? (type === 'model' ? [4, 3.5, 4] : [3, 2.5, 3]);
   return (
     <div className="w-full h-full relative group">
       <div className="absolute inset-0 border border-border/20 z-10 pointer-events-none" />
@@ -192,19 +172,18 @@ function QuadrantCanvas({ type, playful, rotationDir, label, terrain, onLabelCli
       >
         {label} →
       </button>
-      <Canvas camera={{ position: type === 'model' ? [4, 3.5, 4] : [3, 2.5, 3], fov: type === 'model' ? 40 : 45 }}>
-        <ambientLight intensity={playful ? 0.8 : 0.5} />
-        <directionalLight position={[5, 5, 5]} intensity={playful ? 1.2 : 0.8} />
-        {playful && <color attach="background" args={['#0d1117']} />}
+      <Canvas camera={{ position: camPos as [number, number, number], fov: type === 'model' ? 40 : 45 }}>
+        <ambientLight intensity={0.6} />
+        <directionalLight position={[5, 5, 5]} intensity={0.9} />
         <Suspense fallback={null}>
           {type === 'terrain' && terrain ? (
             <group>
-              <DEMTerrain terrain={terrain} playful={playful} />
+              <DEMTerrain terrain={terrain} colorFn={colorFn ?? getPaleColor} />
             </group>
           ) : type === 'model' && modelPath ? (
-            <RotatingModel modelPath={modelPath} playful={playful} rotationDir={rotationDir} scaleBase={modelScale} />
+            <RotatingModel modelPath={modelPath} playful={false} rotationDir={rotationDir} scaleBase={modelScale} />
           ) : null}
-          <Environment preset={playful ? 'sunset' : 'city'} />
+          <Environment preset="city" />
         </Suspense>
         <OrbitControls
           enableZoom={true}
@@ -276,30 +255,29 @@ export default function QuadrantView({ onSelectQuadrant, onBack }: QuadrantViewP
 
             {/* 2x2 grid of 3D canvases */}
             <div className="grid grid-cols-2 grid-rows-2 w-full h-full">
-              {/* Top-left: Serious × Large Scale */}
+              {/* Top-left: Serious × Large Scale — natural terrain */}
               <QuadrantCanvas
                 type="terrain"
-                playful={false}
                 rotationDir={[1, 1]}
                 label="ag (MAR): Water Hide-and-seek"
                 terrain={terrain}
+                colorFn={getNaturalColor}
                 onLabelClick={() => onSelectQuadrant('serious-large')}
               />
               {/* Top-right: Playful × Large Scale — Noah's Arc */}
               <QuadrantCanvas
                 type="model"
-                playful={true}
                 rotationDir={[-0.7, 1.3]}
                 label="Canal thinking?"
                 terrain={terrain}
                 modelPath="/models/noahs-arc.glb"
                 modelScale={2}
+                cameraPos={[3, 2.5, 3]}
                 onLabelClick={() => onSelectQuadrant('playful-large')}
               />
               {/* Bottom-left: Serious × Small Scale — Aryq */}
               <QuadrantCanvas
                 type="model"
-                playful={false}
                 rotationDir={[0.8, -1]}
                 label="Bodies of Water"
                 terrain={terrain}
@@ -310,12 +288,12 @@ export default function QuadrantView({ onSelectQuadrant, onBack }: QuadrantViewP
               {/* Bottom-right: Playful × Small Scale — Soap */}
               <QuadrantCanvas
                 type="model"
-                playful={true}
                 rotationDir={[-1.2, 0.8]}
                 label="Soap Opera"
                 terrain={terrain}
                 modelPath="/models/soap-khorezm.glb"
-                modelScale={3}
+                modelScale={5}
+                cameraPos={[2.5, 2, 2.5]}
                 onLabelClick={() => onSelectQuadrant('playful-small')}
               />
             </div>
