@@ -216,7 +216,7 @@ interface IntroOverlayProps {
 
 type LandingView = 'main' | 'artifacts';
 
-const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onAgmarTour, onObjectSelect, onStartGame }: IntroOverlayProps) => {
+const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onAgmarTour, onObjectSelect, onStartGame, onQuadrants }: IntroOverlayProps) => {
   const [view, setView] = useState<LandingView>('main');
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
