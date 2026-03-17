@@ -54,13 +54,15 @@ interface AryqWorldProps {
 export default function AryqWorld({ active, onComplete, orbitRef }: AryqWorldProps) {
   const { scene } = useGLTF('/models/aryq.glb');
   const { camera } = useThree();
-  const [avatarPos, setAvatarPos] = useState<[number, number, number]>([0, 0.1, 1.5]);
+  const [avatarPos, setAvatarPos] = useState<[number, number, number]>([0, 0.02, 1.5]);
   const [facing, setFacing] = useState(0);
   const [completed, setCompleted] = useState(false);
   const keysRef = useRef<Set<string>>(new Set());
   const facingRef = useRef(0);
-  const avatarPosRef = useRef<[number, number, number]>([0, 0.1, 1.5]);
+  const avatarPosRef = useRef<[number, number, number]>([0, 0.02, 1.5]);
   const initializedRef = useRef(false);
+  const raycaster = useRef(new THREE.Raycaster());
+  const modelRef = useRef<THREE.Group>(null);
 
   const targetPos: [number, number, number] = [0, 0.1, 0];
 
