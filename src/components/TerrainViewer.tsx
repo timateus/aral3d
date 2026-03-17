@@ -100,6 +100,7 @@ interface TerrainViewerProps {
   onLandcoverAvailableClasses?: (classes: number[]) => void;
   showSchools?: boolean;
   showVocabulary?: boolean;
+  agmarShowProposalSites?: boolean;
 }
 
 function CameraAnimator({ started }: { started: boolean }) {
