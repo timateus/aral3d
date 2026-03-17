@@ -281,6 +281,8 @@ export default function QuadrantView({ onSelectQuadrant, onBack }: QuadrantViewP
                 modelPath="/models/noahs-arc.glb"
                 modelScale={2}
                 cameraPos={[3, 2.5, 3]}
+                brightLight
+                modelPosY={0.2}
                 onLabelClick={() => onSelectQuadrant('playful-large')}
               />
               {/* Bottom-left: Serious × Small Scale — Aryq */}
