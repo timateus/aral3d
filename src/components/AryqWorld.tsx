@@ -170,6 +170,19 @@ export default function AryqWorld({ active, onComplete, orbitRef }: AryqWorldPro
       camera.position.z += dz;
     }
 
+    // Space = pour water
+    if (spaceRef.current && !completed) {
+      // Add multiple water drops around avatar
+      const newDrops: { id: number; pos: [number, number, number] }[] = [];
+      for (let i = 0; i < 3; i++) {
+        const id = dropIdRef.current++;
+        const ox = (Math.random() - 0.5) * 0.3;
+        const oz = (Math.random() - 0.5) * 0.3;
+        newDrops.push({ id, pos: [newX + ox, newY + 0.15, newZ + oz] });
+      }
+      setWaterDrops(prev => [...prev.slice(-60), ...newDrops]); // keep max 60
+    }
+
     const dist = Math.sqrt((newX - targetPos[0]) ** 2 + (newZ - targetPos[2]) ** 2);
     if (dist < 0.2) {
       setCompleted(true);
