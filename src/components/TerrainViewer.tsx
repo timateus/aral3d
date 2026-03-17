@@ -20,6 +20,7 @@ import SchoolsLayer from './SchoolsLayer';
 import VocabularyLayer from './VocabularyLayer';
 import GameMode from './GameMode';
 import BowlWorld from './BowlWorld';
+import AryqWorld from './AryqWorld';
 import { TerrainData } from '@/lib/geotiff-loader';
 import type { ScenarioAction } from '@/types/scenario';
 import type { WaterFlowState } from '@/lib/water-flow-simulation';
