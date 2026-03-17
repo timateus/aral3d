@@ -1109,7 +1109,7 @@ const Index = () => {
       )}
 
       {/* Timeline Slider - bottom bar (hide in game mode) */}
-      {started && !narrativeActive && !canalTourActive && !agmarTourActive && !gameModeActive && (
+      {isMapExploration && (
         <TimelineSlider
           year={waterExtentYear}
           onYearChange={setWaterExtentYear}
