@@ -475,7 +475,7 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
           </mesh>
           <Line
             points={lake.outline}
-            color="#ff85c8"
+            color="#81d4fa"
             lineWidth={1.5}
             transparent
             opacity={0.9}

@@ -129,7 +129,7 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
       {onToggle21cLakes && (
         <label className="flex items-center justify-between cursor-pointer">
           <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
-            <span className="inline-block w-3 h-3 rounded-sm" style={{ background: '#ff69b4', borderColor: '#ff85c880', borderWidth: 1 }} />
+            <span className="inline-block w-3 h-3 rounded-sm" style={{ background: '#4fc3f7', borderColor: '#81d4fa80', borderWidth: 1 }} />
             21c Lakes
           </span>
           <Switch className="scale-75" checked={!!show21cLakes} onCheckedChange={onToggle21cLakes} />
