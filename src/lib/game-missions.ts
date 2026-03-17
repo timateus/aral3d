@@ -16,6 +16,7 @@ export interface Mission {
   requiresWater?: boolean;
   requiresKhorezm?: boolean;
   requiresInspector?: boolean;
+  enterBowlWorld?: boolean;
 }
 
 export function findHighestPoint(terrain: TerrainData): { lat: number; lon: number; elev: number } {
