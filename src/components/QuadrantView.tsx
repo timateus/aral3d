@@ -211,7 +211,7 @@ function QuadrantCanvas({ type, playful, rotationDir, label, terrain, onLabelCli
           autoRotate
           autoRotateSpeed={rotationDir[0] * 1.5}
           minDistance={1.5}
-          maxDistance={8}
+          maxDistance={12}
         />
       </Canvas>
     </div>
