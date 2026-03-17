@@ -23,6 +23,7 @@ import NarrativeOverlay from '@/components/NarrativeOverlay';
 import CanalTourOverlay from '@/components/CanalTourOverlay';
 import AgmarTourOverlay from '@/components/AgmarTourOverlay';
 import QuadrantView from '@/components/QuadrantView';
+import SoapBubblesOverlay from '@/components/SoapBubblesOverlay';
 import DamToolPanel from '@/components/DamToolPanel';
 import CanalToolPanel from '@/components/CanalToolPanel';
 import WaterFlowPanel from '@/components/WaterFlowPanel';
