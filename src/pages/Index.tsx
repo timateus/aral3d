@@ -842,7 +842,7 @@ const Index = () => {
       )}
 
       {/* Header */}
-      {started && !narrativeActive && !canalTourActive && !agmarTourActive && !isMobile && (
+      {isMapExploration && !isMobile && (
         <div className="absolute top-4 left-4 z-10 flex items-center gap-3">
           <button
             onClick={() => { setStarted(false); setGameModeActive(false); }}
