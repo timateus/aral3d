@@ -747,6 +747,7 @@ const Index = () => {
             showSchools={showSchools}
             showVocabulary={showVocabulary}
             agmarShowProposalSites={agmarTourActive && !!AGMAR_TOUR_STEPS[agmarTourStep]?.proposalSites}
+            showOverlayMetrics={isMapExploration}
           />
         )}
         {!terrain && !loading && error && (
