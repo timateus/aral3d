@@ -466,7 +466,7 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
         <group key={`lake21c-${i}`}>
           <mesh geometry={lake.geometry}>
             <meshStandardMaterial
-              color="#ff69b4"
+              color="#4fc3f7"
               transparent
               opacity={0.45}
               side={THREE.DoubleSide}
