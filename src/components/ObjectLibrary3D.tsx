@@ -22,6 +22,14 @@ export const LIBRARY_OBJECTS: LibraryObject[] = [
     lat: 44.5,
     lon: 59.0,
   },
+  {
+    id: 'aryq',
+    name: 'Aryq',
+    imagePath: '/images/vocabulary/aryq.jpg',
+    description: 'Traditional irrigation canal — the lifeline of Karakalpak agriculture',
+    lat: 42.462,
+    lon: 59.603,
+  },
 ];
 
 function geoTo3D(lat: number, lon: number, terrain: TerrainData, exaggeration: number): THREE.Vector3 {

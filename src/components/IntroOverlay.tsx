@@ -61,6 +61,17 @@ const LIBRARY_ITEMS: LibraryItem[] = [
     is3D: true,
   },
   {
+    id: 'aryq',
+    name: 'Aryq',
+    modelPath: '/models/aryq.glb',
+    image: '',
+    description: 'Irrigation canal',
+    detailText: 'An aryq is a traditional irrigation canal — the lifeline of agriculture in Karakalpakstan. These channels carry water from rivers to fields, sustaining communities across the arid landscape.',
+    lat: 42.462,
+    lon: 59.603,
+    is3D: true,
+  },
+  {
     id: 'aral-north',
     name: 'Aral Sea North',
     image: '',
