@@ -102,6 +102,7 @@ const Index = () => {
   const [gameModeState, setGameModeState] = useState<GameModeState | null>(null);
   const [bowlWorldActive, setBowlWorldActive] = useState(false);
   const [aryqWorldActive, setAryqWorldActive] = useState(false);
+  const [quadrantViewActive, setQuadrantViewActive] = useState(false);
   const [agmarTourActive, setAgmarTourActive] = useState(false);
   const [agmarTourStep, setAgmarTourStep] = useState(0);
   
