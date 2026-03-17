@@ -69,6 +69,7 @@ const Index = () => {
   const [showVocabulary, setShowVocabulary] = useState(false);
   const [showGroundwater, setShowGroundwater] = useState(false);
   const [showPrecipitation, setShowPrecipitation] = useState(false);
+  const [showSalinity, setShowSalinity] = useState(false);
   const [waterExtentYear, setWaterExtentYear] = useState(1960);
   
   const [started, setStarted] = useState(false);
@@ -110,6 +111,8 @@ const Index = () => {
   const [bodiesActiveLayer, setBodiesActiveLayer] = useState<'none' | 'mortality' | 'landcover' | 'sewage'>('none');
   const [agMarMode, setAgMarMode] = useState(false);
   const [agMarActiveLayer, setAgMarActiveLayer] = useState<'none' | 'population' | 'groundwater'>('none');
+  const [soapOperaMode, setSoapOperaMode] = useState(false);
+  const [soapActiveLayer, setSoapActiveLayer] = useState<'none' | 'salinity'>('none');
   const [agmarTourActive, setAgmarTourActive] = useState(false);
   const [agmarTourStep, setAgmarTourStep] = useState(0);
   
@@ -654,7 +657,7 @@ const Index = () => {
     }
   }, [terrain]);
 
-  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode;
+  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode;
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
@@ -756,6 +759,7 @@ const Index = () => {
             showOverlayMetrics={isMapExploration}
             showGroundwater={showGroundwater}
             showPrecipitation={showPrecipitation}
+            showSalinity={showSalinity}
           />
         )}
         {!terrain && !loading && error && (
@@ -806,7 +810,12 @@ const Index = () => {
               setShowChoropleth(false);
               setShowLandcover(false);
             } else if (id === 'playful-small') {
-              setAryqWorldActive(true);
+              setSoapOperaMode(true);
+              setSoapActiveLayer('none');
+              setWaterExtentYear(2024);
+              setShowWaterExtent(true);
+              setShowKhorezm(true);
+              setShowSalinity(false);
             }
           }}
           onBack={() => setQuadrantViewActive(false)}
@@ -1258,6 +1267,37 @@ const Index = () => {
             }`}
           >
             Ground Water
+          </button>
+        </div>
+      )}
+
+      {/* Soap Opera preset buttons */}
+      {soapOperaMode && started && (
+        <div className="absolute bottom-6 left-6 z-20 flex flex-col gap-2">
+          <button
+            onClick={() => {
+              setSoapOperaMode(false);
+              setShowSalinity(false);
+              setSoapActiveLayer('none');
+              setShowKhorezm(false);
+            }}
+            className="text-[10px] tracking-[0.12em] uppercase text-muted-foreground hover:text-primary transition-colors border border-border/50 px-3 py-1.5 bg-card/60 backdrop-blur-sm mb-2"
+          >
+            ← Back to explore
+          </button>
+          <button
+            onClick={() => {
+              const next = soapActiveLayer === 'salinity' ? 'none' : 'salinity';
+              setSoapActiveLayer(next);
+              setShowSalinity(next === 'salinity');
+            }}
+            className={`text-[11px] tracking-[0.08em] uppercase font-mono px-4 py-2 border backdrop-blur-sm transition-all ${
+              soapActiveLayer === 'salinity'
+                ? 'bg-primary/20 border-primary/60 text-primary'
+                : 'bg-card/60 border-border/50 text-muted-foreground hover:text-primary hover:border-primary/40'
+            }`}
+          >
+            Salinity
           </button>
         </div>
       )}

@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle, Suspense } from 'react';
 import AgmarProposalMarkers from './AgmarProposalMarkers';
 import GroundwaterLayer from './GroundwaterLayer';
+import SalinityLayer from './SalinityLayer';
 import PrecipitationLayer from './PrecipitationLayer';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { GizmoHelper, GizmoViewport, Html } from '@react-three/drei';
@@ -110,6 +111,7 @@ interface TerrainViewerProps {
   showOverlayMetrics?: boolean;
   showGroundwater?: boolean;
   showPrecipitation?: boolean;
+  showSalinity?: boolean;
 }
 
 function CameraAnimator({ started }: { started: boolean }) {
@@ -285,7 +287,7 @@ function VideoAnimator({
   return null;
 }
 
-const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, showWaterExtent, waterExtentYear, showPopDensity, popHexSize, popHexHeight, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone, riverInflow, userLocation, inspectorEnabled, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, flowState, flowRenderKey, terrainVersion, raisedPixels, dugPixels, showMigration, migrationYear, showChoropleth, choroplethIndicator, choroplethExaggeration, canalHighlights, highlightedCanalNames, canalTourActive, showObjectLibrary, onObjectSelect, gameModeActive, onGameAddWater, bowlWorldActive, onBowlWorldComplete, showLandcover, landcoverVisibleClasses, onLandcoverAvailableClasses, showSchools, showVocabulary, agmarShowProposalSites, aryqWorldActive, onAryqWorldComplete, onNukusClick, showOverlayMetrics, showGroundwater, showPrecipitation }, ref) => {
+const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, showWaterExtent, waterExtentYear, showPopDensity, popHexSize, popHexHeight, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone, riverInflow, userLocation, inspectorEnabled, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, flowState, flowRenderKey, terrainVersion, raisedPixels, dugPixels, showMigration, migrationYear, showChoropleth, choroplethIndicator, choroplethExaggeration, canalHighlights, highlightedCanalNames, canalTourActive, showObjectLibrary, onObjectSelect, gameModeActive, onGameAddWater, bowlWorldActive, onBowlWorldComplete, showLandcover, landcoverVisibleClasses, onLandcoverAvailableClasses, showSchools, showVocabulary, agmarShowProposalSites, aryqWorldActive, onAryqWorldComplete, onNukusClick, showOverlayMetrics, showGroundwater, showPrecipitation, showSalinity }, ref) => {
   const screenshotFn = useRef<(() => void) | null>(null);
   const orbitRef = useRef<any>(null);
   const [flyoverAnimating, setFlyoverAnimating] = useState(false);
@@ -328,6 +330,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
           {showVocabulary && <VocabularyLayer terrain={terrain} exaggeration={exaggeration} />}
           {showGroundwater && <GroundwaterLayer terrain={terrain} exaggeration={exaggeration} />}
           {showPrecipitation && <PrecipitationLayer terrain={terrain} exaggeration={exaggeration} />}
+          {showSalinity && <SalinityLayer terrain={terrain} exaggeration={exaggeration} />}
           {scenarioActions && scenarioActions.length > 0 && (
             <ScenarioOverlay actions={scenarioActions} terrain={terrain} exaggeration={exaggeration} />
           )}
