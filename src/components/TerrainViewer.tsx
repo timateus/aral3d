@@ -105,6 +105,7 @@ interface TerrainViewerProps {
   aryqWorldActive?: boolean;
   onAryqWorldComplete?: () => void;
   onNukusClick?: () => void;
+  showOverlayMetrics?: boolean;
 }
 
 function CameraAnimator({ started }: { started: boolean }) {
