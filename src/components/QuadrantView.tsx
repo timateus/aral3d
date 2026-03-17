@@ -156,7 +156,7 @@ function RotatingAryq({ playful, rotationDir }: { playful: boolean; rotationDir:
   }, [scene, playful]);
 
   return (
-    <group ref={ref} scale={[5, playful ? 7 : 5, 5]} position={[0, -0.8, 0]}>
+    <group ref={ref} scale={[3, playful ? 4.5 : 3, 3]} position={[0, -0.5, 0]}>
       <primitive object={clonedScene} />
       {playful && (
         <>
