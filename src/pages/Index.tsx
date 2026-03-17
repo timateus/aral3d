@@ -96,6 +96,7 @@ const Index = () => {
   const [showObjectLibrary, setShowObjectLibrary] = useState(false);
   const [gameModeActive, setGameModeActive] = useState(false);
   const [gameModeState, setGameModeState] = useState<GameModeState | null>(null);
+  const [bowlWorldActive, setBowlWorldActive] = useState(false);
   
   const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
   const [flowRenderKey, setFlowRenderKey] = useState(0);

@@ -358,6 +358,12 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
 
       <GameMode terrain={terrain} exaggeration={exaggeration} active={!!gameModeActive} onAddWater={onGameAddWater} orbitRef={orbitRef} />
 
+      {bowlWorldActive && onBowlWorldComplete && (
+        <Suspense fallback={null}>
+          <BowlWorld active={bowlWorldActive} onComplete={onBowlWorldComplete} orbitRef={orbitRef} />
+        </Suspense>
+      )}
+
       {!narrativeActive && !flyoverAnimating && !gameModeActive && <CameraAnimator started={started} />}
       {narrativeActive && narrativeCameraPosition && narrativeCameraTarget && (
         <NarrativeCameraController
