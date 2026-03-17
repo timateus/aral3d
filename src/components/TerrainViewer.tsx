@@ -312,6 +312,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
         {showChoropleth && <ChoroplethLayer terrain={terrain} exaggeration={exaggeration} year={waterExtentYear} indicatorId={choroplethIndicator} choroplethExaggeration={choroplethExaggeration} />}
         {showLandcover && <LandcoverLayer terrain={terrain} exaggeration={exaggeration} visibleClasses={landcoverVisibleClasses} onDataLoaded={setLcData} onAvailableClasses={onLandcoverAvailableClasses} />}
         {showSchools && <SchoolsLayer terrain={terrain} exaggeration={exaggeration} />}
+        {showVocabulary && <VocabularyLayer terrain={terrain} exaggeration={exaggeration} />}
         {scenarioActions && scenarioActions.length > 0 && (
           <ScenarioOverlay actions={scenarioActions} terrain={terrain} exaggeration={exaggeration} />
         )}
