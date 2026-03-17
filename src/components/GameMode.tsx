@@ -198,6 +198,7 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater, or
   const [rewardMessage, setRewardMessage] = useState<string | null>(null);
   const [rewardFact, setRewardFact] = useState<string | null>(null);
   const [waterPouring, setWaterPouring] = useState(false);
+  const [inBowlWorld, setInBowlWorld] = useState(false);
   const keysRef = useRef<Set<string>>(new Set());
   const facingRef = useRef(0);
   const { camera } = useThree();
@@ -228,9 +229,10 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater, or
       waterPouringActive: waterPouring,
       requiresKhorezm: currentMission?.requiresKhorezm ?? false,
       requiresInspector: currentMission?.requiresInspector ?? false,
+      inBowlWorld,
     };
     window.dispatchEvent(new CustomEvent('game-mode-state', { detail: state }));
-  }, [active, currentMission, completedMissions.size, missions.length, rewardMessage, rewardFact, waterPouring]);
+  }, [active, currentMission, completedMissions.size, missions.length, rewardMessage, rewardFact, waterPouring, inBowlWorld]);
 
   // Initialize
   useEffect(() => {
