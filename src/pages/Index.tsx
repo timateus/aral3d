@@ -648,7 +648,7 @@ const Index = () => {
     }
   }, [terrain]);
 
-  const isMapExploration = started && !narrativeActive && !canalTourActive && !agmarTourActive && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary;
+  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive;
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
