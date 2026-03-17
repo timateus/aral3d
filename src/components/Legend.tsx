@@ -303,6 +303,18 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
           </div>
         </div>
       )}
+
+      {/* Groundwater */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-muted-foreground">Groundwater Level</span>
+        <Switch checked={showGroundwater} onCheckedChange={onToggleGroundwater} />
+      </div>
+
+      {/* Precipitation */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-muted-foreground">Precipitation</span>
+        <Switch checked={showPrecipitation} onCheckedChange={onTogglePrecipitation} />
+      </div>
     </div>
   );
 };
