@@ -232,15 +232,50 @@ const Index = () => {
   }, []);
 
   // Ag-MAR tour handlers
+  const agmarAnimRef = useRef<number | null>(null);
+
   const handleAgmarTourStepChange = useCallback((newStep: number) => {
+    // Cancel any running year animation
+    if (agmarAnimRef.current) {
+      cancelAnimationFrame(agmarAnimRef.current);
+      agmarAnimRef.current = null;
+    }
+
     setAgmarTourStep(newStep);
     const step = AGMAR_TOUR_STEPS[newStep];
     if (!step) return;
-    setWaterExtentYear(step.year);
     setShowBorders(step.layers.showBorders);
     setShowRivers(step.layers.showRivers);
     setShowWaterExtent(step.layers.showWaterExtent);
     setShowKhorezm(step.layers.showKhorezm);
+    setShowLandcover(step.layers.showLandcover);
+    setShowChoropleth(step.layers.showChoropleth);
+    if (step.layers.choroplethIndicator) setChoroplethIndicator(step.layers.choroplethIndicator);
+    if (step.enabledSeries) setEnabledSeries(new Set(step.enabledSeries));
+
+    // Year animation
+    if (step.animateYearFrom != null) {
+      const fromYear = step.animateYearFrom;
+      const toYear = step.year;
+      const duration = 4000; // 4 seconds
+      const startTime = performance.now();
+      setWaterExtentYear(fromYear);
+
+      const tick = (now: number) => {
+        const elapsed = now - startTime;
+        const t = Math.min(elapsed / duration, 1);
+        const currentYear = Math.round(fromYear + (toYear - fromYear) * t);
+        setWaterExtentYear(currentYear);
+        if (t < 1) {
+          agmarAnimRef.current = requestAnimationFrame(tick);
+        } else {
+          agmarAnimRef.current = null;
+        }
+      };
+      agmarAnimRef.current = requestAnimationFrame(tick);
+    } else {
+      setWaterExtentYear(step.year);
+    }
   }, []);
 
   const startAgmarTour = useCallback(() => {
@@ -251,7 +286,13 @@ const Index = () => {
   }, [handleAgmarTourStepChange]);
 
   const exitAgmarTour = useCallback(() => {
+    if (agmarAnimRef.current) {
+      cancelAnimationFrame(agmarAnimRef.current);
+      agmarAnimRef.current = null;
+    }
     setAgmarTourActive(false);
+    setShowLandcover(false);
+    setShowChoropleth(false);
   }, []);
 
   useEffect(() => {
