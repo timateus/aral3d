@@ -125,9 +125,10 @@ function AutoRotate({ dir }: { dir: [number, number] }) {
   return null;
 }
 
-function RotatingAryq({ playful, rotationDir }: { playful: boolean; rotationDir: [number, number] }) {
-  const { scene } = useGLTF('/models/aryq.glb');
+function RotatingModel({ modelPath, playful, rotationDir, scaleBase }: { modelPath: string; playful: boolean; rotationDir: [number, number]; scaleBase?: number }) {
+  const { scene } = useGLTF(modelPath);
   const ref = useRef<THREE.Group>(null);
+  const s = scaleBase ?? 3;
 
   useFrame((state) => {
     if (ref.current) {
@@ -156,7 +157,7 @@ function RotatingAryq({ playful, rotationDir }: { playful: boolean; rotationDir:
   }, [scene, playful]);
 
   return (
-    <group ref={ref} scale={[3, playful ? 4.5 : 3, 3]} position={[0, -0.5, 0]}>
+    <group ref={ref} scale={[s, playful ? s * 1.5 : s, s]} position={[0, -0.5, 0]}>
       <primitive object={clonedScene} />
       {playful && (
         <>
@@ -172,25 +173,26 @@ function RotatingAryq({ playful, rotationDir }: { playful: boolean; rotationDir:
   );
 }
 
-function QuadrantCanvas({ type, playful, rotationDir, label, terrain, onLabelClick }: {
-  type: 'terrain' | 'aryq';
+function QuadrantCanvas({ type, playful, rotationDir, label, terrain, onLabelClick, modelPath, modelScale }: {
+  type: 'terrain' | 'model';
   playful: boolean;
   rotationDir: [number, number];
   label: string;
   terrain: TerrainData | null;
   onLabelClick: () => void;
+  modelPath?: string;
+  modelScale?: number;
 }) {
   return (
     <div className="w-full h-full relative group">
       <div className="absolute inset-0 border border-border/20 z-10 pointer-events-none" />
-      {/* Label overlay — clicking this enters the map */}
       <button
         onClick={onLabelClick}
         className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 text-[10px] tracking-[0.12em] uppercase font-mono px-3 py-1.5 bg-card/70 backdrop-blur-sm border border-border/40 text-muted-foreground hover:text-primary hover:border-primary/50 transition-all duration-300 cursor-pointer whitespace-nowrap"
       >
         {label} →
       </button>
-      <Canvas camera={{ position: type === 'aryq' ? [4, 3.5, 4] : [3, 2.5, 3], fov: type === 'aryq' ? 40 : 45 }}>
+      <Canvas camera={{ position: type === 'model' ? [4, 3.5, 4] : [3, 2.5, 3], fov: type === 'model' ? 40 : 45 }}>
         <ambientLight intensity={playful ? 0.8 : 0.5} />
         <directionalLight position={[5, 5, 5]} intensity={playful ? 1.2 : 0.8} />
         {playful && <color attach="background" args={['#0d1117']} />}
@@ -199,8 +201,8 @@ function QuadrantCanvas({ type, playful, rotationDir, label, terrain, onLabelCli
             <group>
               <DEMTerrain terrain={terrain} playful={playful} />
             </group>
-          ) : type === 'aryq' ? (
-            <RotatingAryq playful={playful} rotationDir={rotationDir} />
+          ) : type === 'model' && modelPath ? (
+            <RotatingModel modelPath={modelPath} playful={playful} rotationDir={rotationDir} scaleBase={modelScale} />
           ) : null}
           <Environment preset={playful ? 'sunset' : 'city'} />
         </Suspense>
@@ -274,40 +276,46 @@ export default function QuadrantView({ onSelectQuadrant, onBack }: QuadrantViewP
 
             {/* 2x2 grid of 3D canvases */}
             <div className="grid grid-cols-2 grid-rows-2 w-full h-full">
-              {/* Top-left: Serious × Large Scale → DEM terrain normal */}
+              {/* Top-left: Serious × Large Scale */}
               <QuadrantCanvas
                 type="terrain"
                 playful={false}
                 rotationDir={[1, 1]}
-                label="Explore Terrain"
+                label="ag (MAR): Water Hide-and-seek"
                 terrain={terrain}
                 onLabelClick={() => onSelectQuadrant('serious-large')}
               />
-              {/* Top-right: Playful × Large Scale → DEM terrain adventure time */}
+              {/* Top-right: Playful × Large Scale — Noah's Arc */}
               <QuadrantCanvas
-                type="terrain"
+                type="model"
                 playful={true}
                 rotationDir={[-0.7, 1.3]}
-                label="Adventure Mode"
+                label="Canal thinking?"
                 terrain={terrain}
+                modelPath="/models/noahs-arc.glb"
+                modelScale={2}
                 onLabelClick={() => onSelectQuadrant('playful-large')}
               />
-              {/* Bottom-left: Serious × Small Scale → aryq normal */}
+              {/* Bottom-left: Serious × Small Scale — Aryq */}
               <QuadrantCanvas
-                type="aryq"
+                type="model"
                 playful={false}
                 rotationDir={[0.8, -1]}
-                label="Explore Aryq"
+                label="Bodies of Water"
                 terrain={terrain}
+                modelPath="/models/aryq.glb"
+                modelScale={3}
                 onLabelClick={() => onSelectQuadrant('serious-small')}
               />
-              {/* Bottom-right: Playful × Small Scale → aryq adventure time */}
+              {/* Bottom-right: Playful × Small Scale — Soap */}
               <QuadrantCanvas
-                type="aryq"
+                type="model"
                 playful={true}
                 rotationDir={[-1.2, 0.8]}
-                label="Aryq Adventure"
+                label="Soap Opera"
                 terrain={terrain}
+                modelPath="/models/soap-khorezm.glb"
+                modelScale={3}
                 onLabelClick={() => onSelectQuadrant('playful-small')}
               />
             </div>
