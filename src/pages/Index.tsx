@@ -840,6 +840,8 @@ const Index = () => {
             onChoroplethExaggerationChange={setChoroplethExaggeration}
             showSchools={showSchools}
             onToggleSchools={setShowSchools}
+            showVocabulary={showVocabulary}
+            onToggleVocabulary={setShowVocabulary}
           />
           {terrain && (
             <WaterVolumeDisplay
