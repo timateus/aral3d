@@ -69,13 +69,13 @@ export default function AryqWorld({ active, onComplete, orbitRef }: AryqWorldPro
   useEffect(() => {
     if (active && !initializedRef.current) {
       initializedRef.current = true;
-      const pos: [number, number, number] = [0, 0.1, 1.5];
+      const pos: [number, number, number] = [0, 0.02, 1.5];
       setAvatarPos(pos);
       avatarPosRef.current = pos;
-      camera.position.set(0, 1.5, 3);
-      camera.lookAt(0, 0.1, 0);
+      camera.position.set(0, 2, 3.5);
+      camera.lookAt(0, 0, 0);
       if (orbitRef?.current) {
-        orbitRef.current.target.set(0, 0.1, 1.5);
+        orbitRef.current.target.set(0, 0.02, 1.5);
       }
     }
   }, [active]);
