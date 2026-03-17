@@ -741,8 +741,17 @@ const Index = () => {
         />
       )}
 
+      {/* Ag-MAR Tour Overlay */}
+      {agmarTourActive && (
+        <AgmarTourOverlay
+          step={agmarTourStep}
+          onStepChange={handleAgmarTourStepChange}
+          onExit={exitAgmarTour}
+        />
+      )}
+
       {/* Scenario Chat */}
-      {started && !narrativeActive && !canalTourActive && !isMobile && (
+      {started && !narrativeActive && !canalTourActive && !agmarTourActive && !isMobile && (
         <ScenarioChat
           onActions={handleScenarioActions}
           onClear={() => setScenarioActions([])}
