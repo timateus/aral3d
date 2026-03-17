@@ -31,7 +31,7 @@ const SoapBubblesOverlay = ({ active }: { active: boolean }) => {
       wobble: 0,
       wobbleSpeed: 0.5 + Math.random() * 1.5,
       opacity: 0.15 + Math.random() * 0.25,
-      hue: Math.random() * 360,
+      hue: 320 + Math.random() * 40,
       delay: Math.random() * 3000,
     }));
     setBubbles(initial);
