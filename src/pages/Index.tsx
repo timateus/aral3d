@@ -792,7 +792,14 @@ const Index = () => {
           onSelectQuadrant={(id) => {
             setQuadrantViewActive(false);
             setStarted(true);
-            if (id === 'serious-small') {
+            if (id === 'serious-large') {
+              setAgMarMode(true);
+              setAgMarActiveLayer('none');
+              setWaterExtentYear(2024);
+              setShowWaterExtent(true);
+              setShowPopDensity(false);
+              setShowGroundwater(false);
+            } else if (id === 'serious-small') {
               setBodiesOfWaterMode(true);
               setBodiesActiveLayer('none');
               setWaterExtentYear(2024);
