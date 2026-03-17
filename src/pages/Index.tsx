@@ -650,7 +650,7 @@ const Index = () => {
     }
   }, [terrain]);
 
-  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive;
+  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode;
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
