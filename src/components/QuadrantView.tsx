@@ -141,24 +141,8 @@ function RotatingModel({ modelPath, playful, rotationDir, scaleBase }: { modelPa
   });
 
   const clonedScene = useMemo(() => {
-    const c = scene.clone();
-    if (playful) {
-      c.traverse((child) => {
-        if ((child as THREE.Mesh).isMesh) {
-          const mesh = child as THREE.Mesh;
-          const mat = (mesh.material as THREE.MeshStandardMaterial).clone();
-          mat.color.setHSL(
-            mat.color.getHSL({ h: 0, s: 0, l: 0 }).h,
-            1.0,
-            0.65
-          );
-          mat.flatShading = true;
-          mesh.material = mat;
-        }
-      });
-    }
-    return c;
-  }, [scene, playful]);
+    return scene.clone();
+  }, [scene]);
 
   return (
     <group ref={ref} scale={[s, playful ? s * 1.5 : s, s]} position={[0, -0.5, 0]}>
