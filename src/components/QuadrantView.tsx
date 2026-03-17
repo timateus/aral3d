@@ -190,7 +190,7 @@ function QuadrantCanvas({ type, playful, rotationDir, label, terrain, onLabelCli
       >
         {label} →
       </button>
-      <Canvas camera={{ position: [3, 2.5, 3], fov: 45 }}>
+      <Canvas camera={{ position: type === 'aryq' ? [4, 3.5, 4] : [3, 2.5, 3], fov: type === 'aryq' ? 40 : 45 }}>
         <ambientLight intensity={playful ? 0.8 : 0.5} />
         <directionalLight position={[5, 5, 5]} intensity={playful ? 1.2 : 0.8} />
         {playful && <color attach="background" args={['#0d1117']} />}
