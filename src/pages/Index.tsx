@@ -759,6 +759,7 @@ const Index = () => {
             showOverlayMetrics={isMapExploration}
             showGroundwater={showGroundwater}
             showPrecipitation={showPrecipitation}
+            showSalinity={showSalinity}
           />
         )}
         {!terrain && !loading && error && (
