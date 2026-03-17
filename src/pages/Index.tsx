@@ -752,6 +752,8 @@ const Index = () => {
             showVocabulary={showVocabulary}
             agmarShowProposalSites={agmarTourActive && !!AGMAR_TOUR_STEPS[agmarTourStep]?.proposalSites}
             showOverlayMetrics={isMapExploration}
+            showGroundwater={showGroundwater}
+            showPrecipitation={showPrecipitation}
           />
         )}
         {!terrain && !loading && error && (
