@@ -16,6 +16,7 @@ export interface Mission {
   requiresWater?: boolean;
   requiresKhorezm?: boolean;
   requiresInspector?: boolean;
+  enterBowlWorld?: boolean;
 }
 
 export function findHighestPoint(terrain: TerrainData): { lat: number; lon: number; elev: number } {
@@ -223,6 +224,20 @@ export function buildMissions(terrain: TerrainData): Mission[] {
     {
       id: 'mission-14',
       level: 14,
+      title: "Artist's Studio",
+      description: 'Visit the ceramic workshop in Nukus and enter the world of bowls.',
+      hint: 'Head to the workshop near Nukus — you will be transported inside!',
+      targetLat: 42.3,
+      targetLon: 59.4,
+      radius: 0.4,
+      reward: '🏺 You entered the artist\'s world!',
+      emoji: '🏺',
+      enterBowlWorld: true,
+      funFact: 'Karakalpak ceramics carry geometric water and earth motifs dating back to the ancient Khorezm civilization. Each bowl tells a story of the land and its people.',
+    },
+    {
+      id: 'mission-15',
+      level: 15,
       title: 'Kok-Aral Dam',
       description: 'Find where the dam was built to save the North Aral Sea.',
       hint: 'The dam sits between the North and South Aral basins.',
@@ -234,8 +249,8 @@ export function buildMissions(terrain: TerrainData): Mission[] {
       funFact: 'Built in 2005 with World Bank funding, the Kok-Aral Dam separated the North Aral from the South. Within 2 years, water levels rose 4 meters, salinity dropped from 30 to 8 g/L, and fish returned. It\'s one of the few environmental success stories.',
     },
     {
-      id: 'mission-15',
-      level: 15,
+      id: 'mission-16',
+      level: 16,
       title: 'Water Bringer',
       description: 'Pour water at the deepest basin to symbolically refill the Aral Sea!',
       hint: 'Go to the deepest point and hold SPACE to pour water.',

@@ -96,6 +96,7 @@ const Index = () => {
   const [showObjectLibrary, setShowObjectLibrary] = useState(false);
   const [gameModeActive, setGameModeActive] = useState(false);
   const [gameModeState, setGameModeState] = useState<GameModeState | null>(null);
+  const [bowlWorldActive, setBowlWorldActive] = useState(false);
   
   const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
   const [flowRenderKey, setFlowRenderKey] = useState(0);
@@ -271,9 +272,9 @@ const Index = () => {
     const handler = (e: Event) => {
       const state = (e as CustomEvent<GameModeState>).detail;
       setGameModeState(state);
-      // Toggle Khorezm DEM and inspector based on current mission
       if (state.requiresKhorezm !== undefined) setShowKhorezm(state.requiresKhorezm);
       if (state.requiresInspector !== undefined) setShowInspector(state.requiresInspector);
+      if (state.inBowlWorld) setBowlWorldActive(true);
     };
     window.addEventListener('game-mode-state', handler);
     return () => window.removeEventListener('game-mode-state', handler);
@@ -651,6 +652,12 @@ const Index = () => {
             }}
             gameModeActive={gameModeActive}
             onGameAddWater={handleGameAddWater}
+            bowlWorldActive={bowlWorldActive}
+            onBowlWorldComplete={() => {
+              setBowlWorldActive(false);
+              // Complete the current mission after returning from bowl world
+              window.dispatchEvent(new CustomEvent('bowl-world-complete'));
+            }}
             showLandcover={showLandcover}
             landcoverVisibleClasses={landcoverVisibleClasses}
             onLandcoverAvailableClasses={setLandcoverAvailableClasses}

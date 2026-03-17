@@ -50,6 +50,17 @@ const LIBRARY_ITEMS: LibraryItem[] = [
     is3D: true,
   },
   {
+    id: 'bowls',
+    name: 'Ceramic Bowls',
+    modelPath: '/models/bowls.glb',
+    image: '',
+    description: 'Traditional ceramics',
+    detailText: 'Karakalpak ceramic bowls feature geometric patterns inspired by water and earth — crafted using techniques dating back to the Khorezm civilization.',
+    lat: 42.3,
+    lon: 59.4,
+    is3D: true,
+  },
+  {
     id: 'aral-north',
     name: 'Aral Sea North',
     image: '',
@@ -75,15 +86,6 @@ const LIBRARY_ITEMS: LibraryItem[] = [
     detailText: 'Home to the Savitsky Museum — one of the world\'s most important collections of Soviet avant-garde art.',
     lat: 42.46,
     lon: 59.6,
-  },
-  {
-    id: 'amu-delta',
-    name: 'Amu Darya Delta',
-    image: '',
-    description: 'River delta',
-    detailText: 'The delta once supported vast wetlands and fisheries before upstream irrigation diverted most of its flow.',
-    lat: 43.5,
-    lon: 58.8,
   },
 ];
 
@@ -125,7 +127,6 @@ function ParticleField() {
     resize();
     window.addEventListener('resize', resize);
 
-    // Init particles
     const count = 120;
     particlesRef.current = Array.from({ length: count }, () => ({
       x: Math.random() * canvas.width,
@@ -142,7 +143,6 @@ function ParticleField() {
       const particles = particlesRef.current;
       const connectionDist = 200;
 
-      // Update & draw particles
       for (const p of particles) {
         p.x += p.vx;
         p.y += p.vy;
@@ -157,7 +157,6 @@ function ParticleField() {
         ctx.fill();
       }
 
-      // Draw connections
       for (let i = 0; i < particles.length; i++) {
         for (let j = i + 1; j < particles.length; j++) {
           const dx = particles[i].x - particles[j].x;
@@ -207,6 +206,16 @@ type LandingView = 'main' | 'artifacts';
 const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onObjectSelect, onStartGame }: IntroOverlayProps) => {
   const [view, setView] = useState<LandingView>('main');
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+
+  // Dispatch auto-rotate event for the background 3D map
+  useEffect(() => {
+    if (view === 'main') {
+      window.dispatchEvent(new CustomEvent('intro-auto-rotate', { detail: { active: true } }));
+    }
+    return () => {
+      window.dispatchEvent(new CustomEvent('intro-auto-rotate', { detail: { active: false } }));
+    };
+  }, [view]);
 
   const handleItemClick = (item: LibraryItem) => {
     if (onObjectSelect) {
@@ -315,7 +324,7 @@ const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onObjectSelect, onSt
     );
   }
 
-  // Main landing view — translucent cards over the 3D map with generative particles
+  // Main landing view — sharp cards, auto-rotating background
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center animate-fade-in">
       {/* Very subtle overlay to keep map visible */}
@@ -336,15 +345,15 @@ const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onObjectSelect, onSt
           </p>
         </div>
 
-        {/* Four cards in a 2x2 grid */}
+        {/* Four cards — sharp edges */}
         <div className="grid grid-cols-2 gap-4">
           <button
             onClick={() => onStartGame?.()}
-            className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-6 rounded-xl hover:bg-card/70 hover:border-primary/40 transition-all duration-500 text-left overflow-hidden"
+            className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-6 hover:bg-card/70 hover:border-primary/40 transition-all duration-500 text-left overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="relative z-10">
-              <p className="text-base font-semibold text-foreground tracking-wide mb-1">Start a Game</p>
+              <p className="text-base font-semibold text-foreground tracking-wide mb-1">Play</p>
               <p className="text-xs text-foreground/50 leading-relaxed">
                 Explore missions, pour water, and discover the region
               </p>
@@ -354,11 +363,11 @@ const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onObjectSelect, onSt
 
           <button
             onClick={() => setView('artifacts')}
-            className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-6 rounded-xl hover:bg-card/70 hover:border-accent/40 transition-all duration-500 text-left overflow-hidden"
+            className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-6 hover:bg-card/70 hover:border-accent/40 transition-all duration-500 text-left overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="relative z-10">
-              <p className="text-base font-semibold text-foreground tracking-wide mb-1">Explore Artifacts</p>
+              <p className="text-base font-semibold text-foreground tracking-wide mb-1">Touch</p>
               <p className="text-xs text-foreground/50 leading-relaxed">
                 Browse 3D objects and cultural heritage items
               </p>
@@ -368,11 +377,11 @@ const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onObjectSelect, onSt
 
           <button
             onClick={onGuidedTour}
-            className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-6 rounded-xl hover:bg-card/70 hover:border-secondary-foreground/30 transition-all duration-500 text-left overflow-hidden"
+            className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-6 hover:bg-card/70 hover:border-secondary-foreground/30 transition-all duration-500 text-left overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-secondary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="relative z-10">
-              <p className="text-base font-semibold text-foreground tracking-wide mb-1">Guided Tours</p>
+              <p className="text-base font-semibold text-foreground tracking-wide mb-1">Walk</p>
               <p className="text-xs text-foreground/50 leading-relaxed">
                 Narrated history of the Aral Sea & canal systems
               </p>
@@ -382,11 +391,11 @@ const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onObjectSelect, onSt
 
           <button
             onClick={onStart}
-            className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-6 rounded-xl hover:bg-card/70 hover:border-muted-foreground/30 transition-all duration-500 text-left overflow-hidden"
+            className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-6 hover:bg-card/70 hover:border-muted-foreground/30 transition-all duration-500 text-left overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-muted/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="relative z-10">
-              <p className="text-base font-semibold text-foreground tracking-wide mb-1">Free Exploration</p>
+              <p className="text-base font-semibold text-foreground tracking-wide mb-1">Explore</p>
               <p className="text-xs text-foreground/50 leading-relaxed">
                 Full map controls, data layers, and simulation tools
               </p>

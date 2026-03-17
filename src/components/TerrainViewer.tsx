@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle } from 'react';
+import { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle, Suspense } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { GizmoHelper, GizmoViewport, Html } from '@react-three/drei';
 import TerrainMesh from './TerrainMesh';
@@ -16,6 +16,7 @@ import MapControls from './MapControls';
 import ObjectLibrary3D from './ObjectLibrary3D';
 import type { LibraryObject } from './ObjectLibrary3D';
 import GameMode from './GameMode';
+import BowlWorld from './BowlWorld';
 import { TerrainData } from '@/lib/geotiff-loader';
 import type { ScenarioAction } from '@/types/scenario';
 import type { WaterFlowState } from '@/lib/water-flow-simulation';
@@ -89,6 +90,8 @@ interface TerrainViewerProps {
   onObjectSelect?: (obj: LibraryObject) => void;
   gameModeActive?: boolean;
   onGameAddWater?: (row: number, col: number) => void;
+  bowlWorldActive?: boolean;
+  onBowlWorldComplete?: () => void;
   showLandcover?: boolean;
   landcoverVisibleClasses?: Set<number>;
   onLandcoverAvailableClasses?: (classes: number[]) => void;
@@ -99,11 +102,21 @@ function CameraAnimator({ started }: { started: boolean }) {
   const progress = useRef(0);
   const animating = useRef(false);
   const hasStarted = useRef(false);
+  const autoRotateAngle = useRef(0);
+  const [autoRotate, setAutoRotate] = useState(false);
 
   const start = new THREE.Vector3(0, 18, 8);
   const end = new THREE.Vector3(0, 10, 12);
   const startTarget = new THREE.Vector3(0, 0, 0);
   const endTarget = new THREE.Vector3(0, 0, -1);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      setAutoRotate((e as CustomEvent).detail.active);
+    };
+    window.addEventListener('intro-auto-rotate', handler);
+    return () => window.removeEventListener('intro-auto-rotate', handler);
+  }, []);
 
   useEffect(() => {
     camera.position.copy(start);
@@ -119,14 +132,23 @@ function CameraAnimator({ started }: { started: boolean }) {
   }, [started]);
 
   useFrame((_, delta) => {
+    if (autoRotate && !started) {
+      autoRotateAngle.current += delta * 0.08;
+      const radius = 20;
+      camera.position.set(
+        Math.sin(autoRotateAngle.current) * radius,
+        18,
+        Math.cos(autoRotateAngle.current) * radius
+      );
+      camera.lookAt(0, 0, 0);
+      return;
+    }
     if (!animating.current) return;
     progress.current = Math.min(progress.current + delta * 0.15, 1);
     const t = 1 - Math.pow(1 - progress.current, 3);
-
     camera.position.lerpVectors(start, end, t);
     const target = new THREE.Vector3().lerpVectors(startTarget, endTarget, t);
     camera.lookAt(target);
-
     if (progress.current >= 1) animating.current = false;
   });
 
@@ -248,7 +270,7 @@ function VideoAnimator({
   return null;
 }
 
-const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, showWaterExtent, waterExtentYear, showPopDensity, popHexSize, popHexHeight, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone, riverInflow, userLocation, inspectorEnabled, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, flowState, flowRenderKey, terrainVersion, raisedPixels, dugPixels, showMigration, migrationYear, showChoropleth, choroplethIndicator, choroplethExaggeration, canalHighlights, highlightedCanalNames, canalTourActive, showObjectLibrary, onObjectSelect, gameModeActive, onGameAddWater, showLandcover, landcoverVisibleClasses, onLandcoverAvailableClasses }, ref) => {
+const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, showWaterExtent, waterExtentYear, showPopDensity, popHexSize, popHexHeight, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone, riverInflow, userLocation, inspectorEnabled, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, flowState, flowRenderKey, terrainVersion, raisedPixels, dugPixels, showMigration, migrationYear, showChoropleth, choroplethIndicator, choroplethExaggeration, canalHighlights, highlightedCanalNames, canalTourActive, showObjectLibrary, onObjectSelect, gameModeActive, onGameAddWater, bowlWorldActive, onBowlWorldComplete, showLandcover, landcoverVisibleClasses, onLandcoverAvailableClasses }, ref) => {
   const screenshotFn = useRef<(() => void) | null>(null);
   const orbitRef = useRef<any>(null);
   const [flyoverAnimating, setFlyoverAnimating] = useState(false);
@@ -335,6 +357,12 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
 
 
       <GameMode terrain={terrain} exaggeration={exaggeration} active={!!gameModeActive} onAddWater={onGameAddWater} orbitRef={orbitRef} />
+
+      {bowlWorldActive && onBowlWorldComplete && (
+        <Suspense fallback={null}>
+          <BowlWorld active={bowlWorldActive} onComplete={onBowlWorldComplete} orbitRef={orbitRef} />
+        </Suspense>
+      )}
 
       {!narrativeActive && !flyoverAnimating && !gameModeActive && <CameraAnimator started={started} />}
       {narrativeActive && narrativeCameraPosition && narrativeCameraTarget && (

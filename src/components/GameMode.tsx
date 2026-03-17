@@ -188,6 +188,7 @@ export interface GameModeState {
   waterPouringActive: boolean;
   requiresKhorezm: boolean;
   requiresInspector: boolean;
+  inBowlWorld: boolean;
 }
 
 export default function GameMode({ terrain, exaggeration, active, onAddWater, orbitRef }: GameModeProps) {
@@ -197,6 +198,7 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater, or
   const [rewardMessage, setRewardMessage] = useState<string | null>(null);
   const [rewardFact, setRewardFact] = useState<string | null>(null);
   const [waterPouring, setWaterPouring] = useState(false);
+  const [inBowlWorld, setInBowlWorld] = useState(false);
   const keysRef = useRef<Set<string>>(new Set());
   const facingRef = useRef(0);
   const { camera } = useThree();
@@ -227,9 +229,10 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater, or
       waterPouringActive: waterPouring,
       requiresKhorezm: currentMission?.requiresKhorezm ?? false,
       requiresInspector: currentMission?.requiresInspector ?? false,
+      inBowlWorld,
     };
     window.dispatchEvent(new CustomEvent('game-mode-state', { detail: state }));
-  }, [active, currentMission, completedMissions.size, missions.length, rewardMessage, rewardFact, waterPouring]);
+  }, [active, currentMission, completedMissions.size, missions.length, rewardMessage, rewardFact, waterPouring, inBowlWorld]);
 
   // Initialize
   useEffect(() => {
@@ -251,6 +254,22 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater, or
     }
   }, [active]);
 
+  // Listen for bowl world completion
+  useEffect(() => {
+    if (!active) return;
+    const handler = () => {
+      if (currentMission?.enterBowlWorld) {
+        setInBowlWorld(false);
+        setCompletedMissions(prev => new Set([...prev, currentMission.id]));
+        setRewardMessage(currentMission.reward);
+        setRewardFact(currentMission.funFact);
+        setTimeout(() => { setRewardMessage(null); setRewardFact(null); }, 6000);
+      }
+    };
+    window.addEventListener('bowl-world-complete', handler);
+    return () => window.removeEventListener('bowl-world-complete', handler);
+  }, [active, currentMission]);
+
   // Reset on deactivate
   useEffect(() => {
     if (!active) {
@@ -259,6 +278,7 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater, or
       setRewardMessage(null);
       setRewardFact(null);
       setWaterPouring(false);
+      setInBowlWorld(false);
     }
   }, [active]);
 
@@ -354,7 +374,7 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater, or
     }
 
     // Check mission completion
-    if (currentMission && missionTargetPos) {
+    if (currentMission && missionTargetPos && !inBowlWorld) {
       const dist = Math.sqrt(
         (newX - missionTargetPos[0]) ** 2 + (newZ - missionTargetPos[2]) ** 2
       );
@@ -363,6 +383,11 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater, or
         : dist < currentMission.radius;
 
       if (isMet) {
+        if (currentMission.enterBowlWorld) {
+          // Enter bowl world instead of completing immediately
+          setInBowlWorld(true);
+          return;
+        }
         setCompletedMissions(prev => new Set([...prev, currentMission.id]));
         setRewardMessage(currentMission.reward);
         setRewardFact(currentMission.funFact);
