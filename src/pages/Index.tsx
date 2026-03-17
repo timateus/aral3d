@@ -101,6 +101,7 @@ const Index = () => {
   const [gameModeActive, setGameModeActive] = useState(false);
   const [gameModeState, setGameModeState] = useState<GameModeState | null>(null);
   const [bowlWorldActive, setBowlWorldActive] = useState(false);
+  const [aryqWorldActive, setAryqWorldActive] = useState(false);
   const [agmarTourActive, setAgmarTourActive] = useState(false);
   const [agmarTourStep, setAgmarTourStep] = useState(0);
   
@@ -727,8 +728,14 @@ const Index = () => {
             bowlWorldActive={bowlWorldActive}
             onBowlWorldComplete={() => {
               setBowlWorldActive(false);
-              // Complete the current mission after returning from bowl world
               window.dispatchEvent(new CustomEvent('bowl-world-complete'));
+            }}
+            aryqWorldActive={aryqWorldActive}
+            onAryqWorldComplete={() => {
+              setAryqWorldActive(false);
+            }}
+            onNukusClick={() => {
+              setAryqWorldActive(true);
             }}
             showLandcover={showLandcover}
             landcoverVisibleClasses={landcoverVisibleClasses}

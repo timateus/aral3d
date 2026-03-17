@@ -26,6 +26,7 @@ interface GeoFeaturesProps {
   canalHighlights?: CanalHighlight[];
   highlightedCanalNames?: Set<string>;
   canalTourActive?: boolean;
+  onNukusClick?: () => void;
 }
 
 interface City {
@@ -158,7 +159,7 @@ function geoToMeshPos(
   return [x, zHeight, -planeY];
 }
 
-const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, riverInflow, userLocation, canalHighlights, highlightedCanalNames, canalTourActive }: GeoFeaturesProps) => {
+const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, riverInflow, userLocation, canalHighlights, highlightedCanalNames, canalTourActive, onNukusClick }: GeoFeaturesProps) => {
   const bounds = terrain.bounds;
   const w = terrain.width;
   const h = terrain.height;
@@ -427,28 +428,48 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
       })}
 
       {/* City markers */}
-      {cityMarkers.map((city) => (
-        <group key={city.name} position={city.pos}>
-          <mesh>
-            <sphereGeometry args={[0.04, 10, 10]} />
-            <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.6} />
-          </mesh>
-          <Html position={[0, 0.12, 0]} center distanceFactor={8} style={{ pointerEvents: 'none' }}>
-            <div style={{
-              color: 'rgba(255, 255, 255, 0.9)',
-              padding: '1px 4px',
-              fontSize: '9px',
-              fontFamily: "'Inter', system-ui, sans-serif",
-              fontWeight: 400,
-              letterSpacing: '0.5px',
-              whiteSpace: 'nowrap',
-              textShadow: '0 1px 4px rgba(0,0,0,0.8), 0 0px 2px rgba(0,0,0,0.6)',
-            }}>
-              {city.name}
-            </div>
-          </Html>
-        </group>
-      ))}
+      {cityMarkers.map((city) => {
+        const isNukus = city.name === 'Nukus';
+        return (
+          <group key={city.name} position={city.pos}>
+            <mesh
+              onClick={isNukus && onNukusClick ? (e) => { e.stopPropagation(); onNukusClick(); } : undefined}
+              onPointerOver={isNukus && onNukusClick ? () => { document.body.style.cursor = 'pointer'; } : undefined}
+              onPointerOut={isNukus && onNukusClick ? () => { document.body.style.cursor = 'default'; } : undefined}
+            >
+              <sphereGeometry args={[isNukus ? 0.08 : 0.04, 10, 10]} />
+              <meshStandardMaterial
+                color={isNukus ? '#38bdf8' : '#ffffff'}
+                emissive={isNukus ? '#38bdf8' : '#ffffff'}
+                emissiveIntensity={isNukus ? 1 : 0.6}
+              />
+            </mesh>
+            {isNukus && (
+              <mesh>
+                <ringGeometry args={[0.1, 0.14, 24]} />
+                <meshBasicMaterial color="#38bdf8" transparent opacity={0.4} side={THREE.DoubleSide} />
+              </mesh>
+            )}
+            <Html position={[0, 0.12, 0]} center distanceFactor={8} style={{ pointerEvents: isNukus && onNukusClick ? 'auto' : 'none' }}>
+              <div
+                onClick={isNukus && onNukusClick ? onNukusClick : undefined}
+                style={{
+                  color: isNukus ? '#38bdf8' : 'rgba(255, 255, 255, 0.9)',
+                  padding: '1px 4px',
+                  fontSize: isNukus ? '11px' : '9px',
+                  fontFamily: "'Inter', system-ui, sans-serif",
+                  fontWeight: isNukus ? 600 : 400,
+                  letterSpacing: '0.5px',
+                  whiteSpace: 'nowrap',
+                  textShadow: '0 1px 4px rgba(0,0,0,0.8), 0 0px 2px rgba(0,0,0,0.6)',
+                  cursor: isNukus && onNukusClick ? 'pointer' : 'default',
+                }}>
+                {city.name}{isNukus && onNukusClick ? ' 🔍' : ''}
+              </div>
+            </Html>
+          </group>
+        );
+      })}
 
       {/* Basin hover labels - only in free exploration (not during canal tour) */}
       {!canalTourActive && show13thBasin && basinLabels13.map((label, i) => (

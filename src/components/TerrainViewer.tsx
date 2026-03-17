@@ -20,6 +20,7 @@ import SchoolsLayer from './SchoolsLayer';
 import VocabularyLayer from './VocabularyLayer';
 import GameMode from './GameMode';
 import BowlWorld from './BowlWorld';
+import AryqWorld from './AryqWorld';
 import { TerrainData } from '@/lib/geotiff-loader';
 import type { ScenarioAction } from '@/types/scenario';
 import type { WaterFlowState } from '@/lib/water-flow-simulation';
@@ -101,6 +102,9 @@ interface TerrainViewerProps {
   showSchools?: boolean;
   showVocabulary?: boolean;
   agmarShowProposalSites?: boolean;
+  aryqWorldActive?: boolean;
+  onAryqWorldComplete?: () => void;
+  onNukusClick?: () => void;
 }
 
 function CameraAnimator({ started }: { started: boolean }) {
@@ -276,7 +280,7 @@ function VideoAnimator({
   return null;
 }
 
-const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, showWaterExtent, waterExtentYear, showPopDensity, popHexSize, popHexHeight, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone, riverInflow, userLocation, inspectorEnabled, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, flowState, flowRenderKey, terrainVersion, raisedPixels, dugPixels, showMigration, migrationYear, showChoropleth, choroplethIndicator, choroplethExaggeration, canalHighlights, highlightedCanalNames, canalTourActive, showObjectLibrary, onObjectSelect, gameModeActive, onGameAddWater, bowlWorldActive, onBowlWorldComplete, showLandcover, landcoverVisibleClasses, onLandcoverAvailableClasses, showSchools, showVocabulary, agmarShowProposalSites }, ref) => {
+const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, showWaterExtent, waterExtentYear, showPopDensity, popHexSize, popHexHeight, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone, riverInflow, userLocation, inspectorEnabled, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, flowState, flowRenderKey, terrainVersion, raisedPixels, dugPixels, showMigration, migrationYear, showChoropleth, choroplethIndicator, choroplethExaggeration, canalHighlights, highlightedCanalNames, canalTourActive, showObjectLibrary, onObjectSelect, gameModeActive, onGameAddWater, bowlWorldActive, onBowlWorldComplete, showLandcover, landcoverVisibleClasses, onLandcoverAvailableClasses, showSchools, showVocabulary, agmarShowProposalSites, aryqWorldActive, onAryqWorldComplete, onNukusClick }, ref) => {
   const screenshotFn = useRef<(() => void) | null>(null);
   const orbitRef = useRef<any>(null);
   const [flyoverAnimating, setFlyoverAnimating] = useState(false);
@@ -307,7 +311,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
           <WaterFlowOverlay terrain={terrain} exaggeration={exaggeration} flowState={flowState} renderKey={flowRenderKey} />
         )}
       </group>
-      <GeoFeatures terrain={terrain} exaggeration={exaggeration} showBorders={showBorders} showRivers={showRivers} show13thBasin={show13thBasin} show19thBasin={show19thBasin} show21stBasin={show21stBasin} showLakes={showLakes} show21cLakes={show21cLakes} riverInflow={riverInflow} userLocation={userLocation} canalHighlights={canalHighlights} highlightedCanalNames={highlightedCanalNames} canalTourActive={canalTourActive} />
+      <GeoFeatures terrain={terrain} exaggeration={exaggeration} showBorders={showBorders} showRivers={showRivers} show13thBasin={show13thBasin} show19thBasin={show19thBasin} show21stBasin={show21stBasin} showLakes={showLakes} show21cLakes={show21cLakes} riverInflow={riverInflow} userLocation={userLocation} canalHighlights={canalHighlights} highlightedCanalNames={highlightedCanalNames} canalTourActive={canalTourActive} onNukusClick={onNukusClick} />
         {showWaterExtent && <WaterExtentLayer terrain={terrain} exaggeration={exaggeration} year={waterExtentYear} />}
         {showPopDensity && <PopulationDensityLayer terrain={terrain} exaggeration={exaggeration} onDataLoaded={setPopData} hexSize={popHexSize} hexHeightExag={popHexHeight} />}
         {showMigration && <MigrationLayer terrain={terrain} exaggeration={exaggeration} year={migrationYear ?? waterExtentYear} />}
@@ -369,6 +373,12 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
       {bowlWorldActive && onBowlWorldComplete && (
         <Suspense fallback={null}>
           <BowlWorld active={bowlWorldActive} onComplete={onBowlWorldComplete} orbitRef={orbitRef} />
+        </Suspense>
+      )}
+
+      {aryqWorldActive && onAryqWorldComplete && (
+        <Suspense fallback={null}>
+          <AryqWorld active={aryqWorldActive} onComplete={onAryqWorldComplete} orbitRef={orbitRef} />
         </Suspense>
       )}
 
