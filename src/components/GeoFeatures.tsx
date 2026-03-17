@@ -26,6 +26,7 @@ interface GeoFeaturesProps {
   canalHighlights?: CanalHighlight[];
   highlightedCanalNames?: Set<string>;
   canalTourActive?: boolean;
+  onNukusClick?: () => void;
 }
 
 interface City {
