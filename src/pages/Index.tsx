@@ -112,7 +112,8 @@ const Index = () => {
   const [agMarMode, setAgMarMode] = useState(false);
   const [agMarActiveLayer, setAgMarActiveLayer] = useState<'none' | 'population' | 'groundwater'>('none');
   const [soapOperaMode, setSoapOperaMode] = useState(false);
-  const [soapActiveLayer, setSoapActiveLayer] = useState<'none' | 'salinity'>('none');
+  const [soapActiveLayer, setSoapActiveLayer] = useState<'none' | 'salinity' | 'soap'>('none');
+  const [showSoapBubbles, setShowSoapBubbles] = useState(false);
   const [agmarTourActive, setAgmarTourActive] = useState(false);
   const [agmarTourStep, setAgmarTourStep] = useState(0);
   
