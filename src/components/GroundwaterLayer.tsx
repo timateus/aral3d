@@ -49,12 +49,32 @@ const GroundwaterLayer = ({ terrain, exaggeration }: GroundwaterLayerProps) => {
         let result = await source.read();
         while (!result.done) {
           const f = result.value;
-          if (f.geometry && f.geometry.type === 'Point') {
-            pts.push({
-              lon: f.geometry.coordinates[0],
-              lat: f.geometry.coordinates[1],
-              properties: f.properties || {},
-            });
+          if (f.geometry) {
+            let lon = 0, lat = 0;
+            if (f.geometry.type === 'Point') {
+              lon = f.geometry.coordinates[0];
+              lat = f.geometry.coordinates[1];
+            } else if (f.geometry.type === 'Polygon' || f.geometry.type === 'MultiPolygon') {
+              // Compute centroid from outer ring(s)
+              const rings = f.geometry.type === 'Polygon'
+                ? [f.geometry.coordinates[0]]
+                : f.geometry.coordinates.map((p: number[][][]) => p[0]);
+              let sumLon = 0, sumLat = 0, count = 0;
+              for (const ring of rings) {
+                for (const coord of ring) {
+                  sumLon += coord[0];
+                  sumLat += coord[1];
+                  count++;
+                }
+              }
+              if (count === 0) { result = await source.read(); continue; }
+              lon = sumLon / count;
+              lat = sumLat / count;
+            } else {
+              result = await source.read();
+              continue;
+            }
+            pts.push({ lon, lat, properties: f.properties || {} });
           }
           result = await source.read();
         }
