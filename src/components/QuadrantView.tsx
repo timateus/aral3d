@@ -173,25 +173,26 @@ function RotatingModel({ modelPath, playful, rotationDir, scaleBase }: { modelPa
   );
 }
 
-function QuadrantCanvas({ type, playful, rotationDir, label, terrain, onLabelClick }: {
-  type: 'terrain' | 'aryq';
+function QuadrantCanvas({ type, playful, rotationDir, label, terrain, onLabelClick, modelPath, modelScale }: {
+  type: 'terrain' | 'model';
   playful: boolean;
   rotationDir: [number, number];
   label: string;
   terrain: TerrainData | null;
   onLabelClick: () => void;
+  modelPath?: string;
+  modelScale?: number;
 }) {
   return (
     <div className="w-full h-full relative group">
       <div className="absolute inset-0 border border-border/20 z-10 pointer-events-none" />
-      {/* Label overlay — clicking this enters the map */}
       <button
         onClick={onLabelClick}
         className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 text-[10px] tracking-[0.12em] uppercase font-mono px-3 py-1.5 bg-card/70 backdrop-blur-sm border border-border/40 text-muted-foreground hover:text-primary hover:border-primary/50 transition-all duration-300 cursor-pointer whitespace-nowrap"
       >
         {label} →
       </button>
-      <Canvas camera={{ position: type === 'aryq' ? [4, 3.5, 4] : [3, 2.5, 3], fov: type === 'aryq' ? 40 : 45 }}>
+      <Canvas camera={{ position: type === 'model' ? [4, 3.5, 4] : [3, 2.5, 3], fov: type === 'model' ? 40 : 45 }}>
         <ambientLight intensity={playful ? 0.8 : 0.5} />
         <directionalLight position={[5, 5, 5]} intensity={playful ? 1.2 : 0.8} />
         {playful && <color attach="background" args={['#0d1117']} />}
@@ -200,8 +201,8 @@ function QuadrantCanvas({ type, playful, rotationDir, label, terrain, onLabelCli
             <group>
               <DEMTerrain terrain={terrain} playful={playful} />
             </group>
-          ) : type === 'aryq' ? (
-            <RotatingAryq playful={playful} rotationDir={rotationDir} />
+          ) : type === 'model' && modelPath ? (
+            <RotatingModel modelPath={modelPath} playful={playful} rotationDir={rotationDir} scaleBase={modelScale} />
           ) : null}
           <Environment preset={playful ? 'sunset' : 'city'} />
         </Suspense>
