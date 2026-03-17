@@ -34,7 +34,6 @@ function geoTo3D(lat: number, lon: number, terrain: TerrainData, exaggeration: n
   const x = (nx - 0.5) * scaleX;
   const z = -(ny - 0.5) * scaleZ;
 
-  // Sample elevation
   const col = Math.min(Math.max(Math.round(nx * (width - 1)), 0), width - 1);
   const row = Math.min(Math.max(Math.round((1 - ny) * (height - 1)), 0), height - 1);
   const elev = elevations[row * width + col];
@@ -64,11 +63,8 @@ function ObjectCard({ obj, terrain, exaggeration, onSelect }: ObjectCardProps) {
 
   useFrame((state) => {
     if (!meshRef.current) return;
-    // Gentle float
     meshRef.current.position.y = position.y + Math.sin(state.clock.elapsedTime * 1.2 + position.x) * 0.15;
-    // Always face camera
     meshRef.current.quaternion.copy(state.camera.quaternion);
-    // Scale on hover
     const targetScale = hovered ? 1.3 : 1;
     meshRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1);
   });
@@ -91,7 +87,6 @@ function ObjectCard({ obj, terrain, exaggeration, onSelect }: ObjectCardProps) {
         />
       </mesh>
 
-      {/* Vertical line from terrain to object */}
       <line>
         <bufferGeometry>
           <bufferAttribute
@@ -106,13 +101,11 @@ function ObjectCard({ obj, terrain, exaggeration, onSelect }: ObjectCardProps) {
         <lineBasicMaterial color="#8ec8e8" transparent opacity={0.4} />
       </line>
 
-      {/* Label */}
       {hovered && (
         <Html position={[position.x, position.y + 1, position.z]} center style={{ pointerEvents: 'none' }}>
           <div style={{
             background: 'rgba(13,17,23,0.9)',
             border: '1px solid rgba(142,200,232,0.4)',
-            borderRadius: '6px',
             padding: '4px 10px',
             whiteSpace: 'nowrap',
             color: '#8ec8e8',
