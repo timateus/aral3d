@@ -1,5 +1,7 @@
 import { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle, Suspense } from 'react';
 import AgmarProposalMarkers from './AgmarProposalMarkers';
+import GroundwaterLayer from './GroundwaterLayer';
+import PrecipitationLayer from './PrecipitationLayer';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { GizmoHelper, GizmoViewport, Html } from '@react-three/drei';
 import TerrainMesh from './TerrainMesh';
