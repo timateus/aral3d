@@ -54,26 +54,28 @@ interface AryqWorldProps {
 export default function AryqWorld({ active, onComplete, orbitRef }: AryqWorldProps) {
   const { scene } = useGLTF('/models/aryq.glb');
   const { camera } = useThree();
-  const [avatarPos, setAvatarPos] = useState<[number, number, number]>([0, 0.1, 1.5]);
+  const [avatarPos, setAvatarPos] = useState<[number, number, number]>([0, 0.02, 1.5]);
   const [facing, setFacing] = useState(0);
   const [completed, setCompleted] = useState(false);
   const keysRef = useRef<Set<string>>(new Set());
   const facingRef = useRef(0);
-  const avatarPosRef = useRef<[number, number, number]>([0, 0.1, 1.5]);
+  const avatarPosRef = useRef<[number, number, number]>([0, 0.02, 1.5]);
   const initializedRef = useRef(false);
+  const raycaster = useRef(new THREE.Raycaster());
+  const modelRef = useRef<THREE.Group>(null);
 
   const targetPos: [number, number, number] = [0, 0.1, 0];
 
   useEffect(() => {
     if (active && !initializedRef.current) {
       initializedRef.current = true;
-      const pos: [number, number, number] = [0, 0.1, 1.5];
+      const pos: [number, number, number] = [0, 0.02, 1.5];
       setAvatarPos(pos);
       avatarPosRef.current = pos;
-      camera.position.set(0, 1.5, 3);
-      camera.lookAt(0, 0.1, 0);
+      camera.position.set(0, 2, 3.5);
+      camera.lookAt(0, 0, 0);
       if (orbitRef?.current) {
-        orbitRef.current.target.set(0, 0.1, 1.5);
+        orbitRef.current.target.set(0, 0.02, 1.5);
       }
     }
   }, [active]);
@@ -130,7 +132,17 @@ export default function AryqWorld({ active, onComplete, orbitRef }: AryqWorldPro
     const [cx, , cz] = avatarPosRef.current;
     const newX = THREE.MathUtils.clamp(cx + moveDir.x, -2, 2);
     const newZ = THREE.MathUtils.clamp(cz + moveDir.z, -2, 2);
-    const newY = 0.1;
+
+    // Raycast down onto the aryq model to find surface height
+    let newY = 0.02;
+    if (modelRef.current) {
+      raycaster.current.set(new THREE.Vector3(newX, 5, newZ), new THREE.Vector3(0, -1, 0));
+      const hits = raycaster.current.intersectObject(modelRef.current, true);
+      if (hits.length > 0) {
+        newY = hits[0].point.y + 0.02;
+      }
+    }
+
     const newPos: [number, number, number] = [newX, newY, newZ];
     avatarPosRef.current = newPos;
     setAvatarPos(newPos);
@@ -157,14 +169,10 @@ export default function AryqWorld({ active, onComplete, orbitRef }: AryqWorldPro
 
   return (
     <group>
-      {/* Ground plane */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
-        <planeGeometry args={[6, 6]} />
-        <meshStandardMaterial color="#1a2332" roughness={0.9} />
-      </mesh>
-
       {/* Aryq model */}
-      <primitive object={scene} scale={[1, 1, 1]} position={[0, 0, 0]} />
+      <group ref={modelRef}>
+        <primitive object={scene} scale={[1, 1, 1]} position={[0, 0, 0]} />
+      </group>
 
       {/* Lighting */}
       <ambientLight intensity={0.5} />
