@@ -129,10 +129,19 @@ function AutoRotate({ dir }: { dir: [number, number] }) {
   return null;
 }
 
-function RotatingModel({ modelPath, playful, rotationDir, scaleBase }: { modelPath: string; playful: boolean; rotationDir: [number, number]; scaleBase?: number }) {
+function RotatingModel({ modelPath, playful, rotationDir, scaleBase, brightLight, positionY }: { modelPath: string; playful: boolean; rotationDir: [number, number]; scaleBase?: number; brightLight?: boolean; positionY?: number }) {
   const { scene } = useGLTF(modelPath);
   const ref = useRef<THREE.Group>(null);
   const s = scaleBase ?? 3;
+
+  // Center the model on its own bounding box so it rotates around its center
+  const clonedScene = useMemo(() => {
+    const c = scene.clone();
+    const box = new THREE.Box3().setFromObject(c);
+    const center = box.getCenter(new THREE.Vector3());
+    c.position.sub(center);
+    return c;
+  }, [scene]);
 
   useFrame((state) => {
     if (ref.current) {
@@ -140,12 +149,9 @@ function RotatingModel({ modelPath, playful, rotationDir, scaleBase }: { modelPa
     }
   });
 
-  const clonedScene = useMemo(() => {
-    return scene.clone();
-  }, [scene]);
-
   return (
-    <group ref={ref} scale={[s, s, s]} position={[0, -0.5, 0]}>
+    <group ref={ref} scale={[s, s, s]} position={[0, positionY ?? -0.5, 0]}>
+      {brightLight && <pointLight position={[0, 2, 0]} intensity={3} />}
       <primitive object={clonedScene} />
     </group>
   );
