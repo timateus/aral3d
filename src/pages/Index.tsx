@@ -272,9 +272,9 @@ const Index = () => {
     const handler = (e: Event) => {
       const state = (e as CustomEvent<GameModeState>).detail;
       setGameModeState(state);
-      // Toggle Khorezm DEM and inspector based on current mission
       if (state.requiresKhorezm !== undefined) setShowKhorezm(state.requiresKhorezm);
       if (state.requiresInspector !== undefined) setShowInspector(state.requiresInspector);
+      if (state.inBowlWorld) setBowlWorldActive(true);
     };
     window.addEventListener('game-mode-state', handler);
     return () => window.removeEventListener('game-mode-state', handler);
