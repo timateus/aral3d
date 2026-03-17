@@ -728,8 +728,14 @@ const Index = () => {
             bowlWorldActive={bowlWorldActive}
             onBowlWorldComplete={() => {
               setBowlWorldActive(false);
-              // Complete the current mission after returning from bowl world
               window.dispatchEvent(new CustomEvent('bowl-world-complete'));
+            }}
+            aryqWorldActive={aryqWorldActive}
+            onAryqWorldComplete={() => {
+              setAryqWorldActive(false);
+            }}
+            onNukusClick={() => {
+              setAryqWorldActive(true);
             }}
             showLandcover={showLandcover}
             landcoverVisibleClasses={landcoverVisibleClasses}
