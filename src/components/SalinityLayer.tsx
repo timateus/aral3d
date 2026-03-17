@@ -3,38 +3,34 @@ import { TerrainData } from '@/lib/geotiff-loader';
 import * as shapefile from 'shapefile';
 import * as THREE from 'three';
 import { Html } from '@react-three/drei';
+import JSZip from 'jszip';
 
-interface GroundwaterLayerProps {
+interface SalinityLayerProps {
   terrain: TerrainData;
   exaggeration: number;
 }
 
-interface GWFeature {
+interface SalFeature {
   rings: number[][][];
   properties: Record<string, any>;
 }
 
 const MAX_EXTRUDE = 1.5;
 
-function interpolateColor(t: number): string {
-  // Deep blue (low value) → cyan → yellow → red (high value)
-  if (t < 0.25) {
-    const s = t / 0.25;
-    const r = 0, g = Math.round(s * 200), b = Math.round(255 - s * 50);
+function salinityColor(t: number): string {
+  // White/light (low salinity) → yellow → orange → dark red/brown (high salinity)
+  if (t < 0.33) {
+    const s = t / 0.33;
+    const r = 255, g = Math.round(255 - s * 30), b = Math.round(220 - s * 120);
     return `rgb(${r},${g},${b})`;
   }
-  if (t < 0.5) {
-    const s = (t - 0.25) / 0.25;
-    const r = Math.round(s * 50), g = Math.round(200 + s * 55), b = Math.round(200 - s * 120);
+  if (t < 0.66) {
+    const s = (t - 0.33) / 0.33;
+    const r = 255, g = Math.round(225 - s * 95), b = Math.round(100 - s * 70);
     return `rgb(${r},${g},${b})`;
   }
-  if (t < 0.75) {
-    const s = (t - 0.5) / 0.25;
-    const r = Math.round(50 + s * 205), g = Math.round(255 - s * 75), b = Math.round(80 - s * 80);
-    return `rgb(${r},${g},${b})`;
-  }
-  const s = (t - 0.75) / 0.25;
-  const r = 255, g = Math.round(180 - s * 130), b = Math.round(s * 25);
+  const s = (t - 0.66) / 0.34;
+  const r = Math.round(255 - s * 75), g = Math.round(130 - s * 90), b = Math.round(30 - s * 10);
   return `rgb(${r},${g},${b})`;
 }
 
@@ -90,19 +86,49 @@ interface RegionMesh {
   height: number;
 }
 
-const GroundwaterLayer = ({ terrain, exaggeration }: GroundwaterLayerProps) => {
-  const [features, setFeatures] = useState<GWFeature[]>([]);
+async function extractShapefilesFromZip(zipBuf: ArrayBuffer): Promise<{ shp: ArrayBuffer; dbf: ArrayBuffer } | null> {
+  const zip = await JSZip.loadAsync(zipBuf);
+  
+  // Check for nested zip
+  const zipFiles = Object.keys(zip.files).filter(n => n.endsWith('.zip'));
+  let targetZip = zip;
+  
+  if (zipFiles.length > 0 && !Object.keys(zip.files).some(n => n.endsWith('.shp'))) {
+    // Extract inner zip
+    const innerBuf = await zip.files[zipFiles[0]].async('arraybuffer');
+    targetZip = await JSZip.loadAsync(innerBuf);
+  }
+  
+  const files = Object.keys(targetZip.files);
+  const shpFile = files.find(f => f.toLowerCase().endsWith('.shp'));
+  const dbfFile = files.find(f => f.toLowerCase().endsWith('.dbf'));
+  
+  if (!shpFile || !dbfFile) {
+    console.warn('No .shp/.dbf found in zip. Files:', files);
+    return null;
+  }
+  
+  const [shp, dbf] = await Promise.all([
+    targetZip.files[shpFile].async('arraybuffer'),
+    targetZip.files[dbfFile].async('arraybuffer'),
+  ]);
+  
+  return { shp, dbf };
+}
+
+const SalinityLayer = ({ terrain, exaggeration }: SalinityLayerProps) => {
+  const [features, setFeatures] = useState<SalFeature[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
       try {
-        const [shpBuf, dbfBuf] = await Promise.all([
-          fetch('/data/groundwater_level.shp').then(r => r.arrayBuffer()),
-          fetch('/data/groundwater_level.dbf').then(r => r.arrayBuffer()),
-        ]);
-        const source = await shapefile.open(shpBuf, dbfBuf);
-        const feats: GWFeature[] = [];
+        const zipBuf = await fetch('/data/salinity.zip').then(r => r.arrayBuffer());
+        const extracted = await extractShapefilesFromZip(zipBuf);
+        if (!extracted) return;
+        
+        const source = await shapefile.open(extracted.shp, extracted.dbf);
+        const feats: SalFeature[] = [];
         let result = await source.read();
         while (!result.done) {
           const f = result.value;
@@ -112,6 +138,8 @@ const GroundwaterLayer = ({ terrain, exaggeration }: GroundwaterLayerProps) => {
               rings = [f.geometry.coordinates[0]];
             } else if (f.geometry.type === 'MultiPolygon') {
               rings = f.geometry.coordinates.map((p: number[][][]) => p[0]);
+            } else if (f.geometry.type === 'Point') {
+              // Skip points for now, we want polygons
             }
             if (rings.length > 0) {
               feats.push({ rings, properties: f.properties || {} });
@@ -119,10 +147,10 @@ const GroundwaterLayer = ({ terrain, exaggeration }: GroundwaterLayerProps) => {
           }
           result = await source.read();
         }
-        console.log('Groundwater features loaded:', feats.length, feats[0]?.properties);
+        console.log('Salinity features loaded:', feats.length, feats[0]?.properties);
         setFeatures(feats);
       } catch (e) {
-        console.warn('Groundwater shapefile load failed:', e);
+        console.warn('Salinity zip load failed:', e);
       }
     })();
   }, []);
@@ -139,11 +167,10 @@ const GroundwaterLayer = ({ terrain, exaggeration }: GroundwaterLayerProps) => {
   const { regions, valueKey } = useMemo(() => {
     if (!features.length) return { regions: [], valueKey: '' };
 
-    // Find numeric property key
     const props0 = features[0].properties;
     let vKey = '';
     for (const k of Object.keys(props0)) {
-      if (typeof props0[k] === 'number' && !k.toLowerCase().includes('id') && !k.toLowerCase().includes('fid')) {
+      if (typeof props0[k] === 'number' && !k.toLowerCase().includes('id') && !k.toLowerCase().includes('fid') && !k.toLowerCase().includes('objectid')) {
         vKey = k; break;
       }
     }
@@ -170,8 +197,8 @@ const GroundwaterLayer = ({ terrain, exaggeration }: GroundwaterLayerProps) => {
 
       const t = (v - mn) / range;
       const height = Math.sqrt(t) * MAX_EXTRUDE;
-      const color = interpolateColor(t);
-      const name = feat.properties['ab_doff'] || feat.properties['name'] || `Region ${i + 1}`;
+      const color = salinityColor(t);
+      const name = feat.properties['name'] || feat.properties['NAME'] || feat.properties['ab_doff'] || `Zone ${i + 1}`;
 
       const allTopVerts: number[] = [];
       const allSideVerts: number[] = [];
@@ -199,7 +226,7 @@ const GroundwaterLayer = ({ terrain, exaggeration }: GroundwaterLayerProps) => {
       const labelP = converter(clon, clat);
 
       result.push({
-        key: `gw-${i}`,
+        key: `sal-${i}`,
         name: String(name),
         value: v,
         valueKey: vKey,
@@ -262,7 +289,7 @@ const GroundwaterLayer = ({ terrain, exaggeration }: GroundwaterLayerProps) => {
                 }}>
                   <div style={{ fontWeight: 600, color: r.color }}>{r.name}</div>
                   <div style={{ marginTop: 2, fontWeight: 700 }}>
-                    {r.valueKey}: {r.value.toLocaleString()} cm
+                    {r.valueKey}: {r.value.toLocaleString()}
                   </div>
                 </div>
               </Html>
@@ -274,4 +301,4 @@ const GroundwaterLayer = ({ terrain, exaggeration }: GroundwaterLayerProps) => {
   );
 };
 
-export default GroundwaterLayer;
+export default SalinityLayer;
