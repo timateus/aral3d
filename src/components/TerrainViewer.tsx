@@ -305,70 +305,72 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
       <directionalLight position={[5, 10, 5]} intensity={1.2} castShadow />
       <directionalLight position={[-3, 5, -3]} intensity={0.4} color="#8ec8e8" />
 
-      <group>
-        <TerrainMesh terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} hideNoData={hideNoData} waterBounds={waterBounds} inspectorEnabled={inspectorEnabled} popData={showPopDensity ? popData : null} lcData={showLandcover ? lcData : null} damToolActive={damToolActive} onDamPlace={onDamPlace} canalToolActive={canalToolActive} onCanalDig={onCanalDig} waterFlowActive={waterFlowActive} onWaterFlowClick={onWaterFlowClick} terrainVersion={terrainVersion} raisedPixels={raisedPixels} dugPixels={dugPixels} />
-        {flowState && flowRenderKey !== undefined && (
-          <WaterFlowOverlay terrain={terrain} exaggeration={exaggeration} flowState={flowState} renderKey={flowRenderKey} />
-        )}
-      </group>
-      <GeoFeatures terrain={terrain} exaggeration={exaggeration} showBorders={showBorders} showRivers={showRivers} show13thBasin={show13thBasin} show19thBasin={show19thBasin} show21stBasin={show21stBasin} showLakes={showLakes} show21cLakes={show21cLakes} riverInflow={riverInflow} userLocation={userLocation} canalHighlights={canalHighlights} highlightedCanalNames={highlightedCanalNames} canalTourActive={canalTourActive} onNukusClick={onNukusClick} />
-        {showWaterExtent && <WaterExtentLayer terrain={terrain} exaggeration={exaggeration} year={waterExtentYear} />}
-        {showPopDensity && <PopulationDensityLayer terrain={terrain} exaggeration={exaggeration} onDataLoaded={setPopData} hexSize={popHexSize} hexHeightExag={popHexHeight} />}
-        {showMigration && <MigrationLayer terrain={terrain} exaggeration={exaggeration} year={migrationYear ?? waterExtentYear} />}
-        {showChoropleth && <ChoroplethLayer terrain={terrain} exaggeration={exaggeration} year={waterExtentYear} indicatorId={choroplethIndicator} choroplethExaggeration={choroplethExaggeration} />}
-        {showLandcover && <LandcoverLayer terrain={terrain} exaggeration={exaggeration} visibleClasses={landcoverVisibleClasses} onDataLoaded={setLcData} onAvailableClasses={onLandcoverAvailableClasses} />}
-        {showSchools && <SchoolsLayer terrain={terrain} exaggeration={exaggeration} />}
-        {showVocabulary && <VocabularyLayer terrain={terrain} exaggeration={exaggeration} />}
-        {scenarioActions && scenarioActions.length > 0 && (
-          <ScenarioOverlay actions={scenarioActions} terrain={terrain} exaggeration={exaggeration} />
-        )}
-        {showWaterExtent && (
-          <group position={[0, 6, -2]}>
-          <Html center distanceFactor={15} style={{ pointerEvents: 'none' }}>
-            <div style={{
-              textAlign: 'center',
-              color: '#ffffff',
-              textShadow: '0 2px 12px rgba(0,0,0,0.9), 0 0 4px rgba(0,0,0,0.7)',
-              fontFamily: "'Inter', system-ui, sans-serif",
-            }}>
-              <div style={{ fontSize: '72px', fontWeight: 700, lineHeight: 1 }}>
-                {waterExtentYear}
-              </div>
-              <div style={{ fontSize: '22px', fontWeight: 400, color: '#8ec8e8', marginTop: '4px' }}>
-                Water Level: {waterLevel} m
-              </div>
-              {currentMetrics && currentMetrics.length > 0 && (
-                <div style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  justifyContent: 'center',
-                  gap: '6px 12px',
-                  marginTop: '8px',
-                  maxWidth: '400px',
-                }}>
-                  {currentMetrics.map(m => (
-                    <div key={m.name} style={{
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      color: m.color,
-                      whiteSpace: 'nowrap',
-                    }}>
-                      {m.name.replace(/\s*\(.*\)/, '')}: <span style={{ color: '#fff', fontWeight: 600 }}>
-                        {typeof m.value === 'number' ? (m.value >= 1000 ? m.value.toLocaleString() : m.value) : m.value}
-                      </span>{' '}
-                      <span style={{ fontSize: '11px', opacity: 0.7 }}>{m.unit}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </Html>
+      {!aryqWorldActive && (
+        <>
+          <group>
+            <TerrainMesh terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} hideNoData={hideNoData} waterBounds={waterBounds} inspectorEnabled={inspectorEnabled} popData={showPopDensity ? popData : null} lcData={showLandcover ? lcData : null} damToolActive={damToolActive} onDamPlace={onDamPlace} canalToolActive={canalToolActive} onCanalDig={onCanalDig} waterFlowActive={waterFlowActive} onWaterFlowClick={onWaterFlowClick} terrainVersion={terrainVersion} raisedPixels={raisedPixels} dugPixels={dugPixels} />
+            {flowState && flowRenderKey !== undefined && (
+              <WaterFlowOverlay terrain={terrain} exaggeration={exaggeration} flowState={flowState} renderKey={flowRenderKey} />
+            )}
           </group>
-        )}
-
-
-
-      <GameMode terrain={terrain} exaggeration={exaggeration} active={!!gameModeActive} onAddWater={onGameAddWater} orbitRef={orbitRef} />
+          <GeoFeatures terrain={terrain} exaggeration={exaggeration} showBorders={showBorders} showRivers={showRivers} show13thBasin={show13thBasin} show19thBasin={show19thBasin} show21stBasin={show21stBasin} showLakes={showLakes} show21cLakes={show21cLakes} riverInflow={riverInflow} userLocation={userLocation} canalHighlights={canalHighlights} highlightedCanalNames={highlightedCanalNames} canalTourActive={canalTourActive} onNukusClick={onNukusClick} />
+          {showWaterExtent && <WaterExtentLayer terrain={terrain} exaggeration={exaggeration} year={waterExtentYear} />}
+          {showPopDensity && <PopulationDensityLayer terrain={terrain} exaggeration={exaggeration} onDataLoaded={setPopData} hexSize={popHexSize} hexHeightExag={popHexHeight} />}
+          {showMigration && <MigrationLayer terrain={terrain} exaggeration={exaggeration} year={migrationYear ?? waterExtentYear} />}
+          {showChoropleth && <ChoroplethLayer terrain={terrain} exaggeration={exaggeration} year={waterExtentYear} indicatorId={choroplethIndicator} choroplethExaggeration={choroplethExaggeration} />}
+          {showLandcover && <LandcoverLayer terrain={terrain} exaggeration={exaggeration} visibleClasses={landcoverVisibleClasses} onDataLoaded={setLcData} onAvailableClasses={onLandcoverAvailableClasses} />}
+          {showSchools && <SchoolsLayer terrain={terrain} exaggeration={exaggeration} />}
+          {showVocabulary && <VocabularyLayer terrain={terrain} exaggeration={exaggeration} />}
+          {scenarioActions && scenarioActions.length > 0 && (
+            <ScenarioOverlay actions={scenarioActions} terrain={terrain} exaggeration={exaggeration} />
+          )}
+          {showWaterExtent && (
+            <group position={[0, 6, -2]}>
+            <Html center distanceFactor={15} style={{ pointerEvents: 'none' }}>
+              <div style={{
+                textAlign: 'center',
+                color: '#ffffff',
+                textShadow: '0 2px 12px rgba(0,0,0,0.9), 0 0 4px rgba(0,0,0,0.7)',
+                fontFamily: "'Inter', system-ui, sans-serif",
+              }}>
+                <div style={{ fontSize: '72px', fontWeight: 700, lineHeight: 1 }}>
+                  {waterExtentYear}
+                </div>
+                <div style={{ fontSize: '22px', fontWeight: 400, color: '#8ec8e8', marginTop: '4px' }}>
+                  Water Level: {waterLevel} m
+                </div>
+                {currentMetrics && currentMetrics.length > 0 && (
+                  <div style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    justifyContent: 'center',
+                    gap: '6px 12px',
+                    marginTop: '8px',
+                    maxWidth: '400px',
+                  }}>
+                    {currentMetrics.map(m => (
+                      <div key={m.name} style={{
+                        fontSize: '13px',
+                        fontWeight: 500,
+                        color: m.color,
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {m.name.replace(/\s*\(.*\)/, '')}: <span style={{ color: '#fff', fontWeight: 600 }}>
+                          {typeof m.value === 'number' ? (m.value >= 1000 ? m.value.toLocaleString() : m.value) : m.value}
+                        </span>{' '}
+                        <span style={{ fontSize: '11px', opacity: 0.7 }}>{m.unit}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Html>
+            </group>
+          )}
+          <GameMode terrain={terrain} exaggeration={exaggeration} active={!!gameModeActive} onAddWater={onGameAddWater} orbitRef={orbitRef} />
+          <gridHelper args={[20, 20, '#1a2332', '#1a2332']} position={[0, -0.01, 0]} />
+        </>
+      )}
 
       {bowlWorldActive && onBowlWorldComplete && (
         <Suspense fallback={null}>
@@ -382,7 +384,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
         </Suspense>
       )}
 
-      {!narrativeActive && !flyoverAnimating && !gameModeActive && <CameraAnimator started={started} />}
+      {!narrativeActive && !flyoverAnimating && !gameModeActive && !aryqWorldActive && <CameraAnimator started={started} />}
       {narrativeActive && narrativeCameraPosition && narrativeCameraTarget && (
         <NarrativeCameraController
           active={narrativeActive}
@@ -399,30 +401,34 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
         />
       )}
 
-      <RiverFlyover
-        recording={!!riverFlyover}
-        terrain={terrain}
-        exaggeration={exaggeration}
-        onDone={onRiverFlyoverDone || (() => {})}
-        onAnimatingChange={setFlyoverAnimating}
-      />
+      {!aryqWorldActive && (
+        <RiverFlyover
+          recording={!!riverFlyover}
+          terrain={terrain}
+          exaggeration={exaggeration}
+          onDone={onRiverFlyoverDone || (() => {})}
+          onAnimatingChange={setFlyoverAnimating}
+        />
+      )}
 
       <MapControls
         enabled={!narrativeActive && !flyoverAnimating}
         orbitRef={orbitRef}
-        gameModeActive={gameModeActive}
+        gameModeActive={gameModeActive || aryqWorldActive}
       />
 
-      <GizmoHelper alignment="bottom-right" margin={[60, 60]}>
-        <GizmoViewport labelColor="white" axisHeadScale={0.8} />
-      </GizmoHelper>
-
-      <gridHelper args={[20, 20, '#1a2332', '#1a2332']} position={[0, -0.01, 0]} />
-      {showObjectLibrary && onObjectSelect && (
-        <ObjectLibrary3D terrain={terrain} exaggeration={exaggeration} onSelect={onObjectSelect} />
-      )}
-      {agmarShowProposalSites && (
-        <AgmarProposalMarkers terrain={terrain} exaggeration={exaggeration} />
+      {!aryqWorldActive && (
+        <>
+          <GizmoHelper alignment="bottom-right" margin={[60, 60]}>
+            <GizmoViewport labelColor="white" axisHeadScale={0.8} />
+          </GizmoHelper>
+          {showObjectLibrary && onObjectSelect && (
+            <ObjectLibrary3D terrain={terrain} exaggeration={exaggeration} onSelect={onObjectSelect} />
+          )}
+          {agmarShowProposalSites && (
+            <AgmarProposalMarkers terrain={terrain} exaggeration={exaggeration} />
+          )}
+        </>
       )}
     </Canvas>
   );
