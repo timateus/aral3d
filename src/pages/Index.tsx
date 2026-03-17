@@ -795,7 +795,7 @@ const Index = () => {
             } else if (id === 'playful-small') {
               setAryqWorldActive(true);
             }
-          }
+          }}
           onBack={() => setQuadrantViewActive(false)}
         />
       )}
