@@ -62,6 +62,7 @@ const Index = () => {
   const [popHexSize, setPopHexSize] = useState(0.15);
   const [popHexHeight, setPopHexHeight] = useState(1.0);
   const [showWaterExtent, setShowWaterExtent] = useState(true);
+  const [showSchools, setShowSchools] = useState(false);
   const [waterExtentYear, setWaterExtentYear] = useState(1960);
   
   const [started, setStarted] = useState(false);
