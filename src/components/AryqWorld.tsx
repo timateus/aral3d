@@ -205,6 +205,14 @@ export default function AryqWorld({ active, onComplete, orbitRef }: AryqWorldPro
       <pointLight position={[0, 1, 0]} intensity={0.4} color="#38bdf8" distance={3} />
 
       <MiniAvatar position={avatarPos} facing={facing} />
+
+      {/* Water drops from space key */}
+      {waterDrops.map(drop => (
+        <mesh key={drop.id} position={drop.pos}>
+          <sphereGeometry args={[0.015, 8, 8]} />
+          <meshStandardMaterial color="#38bdf8" emissive="#38bdf8" emissiveIntensity={0.6} transparent opacity={0.7} />
+        </mesh>
+      ))}
       {!completed && <AryqBeacon position={targetPos} />}
 
       {completed && (
