@@ -1210,6 +1210,57 @@ const Index = () => {
           </button>
         </div>
       )}
+
+      {/* ag MAR preset buttons */}
+      {agMarMode && started && (
+        <div className="absolute bottom-6 left-6 z-20 flex flex-col gap-2">
+          <button
+            onClick={() => {
+              setAgMarMode(false);
+              setShowPopDensity(false);
+              setShowGroundwater(false);
+              setAgMarActiveLayer('none');
+            }}
+            className="text-[10px] tracking-[0.12em] uppercase text-muted-foreground hover:text-primary transition-colors border border-border/50 px-3 py-1.5 bg-card/60 backdrop-blur-sm mb-2"
+          >
+            ← Back to explore
+          </button>
+          <button
+            onClick={() => {
+              const next = agMarActiveLayer === 'population' ? 'none' : 'population';
+              setAgMarActiveLayer(next);
+              setShowPopDensity(next === 'population');
+              if (next === 'population') {
+                setPopHexSize(0.01);
+                setPopHexHeight(0);
+              }
+              setShowGroundwater(false);
+            }}
+            className={`text-[11px] tracking-[0.08em] uppercase font-mono px-4 py-2 border backdrop-blur-sm transition-all ${
+              agMarActiveLayer === 'population'
+                ? 'bg-primary/20 border-primary/60 text-primary'
+                : 'bg-card/60 border-border/50 text-muted-foreground hover:text-primary hover:border-primary/40'
+            }`}
+          >
+            Population
+          </button>
+          <button
+            onClick={() => {
+              const next = agMarActiveLayer === 'groundwater' ? 'none' : 'groundwater';
+              setAgMarActiveLayer(next);
+              setShowGroundwater(next === 'groundwater');
+              setShowPopDensity(false);
+            }}
+            className={`text-[11px] tracking-[0.08em] uppercase font-mono px-4 py-2 border backdrop-blur-sm transition-all ${
+              agMarActiveLayer === 'groundwater'
+                ? 'bg-primary/20 border-primary/60 text-primary'
+                : 'bg-card/60 border-border/50 text-muted-foreground hover:text-primary hover:border-primary/40'
+            }`}
+          >
+            Ground Water
+          </button>
+        </div>
+      )}
     </div>
   );
 };
