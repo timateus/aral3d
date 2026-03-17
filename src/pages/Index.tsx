@@ -809,7 +809,12 @@ const Index = () => {
               setShowChoropleth(false);
               setShowLandcover(false);
             } else if (id === 'playful-small') {
-              setAryqWorldActive(true);
+              setSoapOperaMode(true);
+              setSoapActiveLayer('none');
+              setWaterExtentYear(2024);
+              setShowWaterExtent(true);
+              setShowKhorezm(true);
+              setShowSalinity(false);
             }
           }}
           onBack={() => setQuadrantViewActive(false)}
