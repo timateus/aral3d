@@ -1118,13 +1118,80 @@ const Index = () => {
       )}
 
       {/* Timeline Slider - bottom bar (hide in game mode) */}
-      {isMapExploration && (
+      {isMapExploration && !bodiesOfWaterMode && (
         <TimelineSlider
           year={waterExtentYear}
           onYearChange={setWaterExtentYear}
           visible={showWaterExtent}
           onToggleVisible={setShowWaterExtent}
         />
+      )}
+
+      {/* Bodies of Water preset buttons */}
+      {bodiesOfWaterMode && started && (
+        <div className="absolute bottom-6 left-6 z-20 flex flex-col gap-2">
+          <button
+            onClick={() => {
+              setBodiesOfWaterMode(false);
+              setShowChoropleth(false);
+              setShowLandcover(false);
+            }}
+            className="text-[10px] tracking-[0.12em] uppercase text-muted-foreground hover:text-primary transition-colors border border-border/50 px-3 py-1.5 bg-card/60 backdrop-blur-sm mb-2"
+          >
+            ← Back to explore
+          </button>
+          <button
+            onClick={() => {
+              const next = bodiesActiveLayer === 'mortality' ? 'none' : 'mortality';
+              setBodiesActiveLayer(next);
+              setShowChoropleth(next === 'mortality');
+              setChoroplethIndicator(next === 'mortality' ? 'maternal_mortality' : 'sewage');
+              setShowLandcover(false);
+            }}
+            className={`text-[11px] tracking-[0.08em] uppercase font-mono px-4 py-2 border backdrop-blur-sm transition-all ${
+              bodiesActiveLayer === 'mortality'
+                ? 'bg-primary/20 border-primary/60 text-primary'
+                : 'bg-card/60 border-border/50 text-muted-foreground hover:text-primary hover:border-primary/40'
+            }`}
+          >
+            Mortality
+          </button>
+          <button
+            onClick={() => {
+              const next = bodiesActiveLayer === 'landcover' ? 'none' : 'landcover';
+              setBodiesActiveLayer(next);
+              setShowLandcover(next === 'landcover');
+              if (next === 'landcover') {
+                setLandcoverVisibleClasses(new Set([16, 17, 18]));
+              }
+              setShowChoropleth(false);
+            }}
+            className={`text-[11px] tracking-[0.08em] uppercase font-mono px-4 py-2 border backdrop-blur-sm transition-all ${
+              bodiesActiveLayer === 'landcover'
+                ? 'bg-primary/20 border-primary/60 text-primary'
+                : 'bg-card/60 border-border/50 text-muted-foreground hover:text-primary hover:border-primary/40'
+            }`}
+          >
+            Landcover
+          </button>
+          <button
+            onClick={() => {
+              const next = bodiesActiveLayer === 'sewage' ? 'none' : 'sewage';
+              setBodiesActiveLayer(next);
+              setShowChoropleth(next === 'sewage');
+              setChoroplethIndicator(next === 'sewage' ? 'sewage' : 'sewage');
+              if (next === 'sewage') setWaterExtentYear(2018);
+              setShowLandcover(false);
+            }}
+            className={`text-[11px] tracking-[0.08em] uppercase font-mono px-4 py-2 border backdrop-blur-sm transition-all ${
+              bodiesActiveLayer === 'sewage'
+                ? 'bg-primary/20 border-primary/60 text-primary'
+                : 'bg-card/60 border-border/50 text-muted-foreground hover:text-primary hover:border-primary/40'
+            }`}
+          >
+            Sewage Coverage
+          </button>
+        </div>
       )}
     </div>
   );
