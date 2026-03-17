@@ -634,15 +634,17 @@ const Index = () => {
             onRecordingDone={() => setRecording(false)}
             scenarioActions={scenarioActions}
             currentMetrics={currentMetrics}
-            narrativeActive={narrativeActive || canalTourActive}
+            narrativeActive={narrativeActive || canalTourActive || agmarTourActive}
             narrativeCameraPosition={
               narrativeActive ? NARRATIVE_STEPS[narrativeStep]?.camera.position :
               canalTourActive ? CANAL_TOUR_STEPS[canalTourStep]?.camera.position :
+              agmarTourActive ? AGMAR_TOUR_STEPS[agmarTourStep]?.camera.position :
               undefined
             }
             narrativeCameraTarget={
               narrativeActive ? NARRATIVE_STEPS[narrativeStep]?.camera.target :
               canalTourActive ? CANAL_TOUR_STEPS[canalTourStep]?.camera.target :
+              agmarTourActive ? AGMAR_TOUR_STEPS[agmarTourStep]?.camera.target :
               undefined
             }
             riverFlyover={riverFlyover}
