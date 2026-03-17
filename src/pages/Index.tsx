@@ -18,8 +18,10 @@ import type { GameModeState } from '@/components/GameMode';
 import type { ScenarioAction } from '@/types/scenario';
 import { NARRATIVE_STEPS } from '@/lib/narrative-steps';
 import { CANAL_TOUR_STEPS, getEthnicityColor } from '@/lib/canal-tour-steps';
+import { AGMAR_TOUR_STEPS } from '@/lib/agmar-tour-steps';
 import NarrativeOverlay from '@/components/NarrativeOverlay';
 import CanalTourOverlay from '@/components/CanalTourOverlay';
+import AgmarTourOverlay from '@/components/AgmarTourOverlay';
 import DamToolPanel from '@/components/DamToolPanel';
 import CanalToolPanel from '@/components/CanalToolPanel';
 import WaterFlowPanel from '@/components/WaterFlowPanel';
@@ -99,6 +101,8 @@ const Index = () => {
   const [gameModeActive, setGameModeActive] = useState(false);
   const [gameModeState, setGameModeState] = useState<GameModeState | null>(null);
   const [bowlWorldActive, setBowlWorldActive] = useState(false);
+  const [agmarTourActive, setAgmarTourActive] = useState(false);
+  const [agmarTourStep, setAgmarTourStep] = useState(0);
   
   const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
   const [flowRenderKey, setFlowRenderKey] = useState(0);
@@ -225,6 +229,29 @@ const Index = () => {
   const exitCanalTour = useCallback(() => {
     setCanalTourActive(false);
     setShowKhorezm(false);
+  }, []);
+
+  // Ag-MAR tour handlers
+  const handleAgmarTourStepChange = useCallback((newStep: number) => {
+    setAgmarTourStep(newStep);
+    const step = AGMAR_TOUR_STEPS[newStep];
+    if (!step) return;
+    setWaterExtentYear(step.year);
+    setShowBorders(step.layers.showBorders);
+    setShowRivers(step.layers.showRivers);
+    setShowWaterExtent(step.layers.showWaterExtent);
+    setShowKhorezm(step.layers.showKhorezm);
+  }, []);
+
+  const startAgmarTour = useCallback(() => {
+    setStarted(true);
+    setAgmarTourActive(true);
+    setAgmarTourStep(0);
+    handleAgmarTourStepChange(0);
+  }, [handleAgmarTourStepChange]);
+
+  const exitAgmarTour = useCallback(() => {
+    setAgmarTourActive(false);
   }, []);
 
   useEffect(() => {
@@ -607,15 +634,17 @@ const Index = () => {
             onRecordingDone={() => setRecording(false)}
             scenarioActions={scenarioActions}
             currentMetrics={currentMetrics}
-            narrativeActive={narrativeActive || canalTourActive}
+            narrativeActive={narrativeActive || canalTourActive || agmarTourActive}
             narrativeCameraPosition={
               narrativeActive ? NARRATIVE_STEPS[narrativeStep]?.camera.position :
               canalTourActive ? CANAL_TOUR_STEPS[canalTourStep]?.camera.position :
+              agmarTourActive ? AGMAR_TOUR_STEPS[agmarTourStep]?.camera.position :
               undefined
             }
             narrativeCameraTarget={
               narrativeActive ? NARRATIVE_STEPS[narrativeStep]?.camera.target :
               canalTourActive ? CANAL_TOUR_STEPS[canalTourStep]?.camera.target :
+              agmarTourActive ? AGMAR_TOUR_STEPS[agmarTourStep]?.camera.target :
               undefined
             }
             riverFlyover={riverFlyover}
@@ -665,6 +694,7 @@ const Index = () => {
             onLandcoverAvailableClasses={setLandcoverAvailableClasses}
             showSchools={showSchools}
             showVocabulary={showVocabulary}
+            agmarShowProposalSites={agmarTourActive && !!AGMAR_TOUR_STEPS[agmarTourStep]?.proposalSites}
           />
         )}
         {!terrain && !loading && error && (
@@ -682,6 +712,7 @@ const Index = () => {
           onStart={() => setStarted(true)}
           onGuidedTour={startNarrative}
           onCanalTour={startCanalTour}
+          onAgmarTour={startAgmarTour}
           onObjectSelect={(lat, lon, name) => { setStarted(true); }}
           onStartGame={() => {
             setStarted(true);
@@ -711,8 +742,17 @@ const Index = () => {
         />
       )}
 
+      {/* Ag-MAR Tour Overlay */}
+      {agmarTourActive && (
+        <AgmarTourOverlay
+          step={agmarTourStep}
+          onStepChange={handleAgmarTourStepChange}
+          onExit={exitAgmarTour}
+        />
+      )}
+
       {/* Scenario Chat */}
-      {started && !narrativeActive && !canalTourActive && !isMobile && (
+      {started && !narrativeActive && !canalTourActive && !agmarTourActive && !isMobile && (
         <ScenarioChat
           onActions={handleScenarioActions}
           onClear={() => setScenarioActions([])}
@@ -720,7 +760,7 @@ const Index = () => {
       )}
 
       {/* Data Panel - positioned left */}
-      {started && !narrativeActive && !canalTourActive && showDataPanel && !isMobile && (
+      {started && !narrativeActive && !canalTourActive && !agmarTourActive && showDataPanel && !isMobile && (
         <div className="absolute top-16 left-4 z-10">
           <DataPanel
             currentYear={waterExtentYear}
@@ -735,7 +775,7 @@ const Index = () => {
       )}
 
       {/* Header */}
-      {started && !narrativeActive && !canalTourActive && !isMobile && (
+      {started && !narrativeActive && !canalTourActive && !agmarTourActive && !isMobile && (
         <div className="absolute top-4 left-4 z-10 flex items-center gap-3">
           <button
             onClick={() => { setStarted(false); setGameModeActive(false); }}
@@ -779,7 +819,7 @@ const Index = () => {
       )}
 
       {/* Controls - desktop only, hide in game mode unless toggled */}
-      {started && !narrativeActive && !canalTourActive && !isMobile && !gameModeActive && (
+      {started && !narrativeActive && !canalTourActive && !agmarTourActive && !isMobile && !gameModeActive && (
         <div className="absolute top-4 right-4 z-10 space-y-3 max-h-[calc(100vh-2rem)] overflow-y-auto w-[280px] scrollbar-thin pr-1">
           <ControlPanel
             terrain={terrain}
@@ -977,7 +1017,7 @@ const Index = () => {
       )}
 
       {/* Mobile locate button */}
-      {started && !narrativeActive && !canalTourActive && isMobile && (
+      {started && !narrativeActive && !canalTourActive && !agmarTourActive && isMobile && (
         <button
           onClick={requestLocation}
           disabled={locating}
@@ -1002,7 +1042,7 @@ const Index = () => {
       )}
 
       {/* Timeline Slider - bottom bar (hide in game mode) */}
-      {started && !narrativeActive && !canalTourActive && !gameModeActive && (
+      {started && !narrativeActive && !canalTourActive && !agmarTourActive && !gameModeActive && (
         <TimelineSlider
           year={waterExtentYear}
           onYearChange={setWaterExtentYear}
