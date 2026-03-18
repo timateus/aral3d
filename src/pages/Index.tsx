@@ -1353,6 +1353,7 @@ const Index = () => {
               const next = canalActiveLayer === 'playground' ? 'none' : 'playground';
               setCanalActiveLayer(next);
               setShowWaterPlayground(next === 'playground');
+              if (next !== 'playground') setGameModeActive(false);
             }}
             className={`text-[11px] tracking-[0.08em] uppercase font-mono px-4 py-2 border backdrop-blur-sm transition-all ${
               canalActiveLayer === 'playground'
@@ -1362,6 +1363,24 @@ const Index = () => {
           >
             🏊 Water Playground
           </button>
+          {showWaterPlayground && (
+            <button
+              onClick={() => {
+                setGameModeActive(prev => !prev);
+                if (!gameModeActive) {
+                  setFlowSpeed(20);
+                }
+              }}
+              className={`text-[11px] tracking-[0.08em] uppercase font-mono px-4 py-2 border backdrop-blur-sm transition-all flex items-center gap-1.5 ${
+                gameModeActive
+                  ? 'bg-primary/20 border-primary/60 text-primary'
+                  : 'bg-card/60 border-border/50 text-muted-foreground hover:text-primary hover:border-primary/40'
+              }`}
+            >
+              <Gamepad2 className="w-3.5 h-3.5" />
+              {gameModeActive ? 'Exit Game' : 'Game Mode'}
+            </button>
+          )}
         </div>
       )}
     </div>
