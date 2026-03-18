@@ -115,6 +115,9 @@ const Index = () => {
   const [soapOperaMode, setSoapOperaMode] = useState(false);
   const [soapActiveLayer, setSoapActiveLayer] = useState<'none' | 'salinity' | 'soap'>('none');
   const [showSoapBubbles, setShowSoapBubbles] = useState(false);
+  const [canalMode, setCanalMode] = useState(false);
+  const [canalActiveLayer, setCanalActiveLayer] = useState<'none' | 'playground'>('none');
+  const [showWaterPlayground, setShowWaterPlayground] = useState(false);
   const [agmarTourActive, setAgmarTourActive] = useState(false);
   const [agmarTourStep, setAgmarTourStep] = useState(0);
   
