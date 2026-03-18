@@ -289,6 +289,29 @@ function VideoAnimator({
   return null;
 }
 
+/* ── Noah's Ark in the middle of the Aral Sea ──────────────── */
+function NoahsArk({ terrain, exaggeration }: { terrain: TerrainData; exaggeration: number }) {
+  const { scene } = useGLTF('/models/noahs-arc.glb');
+  const cloned = useMemo(() => scene.clone(), [scene]);
+
+  const position = useMemo(() => {
+    const bounds = terrain.bounds;
+    if (!bounds) return [0, 0, 0] as [number, number, number];
+    const lat = 44.5, lon = 59.0;
+    const nx = (lon - bounds.minLon) / (bounds.maxLon - bounds.minLon);
+    const ny = (lat - bounds.minLat) / (bounds.maxLat - bounds.minLat);
+    const meshW = 10, meshH = 10 * (terrain.height / terrain.width);
+    const x = (nx - 0.5) * meshW;
+    const z = -(ny - 0.5) * meshH;
+    const maxH = 10 * (exaggeration / 100);
+    return [x, maxH * 0.15, z] as [number, number, number];
+  }, [terrain, exaggeration]);
+
+  return (
+    <primitive object={cloned} position={position} scale={0.3} rotation={[0, Math.PI / 4, 0]} />
+  );
+}
+
 const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, showWaterExtent, waterExtentYear, showPopDensity, popHexSize, popHexHeight, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone, riverInflow, userLocation, inspectorEnabled, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, flowState, flowRenderKey, terrainVersion, raisedPixels, dugPixels, showMigration, migrationYear, showChoropleth, choroplethIndicator, choroplethExaggeration, canalHighlights, highlightedCanalNames, canalTourActive, showObjectLibrary, onObjectSelect, gameModeActive, onGameAddWater, bowlWorldActive, onBowlWorldComplete, showLandcover, landcoverVisibleClasses, onLandcoverAvailableClasses, showSchools, showVocabulary, agmarShowProposalSites, aryqWorldActive, onAryqWorldComplete, onNukusClick, showOverlayMetrics, showGroundwater, showPrecipitation, showSalinity, waterPlaygroundActive }, ref) => {
   const screenshotFn = useRef<(() => void) | null>(null);
   const orbitRef = useRef<any>(null);
