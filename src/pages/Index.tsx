@@ -1333,6 +1333,37 @@ const Index = () => {
       )}
 
       <SoapBubblesOverlay active={showSoapBubbles} />
+
+      {/* Canal thinking preset buttons */}
+      {canalMode && started && (
+        <div className="absolute bottom-6 left-6 z-20 flex flex-col gap-2">
+          <button
+            onClick={() => {
+              setCanalMode(false);
+              setShowWaterPlayground(false);
+              setCanalActiveLayer('none');
+              setShow21stBasin(false);
+            }}
+            className="text-[10px] tracking-[0.12em] uppercase text-muted-foreground hover:text-primary transition-colors border border-border/50 px-3 py-1.5 bg-card/60 backdrop-blur-sm mb-2"
+          >
+            ← Back to explore
+          </button>
+          <button
+            onClick={() => {
+              const next = canalActiveLayer === 'playground' ? 'none' : 'playground';
+              setCanalActiveLayer(next);
+              setShowWaterPlayground(next === 'playground');
+            }}
+            className={`text-[11px] tracking-[0.08em] uppercase font-mono px-4 py-2 border backdrop-blur-sm transition-all ${
+              canalActiveLayer === 'playground'
+                ? 'bg-primary/20 border-primary/60 text-primary'
+                : 'bg-card/60 border-border/50 text-muted-foreground hover:text-primary hover:border-primary/40'
+            }`}
+          >
+            🏊 Water Playground
+          </button>
+        </div>
+      )}
     </div>
   );
 };
