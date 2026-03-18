@@ -818,7 +818,7 @@ const Index = () => {
             } else if (id === 'playful-large') {
               setCanalMode(true);
               setCanalActiveLayer('none');
-              setWaterExtentYear(2024);
+              setWaterExtentYear(1960);
               setShowWaterExtent(true);
               setShow21stBasin(true);
               setShowRivers(true);
