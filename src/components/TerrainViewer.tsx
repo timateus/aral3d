@@ -4,7 +4,7 @@ import GroundwaterLayer from './GroundwaterLayer';
 import SalinityLayer from './SalinityLayer';
 import PrecipitationLayer from './PrecipitationLayer';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
-import { GizmoHelper, GizmoViewport, Html } from '@react-three/drei';
+import { GizmoHelper, GizmoViewport, Html, useGLTF } from '@react-three/drei';
 import TerrainMesh from './TerrainMesh';
 import GeoFeatures from './GeoFeatures';
 import WaterExtentLayer from './WaterExtentLayer';
