@@ -55,7 +55,7 @@ const DEVICES: HydraulicDevice[] = [
     id: 'shaduf',
     name: 'Shaduf',
     nameLocal: 'Shaduf',
-    description: 'A counterweighted lever for lifting water from wells — one of humanity's oldest machines.',
+    description: "A counterweighted lever for lifting water from wells — one of humanity's oldest machines.",
     image: '/images/hydraulic/shaduf.png',
     position: [2.5, 0, -1.0],
     type: 'shaduf',
