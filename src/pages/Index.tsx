@@ -1298,10 +1298,12 @@ const Index = () => {
               setShowSoapBubbles(false);
               setSoapActiveLayer('none');
               setShowKhorezm(false);
+              setStarted(false);
+              setQuadrantViewActive(true);
             }}
             className="text-[10px] tracking-[0.12em] uppercase text-muted-foreground hover:text-primary transition-colors border border-border/50 px-3 py-1.5 bg-card/60 backdrop-blur-sm mb-2"
           >
-            ← Back to explore
+            ← Back to compare
           </button>
           <button
             onClick={() => {
