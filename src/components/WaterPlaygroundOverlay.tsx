@@ -72,7 +72,7 @@ function Boardwalk({ start, end, width = 0.12 }: { start: [number, number, numbe
 }
 
 /* ── Canal channel (earthy) ───────────────────────────────── */
-function Canal({ start, end, width = 0.15 }: { start: [number, number, number]; end: [number, number, number]; width?: number }) {
+function Canal({ start, end, width = 0.35 }: { start: [number, number, number]; end: [number, number, number]; width?: number }) {
   const dx = end[0] - start[0], dz = end[2] - start[2];
   const length = Math.sqrt(dx * dx + dz * dz);
   const angle = Math.atan2(dz, dx);
@@ -88,7 +88,7 @@ function Canal({ start, end, width = 0.15 }: { start: [number, number, number]; 
       {/* Water */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]}>
         <planeGeometry args={[length, width * 0.7]} />
-        <meshStandardMaterial color={WATER} transparent opacity={0.6} />
+        <meshStandardMaterial color="#4A9A6A" transparent opacity={0.65} />
       </mesh>
     </group>
   );
