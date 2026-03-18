@@ -820,6 +820,8 @@ const Index = () => {
               setCanalActiveLayer('none');
               setWaterExtentYear(1960);
               setShowWaterExtent(true);
+              setWaterLevel(50);
+              setWaterLevelManual(true);
               setShow21stBasin(true);
               setShowRivers(true);
             } else if (id === 'playful-small') {
