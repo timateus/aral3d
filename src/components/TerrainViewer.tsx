@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle, Suspense } from 'react';
+import { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle, Suspense, useMemo } from 'react';
 import AgmarProposalMarkers from './AgmarProposalMarkers';
 import GroundwaterLayer from './GroundwaterLayer';
 import SalinityLayer from './SalinityLayer';
