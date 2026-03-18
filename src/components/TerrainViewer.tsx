@@ -304,11 +304,11 @@ function NoahsArk({ terrain, exaggeration }: { terrain: TerrainData; exaggeratio
     const x = (nx - 0.5) * meshW;
     const z = -(ny - 0.5) * meshH;
     const maxH = 10 * (exaggeration / 100);
-    return [x, maxH * 0.15, z] as [number, number, number];
+    return [x, maxH * 0.25, z] as [number, number, number];
   }, [terrain, exaggeration]);
 
   return (
-    <primitive object={cloned} position={position} scale={0.3} rotation={[0, Math.PI / 4, 0]} />
+    <primitive object={cloned} position={position} scale={3} rotation={[0, Math.PI / 4, 0]} />
   );
 }
 
