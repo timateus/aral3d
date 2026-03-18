@@ -297,14 +297,17 @@ function NoahsArk({ terrain, exaggeration }: { terrain: TerrainData; exaggeratio
   const position = useMemo(() => {
     const bounds = terrain.bounds;
     if (!bounds) return [0, 0, 0] as [number, number, number];
-    const lat = 44.5, lon = 59.0;
+    const lat = 44.87, lon = 59.87;
     const nx = (lon - bounds.minLon) / (bounds.maxLon - bounds.minLon);
     const ny = (lat - bounds.minLat) / (bounds.maxLat - bounds.minLat);
     const meshW = 10, meshH = 10 * (terrain.height / terrain.width);
     const x = (nx - 0.5) * meshW;
     const z = -(ny - 0.5) * meshH;
+    // Place bottom at 50m elevation
+    const elevRange = terrain.maxElevation - terrain.minElevation || 1;
     const maxH = 10 * (exaggeration / 100);
-    return [x, maxH * 0.25, z] as [number, number, number];
+    const yAt50m = ((50 - terrain.minElevation) / elevRange) * maxH;
+    return [x, yAt50m, z] as [number, number, number];
   }, [terrain, exaggeration]);
 
   return (
