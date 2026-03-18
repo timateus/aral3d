@@ -290,7 +290,7 @@ function VideoAnimator({
 }
 
 /* ── Noah's Ark in the middle of the Aral Sea ──────────────── */
-function NoahsArk({ terrain, exaggeration }: { terrain: TerrainData; exaggeration: number }) {
+function NoahsArk({ terrain, exaggeration, waterLevel }: { terrain: TerrainData; exaggeration: number; waterLevel: number }) {
   const { scene } = useGLTF('/models/noahs-arc.glb');
   const cloned = useMemo(() => scene.clone(), [scene]);
 
@@ -303,12 +303,12 @@ function NoahsArk({ terrain, exaggeration }: { terrain: TerrainData; exaggeratio
     const meshW = 10, meshH = 10 * (terrain.height / terrain.width);
     const x = (nx - 0.5) * meshW;
     const z = -(ny - 0.5) * meshH;
-    // Place bottom at 50m elevation
+    // Place on top of water surface
     const elevRange = terrain.maxElevation - terrain.minElevation || 1;
     const maxH = 10 * (exaggeration / 100);
-    const yAt50m = ((50 - terrain.minElevation) / elevRange) * maxH;
-    return [x, yAt50m, z] as [number, number, number];
-  }, [terrain, exaggeration]);
+    const waterY = ((waterLevel - terrain.minElevation) / elevRange) * maxH;
+    return [x, waterY + 0.05, z] as [number, number, number];
+  }, [terrain, exaggeration, waterLevel]);
 
   return (
     <primitive object={cloned} position={position} scale={3} rotation={[0, Math.PI / 4, 0]} />
