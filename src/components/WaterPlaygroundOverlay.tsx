@@ -390,20 +390,19 @@ export default function WaterPlaygroundOverlay({ terrain, exaggeration, active }
       <Pond position={[2.5, maxH * 0.01, 0]} size={0.45} />
       <Pond position={[-1.5, maxH * 0.01, 1.0]} size={0.3} />
 
-      {/* ── Canals connecting devices ── */}
-      <Canal start={SLUICE_POS} end={[0, 0, 0]} />
-      <Canal start={[0, 0, 0]} end={TROUGH_POS} />
-      <Canal start={[0, 0, 0]} end={CHIGIR_POS} />
-      <Canal start={[0, 0, 0]} end={SHADUF_POS} />
+      {/* ── Canals connecting all 4 devices directly ── */}
+      {/* All 6 pairs */}
+      <Canal start={SLUICE_POS} end={TROUGH_POS} />
       <Canal start={SLUICE_POS} end={CHIGIR_POS} />
+      <Canal start={SLUICE_POS} end={SHADUF_POS} />
+      <Canal start={TROUGH_POS} end={CHIGIR_POS} />
       <Canal start={TROUGH_POS} end={SHADUF_POS} />
+      <Canal start={CHIGIR_POS} end={SHADUF_POS} />
+      {/* Extra canals to ponds */}
       <Canal start={CHIGIR_POS} end={[-0.8, 0, 2.0]} />
       <Canal start={TROUGH_POS} end={[1.2, 0, 1.5]} />
       <Canal start={SHADUF_POS} end={[2.5, 0, 0]} />
       <Canal start={SLUICE_POS} end={[-1.0, 0, -1.0]} />
-      {/* Canal from fortress */}
-      <Canal start={[-meshW * 0.22, 0, 0.3]} end={[-1.5, 0, 1.0]} />
-      <Canal start={[-meshW * 0.22, 0, -0.4]} end={SLUICE_POS} />
 
       {/* ── Boardwalks connecting devices ── */}
       <Boardwalk start={SLUICE_POS} end={[0, 0, 0]} />
