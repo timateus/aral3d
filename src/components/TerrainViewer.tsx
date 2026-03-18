@@ -112,6 +112,7 @@ interface TerrainViewerProps {
   showGroundwater?: boolean;
   showPrecipitation?: boolean;
   showSalinity?: boolean;
+  waterPlaygroundActive?: boolean;
 }
 
 function CameraAnimator({ started }: { started: boolean }) {
