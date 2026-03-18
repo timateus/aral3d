@@ -1174,10 +1174,12 @@ const Index = () => {
               setBodiesOfWaterMode(false);
               setShowChoropleth(false);
               setShowLandcover(false);
+              setStarted(false);
+              setQuadrantViewActive(true);
             }}
             className="text-[10px] tracking-[0.12em] uppercase text-muted-foreground hover:text-primary transition-colors border border-border/50 px-3 py-1.5 bg-card/60 backdrop-blur-sm mb-2"
           >
-            ← Back to explore
+            ← Back to compare
           </button>
           <button
             onClick={() => {
@@ -1242,10 +1244,12 @@ const Index = () => {
               setShowPopDensity(false);
               setShowGroundwater(false);
               setAgMarActiveLayer('none');
+              setStarted(false);
+              setQuadrantViewActive(true);
             }}
             className="text-[10px] tracking-[0.12em] uppercase text-muted-foreground hover:text-primary transition-colors border border-border/50 px-3 py-1.5 bg-card/60 backdrop-blur-sm mb-2"
           >
-            ← Back to explore
+            ← Back to compare
           </button>
           <button
             onClick={() => {
@@ -1294,10 +1298,12 @@ const Index = () => {
               setShowSoapBubbles(false);
               setSoapActiveLayer('none');
               setShowKhorezm(false);
+              setStarted(false);
+              setQuadrantViewActive(true);
             }}
             className="text-[10px] tracking-[0.12em] uppercase text-muted-foreground hover:text-primary transition-colors border border-border/50 px-3 py-1.5 bg-card/60 backdrop-blur-sm mb-2"
           >
-            ← Back to explore
+            ← Back to compare
           </button>
           <button
             onClick={() => {
@@ -1343,10 +1349,12 @@ const Index = () => {
               setShowWaterPlayground(false);
               setCanalActiveLayer('none');
               setShow21stBasin(false);
+              setStarted(false);
+              setQuadrantViewActive(true);
             }}
             className="text-[10px] tracking-[0.12em] uppercase text-muted-foreground hover:text-primary transition-colors border border-border/50 px-3 py-1.5 bg-card/60 backdrop-blur-sm mb-2"
           >
-            ← Back to explore
+            ← Back to compare
           </button>
           <button
             onClick={() => {
