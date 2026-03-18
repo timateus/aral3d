@@ -13,6 +13,7 @@ import LandcoverLayer, { LandcoverRasterData } from './LandcoverLayer';
 import NarrativeCameraController from './NarrativeCameraController';
 import ScenarioOverlay from './ScenarioOverlay';
 import WaterFlowOverlay from './WaterFlowOverlay';
+import WaterPlaygroundOverlay from './WaterPlaygroundOverlay';
 import MigrationLayer from './MigrationLayer';
 import ChoroplethLayer from './ChoroplethLayer';
 import RiverFlyover from './RiverFlyover';
