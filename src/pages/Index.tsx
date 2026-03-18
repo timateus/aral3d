@@ -814,6 +814,13 @@ const Index = () => {
               setWaterExtentYear(2024);
               setShowChoropleth(false);
               setShowLandcover(false);
+            } else if (id === 'playful-large') {
+              setCanalMode(true);
+              setCanalActiveLayer('none');
+              setWaterExtentYear(2024);
+              setShowWaterExtent(true);
+              setShow21stBasin(true);
+              setShowRivers(true);
             } else if (id === 'playful-small') {
               setSoapOperaMode(true);
               setSoapActiveLayer('none');
