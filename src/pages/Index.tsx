@@ -765,6 +765,7 @@ const Index = () => {
             showGroundwater={showGroundwater}
             showPrecipitation={showPrecipitation}
             showSalinity={showSalinity}
+            waterPlaygroundActive={showWaterPlayground}
           />
         )}
         {!terrain && !loading && error && (
