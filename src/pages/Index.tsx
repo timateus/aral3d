@@ -848,14 +848,19 @@ const Index = () => {
         />
       )}
 
-      {/* Sandbox Mode */}
-      <SandboxMode
-        active={sandboxMode}
-        terrain={terrain}
+      {/* Sandbox HUD */}
+      <SandboxHUD
+        active={sandboxMode && started}
+        selectedElement={sandboxElement}
+        onSelectElement={setSandboxElement}
+        brushSize={sandboxBrushSize}
+        onBrushSize={setSandboxBrushSize}
+        paused={sandboxPaused}
+        onTogglePause={() => setSandboxPaused(p => !p)}
+        onReset={() => setSandboxResetKey(k => k + 1)}
         onExit={() => {
           setSandboxMode(false);
           setStarted(false);
-          setQuadrantViewActive(true);
         }}
       />
 
