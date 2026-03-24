@@ -245,11 +245,17 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
   }, [onSandboxPaintEnd]);
 
   const handleClick = useCallback((e: ThreeEvent<MouseEvent>) => {
-    if (sandboxActive) return; // painting handled by pointerDown/Move
     e.stopPropagation();
     const { uv } = e;
     if (!uv) return;
     const { bounds: b, width, height } = terrain;
+
+    // Sandbox: use click to paint (same pattern as dam/canal tools)
+    if (sandboxActive && onSandboxPaint) {
+      const { sx, sy } = uvToSimCoords(uv);
+      onSandboxPaint(sx, sy);
+      return;
+    }
 
     if (waterFlowActive && onWaterFlowClick) {
       const pixelX = Math.floor(uv.x * (width - 1));
