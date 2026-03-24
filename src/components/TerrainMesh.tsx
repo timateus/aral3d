@@ -184,6 +184,8 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
 
   const handlePointerDown = useCallback((e: ThreeEvent<PointerEvent>) => {
     if (!sandboxActive || !onSandboxPaint) return;
+    // Only respond to left-click (button 0)
+    if (e.nativeEvent.button !== 0) return;
     e.stopPropagation();
     isPaintingSandbox.current = true;
     const { uv } = e;
@@ -243,11 +245,17 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
   }, [onSandboxPaintEnd]);
 
   const handleClick = useCallback((e: ThreeEvent<MouseEvent>) => {
-    if (sandboxActive) return; // painting handled by pointerDown/Move
     e.stopPropagation();
     const { uv } = e;
     if (!uv) return;
     const { bounds: b, width, height } = terrain;
+
+    // Sandbox: use click to paint (same pattern as dam/canal tools)
+    if (sandboxActive && onSandboxPaint) {
+      const { sx, sy } = uvToSimCoords(uv);
+      onSandboxPaint(sx, sy);
+      return;
+    }
 
     if (waterFlowActive && onWaterFlowClick) {
       const pixelX = Math.floor(uv.x * (width - 1));
@@ -269,7 +277,7 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
       onCanalDig(pixelY, pixelX);
       return;
     }
-  }, [sandboxActive, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, terrain]);
+  }, [sandboxActive, onSandboxPaint, uvToSimCoords, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, terrain]);
 
   return (
     <group>
