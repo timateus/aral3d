@@ -28,7 +28,7 @@ interface Sandbox3DProps {
  * 3D sandbox simulation rendered as instanced spheres on the terrain.
  * Runs the cellular automata and maps each non-empty cell to a position on the terrain mesh.
  */
-export function Sandbox3D({ terrain, exaggeration, active, selectedElement, brushSize, paused }: Sandbox3DProps) {
+export function Sandbox3D({ terrain, exaggeration, active, selectedElement, brushSize, paused, onStateReady }: Sandbox3DProps) {
   const stateRef = useRef<SandboxState | null>(null);
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const isPainting = useRef(false);
