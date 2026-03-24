@@ -184,6 +184,8 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
 
   const handlePointerDown = useCallback((e: ThreeEvent<PointerEvent>) => {
     if (!sandboxActive || !onSandboxPaint) return;
+    // Only respond to left-click (button 0)
+    if (e.nativeEvent.button !== 0) return;
     e.stopPropagation();
     isPaintingSandbox.current = true;
     const { uv } = e;
