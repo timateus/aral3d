@@ -4,7 +4,7 @@ import { useGLTF, OrbitControls, Environment } from '@react-three/drei';
 import { loadGeoTiff, TerrainData, getElevationColor } from '@/lib/geotiff-loader';
 import * as THREE from 'three';
 
-export type QuadrantId = 'serious-large' | 'playful-large' | 'serious-small' | 'playful-small';
+export type QuadrantId = 'serious-large' | 'playful-large' | 'serious-small' | 'playful-small' | 'sandbox';
 
 interface QuadrantViewProps {
   onSelectQuadrant: (id: QuadrantId) => void;
@@ -308,6 +308,16 @@ export default function QuadrantView({ onSelectQuadrant, onBack }: QuadrantViewP
                 modelPosY={0.3}
                 onLabelClick={() => onSelectQuadrant('playful-small')}
               />
+            </div>
+
+            {/* Sandbox button */}
+            <div className="absolute -bottom-14 left-1/2 -translate-x-1/2 z-20">
+              <button
+                onClick={() => onSelectQuadrant('sandbox')}
+                className="text-sm tracking-[0.15em] uppercase text-muted-foreground hover:text-primary transition-colors border border-border/50 px-5 py-2 bg-card/60 backdrop-blur-sm rounded hover:border-primary/40"
+              >
+                🏖️ Sandbox
+              </button>
             </div>
           </div>
         </div>

@@ -28,6 +28,7 @@ import DamToolPanel from '@/components/DamToolPanel';
 import CanalToolPanel from '@/components/CanalToolPanel';
 import WaterFlowPanel from '@/components/WaterFlowPanel';
 import { BookOpen } from 'lucide-react';
+import SandboxMode from '@/components/SandboxMode';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useUserLocation } from '@/hooks/useUserLocation';
 
@@ -120,6 +121,7 @@ const Index = () => {
   const [showWaterPlayground, setShowWaterPlayground] = useState(false);
   const [agmarTourActive, setAgmarTourActive] = useState(false);
   const [agmarTourStep, setAgmarTourStep] = useState(0);
+  const [sandboxMode, setSandboxMode] = useState(false);
   
   const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
   const [flowRenderKey, setFlowRenderKey] = useState(0);
@@ -829,13 +831,26 @@ const Index = () => {
               setShowWaterExtent(true);
               setShowKhorezm(true);
               setShowSalinity(false);
+            } else if (id === 'sandbox') {
+              setSandboxMode(true);
             }
           }}
           onBack={() => setQuadrantViewActive(false)}
         />
       )}
 
-      {/* Narrative Overlay */}
+      {/* Sandbox Mode */}
+      <SandboxMode
+        active={sandboxMode}
+        terrain={terrain}
+        onExit={() => {
+          setSandboxMode(false);
+          setStarted(false);
+          setQuadrantViewActive(true);
+        }}
+      />
+
+
       {narrativeActive && (
         <NarrativeOverlay
           step={narrativeStep}
