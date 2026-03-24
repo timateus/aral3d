@@ -123,6 +123,10 @@ const Index = () => {
   const [agmarTourActive, setAgmarTourActive] = useState(false);
   const [agmarTourStep, setAgmarTourStep] = useState(0);
   const [sandboxMode, setSandboxMode] = useState(false);
+  const [sandboxElement, setSandboxElement] = useState<ElementType>('sand');
+  const [sandboxBrushSize, setSandboxBrushSize] = useState(3);
+  const [sandboxPaused, setSandboxPaused] = useState(false);
+  const [sandboxResetKey, setSandboxResetKey] = useState(0);
   
   const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
   const [flowRenderKey, setFlowRenderKey] = useState(0);
