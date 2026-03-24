@@ -773,6 +773,10 @@ const Index = () => {
             showPrecipitation={showPrecipitation}
             showSalinity={showSalinity}
             waterPlaygroundActive={showWaterPlayground}
+            sandboxActive={sandboxMode}
+            sandboxElement={sandboxElement}
+            sandboxBrushSize={sandboxBrushSize}
+            sandboxPaused={sandboxPaused}
           />
         )}
         {!terrain && !loading && error && (
