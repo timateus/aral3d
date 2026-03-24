@@ -26,6 +26,8 @@ import GameMode from './GameMode';
 import BowlWorld from './BowlWorld';
 import AryqWorld from './AryqWorld';
 import { Sandbox3D } from './SandboxMode';
+import { paintElement } from '@/lib/sandbox-simulation';
+import type { SandboxState } from '@/lib/sandbox-simulation';
 import { TerrainData } from '@/lib/geotiff-loader';
 import type { ScenarioAction } from '@/types/scenario';
 import type { WaterFlowState } from '@/lib/water-flow-simulation';
