@@ -28,7 +28,8 @@ import DamToolPanel from '@/components/DamToolPanel';
 import CanalToolPanel from '@/components/CanalToolPanel';
 import WaterFlowPanel from '@/components/WaterFlowPanel';
 import { BookOpen } from 'lucide-react';
-import SandboxMode from '@/components/SandboxMode';
+import { SandboxHUD } from '@/components/SandboxMode';
+import type { ElementType } from '@/lib/sandbox-simulation';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useUserLocation } from '@/hooks/useUserLocation';
 
@@ -122,6 +123,10 @@ const Index = () => {
   const [agmarTourActive, setAgmarTourActive] = useState(false);
   const [agmarTourStep, setAgmarTourStep] = useState(0);
   const [sandboxMode, setSandboxMode] = useState(false);
+  const [sandboxElement, setSandboxElement] = useState<ElementType>('sand');
+  const [sandboxBrushSize, setSandboxBrushSize] = useState(3);
+  const [sandboxPaused, setSandboxPaused] = useState(false);
+  const [sandboxResetKey, setSandboxResetKey] = useState(0);
   
   const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
   const [flowRenderKey, setFlowRenderKey] = useState(0);
@@ -664,7 +669,7 @@ const Index = () => {
     }
   }, [terrain]);
 
-  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode;
+  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode;
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
@@ -768,6 +773,10 @@ const Index = () => {
             showPrecipitation={showPrecipitation}
             showSalinity={showSalinity}
             waterPlaygroundActive={showWaterPlayground}
+            sandboxActive={sandboxMode}
+            sandboxElement={sandboxElement}
+            sandboxBrushSize={sandboxBrushSize}
+            sandboxPaused={sandboxPaused}
           />
         )}
         {!terrain && !loading && error && (
@@ -795,6 +804,11 @@ const Index = () => {
             setShowWaterExtent(true);
           }}
           onQuadrants={() => setQuadrantViewActive(true)}
+          onSandbox={() => {
+            setStarted(true);
+            setSandboxMode(true);
+            setShowWaterExtent(false);
+          }}
         />
       )}
 
@@ -839,14 +853,19 @@ const Index = () => {
         />
       )}
 
-      {/* Sandbox Mode */}
-      <SandboxMode
-        active={sandboxMode}
-        terrain={terrain}
+      {/* Sandbox HUD */}
+      <SandboxHUD
+        active={sandboxMode && started}
+        selectedElement={sandboxElement}
+        onSelectElement={setSandboxElement}
+        brushSize={sandboxBrushSize}
+        onBrushSize={setSandboxBrushSize}
+        paused={sandboxPaused}
+        onTogglePause={() => setSandboxPaused(p => !p)}
+        onReset={() => setSandboxResetKey(k => k + 1)}
         onExit={() => {
           setSandboxMode(false);
           setStarted(false);
-          setQuadrantViewActive(true);
         }}
       />
 
