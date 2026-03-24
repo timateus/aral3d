@@ -366,6 +366,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
           {showSalinity && <SalinityLayer terrain={terrain} exaggeration={exaggeration} />}
           <WaterPlaygroundOverlay terrain={terrain} exaggeration={exaggeration} active={!!waterPlaygroundActive} />
           {waterPlaygroundActive && <NoahsArk terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} />}
+          {sandboxActive && <Sandbox3D terrain={terrain} exaggeration={exaggeration} active={true} selectedElement={sandboxElement ?? 'sand'} brushSize={sandboxBrushSize ?? 3} paused={sandboxPaused ?? false} />}
           {scenarioActions && scenarioActions.length > 0 && (
             <ScenarioOverlay actions={scenarioActions} terrain={terrain} exaggeration={exaggeration} />
           )}
