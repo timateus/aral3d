@@ -50,7 +50,7 @@ function WASDHandler({ enabled }: { enabled: boolean }) {
   return null;
 }
 
-export default function MapControls({ enabled, orbitRef, gameModeActive }: { enabled: boolean; orbitRef: React.MutableRefObject<any>; gameModeActive?: boolean }) {
+export default function MapControls({ enabled, orbitRef, gameModeActive, sandboxActive }: { enabled: boolean; orbitRef: React.MutableRefObject<any>; gameModeActive?: boolean; sandboxActive?: boolean }) {
   useEffect(() => {
     const handler = (e: Event) => {
       const { x, y, z } = (e as CustomEvent).detail;
