@@ -76,12 +76,19 @@ export default function MapControls({ enabled, orbitRef, gameModeActive, sandbox
         maxPolarAngle={Math.PI / 2.1}
         enablePan={!gameModeActive}
         
-        mouseButtons={{
+        mouseButtons={sandboxActive ? {
+          LEFT: undefined as any,
+          MIDDLE: THREE.MOUSE.DOLLY,
+          RIGHT: THREE.MOUSE.ROTATE,
+        } : {
           LEFT: gameModeActive ? THREE.MOUSE.ROTATE : THREE.MOUSE.PAN,
           MIDDLE: THREE.MOUSE.DOLLY,
           RIGHT: THREE.MOUSE.ROTATE,
         }}
-        touches={{
+        touches={sandboxActive ? {
+          ONE: undefined as any,
+          TWO: THREE.TOUCH.DOLLY_ROTATE,
+        } : {
           ONE: gameModeActive ? THREE.TOUCH.ROTATE : THREE.TOUCH.PAN,
           TWO: THREE.TOUCH.DOLLY_ROTATE,
         }}
