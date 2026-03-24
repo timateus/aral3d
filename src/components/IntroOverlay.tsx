@@ -466,7 +466,6 @@ const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onAgmarTour, onObjec
             </button>
           </div>
         </div>
-        </div>
       </div>
     </div>
   );
