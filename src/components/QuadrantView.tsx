@@ -4,7 +4,7 @@ import { useGLTF, OrbitControls, Environment } from '@react-three/drei';
 import { loadGeoTiff, TerrainData, getElevationColor } from '@/lib/geotiff-loader';
 import * as THREE from 'three';
 
-export type QuadrantId = 'serious-large' | 'playful-large' | 'serious-small' | 'playful-small';
+export type QuadrantId = 'serious-large' | 'playful-large' | 'serious-small' | 'playful-small' | 'sandbox';
 
 interface QuadrantViewProps {
   onSelectQuadrant: (id: QuadrantId) => void;
