@@ -277,7 +277,7 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
       onCanalDig(pixelY, pixelX);
       return;
     }
-  }, [sandboxActive, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, terrain]);
+  }, [sandboxActive, onSandboxPaint, uvToSimCoords, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, terrain]);
 
   return (
     <group>
