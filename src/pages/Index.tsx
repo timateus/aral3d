@@ -831,6 +831,8 @@ const Index = () => {
               setShowWaterExtent(true);
               setShowKhorezm(true);
               setShowSalinity(false);
+            } else if (id === 'sandbox') {
+              setSandboxMode(true);
             }
           }}
           onBack={() => setQuadrantViewActive(false)}
