@@ -121,7 +121,7 @@ interface TerrainViewerProps {
   sandboxPaused?: boolean;
 }
 
-function CameraAnimator({ started }: { started: boolean }) {
+function CameraAnimator({ started, skip }: { started: boolean; skip?: boolean }) {
   const { camera } = useThree();
   const progress = useRef(0);
   const animating = useRef(false);

@@ -24,6 +24,9 @@ interface TerrainMeshProps {
   raisedPixels?: Set<number>;
   dugPixels?: Set<number>;
   lcData?: LandcoverRasterData | null;
+  sandboxActive?: boolean;
+  onSandboxPaint?: (sx: number, sy: number) => void;
+  onSandboxPaintEnd?: () => void;
 }
 
 const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, waterBounds, inspectorEnabled = false, popData, lcData, damToolActive = false, onDamPlace, canalToolActive = false, onCanalDig, waterFlowActive = false, onWaterFlowClick, terrainVersion = 0, raisedPixels, dugPixels }: TerrainMeshProps) => {
