@@ -5,7 +5,6 @@ import { TerrainData } from '@/lib/geotiff-loader';
 import {
   createSandbox,
   stepSandbox,
-  paintElement,
   SandboxState,
   ElementType,
   ELEMENT_RGB,
@@ -21,6 +20,7 @@ interface Sandbox3DProps {
   selectedElement: ElementType;
   brushSize: number;
   paused: boolean;
+  resetKey?: number;
   onStateReady?: (state: SandboxState) => void;
 }
 
@@ -28,11 +28,9 @@ interface Sandbox3DProps {
  * 3D sandbox simulation rendered as instanced spheres on the terrain.
  * Runs the cellular automata and maps each non-empty cell to a position on the terrain mesh.
  */
-export function Sandbox3D({ terrain, exaggeration, active, selectedElement, brushSize, paused, onStateReady }: Sandbox3DProps) {
+export function Sandbox3D({ terrain, exaggeration, active, selectedElement, brushSize, paused, resetKey = 0, onStateReady }: Sandbox3DProps) {
   const stateRef = useRef<SandboxState | null>(null);
   const meshRef = useRef<THREE.InstancedMesh>(null);
-  const isPainting = useRef(false);
-  const lastPaintPos = useRef<{ x: number; y: number } | null>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
 
   // Max particles we can render
@@ -47,7 +45,7 @@ export function Sandbox3D({ terrain, exaggeration, active, selectedElement, brus
     );
     stateRef.current = state;
     onStateReady?.(state);
-  }, [active, terrain]);
+  }, [active, terrain, resetKey, onStateReady]);
 
   // Convert sim grid (x, y) to terrain mesh 3D position
   const simToWorld = useCallback((sx: number, sy: number): [number, number, number] => {
@@ -72,37 +70,6 @@ export function Sandbox3D({ terrain, exaggeration, active, selectedElement, brus
 
     return [meshX, meshY, meshZ];
   }, [terrain, exaggeration]);
-
-  // Handle raycasting for painting
-  const handlePointerDown = useCallback((e: any) => {
-    if (!active || !stateRef.current) return;
-    e.stopPropagation();
-    isPainting.current = true;
-
-    const { uv } = e;
-    if (!uv) return;
-    const sx = Math.floor(uv.x * SIM_WIDTH);
-    const sy = Math.floor((1 - uv.y) * SIM_HEIGHT);
-    paintElement(stateRef.current, sx, sy, selectedElement, brushSize);
-    lastPaintPos.current = { x: sx, y: sy };
-  }, [active, selectedElement, brushSize]);
-
-  const handlePointerMove = useCallback((e: any) => {
-    if (!active || !isPainting.current || !stateRef.current) return;
-    e.stopPropagation();
-
-    const { uv } = e;
-    if (!uv) return;
-    const sx = Math.floor(uv.x * SIM_WIDTH);
-    const sy = Math.floor((1 - uv.y) * SIM_HEIGHT);
-    paintElement(stateRef.current, sx, sy, selectedElement, brushSize);
-    lastPaintPos.current = { x: sx, y: sy };
-  }, [active, selectedElement, brushSize]);
-
-  const handlePointerUp = useCallback(() => {
-    isPainting.current = false;
-    lastPaintPos.current = null;
-  }, []);
 
   // Animation loop: step simulation + update instances
   useFrame(() => {

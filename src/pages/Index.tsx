@@ -777,6 +777,7 @@ const Index = () => {
             sandboxElement={sandboxElement}
             sandboxBrushSize={sandboxBrushSize}
             sandboxPaused={sandboxPaused}
+            sandboxResetKey={sandboxResetKey}
           />
         )}
         {!terrain && !loading && error && (
