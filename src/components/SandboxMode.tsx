@@ -5,7 +5,6 @@ import { TerrainData } from '@/lib/geotiff-loader';
 import {
   createSandbox,
   stepSandbox,
-  paintElement,
   SandboxState,
   ElementType,
   ELEMENT_RGB,
