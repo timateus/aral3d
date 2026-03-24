@@ -120,6 +120,7 @@ const Index = () => {
   const [showWaterPlayground, setShowWaterPlayground] = useState(false);
   const [agmarTourActive, setAgmarTourActive] = useState(false);
   const [agmarTourStep, setAgmarTourStep] = useState(0);
+  const [sandboxMode, setSandboxMode] = useState(false);
   
   const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
   const [flowRenderKey, setFlowRenderKey] = useState(0);
