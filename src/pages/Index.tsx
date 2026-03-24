@@ -837,7 +837,18 @@ const Index = () => {
         />
       )}
 
-      {/* Narrative Overlay */}
+      {/* Sandbox Mode */}
+      <SandboxMode
+        active={sandboxMode}
+        terrain={terrain}
+        onExit={() => {
+          setSandboxMode(false);
+          setStarted(false);
+          setQuadrantViewActive(true);
+        }}
+      />
+
+
       {narrativeActive && (
         <NarrativeOverlay
           step={narrativeStep}
