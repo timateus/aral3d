@@ -508,8 +508,8 @@ export function paintElement(state: SandboxState, cx: number, cy: number, type: 
       const x = cx + dx, y = cy + dy;
       if (!inBounds(state, x, y)) continue;
       const existing = get(state, x, y);
-      if (existing.type === 'wall' && type !== 'empty') continue; // Can't overwrite walls unless erasing
-      if (type === 'empty' || existing.type === 'empty' || (type === 'empty' && existing.type === 'wall')) {
+      if (existing.type === 'wall' && type !== 'empty') continue;
+      if (type === 'empty' || existing.type === 'empty') {
         const life = type === 'fire' ? 40 + Math.floor(Math.random() * 30)
           : type === 'gas' ? 80 + Math.floor(Math.random() * 40)
           : type === 'wind' ? 60 + Math.floor(Math.random() * 40)
