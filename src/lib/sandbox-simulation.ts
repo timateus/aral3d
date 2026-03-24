@@ -71,7 +71,7 @@ function emptyCell(): Cell {
   return { type: 'empty', life: 0, velocity: 0, updated: false };
 }
 
-export function createSandbox(width: number, height: number, terrainElevations?: Float32Array, terrainW?: number, terrainH?: number): SandboxState {
+export function createSandbox(width: number, height: number, terrainElevations?: Float32Array | Float64Array, terrainW?: number, terrainH?: number): SandboxState {
   const grid: Cell[] = new Array(width * height);
   for (let i = 0; i < grid.length; i++) {
     grid[i] = emptyCell();
