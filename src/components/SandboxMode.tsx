@@ -21,6 +21,7 @@ interface Sandbox3DProps {
   selectedElement: ElementType;
   brushSize: number;
   paused: boolean;
+  onStateReady?: (state: SandboxState) => void;
 }
 
 /**
