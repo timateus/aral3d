@@ -278,7 +278,9 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
         geometry={geometry}
         material={material}
         rotation={[-Math.PI / 2, 0, 0]}
+        onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerLeave}
         onClick={handleClick}
       />
