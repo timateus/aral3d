@@ -320,6 +320,7 @@ export default function QuadrantView({ onSelectQuadrant, onBack }: QuadrantViewP
               </button>
             </div>
           </div>
+        </div>
       </div>
     </div>
   );
