@@ -29,7 +29,11 @@ interface TerrainMeshProps {
   onSandboxPaintEnd?: () => void;
 }
 
-const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, waterBounds, inspectorEnabled = false, popData, lcData, damToolActive = false, onDamPlace, canalToolActive = false, onCanalDig, waterFlowActive = false, onWaterFlowClick, terrainVersion = 0, raisedPixels, dugPixels }: TerrainMeshProps) => {
+const SIM_WIDTH = 200;
+const SIM_HEIGHT = 200;
+
+const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, waterBounds, inspectorEnabled = false, popData, lcData, damToolActive = false, onDamPlace, canalToolActive = false, onCanalDig, waterFlowActive = false, onWaterFlowClick, terrainVersion = 0, raisedPixels, dugPixels, sandboxActive = false, onSandboxPaint, onSandboxPaintEnd }: TerrainMeshProps) => {
+  const isPaintingSandbox = useRef(false);
   const [hoverInfo, setHoverInfo] = useState<{ position: THREE.Vector3; elevation: number; lat: number; lon: number; population: number | null; landcover: { classId: number; className: string; color: string } | null } | null>(null);
   const meshRef = useRef<THREE.Mesh>(null);
 
