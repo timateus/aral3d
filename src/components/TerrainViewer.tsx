@@ -332,6 +332,13 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
   const [flyoverAnimating, setFlyoverAnimating] = useState(false);
   const [popData, setPopData] = useState<PopData | null>(null);
   const [lcData, setLcData] = useState<LandcoverRasterData | null>(null);
+  const sandboxStateRef = useRef<import('@/lib/sandbox-simulation').SandboxState | null>(null);
+
+  const handleSandboxPaint = useCallback((sx: number, sy: number) => {
+    if (!sandboxStateRef.current || !sandboxElement) return;
+    const { paintElement } = require('@/lib/sandbox-simulation');
+    paintElement(sandboxStateRef.current, sx, sy, sandboxElement, sandboxBrushSize ?? 3);
+  }, [sandboxElement, sandboxBrushSize]);
 
   useImperativeHandle(ref, () => ({
     screenshot: () => screenshotFn.current?.(),
