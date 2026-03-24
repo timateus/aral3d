@@ -474,7 +474,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
       <MapControls
         enabled={!narrativeActive && !flyoverAnimating}
         orbitRef={orbitRef}
-        gameModeActive={gameModeActive || aryqWorldActive}
+        gameModeActive={gameModeActive || aryqWorldActive || sandboxActive}
       />
 
       {!aryqWorldActive && (
