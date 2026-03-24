@@ -114,6 +114,10 @@ interface TerrainViewerProps {
   showPrecipitation?: boolean;
   showSalinity?: boolean;
   waterPlaygroundActive?: boolean;
+  sandboxActive?: boolean;
+  sandboxElement?: import('@/lib/sandbox-simulation').ElementType;
+  sandboxBrushSize?: number;
+  sandboxPaused?: boolean;
 }
 
 function CameraAnimator({ started }: { started: boolean }) {
