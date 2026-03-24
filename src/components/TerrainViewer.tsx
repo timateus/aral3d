@@ -363,28 +363,32 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
         <>
           <group>
             <TerrainMesh terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} hideNoData={hideNoData} waterBounds={waterBounds} inspectorEnabled={inspectorEnabled} popData={showPopDensity ? popData : null} lcData={showLandcover ? lcData : null} damToolActive={damToolActive} onDamPlace={onDamPlace} canalToolActive={canalToolActive} onCanalDig={onCanalDig} waterFlowActive={waterFlowActive} onWaterFlowClick={onWaterFlowClick} terrainVersion={terrainVersion} raisedPixels={raisedPixels} dugPixels={dugPixels} sandboxActive={sandboxActive} onSandboxPaint={sandboxActive ? handleSandboxPaint : undefined} />
-            {flowState && flowRenderKey !== undefined && (
+            {!sandboxActive && flowState && flowRenderKey !== undefined && (
               <WaterFlowOverlay terrain={terrain} exaggeration={exaggeration} flowState={flowState} renderKey={flowRenderKey} />
             )}
           </group>
-          <GeoFeatures terrain={terrain} exaggeration={exaggeration} showBorders={showBorders} showRivers={showRivers} show13thBasin={show13thBasin} show19thBasin={show19thBasin} show21stBasin={show21stBasin} showLakes={showLakes} show21cLakes={show21cLakes} riverInflow={riverInflow} userLocation={userLocation} canalHighlights={canalHighlights} highlightedCanalNames={highlightedCanalNames} canalTourActive={canalTourActive} onNukusClick={onNukusClick} />
-          {showWaterExtent && <WaterExtentLayer terrain={terrain} exaggeration={exaggeration} year={waterExtentYear} />}
-          {showPopDensity && <PopulationDensityLayer terrain={terrain} exaggeration={exaggeration} onDataLoaded={setPopData} hexSize={popHexSize} hexHeightExag={popHexHeight} />}
-          {showMigration && <MigrationLayer terrain={terrain} exaggeration={exaggeration} year={migrationYear ?? waterExtentYear} />}
-          {showChoropleth && <ChoroplethLayer terrain={terrain} exaggeration={exaggeration} year={waterExtentYear} indicatorId={choroplethIndicator} choroplethExaggeration={choroplethExaggeration} />}
-          {showLandcover && <LandcoverLayer terrain={terrain} exaggeration={exaggeration} visibleClasses={landcoverVisibleClasses} onDataLoaded={setLcData} onAvailableClasses={onLandcoverAvailableClasses} />}
-          {showSchools && <SchoolsLayer terrain={terrain} exaggeration={exaggeration} />}
-          {showVocabulary && <VocabularyLayer terrain={terrain} exaggeration={exaggeration} />}
-          {showGroundwater && <GroundwaterLayer terrain={terrain} exaggeration={exaggeration} />}
-          {showPrecipitation && <PrecipitationLayer terrain={terrain} exaggeration={exaggeration} />}
-          {showSalinity && <SalinityLayer terrain={terrain} exaggeration={exaggeration} />}
-          <WaterPlaygroundOverlay terrain={terrain} exaggeration={exaggeration} active={!!waterPlaygroundActive} />
-          {waterPlaygroundActive && <NoahsArk terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} />}
+          {!sandboxActive && (
+            <>
+              <GeoFeatures terrain={terrain} exaggeration={exaggeration} showBorders={showBorders} showRivers={showRivers} show13thBasin={show13thBasin} show19thBasin={show19thBasin} show21stBasin={show21stBasin} showLakes={showLakes} show21cLakes={show21cLakes} riverInflow={riverInflow} userLocation={userLocation} canalHighlights={canalHighlights} highlightedCanalNames={highlightedCanalNames} canalTourActive={canalTourActive} onNukusClick={onNukusClick} />
+              {showWaterExtent && <WaterExtentLayer terrain={terrain} exaggeration={exaggeration} year={waterExtentYear} />}
+              {showPopDensity && <PopulationDensityLayer terrain={terrain} exaggeration={exaggeration} onDataLoaded={setPopData} hexSize={popHexSize} hexHeightExag={popHexHeight} />}
+              {showMigration && <MigrationLayer terrain={terrain} exaggeration={exaggeration} year={migrationYear ?? waterExtentYear} />}
+              {showChoropleth && <ChoroplethLayer terrain={terrain} exaggeration={exaggeration} year={waterExtentYear} indicatorId={choroplethIndicator} choroplethExaggeration={choroplethExaggeration} />}
+              {showLandcover && <LandcoverLayer terrain={terrain} exaggeration={exaggeration} visibleClasses={landcoverVisibleClasses} onDataLoaded={setLcData} onAvailableClasses={onLandcoverAvailableClasses} />}
+              {showSchools && <SchoolsLayer terrain={terrain} exaggeration={exaggeration} />}
+              {showVocabulary && <VocabularyLayer terrain={terrain} exaggeration={exaggeration} />}
+              {showGroundwater && <GroundwaterLayer terrain={terrain} exaggeration={exaggeration} />}
+              {showPrecipitation && <PrecipitationLayer terrain={terrain} exaggeration={exaggeration} />}
+              {showSalinity && <SalinityLayer terrain={terrain} exaggeration={exaggeration} />}
+              <WaterPlaygroundOverlay terrain={terrain} exaggeration={exaggeration} active={!!waterPlaygroundActive} />
+              {waterPlaygroundActive && <NoahsArk terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} />}
+            </>
+          )}
           {sandboxActive && <Sandbox3D terrain={terrain} exaggeration={exaggeration} active={true} selectedElement={sandboxElement ?? 'sand'} brushSize={sandboxBrushSize ?? 3} paused={sandboxPaused ?? false} onStateReady={(s) => { sandboxStateRef.current = s; }} />}
-          {scenarioActions && scenarioActions.length > 0 && (
+          {!sandboxActive && scenarioActions && scenarioActions.length > 0 && (
             <ScenarioOverlay actions={scenarioActions} terrain={terrain} exaggeration={exaggeration} />
           )}
-          {showWaterExtent && showOverlayMetrics !== false && (
+          {!sandboxActive && showWaterExtent && showOverlayMetrics !== false && (
             <group position={[0, 6, -2]}>
             <Html center distanceFactor={15} style={{ pointerEvents: 'none' }}>
               <div style={{
@@ -427,8 +431,8 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
             </Html>
             </group>
           )}
-          <GameMode terrain={terrain} exaggeration={exaggeration} active={!!gameModeActive} onAddWater={onGameAddWater} orbitRef={orbitRef} />
-          <gridHelper args={[20, 20, '#1a2332', '#1a2332']} position={[0, -0.01, 0]} />
+          {!sandboxActive && <GameMode terrain={terrain} exaggeration={exaggeration} active={!!gameModeActive} onAddWater={onGameAddWater} orbitRef={orbitRef} />}
+          {!sandboxActive && <gridHelper args={[20, 20, '#1a2332', '#1a2332']} position={[0, -0.01, 0]} />}
         </>
       )}
 
@@ -478,7 +482,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
         sandboxActive={sandboxActive}
       />
 
-      {!aryqWorldActive && (
+      {!aryqWorldActive && !sandboxActive && (
         <>
           <GizmoHelper alignment="bottom-right" margin={[60, 60]}>
             <GizmoViewport labelColor="white" axisHeadScale={0.8} />
