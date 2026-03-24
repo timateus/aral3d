@@ -187,6 +187,7 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
     // Only respond to left-click (button 0)
     if (e.nativeEvent.button !== 0) return;
     e.stopPropagation();
+    e.nativeEvent.preventDefault();
     isPaintingSandbox.current = true;
     const { uv } = e;
     if (!uv) return;
@@ -195,10 +196,10 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
   }, [sandboxActive, onSandboxPaint, uvToSimCoords]);
 
   const handlePointerMove = useCallback((e: ThreeEvent<PointerEvent>) => {
-    e.stopPropagation();
-
     // Sandbox drag-painting
     if (sandboxActive && isPaintingSandbox.current && onSandboxPaint) {
+      e.stopPropagation();
+      e.nativeEvent.preventDefault();
       const { uv } = e;
       if (!uv) return;
       const { sx, sy } = uvToSimCoords(uv);
@@ -245,7 +246,10 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
   }, [onSandboxPaintEnd]);
 
   const handleClick = useCallback((e: ThreeEvent<MouseEvent>) => {
-    e.stopPropagation();
+    if (sandboxActive) {
+      e.stopPropagation();
+      e.nativeEvent.preventDefault();
+    }
     const { uv } = e;
     if (!uv) return;
     const { bounds: b, width, height } = terrain;
