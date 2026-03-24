@@ -50,7 +50,7 @@ function WASDHandler({ enabled }: { enabled: boolean }) {
   return null;
 }
 
-export default function MapControls({ enabled, orbitRef, gameModeActive }: { enabled: boolean; orbitRef: React.MutableRefObject<any>; gameModeActive?: boolean }) {
+export default function MapControls({ enabled, orbitRef, gameModeActive, sandboxActive }: { enabled: boolean; orbitRef: React.MutableRefObject<any>; gameModeActive?: boolean; sandboxActive?: boolean }) {
   useEffect(() => {
     const handler = (e: Event) => {
       const { x, y, z } = (e as CustomEvent).detail;
@@ -76,12 +76,19 @@ export default function MapControls({ enabled, orbitRef, gameModeActive }: { ena
         maxPolarAngle={Math.PI / 2.1}
         enablePan={!gameModeActive}
         
-        mouseButtons={{
+        mouseButtons={sandboxActive ? {
+          LEFT: undefined as any,
+          MIDDLE: THREE.MOUSE.DOLLY,
+          RIGHT: THREE.MOUSE.ROTATE,
+        } : {
           LEFT: gameModeActive ? THREE.MOUSE.ROTATE : THREE.MOUSE.PAN,
           MIDDLE: THREE.MOUSE.DOLLY,
           RIGHT: THREE.MOUSE.ROTATE,
         }}
-        touches={{
+        touches={sandboxActive ? {
+          ONE: undefined as any,
+          TWO: THREE.TOUCH.DOLLY_ROTATE,
+        } : {
           ONE: gameModeActive ? THREE.TOUCH.ROTATE : THREE.TOUCH.PAN,
           TWO: THREE.TOUCH.DOLLY_ROTATE,
         }}
