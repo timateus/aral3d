@@ -21,13 +21,14 @@ interface Sandbox3DProps {
   selectedElement: ElementType;
   brushSize: number;
   paused: boolean;
+  onStateReady?: (state: SandboxState) => void;
 }
 
 /**
  * 3D sandbox simulation rendered as instanced spheres on the terrain.
  * Runs the cellular automata and maps each non-empty cell to a position on the terrain mesh.
  */
-export function Sandbox3D({ terrain, exaggeration, active, selectedElement, brushSize, paused }: Sandbox3DProps) {
+export function Sandbox3D({ terrain, exaggeration, active, selectedElement, brushSize, paused, onStateReady }: Sandbox3DProps) {
   const stateRef = useRef<SandboxState | null>(null);
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const isPainting = useRef(false);
@@ -40,10 +41,12 @@ export function Sandbox3D({ terrain, exaggeration, active, selectedElement, brus
   // Initialize simulation
   useEffect(() => {
     if (!active) return;
-    stateRef.current = createSandbox(
+    const state = createSandbox(
       SIM_WIDTH, SIM_HEIGHT,
       terrain.elevations, terrain.width, terrain.height
     );
+    stateRef.current = state;
+    onStateReady?.(state);
   }, [active, terrain]);
 
   // Convert sim grid (x, y) to terrain mesh 3D position

@@ -24,9 +24,16 @@ interface TerrainMeshProps {
   raisedPixels?: Set<number>;
   dugPixels?: Set<number>;
   lcData?: LandcoverRasterData | null;
+  sandboxActive?: boolean;
+  onSandboxPaint?: (sx: number, sy: number) => void;
+  onSandboxPaintEnd?: () => void;
 }
 
-const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, waterBounds, inspectorEnabled = false, popData, lcData, damToolActive = false, onDamPlace, canalToolActive = false, onCanalDig, waterFlowActive = false, onWaterFlowClick, terrainVersion = 0, raisedPixels, dugPixels }: TerrainMeshProps) => {
+const SIM_WIDTH = 200;
+const SIM_HEIGHT = 200;
+
+const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, waterBounds, inspectorEnabled = false, popData, lcData, damToolActive = false, onDamPlace, canalToolActive = false, onCanalDig, waterFlowActive = false, onWaterFlowClick, terrainVersion = 0, raisedPixels, dugPixels, sandboxActive = false, onSandboxPaint, onSandboxPaintEnd }: TerrainMeshProps) => {
+  const isPaintingSandbox = useRef(false);
   const [hoverInfo, setHoverInfo] = useState<{ position: THREE.Vector3; elevation: number; lat: number; lon: number; population: number | null; landcover: { classId: number; className: string; color: string } | null } | null>(null);
   const meshRef = useRef<THREE.Mesh>(null);
 
@@ -169,8 +176,34 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
     });
   }, []);
 
+  const uvToSimCoords = useCallback((uv: { x: number; y: number }) => {
+    const sx = Math.floor(uv.x * SIM_WIDTH);
+    const sy = Math.floor((1 - uv.y) * SIM_HEIGHT);
+    return { sx, sy };
+  }, []);
+
+  const handlePointerDown = useCallback((e: ThreeEvent<PointerEvent>) => {
+    if (!sandboxActive || !onSandboxPaint) return;
+    e.stopPropagation();
+    isPaintingSandbox.current = true;
+    const { uv } = e;
+    if (!uv) return;
+    const { sx, sy } = uvToSimCoords(uv);
+    onSandboxPaint(sx, sy);
+  }, [sandboxActive, onSandboxPaint, uvToSimCoords]);
+
   const handlePointerMove = useCallback((e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation();
+
+    // Sandbox drag-painting
+    if (sandboxActive && isPaintingSandbox.current && onSandboxPaint) {
+      const { uv } = e;
+      if (!uv) return;
+      const { sx, sy } = uvToSimCoords(uv);
+      onSandboxPaint(sx, sy);
+      return;
+    }
+
     const { uv, point } = e;
     if (!uv) return;
 
@@ -192,13 +225,25 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
     const population = samplePopulation(popData ?? null, lon, lat);
     const landcover = sampleLandcover(lcData ?? null, lon, lat);
     setHoverInfo({ position: point.clone(), elevation: Math.round(elev), lat, lon, population, landcover });
-  }, [terrain, popData, lcData]);
+  }, [terrain, popData, lcData, sandboxActive, onSandboxPaint, uvToSimCoords]);
+
+  const handlePointerUp = useCallback(() => {
+    if (isPaintingSandbox.current) {
+      isPaintingSandbox.current = false;
+      onSandboxPaintEnd?.();
+    }
+  }, [onSandboxPaintEnd]);
 
   const handlePointerLeave = useCallback(() => {
     setHoverInfo(null);
-  }, []);
+    if (isPaintingSandbox.current) {
+      isPaintingSandbox.current = false;
+      onSandboxPaintEnd?.();
+    }
+  }, [onSandboxPaintEnd]);
 
   const handleClick = useCallback((e: ThreeEvent<MouseEvent>) => {
+    if (sandboxActive) return; // painting handled by pointerDown/Move
     e.stopPropagation();
     const { uv } = e;
     if (!uv) return;
@@ -224,7 +269,7 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
       onCanalDig(pixelY, pixelX);
       return;
     }
-  }, [damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, terrain]);
+  }, [sandboxActive, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, terrain]);
 
   return (
     <group>
@@ -233,7 +278,9 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
         geometry={geometry}
         material={material}
         rotation={[-Math.PI / 2, 0, 0]}
+        onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerLeave}
         onClick={handleClick}
       />

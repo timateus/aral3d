@@ -26,6 +26,8 @@ import GameMode from './GameMode';
 import BowlWorld from './BowlWorld';
 import AryqWorld from './AryqWorld';
 import { Sandbox3D } from './SandboxMode';
+import { paintElement } from '@/lib/sandbox-simulation';
+import type { SandboxState } from '@/lib/sandbox-simulation';
 import { TerrainData } from '@/lib/geotiff-loader';
 import type { ScenarioAction } from '@/types/scenario';
 import type { WaterFlowState } from '@/lib/water-flow-simulation';
@@ -121,7 +123,7 @@ interface TerrainViewerProps {
   sandboxPaused?: boolean;
 }
 
-function CameraAnimator({ started }: { started: boolean }) {
+function CameraAnimator({ started, skip }: { started: boolean; skip?: boolean }) {
   const { camera } = useThree();
   const progress = useRef(0);
   const animating = useRef(false);
@@ -148,12 +150,18 @@ function CameraAnimator({ started }: { started: boolean }) {
   }, []);
 
   useEffect(() => {
-    if (started && !hasStarted.current) {
+    if (started && !hasStarted.current && !skip) {
       hasStarted.current = true;
       animating.current = true;
       progress.current = 0;
     }
-  }, [started]);
+    if (started && skip && !hasStarted.current) {
+      hasStarted.current = true;
+      // Jump directly to end position
+      camera.position.set(0, 10, 12);
+      camera.lookAt(0, 0, -1);
+    }
+  }, [started, skip]);
 
   useFrame((_, delta) => {
     if (autoRotate && !started) {
@@ -326,6 +334,12 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
   const [flyoverAnimating, setFlyoverAnimating] = useState(false);
   const [popData, setPopData] = useState<PopData | null>(null);
   const [lcData, setLcData] = useState<LandcoverRasterData | null>(null);
+  const sandboxStateRef = useRef<SandboxState | null>(null);
+
+  const handleSandboxPaint = useCallback((sx: number, sy: number) => {
+    if (!sandboxStateRef.current || !sandboxElement) return;
+    paintElement(sandboxStateRef.current, sx, sy, sandboxElement, sandboxBrushSize ?? 3);
+  }, [sandboxElement, sandboxBrushSize]);
 
   useImperativeHandle(ref, () => ({
     screenshot: () => screenshotFn.current?.(),
@@ -348,7 +362,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
       {!aryqWorldActive && (
         <>
           <group>
-            <TerrainMesh terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} hideNoData={hideNoData} waterBounds={waterBounds} inspectorEnabled={inspectorEnabled} popData={showPopDensity ? popData : null} lcData={showLandcover ? lcData : null} damToolActive={damToolActive} onDamPlace={onDamPlace} canalToolActive={canalToolActive} onCanalDig={onCanalDig} waterFlowActive={waterFlowActive} onWaterFlowClick={onWaterFlowClick} terrainVersion={terrainVersion} raisedPixels={raisedPixels} dugPixels={dugPixels} />
+            <TerrainMesh terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} hideNoData={hideNoData} waterBounds={waterBounds} inspectorEnabled={inspectorEnabled} popData={showPopDensity ? popData : null} lcData={showLandcover ? lcData : null} damToolActive={damToolActive} onDamPlace={onDamPlace} canalToolActive={canalToolActive} onCanalDig={onCanalDig} waterFlowActive={waterFlowActive} onWaterFlowClick={onWaterFlowClick} terrainVersion={terrainVersion} raisedPixels={raisedPixels} dugPixels={dugPixels} sandboxActive={sandboxActive} onSandboxPaint={sandboxActive ? handleSandboxPaint : undefined} />
             {flowState && flowRenderKey !== undefined && (
               <WaterFlowOverlay terrain={terrain} exaggeration={exaggeration} flowState={flowState} renderKey={flowRenderKey} />
             )}
@@ -366,7 +380,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
           {showSalinity && <SalinityLayer terrain={terrain} exaggeration={exaggeration} />}
           <WaterPlaygroundOverlay terrain={terrain} exaggeration={exaggeration} active={!!waterPlaygroundActive} />
           {waterPlaygroundActive && <NoahsArk terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} />}
-          {sandboxActive && <Sandbox3D terrain={terrain} exaggeration={exaggeration} active={true} selectedElement={sandboxElement ?? 'sand'} brushSize={sandboxBrushSize ?? 3} paused={sandboxPaused ?? false} />}
+          {sandboxActive && <Sandbox3D terrain={terrain} exaggeration={exaggeration} active={true} selectedElement={sandboxElement ?? 'sand'} brushSize={sandboxBrushSize ?? 3} paused={sandboxPaused ?? false} onStateReady={(s) => { sandboxStateRef.current = s; }} />}
           {scenarioActions && scenarioActions.length > 0 && (
             <ScenarioOverlay actions={scenarioActions} terrain={terrain} exaggeration={exaggeration} />
           )}
@@ -430,7 +444,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
         </Suspense>
       )}
 
-      {!narrativeActive && !flyoverAnimating && !gameModeActive && !aryqWorldActive && <CameraAnimator started={started} />}
+      {!narrativeActive && !flyoverAnimating && !gameModeActive && !aryqWorldActive && <CameraAnimator started={started} skip={sandboxActive} />}
       {narrativeActive && narrativeCameraPosition && narrativeCameraTarget && (
         <NarrativeCameraController
           active={narrativeActive}
@@ -460,7 +474,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
       <MapControls
         enabled={!narrativeActive && !flyoverAnimating}
         orbitRef={orbitRef}
-        gameModeActive={gameModeActive || aryqWorldActive}
+        gameModeActive={gameModeActive || aryqWorldActive || sandboxActive}
       />
 
       {!aryqWorldActive && (
