@@ -212,6 +212,7 @@ interface IntroOverlayProps {
   onObjectSelect?: (lat: number, lon: number, name: string) => void;
   onStartGame?: () => void;
   onQuadrants?: () => void;
+  onSandbox?: () => void;
 }
 
 type LandingView = 'main' | 'artifacts';
