@@ -148,12 +148,18 @@ function CameraAnimator({ started, skip }: { started: boolean; skip?: boolean })
   }, []);
 
   useEffect(() => {
-    if (started && !hasStarted.current) {
+    if (started && !hasStarted.current && !skip) {
       hasStarted.current = true;
       animating.current = true;
       progress.current = 0;
     }
-  }, [started]);
+    if (started && skip && !hasStarted.current) {
+      hasStarted.current = true;
+      // Jump directly to end position
+      camera.position.set(0, 10, 12);
+      camera.lookAt(0, 0, -1);
+    }
+  }, [started, skip]);
 
   useFrame((_, delta) => {
     if (autoRotate && !started) {
