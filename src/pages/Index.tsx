@@ -804,6 +804,11 @@ const Index = () => {
             setShowWaterExtent(true);
           }}
           onQuadrants={() => setQuadrantViewActive(true)}
+          onSandbox={() => {
+            setStarted(true);
+            setSandboxMode(true);
+            setShowWaterExtent(false);
+          }}
         />
       )}
 
