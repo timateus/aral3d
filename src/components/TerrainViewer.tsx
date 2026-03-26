@@ -25,9 +25,8 @@ import VocabularyLayer from './VocabularyLayer';
 import GameMode from './GameMode';
 import BowlWorld from './BowlWorld';
 import AryqWorld from './AryqWorld';
-import { Sandbox3D } from './SandboxMode';
-import { paintElement } from '@/lib/sandbox-simulation';
-import type { SandboxState } from '@/lib/sandbox-simulation';
+import SandboxOverlay from './SandboxOverlay';
+import type { SandboxSimState } from '@/lib/sandbox-simulation';
 import { TerrainData } from '@/lib/geotiff-loader';
 import type { ScenarioAction } from '@/types/scenario';
 import type { WaterFlowState } from '@/lib/water-flow-simulation';
@@ -118,10 +117,10 @@ interface TerrainViewerProps {
   showSalinity?: boolean;
   waterPlaygroundActive?: boolean;
   sandboxActive?: boolean;
-  sandboxElement?: import('@/lib/sandbox-simulation').ElementType;
-  sandboxBrushSize?: number;
-  sandboxPaused?: boolean;
-  sandboxResetKey?: number;
+  sandboxSimState?: SandboxSimState | null;
+  sandboxRenderKey?: number;
+  sandboxToolActive?: boolean;
+  onSandboxClick?: (row: number, col: number) => void;
 }
 
 function CameraAnimator({ started, skip }: { started: boolean; skip?: boolean }) {
@@ -329,18 +328,12 @@ function NoahsArk({ terrain, exaggeration, waterLevel }: { terrain: TerrainData;
   );
 }
 
-const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, showWaterExtent, waterExtentYear, showPopDensity, popHexSize, popHexHeight, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone, riverInflow, userLocation, inspectorEnabled, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, flowState, flowRenderKey, terrainVersion, raisedPixels, dugPixels, showMigration, migrationYear, showChoropleth, choroplethIndicator, choroplethExaggeration, canalHighlights, highlightedCanalNames, canalTourActive, showObjectLibrary, onObjectSelect, gameModeActive, onGameAddWater, bowlWorldActive, onBowlWorldComplete, showLandcover, landcoverVisibleClasses, onLandcoverAvailableClasses, showSchools, showVocabulary, agmarShowProposalSites, aryqWorldActive, onAryqWorldComplete, onNukusClick, showOverlayMetrics, showGroundwater, showPrecipitation, showSalinity, waterPlaygroundActive, sandboxActive, sandboxElement, sandboxBrushSize, sandboxPaused, sandboxResetKey }, ref) => {
+const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, showWaterExtent, waterExtentYear, showPopDensity, popHexSize, popHexHeight, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone, riverInflow, userLocation, inspectorEnabled, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, flowState, flowRenderKey, terrainVersion, raisedPixels, dugPixels, showMigration, migrationYear, showChoropleth, choroplethIndicator, choroplethExaggeration, canalHighlights, highlightedCanalNames, canalTourActive, showObjectLibrary, onObjectSelect, gameModeActive, onGameAddWater, bowlWorldActive, onBowlWorldComplete, showLandcover, landcoverVisibleClasses, onLandcoverAvailableClasses, showSchools, showVocabulary, agmarShowProposalSites, aryqWorldActive, onAryqWorldComplete, onNukusClick, showOverlayMetrics, showGroundwater, showPrecipitation, showSalinity, waterPlaygroundActive, sandboxActive, sandboxSimState, sandboxRenderKey, sandboxToolActive, onSandboxClick }, ref) => {
   const screenshotFn = useRef<(() => void) | null>(null);
   const orbitRef = useRef<any>(null);
   const [flyoverAnimating, setFlyoverAnimating] = useState(false);
   const [popData, setPopData] = useState<PopData | null>(null);
   const [lcData, setLcData] = useState<LandcoverRasterData | null>(null);
-  const sandboxStateRef = useRef<SandboxState | null>(null);
-
-  const handleSandboxPaint = useCallback((sx: number, sy: number) => {
-    if (!sandboxStateRef.current || !sandboxElement) return;
-    paintElement(sandboxStateRef.current, sx, sy, sandboxElement, sandboxBrushSize ?? 3);
-  }, [sandboxElement, sandboxBrushSize]);
 
   useImperativeHandle(ref, () => ({
     screenshot: () => screenshotFn.current?.(),
@@ -363,7 +356,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
       {!aryqWorldActive && (
         <>
           <group>
-            <TerrainMesh terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} hideNoData={hideNoData} waterBounds={waterBounds} inspectorEnabled={inspectorEnabled} popData={showPopDensity ? popData : null} lcData={showLandcover ? lcData : null} damToolActive={damToolActive} onDamPlace={onDamPlace} canalToolActive={canalToolActive} onCanalDig={onCanalDig} waterFlowActive={waterFlowActive} onWaterFlowClick={onWaterFlowClick} terrainVersion={terrainVersion} raisedPixels={raisedPixels} dugPixels={dugPixels} sandboxActive={sandboxActive} onSandboxPaint={sandboxActive ? handleSandboxPaint : undefined} />
+            <TerrainMesh terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} hideNoData={hideNoData} waterBounds={waterBounds} inspectorEnabled={inspectorEnabled} popData={showPopDensity ? popData : null} lcData={showLandcover ? lcData : null} damToolActive={damToolActive} onDamPlace={onDamPlace} canalToolActive={canalToolActive} onCanalDig={onCanalDig} waterFlowActive={waterFlowActive || sandboxToolActive} onWaterFlowClick={sandboxToolActive ? onSandboxClick : onWaterFlowClick} terrainVersion={terrainVersion} raisedPixels={raisedPixels} dugPixels={dugPixels} sandboxActive={false} />
             {!sandboxActive && flowState && flowRenderKey !== undefined && (
               <WaterFlowOverlay terrain={terrain} exaggeration={exaggeration} flowState={flowState} renderKey={flowRenderKey} />
             )}
@@ -385,7 +378,9 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
               {waterPlaygroundActive && <NoahsArk terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} />}
             </>
           )}
-          {sandboxActive && <Sandbox3D terrain={terrain} exaggeration={exaggeration} active={true} selectedElement={sandboxElement ?? 'sand'} brushSize={sandboxBrushSize ?? 3} paused={sandboxPaused ?? false} resetKey={sandboxResetKey ?? 0} onStateReady={(s) => { sandboxStateRef.current = s; }} />}
+          {sandboxActive && sandboxSimState && sandboxRenderKey !== undefined && (
+            <SandboxOverlay terrain={terrain} exaggeration={exaggeration} simState={sandboxSimState} renderKey={sandboxRenderKey} />
+          )}
           {!sandboxActive && scenarioActions && scenarioActions.length > 0 && (
             <ScenarioOverlay actions={scenarioActions} terrain={terrain} exaggeration={exaggeration} />
           )}
