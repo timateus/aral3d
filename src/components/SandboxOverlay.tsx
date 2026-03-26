@@ -115,33 +115,27 @@ export default function SandboxOverlay({ terrain, exaggeration, simState, render
       indices.push(base + 1, base + 3, base + 2);
     };
 
-    // Check 4 directions for each active pixel
-    const dirs: [number, number][] = [[0, -1], [0, 1], [-1, 0], [1, 0]];
+    // Check 4 directions for each active pixel and add side quads
     for (let j = 0; j < height; j++) {
       for (let i = 0; i < width; i++) {
         const idx = j * width + i;
         if (!isActive(idx)) continue;
 
-        for (const [di, dj] of dirs) {
-          const ni = i + di, nj = j + dj;
-          const isEdge = ni < 0 || ni >= width || nj < 0 || nj >= height;
-          const neighborActive = !isEdge && isActive(nj * width + ni);
-
-          if (isEdge || !neighborActive) {
-            // Add a side face on this edge
-            // The quad runs along the edge between (i,j) and its neighbor direction
-            const half = 0.5;
-            // Edge vertices: perpendicular to the direction
-            if (di === 0) {
-              // horizontal edge (top or bottom)
-              const ej = j + dj * half;
-              addSideQuad(i - 0.5, ej, i + 0.5, ej, idx);
-            } else {
-              // vertical edge (left or right)
-              const ei = i + di * half;
-              addSideQuad(ei, j - 0.5, ei, j + 0.5, idx);
-            }
-          }
+        // left
+        if (i === 0 || !isActive(j * width + (i - 1))) {
+          addSideQuad(i - 0.5, j - 0.5, i - 0.5, j + 0.5, idx);
+        }
+        // right
+        if (i === width - 1 || !isActive(j * width + (i + 1))) {
+          addSideQuad(i + 0.5, j - 0.5, i + 0.5, j + 0.5, idx);
+        }
+        // top
+        if (j === 0 || !isActive((j - 1) * width + i)) {
+          addSideQuad(i - 0.5, j - 0.5, i + 0.5, j - 0.5, idx);
+        }
+        // bottom
+        if (j === height - 1 || !isActive((j + 1) * width + i)) {
+          addSideQuad(i - 0.5, j + 0.5, i + 0.5, j + 0.5, idx);
         }
       }
     }
