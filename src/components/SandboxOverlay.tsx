@@ -35,11 +35,11 @@ const REED_COLOR = new THREE.Color(0.15, 0.55, 0.18);
 const REED_TOP_COLOR = new THREE.Color(0.35, 0.70, 0.25);
 
 function toWorldPos(
-  i: number, j: number, elev: number, terrain: TerrainData, elevRange: number, maxHeight: number
+  col: number, row: number, elev: number, terrain: TerrainData, elevRange: number, maxHeight: number
 ): [number, number, number] {
-  const x = (i / (terrain.width - 1) - 0.5) * 10;
-  const z = (0.5 - j / (terrain.height - 1)) * 10 * (terrain.height / terrain.width);
-  const y = ((elev - terrain.minElevation) / elevRange) * maxHeight;
+  const x = (col / (terrain.width - 1) - 0.5) * 10;
+  const y = (0.5 - row / (terrain.height - 1)) * 10 * (terrain.height / terrain.width);
+  const z = ((elev - terrain.minElevation) / elevRange) * maxHeight;
   return [x, y, z];
 }
 
