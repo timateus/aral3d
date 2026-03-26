@@ -1,26 +1,27 @@
 /**
- * Terrain-resolution sandbox simulation.
+ * Aralspiel – terrain-resolution sandbox simulation.
+ * Elements: river water, irrigation water, salt, dust/wind, reeds/life.
  * All arrays are Float32Array at terrain resolution for performance.
  */
 import type { TerrainData } from '@/lib/geotiff-loader';
 
-export type SandboxElement = 'water' | 'sand' | 'fire' | 'plant' | 'lava' | 'eraser';
+export type SandboxElement = 'river' | 'irrigation' | 'salt' | 'dust' | 'reeds' | 'eraser';
 
-export const SANDBOX_ELEMENTS: { type: SandboxElement; label: string; color: string }[] = [
-  { type: 'water', label: 'Water', color: '#1e90ff' },
-  { type: 'sand', label: 'Sand', color: '#d2b48c' },
-  { type: 'fire', label: 'Fire', color: '#ff4500' },
-  { type: 'plant', label: 'Plant', color: '#22c55e' },
-  { type: 'lava', label: 'Lava', color: '#ff6600' },
-  { type: 'eraser', label: 'Erase', color: '#888888' },
+export const SANDBOX_ELEMENTS: { type: SandboxElement; label: string; color: string; desc: string }[] = [
+  { type: 'river',      label: 'River Water',  color: '#1e90ff', desc: 'Flows downhill, fills basins' },
+  { type: 'irrigation', label: 'Irrigation',   color: '#d4a017', desc: 'Extracted flow — evaporates, leaves salt' },
+  { type: 'salt',       label: 'Salt',         color: '#e8e0d0', desc: 'Crystallises on dry seabed' },
+  { type: 'dust',       label: 'Dust / Wind',  color: '#c9a87c', desc: 'Airborne salt & toxins, drifts' },
+  { type: 'reeds',      label: 'Reeds / Life', color: '#4a9a3a', desc: 'Grows near water, dies in salt' },
+  { type: 'eraser',     label: 'Erase',        color: '#888888', desc: 'Remove all elements' },
 ];
 
 export interface SandboxSimState {
-  waterDepth: Float32Array;
-  sandDepth: Float32Array;
-  fireIntensity: Float32Array;
-  plantDensity: Float32Array;
-  lavaDepth: Float32Array;
+  waterDepth: Float32Array;      // river water
+  irrigationDepth: Float32Array; // irrigation / cotton water
+  saltDepth: Float32Array;       // crystallised salt
+  dustDensity: Float32Array;     // airborne dust/toxins
+  reedsDensity: Float32Array;    // reeds, life
   effectiveElev: Float32Array;
   baseElev: Float32Array;
   width: number;
@@ -40,10 +41,10 @@ export function createSandboxSim(terrain: TerrainData): SandboxSimState {
   }
   return {
     waterDepth: new Float32Array(n),
-    sandDepth: new Float32Array(n),
-    fireIntensity: new Float32Array(n),
-    plantDensity: new Float32Array(n),
-    lavaDepth: new Float32Array(n),
+    irrigationDepth: new Float32Array(n),
+    saltDepth: new Float32Array(n),
+    dustDensity: new Float32Array(n),
+    reedsDensity: new Float32Array(n),
     effectiveElev,
     baseElev,
     width: terrain.width,
@@ -72,28 +73,28 @@ export function addElementAt(
       const amt = amount * falloff;
 
       switch (element) {
-        case 'water':
+        case 'river':
           state.waterDepth[idx] += amt;
           break;
-        case 'sand':
-          state.sandDepth[idx] += amt * 1.5; // Sand stacks up more
-          state.effectiveElev[idx] = state.baseElev[idx] + state.sandDepth[idx];
+        case 'irrigation':
+          state.irrigationDepth[idx] += amt * 1.2;
           break;
-        case 'fire':
-          state.fireIntensity[idx] = Math.max(state.fireIntensity[idx], 120 * falloff); // Longer-lasting fire
+        case 'salt':
+          state.saltDepth[idx] += amt * 1.5;
+          state.effectiveElev[idx] = state.baseElev[idx] + state.saltDepth[idx];
           break;
-        case 'plant':
-          state.plantDensity[idx] = Math.min(state.plantDensity[idx] + amt * 2, 20); // Higher cap
+        case 'dust':
+          state.dustDensity[idx] = Math.max(state.dustDensity[idx], 100 * falloff);
           break;
-        case 'lava':
-          state.lavaDepth[idx] += amt * 1.2;
+        case 'reeds':
+          state.reedsDensity[idx] = Math.min(state.reedsDensity[idx] + amt * 2, 20);
           break;
         case 'eraser':
           state.waterDepth[idx] = 0;
-          state.sandDepth[idx] = 0;
-          state.fireIntensity[idx] = 0;
-          state.plantDensity[idx] = 0;
-          state.lavaDepth[idx] = 0;
+          state.irrigationDepth[idx] = 0;
+          state.saltDepth[idx] = 0;
+          state.dustDensity[idx] = 0;
+          state.reedsDensity[idx] = 0;
           state.effectiveElev[idx] = state.baseElev[idx];
           break;
       }
@@ -102,15 +103,16 @@ export function addElementAt(
 }
 
 export function stepSandboxSim(state: SandboxSimState): void {
-  const { width, height, waterDepth, sandDepth, fireIntensity, plantDensity, lavaDepth, effectiveElev, baseElev } = state;
+  const { width, height, waterDepth, irrigationDepth, saltDepth, dustDensity, reedsDensity, effectiveElev, baseElev } = state;
   state.generation++;
   const n = width * height;
   const waterDelta = new Float32Array(n);
-  const lavaDelta = new Float32Array(n);
-  const sandDelta = new Float32Array(n);
+  const irrigDelta = new Float32Array(n);
+  const saltDelta = new Float32Array(n);
+  const dustDelta = new Float32Array(n);
   const neighbors = [-width, width, -1, 1];
 
-  // Water flow
+  // === River water flow (downhill, fast) ===
   for (let i = 0; i < n; i++) {
     if (waterDepth[i] < 0.01) continue;
     const surfaceLevel = effectiveElev[i] + waterDepth[i];
@@ -137,32 +139,10 @@ export function stepSandboxSim(state: SandboxSimState): void {
   }
   for (let i = 0; i < n; i++) waterDepth[i] = Math.max(0, waterDepth[i] + waterDelta[i]);
 
-  // Sand flow
+  // === Irrigation water (flows like water but evaporates, leaves salt behind) ===
   for (let i = 0; i < n; i++) {
-    if (sandDepth[i] < 0.05) continue;
-    const myElev = effectiveElev[i];
-    for (const d of neighbors) {
-      const ni = i + d;
-      if (ni < 0 || ni >= n) continue;
-      if (d === -1 && (i % width) === 0) continue;
-      if (d === 1 && (i % width) === width - 1) continue;
-      const diff = myElev - effectiveElev[ni];
-      if (diff > 3.0) { // Higher threshold = more stacking before avalanche
-        const flow = Math.min(sandDepth[i] * 0.05, diff * 0.02); // Slower flow = taller piles
-        sandDelta[i] -= flow;
-        sandDelta[ni] += flow;
-      }
-    }
-  }
-  for (let i = 0; i < n; i++) {
-    sandDepth[i] = Math.max(0, sandDepth[i] + sandDelta[i]);
-    effectiveElev[i] = baseElev[i] + sandDepth[i];
-  }
-
-  // Lava flow
-  for (let i = 0; i < n; i++) {
-    if (lavaDepth[i] < 0.01) continue;
-    const surfaceLevel = effectiveElev[i] + lavaDepth[i];
+    if (irrigationDepth[i] < 0.01) continue;
+    const surfaceLevel = effectiveElev[i] + irrigationDepth[i];
     let totalDiff = 0;
     const diffs: number[] = [];
     const nIdxs: number[] = [];
@@ -171,85 +151,140 @@ export function stepSandboxSim(state: SandboxSimState): void {
       if (ni < 0 || ni >= n) continue;
       if (d === -1 && (i % width) === 0) continue;
       if (d === 1 && (i % width) === width - 1) continue;
-      const nSurface = effectiveElev[ni] + lavaDepth[ni];
+      const nSurface = effectiveElev[ni] + irrigationDepth[ni];
       const diff = surfaceLevel - nSurface;
       if (diff > 0) { diffs.push(diff); nIdxs.push(ni); totalDiff += diff; }
     }
     if (totalDiff > 0) {
-      const flow = Math.min(lavaDepth[i] * 0.08, lavaDepth[i]);
+      const flow = Math.min(irrigationDepth[i] * 0.15, irrigationDepth[i]); // slower than river
       for (let j = 0; j < nIdxs.length; j++) {
         const share = (diffs[j] / totalDiff) * flow;
-        lavaDelta[i] -= share;
-        lavaDelta[nIdxs[j]] += share;
+        irrigDelta[i] -= share;
+        irrigDelta[nIdxs[j]] += share;
       }
     }
-    const solidify = lavaDepth[i] * 0.0005; // Much slower solidification
-    lavaDepth[i] -= solidify;
-    baseElev[i] += solidify;
-    effectiveElev[i] = baseElev[i] + sandDepth[i];
+    // Evaporation — irrigation water slowly vanishes, depositing salt
+    const evap = irrigationDepth[i] * 0.003;
+    irrigDelta[i] -= evap;
+    saltDepth[i] += evap * 0.4; // residual salt
+    effectiveElev[i] = baseElev[i] + saltDepth[i];
   }
-  for (let i = 0; i < n; i++) lavaDepth[i] = Math.max(0, lavaDepth[i] + lavaDelta[i]);
+  for (let i = 0; i < n; i++) irrigationDepth[i] = Math.max(0, irrigationDepth[i] + irrigDelta[i]);
 
-  // Lava-water interaction
+  // === Salt accumulation & slow spread (like sand avalanche) ===
   for (let i = 0; i < n; i++) {
-    if (lavaDepth[i] > 0.1 && waterDepth[i] > 0.1) {
-      const evap = Math.min(waterDepth[i], lavaDepth[i] * 0.5);
-      waterDepth[i] -= evap;
-      const cool = Math.min(lavaDepth[i], evap * 0.3);
-      lavaDepth[i] -= cool;
-      baseElev[i] += cool;
-      effectiveElev[i] = baseElev[i] + sandDepth[i];
-    }
-  }
-
-  // Fire
-  for (let i = 0; i < n; i++) {
-    if (fireIntensity[i] <= 0) continue;
-    fireIntensity[i] -= 0.3; // Much slower decay — fire burns longer
-    if (fireIntensity[i] <= 0) { fireIntensity[i] = 0; continue; }
-    if (plantDensity[i] > 0) {
-      const burn = Math.min(plantDensity[i], 0.15); // Slower burn = longer interaction
-      plantDensity[i] -= burn;
-      fireIntensity[i] = Math.min(fireIntensity[i] + 8, 150); // Higher cap
-    }
-    if (waterDepth[i] > 0) {
-      const evap = Math.min(waterDepth[i], 0.1); // Slower evaporation
-      waterDepth[i] -= evap;
-      fireIntensity[i] -= 1;
-      if (fireIntensity[i] <= 0) { fireIntensity[i] = 0; continue; }
-    }
-    // Fire spreads more aggressively
-    if (state.generation % 2 === 0) {
-      for (const d of neighbors) {
-        const ni = i + d;
-        if (ni < 0 || ni >= n) continue;
-        if (d === -1 && (i % width) === 0) continue;
-        if (d === 1 && (i % width) === width - 1) continue;
-        if (plantDensity[ni] > 0.3 && fireIntensity[ni] <= 0) fireIntensity[ni] = 30;
+    if (saltDepth[i] < 0.05) continue;
+    const myElev = effectiveElev[i];
+    for (const d of neighbors) {
+      const ni = i + d;
+      if (ni < 0 || ni >= n) continue;
+      if (d === -1 && (i % width) === 0) continue;
+      if (d === 1 && (i % width) === width - 1) continue;
+      const diff = myElev - effectiveElev[ni];
+      if (diff > 3.0) {
+        const flow = Math.min(saltDepth[i] * 0.05, diff * 0.02);
+        saltDelta[i] -= flow;
+        saltDelta[ni] += flow;
       }
     }
+    // Salt dissolves in river water
+    if (waterDepth[i] > 0.5) {
+      const dissolve = Math.min(saltDepth[i], waterDepth[i] * 0.01);
+      saltDepth[i] -= dissolve;
+    }
+  }
+  for (let i = 0; i < n; i++) {
+    saltDepth[i] = Math.max(0, saltDepth[i] + saltDelta[i]);
+    effectiveElev[i] = baseElev[i] + saltDepth[i];
   }
 
-  // Plant growth — faster and more lush
+  // === Dust / Wind — drifts across terrain, deposits salt ===
+  // Wind blows predominantly eastward (+col direction) with some spread
+  const windBias = 1; // +1 col = east
+  for (let i = 0; i < n; i++) {
+    if (dustDensity[i] < 0.1) continue;
+    // Dust picks up salt from exposed seabed
+    if (saltDepth[i] > 0.1 && waterDepth[i] < 0.05 && irrigationDepth[i] < 0.05) {
+      const pickup = Math.min(saltDepth[i] * 0.01, 0.05);
+      saltDepth[i] -= pickup;
+      dustDensity[i] += pickup * 5;
+    }
+    // Drift: move dust to neighbors with wind bias
+    const drift = dustDensity[i] * 0.08;
+    // Primary wind direction (east)
+    const eastIdx = i + windBias;
+    if (eastIdx >= 0 && eastIdx < n && (i % width) < width - 1) {
+      dustDelta[eastIdx] += drift * 0.5;
+      dustDelta[i] -= drift * 0.5;
+    }
+    // Secondary spread (north/south)
+    for (const d of [-width, width]) {
+      const ni = i + d;
+      if (ni >= 0 && ni < n) {
+        dustDelta[ni] += drift * 0.15;
+        dustDelta[i] -= drift * 0.15;
+      }
+    }
+    // Dust settles as salt deposit
+    const settle = dustDensity[i] * 0.005;
+    dustDensity[i] -= settle;
+    saltDepth[i] += settle * 0.3;
+    // Dust suppressed by water
+    if (waterDepth[i] > 0.2) {
+      dustDensity[i] *= 0.9;
+    }
+    // Dust kills reeds
+    if (dustDensity[i] > 20 && reedsDensity[i] > 0) {
+      reedsDensity[i] -= 0.1;
+      if (reedsDensity[i] < 0) reedsDensity[i] = 0;
+    }
+    // Natural decay
+    dustDensity[i] -= 0.15;
+    if (dustDensity[i] < 0) dustDensity[i] = 0;
+  }
+  for (let i = 0; i < n; i++) dustDensity[i] = Math.max(0, dustDensity[i] + dustDelta[i]);
+
+  // === Reeds / Life — grow near water, die in salt & dust ===
   if (state.generation % 3 === 0) {
     for (let i = 0; i < n; i++) {
-      if (plantDensity[i] <= 0 || fireIntensity[i] > 0) continue;
+      if (reedsDensity[i] <= 0) continue;
+      // Salt kills reeds
+      if (saltDepth[i] > 1.0) {
+        reedsDensity[i] -= 0.2;
+        if (reedsDensity[i] < 0) reedsDensity[i] = 0;
+        continue;
+      }
+      // Grow near water
       let hasWater = false;
       for (const d of neighbors) {
         const ni = i + d;
-        if (ni >= 0 && ni < n && waterDepth[ni] > 0.05) { hasWater = true; break; }
+        if (ni >= 0 && ni < n && (waterDepth[ni] > 0.05 || irrigationDepth[ni] > 0.05)) {
+          hasWater = true; break;
+        }
       }
-      if (hasWater) plantDensity[i] = Math.min(plantDensity[i] + 0.3, 20);
-      // Spread more aggressively
-      if (plantDensity[i] > 2 && state.generation % 6 === 0) {
+      if (hasWater) reedsDensity[i] = Math.min(reedsDensity[i] + 0.3, 20);
+      // Spread
+      if (reedsDensity[i] > 2 && state.generation % 6 === 0) {
         for (const d of neighbors) {
           const ni = i + d;
           if (ni < 0 || ni >= n) continue;
           if (d === -1 && (i % width) === 0) continue;
           if (d === 1 && (i % width) === width - 1) continue;
-          if (plantDensity[ni] < 0.1 && fireIntensity[ni] <= 0) plantDensity[ni] = 1.0;
+          if (reedsDensity[ni] < 0.1 && saltDepth[ni] < 0.5 && dustDensity[ni] < 10) {
+            reedsDensity[ni] = 1.0;
+          }
         }
       }
+    }
+  }
+
+  // === River water dissolves irrigation remnants when they meet ===
+  for (let i = 0; i < n; i++) {
+    if (waterDepth[i] > 0.1 && irrigationDepth[i] > 0.1) {
+      // They merge into river water
+      const merge = Math.min(irrigationDepth[i], waterDepth[i] * 0.1);
+      irrigationDepth[i] -= merge;
+      waterDepth[i] += merge * 0.5; // some lost to evap
     }
   }
 }
@@ -258,9 +293,9 @@ export function countActivePixels(state: SandboxSimState): number {
   let count = 0;
   const n = state.width * state.height;
   for (let i = 0; i < n; i++) {
-    if (state.waterDepth[i] > 0.01 || state.sandDepth[i] > 0.01 ||
-        state.fireIntensity[i] > 0 || state.plantDensity[i] > 0.01 ||
-        state.lavaDepth[i] > 0.01) count++;
+    if (state.waterDepth[i] > 0.01 || state.irrigationDepth[i] > 0.01 ||
+        state.saltDepth[i] > 0.01 || state.dustDensity[i] > 0.1 ||
+        state.reedsDensity[i] > 0.01) count++;
   }
   return count;
 }
