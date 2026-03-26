@@ -76,17 +76,17 @@ export function addElementAt(
           state.waterDepth[idx] += amt;
           break;
         case 'sand':
-          state.sandDepth[idx] += amt;
+          state.sandDepth[idx] += amt * 1.5; // Sand stacks up more
           state.effectiveElev[idx] = state.baseElev[idx] + state.sandDepth[idx];
           break;
         case 'fire':
-          state.fireIntensity[idx] = Math.max(state.fireIntensity[idx], 50 * falloff);
+          state.fireIntensity[idx] = Math.max(state.fireIntensity[idx], 120 * falloff); // Longer-lasting fire
           break;
         case 'plant':
-          state.plantDensity[idx] = Math.min(state.plantDensity[idx] + amt, 10);
+          state.plantDensity[idx] = Math.min(state.plantDensity[idx] + amt * 2, 20); // Higher cap
           break;
         case 'lava':
-          state.lavaDepth[idx] += amt;
+          state.lavaDepth[idx] += amt * 1.2;
           break;
         case 'eraser':
           state.waterDepth[idx] = 0;
@@ -147,8 +147,8 @@ export function stepSandboxSim(state: SandboxSimState): void {
       if (d === -1 && (i % width) === 0) continue;
       if (d === 1 && (i % width) === width - 1) continue;
       const diff = myElev - effectiveElev[ni];
-      if (diff > 1.0) {
-        const flow = Math.min(sandDepth[i] * 0.1, diff * 0.05);
+      if (diff > 3.0) { // Higher threshold = more stacking before avalanche
+        const flow = Math.min(sandDepth[i] * 0.05, diff * 0.02); // Slower flow = taller piles
         sandDelta[i] -= flow;
         sandDelta[ni] += flow;
       }
@@ -183,7 +183,7 @@ export function stepSandboxSim(state: SandboxSimState): void {
         lavaDelta[nIdxs[j]] += share;
       }
     }
-    const solidify = lavaDepth[i] * 0.002;
+    const solidify = lavaDepth[i] * 0.0005; // Much slower solidification
     lavaDepth[i] -= solidify;
     baseElev[i] += solidify;
     effectiveElev[i] = baseElev[i] + sandDepth[i];
@@ -205,47 +205,49 @@ export function stepSandboxSim(state: SandboxSimState): void {
   // Fire
   for (let i = 0; i < n; i++) {
     if (fireIntensity[i] <= 0) continue;
-    fireIntensity[i] -= 1;
+    fireIntensity[i] -= 0.3; // Much slower decay — fire burns longer
     if (fireIntensity[i] <= 0) { fireIntensity[i] = 0; continue; }
     if (plantDensity[i] > 0) {
-      const burn = Math.min(plantDensity[i], 0.3);
+      const burn = Math.min(plantDensity[i], 0.15); // Slower burn = longer interaction
       plantDensity[i] -= burn;
-      fireIntensity[i] = Math.min(fireIntensity[i] + 5, 80);
+      fireIntensity[i] = Math.min(fireIntensity[i] + 8, 150); // Higher cap
     }
     if (waterDepth[i] > 0) {
-      const evap = Math.min(waterDepth[i], 0.2);
+      const evap = Math.min(waterDepth[i], 0.1); // Slower evaporation
       waterDepth[i] -= evap;
-      fireIntensity[i] -= 3;
+      fireIntensity[i] -= 1;
       if (fireIntensity[i] <= 0) { fireIntensity[i] = 0; continue; }
     }
-    if (state.generation % 3 === 0) {
+    // Fire spreads more aggressively
+    if (state.generation % 2 === 0) {
       for (const d of neighbors) {
         const ni = i + d;
         if (ni < 0 || ni >= n) continue;
         if (d === -1 && (i % width) === 0) continue;
         if (d === 1 && (i % width) === width - 1) continue;
-        if (plantDensity[ni] > 0.5 && fireIntensity[ni] <= 0) fireIntensity[ni] = 20;
+        if (plantDensity[ni] > 0.3 && fireIntensity[ni] <= 0) fireIntensity[ni] = 30;
       }
     }
   }
 
-  // Plant growth
-  if (state.generation % 5 === 0) {
+  // Plant growth — faster and more lush
+  if (state.generation % 3 === 0) {
     for (let i = 0; i < n; i++) {
       if (plantDensity[i] <= 0 || fireIntensity[i] > 0) continue;
       let hasWater = false;
       for (const d of neighbors) {
         const ni = i + d;
-        if (ni >= 0 && ni < n && waterDepth[ni] > 0.1) { hasWater = true; break; }
+        if (ni >= 0 && ni < n && waterDepth[ni] > 0.05) { hasWater = true; break; }
       }
-      if (hasWater) plantDensity[i] = Math.min(plantDensity[i] + 0.1, 10);
-      if (plantDensity[i] > 3 && state.generation % 15 === 0) {
+      if (hasWater) plantDensity[i] = Math.min(plantDensity[i] + 0.3, 20);
+      // Spread more aggressively
+      if (plantDensity[i] > 2 && state.generation % 6 === 0) {
         for (const d of neighbors) {
           const ni = i + d;
           if (ni < 0 || ni >= n) continue;
           if (d === -1 && (i % width) === 0) continue;
           if (d === 1 && (i % width) === width - 1) continue;
-          if (plantDensity[ni] < 0.1 && waterDepth[ni] > 0.05 && fireIntensity[ni] <= 0) plantDensity[ni] = 0.5;
+          if (plantDensity[ni] < 0.1 && fireIntensity[ni] <= 0) plantDensity[ni] = 1.0;
         }
       }
     }
