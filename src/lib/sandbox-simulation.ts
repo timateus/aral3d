@@ -137,7 +137,7 @@ export function stepSandboxSim(state: SandboxSimState): void {
       if (diff > 0) { diffs.push(diff); nIdxs.push(ni); totalDiff += diff; }
     }
     if (totalDiff > 0) {
-      const flow = Math.min(waterDepth[i] * 0.25, waterDepth[i]);
+      const flow = Math.min(waterDepth[i] * 0.35, waterDepth[i]);
       for (let j = 0; j < nIdxs.length; j++) {
         const share = (diffs[j] / totalDiff) * flow;
         waterDelta[i] -= share;
@@ -170,7 +170,7 @@ export function stepSandboxSim(state: SandboxSimState): void {
       if (diff > 0) { diffs.push(diff); nIdxs.push(eastNi); totalDiff += diff; }
     }
     if (totalDiff > 0) {
-      const flow = Math.min(irrigationDepth[i] * 0.15, irrigationDepth[i]); // slower than river
+      const flow = Math.min(irrigationDepth[i] * 0.25, irrigationDepth[i]); // faster spread
       for (let j = 0; j < nIdxs.length; j++) {
         const share = (diffs[j] / totalDiff) * flow;
         irrigDelta[i] -= share;
@@ -178,7 +178,7 @@ export function stepSandboxSim(state: SandboxSimState): void {
       }
     }
     // Evaporation — irrigation water slowly vanishes, depositing salt
-    const evap = irrigationDepth[i] * 0.003;
+    const evap = irrigationDepth[i] * 0.008;
     irrigDelta[i] -= evap;
     saltDepth[i] += evap * 0.4; // residual salt
     effectiveElev[i] = baseElev[i] + saltDepth[i];
@@ -226,7 +226,7 @@ export function stepSandboxSim(state: SandboxSimState): void {
       dustDensity[i] += pickup * 5;
     }
     // Drift: move dust to neighbors with wind bias
-    const drift = dustDensity[i] * 0.08;
+    const drift = dustDensity[i] * 0.14;
     // Primary wind direction (east)
     const eastIdx = i + windBias;
     if (eastIdx >= 0 && eastIdx < n && (i % width) < width - 1) {
