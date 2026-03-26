@@ -8,6 +8,8 @@ interface SandboxHUDProps {
   onSelectElement: (e: SandboxElement) => void;
   brushSize: number;
   onBrushSize: (s: number) => void;
+  amount: number;
+  onAmountChange: (a: number) => void;
   paused: boolean;
   onTogglePause: () => void;
   onReset: () => void;
@@ -19,6 +21,7 @@ interface SandboxHUDProps {
 
 export function SandboxHUD({
   active, selectedElement, onSelectElement, brushSize, onBrushSize,
+  amount, onAmountChange,
   paused, onTogglePause, onReset, onExit, activePixels = 0,
   speed, onSpeedChange,
 }: SandboxHUDProps) {
@@ -78,6 +81,18 @@ export function SandboxHUD({
             onValueChange={([v]) => onBrushSize(v)}
             min={1}
             max={10}
+            step={1}
+          />
+        </div>
+
+        {/* Amount */}
+        <div>
+          <div className="text-[9px] uppercase tracking-wider text-muted-foreground mb-1">Amount: {amount}</div>
+          <Slider
+            value={[amount]}
+            onValueChange={([v]) => onAmountChange(v)}
+            min={1}
+            max={100}
             step={1}
           />
         </div>
