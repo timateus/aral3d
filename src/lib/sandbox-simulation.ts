@@ -56,8 +56,8 @@ export function addElementAt(
   state: SandboxSimState,
   row: number, col: number,
   element: SandboxElement,
-  amount: number = 2,
-  radius: number = 3,
+  amount: number = 5,
+  radius: number = 6,
 ): void {
   const { width, height } = state;
   for (let dr = -radius; dr <= radius; dr++) {
