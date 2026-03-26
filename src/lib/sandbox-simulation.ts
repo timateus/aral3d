@@ -1,38 +1,63 @@
 /**
- * Sandbox simulation — water only.
- * Reuses the same downhill pipe-model flow physics as the water flow tool.
+ * Terrain-resolution sandbox simulation.
+ * All arrays are Float32Array at terrain resolution for performance.
  */
 import type { TerrainData } from '@/lib/geotiff-loader';
 
-export type SandboxElement = 'water' | 'eraser';
+export type SandboxElement = 'water' | 'sand' | 'fire' | 'plant' | 'lava' | 'eraser';
+
+export const SANDBOX_ELEMENTS: { type: SandboxElement; label: string; color: string }[] = [
+  { type: 'water', label: 'Water', color: '#1e90ff' },
+  { type: 'sand', label: 'Sand', color: '#d2b48c' },
+  { type: 'fire', label: 'Fire', color: '#ff4500' },
+  { type: 'plant', label: 'Plant', color: '#22c55e' },
+  { type: 'lava', label: 'Lava', color: '#ff6600' },
+  { type: 'eraser', label: 'Erase', color: '#888888' },
+];
 
 export interface SandboxSimState {
   waterDepth: Float32Array;
+  sandDepth: Float32Array;
+  fireIntensity: Float32Array;
+  plantDensity: Float32Array;
+  lavaDepth: Float32Array;
+  effectiveElev: Float32Array;
+  baseElev: Float32Array;
   width: number;
   height: number;
-  terrain: TerrainData;
-  stepCount: number;
+  generation: number;
 }
 
 export function createSandboxSim(terrain: TerrainData): SandboxSimState {
+  const n = terrain.width * terrain.height;
+  const baseElev = new Float32Array(n);
+  const effectiveElev = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    let e = terrain.elevations[i];
+    if (isNaN(e) || e <= -9999) e = terrain.minElevation;
+    baseElev[i] = e;
+    effectiveElev[i] = e;
+  }
   return {
-    waterDepth: new Float32Array(terrain.width * terrain.height),
+    waterDepth: new Float32Array(n),
+    sandDepth: new Float32Array(n),
+    fireIntensity: new Float32Array(n),
+    plantDensity: new Float32Array(n),
+    lavaDepth: new Float32Array(n),
+    effectiveElev,
+    baseElev,
     width: terrain.width,
     height: terrain.height,
-    terrain,
-    stepCount: 0,
+    generation: 0,
   };
 }
 
-/**
- * Place a block of water at (row, col) with given amount and radius.
- */
 export function addElementAt(
   state: SandboxSimState,
   row: number, col: number,
   element: SandboxElement,
-  amount: number = 5,
-  radius: number = 6,
+  amount: number = 2,
+  radius: number = 3,
 ): void {
   const { width, height } = state;
   for (let dr = -radius; dr <= radius; dr++) {
@@ -44,80 +69,196 @@ export function addElementAt(
       if (dist > radius) continue;
       const falloff = 1 - dist / (radius + 1);
       const idx = r * width + c;
-      if (element === 'water') {
-        state.waterDepth[idx] += amount * falloff;
-      } else {
-        state.waterDepth[idx] = 0;
+      const amt = amount * falloff;
+
+      switch (element) {
+        case 'water':
+          state.waterDepth[idx] += amt;
+          break;
+        case 'sand':
+          state.sandDepth[idx] += amt;
+          state.effectiveElev[idx] = state.baseElev[idx] + state.sandDepth[idx];
+          break;
+        case 'fire':
+          state.fireIntensity[idx] = Math.max(state.fireIntensity[idx], 50 * falloff);
+          break;
+        case 'plant':
+          state.plantDensity[idx] = Math.min(state.plantDensity[idx] + amt, 10);
+          break;
+        case 'lava':
+          state.lavaDepth[idx] += amt;
+          break;
+        case 'eraser':
+          state.waterDepth[idx] = 0;
+          state.sandDepth[idx] = 0;
+          state.fireIntensity[idx] = 0;
+          state.plantDensity[idx] = 0;
+          state.lavaDepth[idx] = 0;
+          state.effectiveElev[idx] = state.baseElev[idx];
+          break;
       }
     }
   }
 }
 
-/**
- * One simulation step — identical physics to water-flow-simulation.ts pipe model.
- */
 export function stepSandboxSim(state: SandboxSimState): void {
-  const { waterDepth, width, height, terrain } = state;
-  const { elevations, noDataValue } = terrain;
+  const { width, height, waterDepth, sandDepth, fireIntensity, plantDensity, lavaDepth, effectiveElev, baseElev } = state;
+  state.generation++;
   const n = width * height;
-  const outflow = new Float32Array(n);
-  const inflow = new Float32Array(n);
-  const flowRate = 0.25;
+  const waterDelta = new Float32Array(n);
+  const lavaDelta = new Float32Array(n);
+  const sandDelta = new Float32Array(n);
+  const neighbors = [-width, width, -1, 1];
 
-  for (let r = 0; r < height; r++) {
-    for (let c = 0; c < width; c++) {
-      const idx = r * width + c;
-      const water = waterDepth[idx];
-      if (water < 0.001) continue;
-
-      let elev = elevations[idx];
-      if (isNaN(elev) || (noDataValue !== null && elev === noDataValue) || elev <= -9999) continue;
-
-      const surfaceLevel = elev + water;
-      let totalDiff = 0;
-      const diffs: number[] = [];
-      const nIdxs: number[] = [];
-
-      const dirs = [
-        r > 0 ? (r - 1) * width + c : -1,
-        r < height - 1 ? (r + 1) * width + c : -1,
-        c > 0 ? r * width + (c - 1) : -1,
-        c < width - 1 ? r * width + (c + 1) : -1,
-      ];
-
-      for (const ni of dirs) {
-        if (ni < 0) continue;
-        const nElev = elevations[ni];
-        if (isNaN(nElev) || (noDataValue !== null && nElev === noDataValue) || nElev <= -9999) continue;
-        const nSurface = nElev + waterDepth[ni];
-        const diff = surfaceLevel - nSurface;
-        if (diff > 0.001) {
-          diffs.push(diff);
-          nIdxs.push(ni);
-          totalDiff += diff;
-        }
+  // Water flow
+  for (let i = 0; i < n; i++) {
+    if (waterDepth[i] < 0.01) continue;
+    const surfaceLevel = effectiveElev[i] + waterDepth[i];
+    let totalDiff = 0;
+    const diffs: number[] = [];
+    const nIdxs: number[] = [];
+    for (const d of neighbors) {
+      const ni = i + d;
+      if (ni < 0 || ni >= n) continue;
+      if (d === -1 && (i % width) === 0) continue;
+      if (d === 1 && (i % width) === width - 1) continue;
+      const nSurface = effectiveElev[ni] + waterDepth[ni];
+      const diff = surfaceLevel - nSurface;
+      if (diff > 0) { diffs.push(diff); nIdxs.push(ni); totalDiff += diff; }
+    }
+    if (totalDiff > 0) {
+      const flow = Math.min(waterDepth[i] * 0.25, waterDepth[i]);
+      for (let j = 0; j < nIdxs.length; j++) {
+        const share = (diffs[j] / totalDiff) * flow;
+        waterDelta[i] -= share;
+        waterDelta[nIdxs[j]] += share;
       }
+    }
+  }
+  for (let i = 0; i < n; i++) waterDepth[i] = Math.max(0, waterDepth[i] + waterDelta[i]);
 
-      if (totalDiff <= 0) continue;
-      const maxOut = water * flowRate;
-      for (let i = 0; i < nIdxs.length; i++) {
-        const share = (diffs[i] / totalDiff) * maxOut;
-        outflow[idx] += share;
-        inflow[nIdxs[i]] += share;
+  // Sand flow
+  for (let i = 0; i < n; i++) {
+    if (sandDepth[i] < 0.05) continue;
+    const myElev = effectiveElev[i];
+    for (const d of neighbors) {
+      const ni = i + d;
+      if (ni < 0 || ni >= n) continue;
+      if (d === -1 && (i % width) === 0) continue;
+      if (d === 1 && (i % width) === width - 1) continue;
+      const diff = myElev - effectiveElev[ni];
+      if (diff > 1.0) {
+        const flow = Math.min(sandDepth[i] * 0.1, diff * 0.05);
+        sandDelta[i] -= flow;
+        sandDelta[ni] += flow;
+      }
+    }
+  }
+  for (let i = 0; i < n; i++) {
+    sandDepth[i] = Math.max(0, sandDepth[i] + sandDelta[i]);
+    effectiveElev[i] = baseElev[i] + sandDepth[i];
+  }
+
+  // Lava flow
+  for (let i = 0; i < n; i++) {
+    if (lavaDepth[i] < 0.01) continue;
+    const surfaceLevel = effectiveElev[i] + lavaDepth[i];
+    let totalDiff = 0;
+    const diffs: number[] = [];
+    const nIdxs: number[] = [];
+    for (const d of neighbors) {
+      const ni = i + d;
+      if (ni < 0 || ni >= n) continue;
+      if (d === -1 && (i % width) === 0) continue;
+      if (d === 1 && (i % width) === width - 1) continue;
+      const nSurface = effectiveElev[ni] + lavaDepth[ni];
+      const diff = surfaceLevel - nSurface;
+      if (diff > 0) { diffs.push(diff); nIdxs.push(ni); totalDiff += diff; }
+    }
+    if (totalDiff > 0) {
+      const flow = Math.min(lavaDepth[i] * 0.08, lavaDepth[i]);
+      for (let j = 0; j < nIdxs.length; j++) {
+        const share = (diffs[j] / totalDiff) * flow;
+        lavaDelta[i] -= share;
+        lavaDelta[nIdxs[j]] += share;
+      }
+    }
+    const solidify = lavaDepth[i] * 0.002;
+    lavaDepth[i] -= solidify;
+    baseElev[i] += solidify;
+    effectiveElev[i] = baseElev[i] + sandDepth[i];
+  }
+  for (let i = 0; i < n; i++) lavaDepth[i] = Math.max(0, lavaDepth[i] + lavaDelta[i]);
+
+  // Lava-water interaction
+  for (let i = 0; i < n; i++) {
+    if (lavaDepth[i] > 0.1 && waterDepth[i] > 0.1) {
+      const evap = Math.min(waterDepth[i], lavaDepth[i] * 0.5);
+      waterDepth[i] -= evap;
+      const cool = Math.min(lavaDepth[i], evap * 0.3);
+      lavaDepth[i] -= cool;
+      baseElev[i] += cool;
+      effectiveElev[i] = baseElev[i] + sandDepth[i];
+    }
+  }
+
+  // Fire
+  for (let i = 0; i < n; i++) {
+    if (fireIntensity[i] <= 0) continue;
+    fireIntensity[i] -= 1;
+    if (fireIntensity[i] <= 0) { fireIntensity[i] = 0; continue; }
+    if (plantDensity[i] > 0) {
+      const burn = Math.min(plantDensity[i], 0.3);
+      plantDensity[i] -= burn;
+      fireIntensity[i] = Math.min(fireIntensity[i] + 5, 80);
+    }
+    if (waterDepth[i] > 0) {
+      const evap = Math.min(waterDepth[i], 0.2);
+      waterDepth[i] -= evap;
+      fireIntensity[i] -= 3;
+      if (fireIntensity[i] <= 0) { fireIntensity[i] = 0; continue; }
+    }
+    if (state.generation % 3 === 0) {
+      for (const d of neighbors) {
+        const ni = i + d;
+        if (ni < 0 || ni >= n) continue;
+        if (d === -1 && (i % width) === 0) continue;
+        if (d === 1 && (i % width) === width - 1) continue;
+        if (plantDensity[ni] > 0.5 && fireIntensity[ni] <= 0) fireIntensity[ni] = 20;
       }
     }
   }
 
-  for (let i = 0; i < n; i++) {
-    waterDepth[i] = Math.max(0, waterDepth[i] - outflow[i] + inflow[i]);
+  // Plant growth
+  if (state.generation % 5 === 0) {
+    for (let i = 0; i < n; i++) {
+      if (plantDensity[i] <= 0 || fireIntensity[i] > 0) continue;
+      let hasWater = false;
+      for (const d of neighbors) {
+        const ni = i + d;
+        if (ni >= 0 && ni < n && waterDepth[ni] > 0.1) { hasWater = true; break; }
+      }
+      if (hasWater) plantDensity[i] = Math.min(plantDensity[i] + 0.1, 10);
+      if (plantDensity[i] > 3 && state.generation % 15 === 0) {
+        for (const d of neighbors) {
+          const ni = i + d;
+          if (ni < 0 || ni >= n) continue;
+          if (d === -1 && (i % width) === 0) continue;
+          if (d === 1 && (i % width) === width - 1) continue;
+          if (plantDensity[ni] < 0.1 && waterDepth[ni] > 0.05 && fireIntensity[ni] <= 0) plantDensity[ni] = 0.5;
+        }
+      }
+    }
   }
-  state.stepCount++;
 }
 
 export function countActivePixels(state: SandboxSimState): number {
   let count = 0;
-  for (let i = 0; i < state.waterDepth.length; i++) {
-    if (state.waterDepth[i] > 0.01) count++;
+  const n = state.width * state.height;
+  for (let i = 0; i < n; i++) {
+    if (state.waterDepth[i] > 0.01 || state.sandDepth[i] > 0.01 ||
+        state.fireIntensity[i] > 0 || state.plantDensity[i] > 0.01 ||
+        state.lavaDepth[i] > 0.01) count++;
   }
   return count;
 }

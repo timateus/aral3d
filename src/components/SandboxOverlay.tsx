@@ -1,6 +1,5 @@
-import { useRef, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import * as THREE from 'three';
-import { useFrame } from '@react-three/fiber';
 import type { TerrainData } from '@/lib/geotiff-loader';
 import type { SandboxSimState } from '@/lib/sandbox-simulation';
 
@@ -11,97 +10,138 @@ interface SandboxOverlayProps {
   renderKey: number;
 }
 
-const CUBE_SIZE = 0.022;
-const MAX_CUBES = 100000;
-
-const _mat = new THREE.Matrix4();
-const _pos = new THREE.Vector3();
-const _quat = new THREE.Quaternion();
-const _scl = new THREE.Vector3(1, 1, 1);
-
-// Water color gradient from shallow to deep
-const SHALLOW = new THREE.Color(0.15, 0.55, 0.95);  // bright cyan-blue
-const DEEP = new THREE.Color(0.02, 0.12, 0.55);      // dark navy
-
-const cubeGeo = new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE);
-
-function toWorld(
-  col: number, row: number, elev: number,
-  terrain: TerrainData, elevRange: number, maxH: number
-): [number, number, number] {
-  const x = (col / (terrain.width - 1) - 0.5) * 10;
-  const y = (0.5 - row / (terrain.height - 1)) * 10 * (terrain.height / terrain.width);
-  const z = ((elev - terrain.minElevation) / elevRange) * maxH;
-  return [x, y, z];
-}
-
 export default function SandboxOverlay({ terrain, exaggeration, simState, renderKey }: SandboxOverlayProps) {
-  const meshRef = useRef<THREE.InstancedMesh>(null);
+  const geometry = useMemo(() => {
+    if (!simState) return null;
 
-  const elevRange = terrain.maxElevation - terrain.minElevation || 1;
-  const maxH = 10 * (exaggeration / 100);
+    const { width, height } = terrain;
+    const { waterDepth, sandDepth, fireIntensity, plantDensity, lavaDepth, effectiveElev } = simState;
+    const elevRange = terrain.maxElevation - terrain.minElevation || 1;
+    const maxHeight = 10 * (exaggeration / 100);
 
-  useEffect(() => {
-    if (!simState || !meshRef.current) return;
-    const { width, height, waterDepth } = simState;
-    const elevations = simState.terrain.elevations;
-    const noData = simState.terrain.noDataValue;
+    const positions: number[] = [];
+    const colors: number[] = [];
+    const indices: number[] = [];
 
-    let count = 0;
-    const stride = width > 300 ? 2 : 1;
-    const _color = new THREE.Color();
+    // Build vertices for active pixels
+    const vertexMap = new Map<number, number>(); // pixel index -> vertex index
 
-    for (let r = 0; r < height; r += stride) {
-      for (let c = 0; c < width; c += stride) {
-        const idx = r * width + c;
+    for (let j = 0; j < height; j++) {
+      for (let i = 0; i < width; i++) {
+        const idx = j * width + i;
         const w = waterDepth[idx];
-        if (w < 0.02) continue;
+        const s = sandDepth[idx];
+        const f = fireIntensity[idx];
+        const p = plantDensity[idx];
+        const l = lavaDepth[idx];
 
-        let elev = elevations[idx];
-        if (isNaN(elev) || (noData !== null && elev === noData) || elev <= -9999) continue;
+        if (w < 0.01 && s < 0.01 && f <= 0 && p < 0.01 && l < 0.01) continue;
 
-        // Stack cubes based on water depth
-        const layers = Math.min(Math.ceil(w / 1.0), 10);
-        for (let L = 0; L < layers && count < MAX_CUBES; L++) {
-          const [x, y, z] = toWorld(c, r, elev, terrain, elevRange, maxH);
-          const stackZ = z + L * CUBE_SIZE * 1.05 + CUBE_SIZE * 0.5;
+        // Determine dominant element for color
+        let r = 0, g = 0, b = 0, totalWeight = 0;
 
-          // Slight jitter for organic look
-          const jx = Math.sin(idx * 7 + L * 3) * CUBE_SIZE * 0.25;
-          const jy = Math.cos(idx * 11 + L * 5) * CUBE_SIZE * 0.25;
+        if (w > 0.01) {
+          const weight = Math.min(w, 5);
+          r += 0.12 * weight;
+          g += 0.56 * weight;
+          b += 1.0 * weight;
+          totalWeight += weight;
+        }
+        if (s > 0.01) {
+          const weight = Math.min(s, 5);
+          r += 0.82 * weight;
+          g += 0.71 * weight;
+          b += 0.55 * weight;
+          totalWeight += weight;
+        }
+        if (f > 0) {
+          const weight = f / 20;
+          r += 1.0 * weight;
+          g += 0.27 * weight;
+          b += 0.0 * weight;
+          totalWeight += weight;
+        }
+        if (p > 0.01) {
+          const weight = Math.min(p, 5);
+          r += 0.13 * weight;
+          g += 0.77 * weight;
+          b += 0.37 * weight;
+          totalWeight += weight;
+        }
+        if (l > 0.01) {
+          const weight = Math.min(l, 5);
+          r += 1.0 * weight;
+          g += 0.4 * weight;
+          b += 0.0 * weight;
+          totalWeight += weight;
+        }
 
-          _mat.compose(
-            _pos.set(x + jx, y + jy, stackZ),
-            _quat.setFromEuler(new THREE.Euler(0, 0, Math.sin(idx + L) * 0.1)),
-            _scl.set(1, 1, 1)
-          );
-          meshRef.current!.setMatrixAt(count, _mat);
+        if (totalWeight > 0) {
+          r /= totalWeight;
+          g /= totalWeight;
+          b /= totalWeight;
+        }
 
-          // Color: shallow layers are bright, deep are dark
-          const t = L / Math.max(layers - 1, 1);
-          _color.copy(SHALLOW).lerp(DEEP, t);
-          meshRef.current!.setColorAt(count, _color);
-          count++;
+        // Position: slightly above terrain (or on top of accumulated material)
+        const elev = effectiveElev[idx];
+        const topDepth = Math.max(w, l);
+        const normalized = (elev + topDepth - terrain.minElevation) / elevRange;
+
+        const x = (i / (width - 1) - 0.5) * 10;
+        const y = (0.5 - j / (height - 1)) * 10 * (height / width);
+        const z = normalized * maxHeight + 0.02;
+
+        const vIdx = positions.length / 3;
+        vertexMap.set(idx, vIdx);
+        positions.push(x, y, z);
+        colors.push(r, g, b);
+      }
+    }
+
+    if (positions.length === 0) return null;
+
+    // Build triangles between adjacent active pixels
+    for (let j = 0; j < height - 1; j++) {
+      for (let i = 0; i < width - 1; i++) {
+        const a = vertexMap.get(j * width + i);
+        const b2 = vertexMap.get(j * width + i + 1);
+        const c = vertexMap.get((j + 1) * width + i);
+        const d = vertexMap.get((j + 1) * width + i + 1);
+
+        if (a !== undefined && b2 !== undefined && c !== undefined) {
+          indices.push(a, b2, c);
+        }
+        if (b2 !== undefined && d !== undefined && c !== undefined) {
+          indices.push(b2, d, c);
         }
       }
     }
 
-    // Hide unused
-    const hideM = new THREE.Matrix4().makeScale(0, 0, 0);
-    for (let k = count; k < Math.min(count + 50, MAX_CUBES); k++) {
-      meshRef.current!.setMatrixAt(k, hideM);
-    }
+    if (indices.length === 0) return null;
 
-    meshRef.current.count = count;
-    meshRef.current.instanceMatrix.needsUpdate = true;
-    if (meshRef.current.instanceColor) meshRef.current.instanceColor.needsUpdate = true;
-  }, [terrain, exaggeration, simState, renderKey, elevRange, maxH]);
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    geo.setIndex(indices);
+    geo.computeVertexNormals();
+    return geo;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [terrain, exaggeration, simState, renderKey]);
+
+  const material = useMemo(() => {
+    return new THREE.MeshStandardMaterial({
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.85,
+      side: THREE.DoubleSide,
+      roughness: 0.6,
+      metalness: 0.1,
+    });
+  }, []);
+
+  if (!geometry) return null;
 
   return (
-    <group rotation={[-Math.PI / 2, 0, 0]}>
-      <instancedMesh ref={meshRef} args={[cubeGeo, undefined, MAX_CUBES]} frustumCulled={false}>
-        <meshStandardMaterial vertexColors transparent opacity={0.8} roughness={0.3} metalness={0.15} />
-      </instancedMesh>
-    </group>
+    <mesh geometry={geometry} material={material} rotation={[-Math.PI / 2, 0, 0]} />
   );
 }

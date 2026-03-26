@@ -126,10 +126,9 @@ const Index = () => {
   const [agmarTourStep, setAgmarTourStep] = useState(0);
   const [sandboxMode, setSandboxMode] = useState(false);
   const [sandboxElement, setSandboxElement] = useState<SandboxElement>('water');
-  const [sandboxWaterAmount, setSandboxWaterAmount] = useState(10);
-  const [sandboxBrushSize, setSandboxBrushSize] = useState(8);
+  const [sandboxBrushSize, setSandboxBrushSize] = useState(3);
   const [sandboxPaused, setSandboxPaused] = useState(false);
-  const [sandboxSpeed, setSandboxSpeed] = useState(15);
+  const [sandboxSpeed, setSandboxSpeed] = useState(5);
   const sandboxSimRef = useRef<SandboxSimState | null>(null);
   const [sandboxRenderKey, setSandboxRenderKey] = useState(0);
   const [sandboxActivePixels, setSandboxActivePixels] = useState(0);
@@ -490,14 +489,14 @@ const Index = () => {
     if (!sandboxSimRef.current) {
       sandboxSimRef.current = createSandboxSim(terrain);
     }
-    addElementAt(sandboxSimRef.current, row, col, sandboxElement, sandboxWaterAmount, sandboxBrushSize);
+    addElementAt(sandboxSimRef.current, row, col, sandboxElement, 2, sandboxBrushSize);
     setSandboxRenderKey(k => k + 1);
     setSandboxActivePixels(countActivePixels(sandboxSimRef.current));
     // Start animation if not running
     if (!sandboxAnimRef.current && !sandboxPaused) {
       startSandboxAnim();
     }
-  }, [terrain, sandboxElement, sandboxBrushSize, sandboxPaused, sandboxWaterAmount]);
+  }, [terrain, sandboxElement, sandboxBrushSize, sandboxPaused]);
 
   const startSandboxAnim = useCallback(() => {
     if (sandboxAnimRef.current) return;
@@ -879,7 +878,6 @@ const Index = () => {
             setStarted(true);
             setSandboxMode(true);
             setShowWaterExtent(false);
-            setWaterLevel(-10);
           }}
         />
       )}
@@ -944,8 +942,6 @@ const Index = () => {
         activePixels={sandboxActivePixels}
         speed={sandboxSpeed}
         onSpeedChange={setSandboxSpeed}
-        waterAmount={sandboxWaterAmount}
-        onWaterAmountChange={setSandboxWaterAmount}
       />
 
 
