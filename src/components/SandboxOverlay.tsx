@@ -10,6 +10,17 @@ interface SandboxOverlayProps {
   renderKey: number;
 }
 
+function getColor(w: number, s: number, f: number, p: number, l: number): [number, number, number] {
+  let r = 0, g = 0, b = 0, tw = 0;
+  if (w > 0.01) { const wt = Math.min(w, 5); r += 0.12 * wt; g += 0.56 * wt; b += 1.0 * wt; tw += wt; }
+  if (s > 0.01) { const wt = Math.min(s, 5); r += 0.82 * wt; g += 0.71 * wt; b += 0.55 * wt; tw += wt; }
+  if (f > 0) { const wt = f / 20; r += 1.0 * wt; g += 0.27 * wt; b += 0.0 * wt; tw += wt; }
+  if (p > 0.01) { const wt = Math.min(p, 5); r += 0.13 * wt; g += 0.77 * wt; b += 0.37 * wt; tw += wt; }
+  if (l > 0.01) { const wt = Math.min(l, 5); r += 1.0 * wt; g += 0.4 * wt; b += 0.0 * wt; tw += wt; }
+  if (tw > 0) { r /= tw; g /= tw; b /= tw; }
+  return [r, g, b];
+}
+
 export default function SandboxOverlay({ terrain, exaggeration, simState, renderKey }: SandboxOverlayProps) {
   const geometry = useMemo(() => {
     if (!simState) return null;
@@ -23,96 +34,114 @@ export default function SandboxOverlay({ terrain, exaggeration, simState, render
     const colors: number[] = [];
     const indices: number[] = [];
 
-    // Build vertices for active pixels
-    const vertexMap = new Map<number, number>(); // pixel index -> vertex index
+    const isActive = (idx: number) => {
+      return waterDepth[idx] > 0.01 || sandDepth[idx] > 0.01 ||
+        fireIntensity[idx] > 0 || plantDensity[idx] > 0.01 || lavaDepth[idx] > 0.01;
+    };
+
+    const toXY = (i: number, j: number) => {
+      const x = (i / (width - 1) - 0.5) * 10;
+      const y = (0.5 - j / (height - 1)) * 10 * (height / width);
+      return [x, y];
+    };
+
+    const toZ = (elev: number, depth: number) => {
+      return ((elev + depth - terrain.minElevation) / elevRange) * maxHeight;
+    };
+
+    // Top face vertices — one per active pixel
+    const topVertexMap = new Map<number, number>();
 
     for (let j = 0; j < height; j++) {
       for (let i = 0; i < width; i++) {
         const idx = j * width + i;
-        const w = waterDepth[idx];
-        const s = sandDepth[idx];
-        const f = fireIntensity[idx];
-        const p = plantDensity[idx];
-        const l = lavaDepth[idx];
+        if (!isActive(idx)) continue;
 
-        if (w < 0.01 && s < 0.01 && f <= 0 && p < 0.01 && l < 0.01) continue;
-
-        // Determine dominant element for color
-        let r = 0, g = 0, b = 0, totalWeight = 0;
-
-        if (w > 0.01) {
-          const weight = Math.min(w, 5);
-          r += 0.12 * weight;
-          g += 0.56 * weight;
-          b += 1.0 * weight;
-          totalWeight += weight;
-        }
-        if (s > 0.01) {
-          const weight = Math.min(s, 5);
-          r += 0.82 * weight;
-          g += 0.71 * weight;
-          b += 0.55 * weight;
-          totalWeight += weight;
-        }
-        if (f > 0) {
-          const weight = f / 20;
-          r += 1.0 * weight;
-          g += 0.27 * weight;
-          b += 0.0 * weight;
-          totalWeight += weight;
-        }
-        if (p > 0.01) {
-          const weight = Math.min(p, 5);
-          r += 0.13 * weight;
-          g += 0.77 * weight;
-          b += 0.37 * weight;
-          totalWeight += weight;
-        }
-        if (l > 0.01) {
-          const weight = Math.min(l, 5);
-          r += 1.0 * weight;
-          g += 0.4 * weight;
-          b += 0.0 * weight;
-          totalWeight += weight;
-        }
-
-        if (totalWeight > 0) {
-          r /= totalWeight;
-          g /= totalWeight;
-          b /= totalWeight;
-        }
-
-        // Position: slightly above terrain (or on top of accumulated material)
-        const elev = effectiveElev[idx];
-        const topDepth = Math.max(w, l);
-        const normalized = (elev + topDepth - terrain.minElevation) / elevRange;
-
-        const x = (i / (width - 1) - 0.5) * 10;
-        const y = (0.5 - j / (height - 1)) * 10 * (height / width);
-        const z = normalized * maxHeight + 0.02;
+        const [cr, cg, cb] = getColor(waterDepth[idx], sandDepth[idx], fireIntensity[idx], plantDensity[idx], lavaDepth[idx]);
+        const topDepth = Math.max(waterDepth[idx], lavaDepth[idx]);
+        const [x, y] = toXY(i, j);
+        const z = toZ(effectiveElev[idx], topDepth) + 0.02;
 
         const vIdx = positions.length / 3;
-        vertexMap.set(idx, vIdx);
+        topVertexMap.set(idx, vIdx);
         positions.push(x, y, z);
-        colors.push(r, g, b);
+        colors.push(cr, cg, cb);
       }
     }
 
     if (positions.length === 0) return null;
 
-    // Build triangles between adjacent active pixels
+    // Top face triangles
     for (let j = 0; j < height - 1; j++) {
       for (let i = 0; i < width - 1; i++) {
-        const a = vertexMap.get(j * width + i);
-        const b2 = vertexMap.get(j * width + i + 1);
-        const c = vertexMap.get((j + 1) * width + i);
-        const d = vertexMap.get((j + 1) * width + i + 1);
+        const a = topVertexMap.get(j * width + i);
+        const b2 = topVertexMap.get(j * width + i + 1);
+        const c = topVertexMap.get((j + 1) * width + i);
+        const d = topVertexMap.get((j + 1) * width + i + 1);
 
         if (a !== undefined && b2 !== undefined && c !== undefined) {
           indices.push(a, b2, c);
         }
         if (b2 !== undefined && d !== undefined && c !== undefined) {
           indices.push(b2, d, c);
+        }
+      }
+    }
+
+    // Side faces — at boundaries between active and inactive pixels
+    const addSideQuad = (
+      i1: number, j1: number, i2: number, j2: number,
+      idx: number
+    ) => {
+      const [cr, cg, cb] = getColor(waterDepth[idx], sandDepth[idx], fireIntensity[idx], plantDensity[idx], lavaDepth[idx]);
+      // Darken sides slightly
+      const dr = cr * 0.7, dg = cg * 0.7, db = cb * 0.7;
+
+      const topDepth = Math.max(waterDepth[idx], lavaDepth[idx]);
+      const topZ = toZ(effectiveElev[idx], topDepth) + 0.02;
+      const baseZ = toZ(effectiveElev[idx], 0);
+
+      const [x1, y1] = toXY(i1, j1);
+      const [x2, y2] = toXY(i2, j2);
+
+      const base = positions.length / 3;
+      // top-left, top-right, bottom-left, bottom-right
+      positions.push(x1, y1, topZ);  colors.push(dr, dg, db);
+      positions.push(x2, y2, topZ);  colors.push(dr, dg, db);
+      positions.push(x1, y1, baseZ); colors.push(dr, dg, db);
+      positions.push(x2, y2, baseZ); colors.push(dr, dg, db);
+
+      indices.push(base, base + 1, base + 2);
+      indices.push(base + 1, base + 3, base + 2);
+    };
+
+    // Check 4 directions for each active pixel
+    const dirs: [number, number][] = [[0, -1], [0, 1], [-1, 0], [1, 0]];
+    for (let j = 0; j < height; j++) {
+      for (let i = 0; i < width; i++) {
+        const idx = j * width + i;
+        if (!isActive(idx)) continue;
+
+        for (const [di, dj] of dirs) {
+          const ni = i + di, nj = j + dj;
+          const isEdge = ni < 0 || ni >= width || nj < 0 || nj >= height;
+          const neighborActive = !isEdge && isActive(nj * width + ni);
+
+          if (isEdge || !neighborActive) {
+            // Add a side face on this edge
+            // The quad runs along the edge between (i,j) and its neighbor direction
+            const half = 0.5;
+            // Edge vertices: perpendicular to the direction
+            if (di === 0) {
+              // horizontal edge (top or bottom)
+              const ej = j + dj * half;
+              addSideQuad(i - 0.5, ej, i + 0.5, ej, idx);
+            } else {
+              // vertical edge (left or right)
+              const ei = i + di * half;
+              addSideQuad(ei, j - 0.5, ei, j + 0.5, idx);
+            }
+          }
         }
       }
     }
