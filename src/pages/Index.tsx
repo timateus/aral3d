@@ -31,7 +31,6 @@ import { BookOpen } from 'lucide-react';
 import { SandboxHUD } from '@/components/SandboxHUD';
 import type { SandboxElement } from '@/lib/sandbox-simulation';
 import { createSandboxSim, addElementAt, stepSandboxSim, countActivePixels } from '@/lib/sandbox-simulation';
-import { spawnFallingCubes } from '@/components/SandboxOverlay';
 import type { SandboxSimState } from '@/lib/sandbox-simulation';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useUserLocation } from '@/hooks/useUserLocation';
@@ -126,7 +125,8 @@ const Index = () => {
   const [agmarTourActive, setAgmarTourActive] = useState(false);
   const [agmarTourStep, setAgmarTourStep] = useState(0);
   const [sandboxMode, setSandboxMode] = useState(false);
-  const [sandboxElement, setSandboxElement] = useState<SandboxElement>('river');
+  const [sandboxElement, setSandboxElement] = useState<SandboxElement>('water');
+  const [sandboxWaterAmount, setSandboxWaterAmount] = useState(10);
   const [sandboxBrushSize, setSandboxBrushSize] = useState(8);
   const [sandboxPaused, setSandboxPaused] = useState(false);
   const [sandboxSpeed, setSandboxSpeed] = useState(15);
@@ -490,16 +490,14 @@ const Index = () => {
     if (!sandboxSimRef.current) {
       sandboxSimRef.current = createSandboxSim(terrain);
     }
-    addElementAt(sandboxSimRef.current, row, col, sandboxElement, 4, sandboxBrushSize);
-    // Spawn dramatic falling cubes
-    spawnFallingCubes(row, col, sandboxElement, 12);
+    addElementAt(sandboxSimRef.current, row, col, sandboxElement, sandboxWaterAmount, sandboxBrushSize);
     setSandboxRenderKey(k => k + 1);
     setSandboxActivePixels(countActivePixels(sandboxSimRef.current));
     // Start animation if not running
     if (!sandboxAnimRef.current && !sandboxPaused) {
       startSandboxAnim();
     }
-  }, [terrain, sandboxElement, sandboxBrushSize, sandboxPaused]);
+  }, [terrain, sandboxElement, sandboxBrushSize, sandboxPaused, sandboxWaterAmount]);
 
   const startSandboxAnim = useCallback(() => {
     if (sandboxAnimRef.current) return;
@@ -946,6 +944,8 @@ const Index = () => {
         activePixels={sandboxActivePixels}
         speed={sandboxSpeed}
         onSpeedChange={setSandboxSpeed}
+        waterAmount={sandboxWaterAmount}
+        onWaterAmountChange={setSandboxWaterAmount}
       />
 
 
