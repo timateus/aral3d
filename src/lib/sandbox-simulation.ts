@@ -112,7 +112,12 @@ export function stepSandboxSim(state: SandboxSimState): void {
   const dustDelta = new Float32Array(n);
   const neighbors = [-width, width, -1, 1];
 
-  // === River water flow (downhill, fast) ===
+  // Wind direction (predominantly east with slight south)
+  const windEast = 1;   // +col
+  const windSouth = width; // +row (slight southward component)
+  const windStrength = 0.02; // base wind push on water surface
+
+  // === River water flow (downhill, fast + wind bias) ===
   for (let i = 0; i < n; i++) {
     if (waterDepth[i] < 0.01) continue;
     const surfaceLevel = effectiveElev[i] + waterDepth[i];
@@ -125,7 +130,10 @@ export function stepSandboxSim(state: SandboxSimState): void {
       if (d === -1 && (i % width) === 0) continue;
       if (d === 1 && (i % width) === width - 1) continue;
       const nSurface = effectiveElev[ni] + waterDepth[ni];
-      const diff = surfaceLevel - nSurface;
+      let diff = surfaceLevel - nSurface;
+      // Wind bias pushes water east and slightly south
+      if (d === windEast) diff += windStrength * waterDepth[i];
+      if (d === windSouth) diff += windStrength * 0.3 * waterDepth[i];
       if (diff > 0) { diffs.push(diff); nIdxs.push(ni); totalDiff += diff; }
     }
     if (totalDiff > 0) {
@@ -154,6 +162,12 @@ export function stepSandboxSim(state: SandboxSimState): void {
       const nSurface = effectiveElev[ni] + irrigationDepth[ni];
       const diff = surfaceLevel - nSurface;
       if (diff > 0) { diffs.push(diff); nIdxs.push(ni); totalDiff += diff; }
+    }
+    // Wind bias on irrigation too
+    const eastNi = i + 1;
+    if ((i % width) < width - 1 && eastNi < n) {
+      const diff = surfaceLevel - (effectiveElev[eastNi] + irrigationDepth[eastNi]) + windStrength * 0.5 * irrigationDepth[i];
+      if (diff > 0) { diffs.push(diff); nIdxs.push(eastNi); totalDiff += diff; }
     }
     if (totalDiff > 0) {
       const flow = Math.min(irrigationDepth[i] * 0.15, irrigationDepth[i]); // slower than river
