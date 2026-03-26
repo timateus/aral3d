@@ -56,7 +56,7 @@ export function addElementAt(
   state: SandboxSimState,
   row: number, col: number,
   element: SandboxElement,
-  amount: number = 2,
+  amount: number = 10,
   radius: number = 3,
 ): void {
   const { width, height } = state;
