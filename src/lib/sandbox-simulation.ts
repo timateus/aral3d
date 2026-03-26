@@ -185,7 +185,7 @@ export function stepSandboxSim(state: SandboxSimState): void {
   }
   for (let i = 0; i < n; i++) irrigationDepth[i] = Math.max(0, irrigationDepth[i] + irrigDelta[i]);
 
-  // === Salt accumulation & slow spread (like sand avalanche) ===
+  // === Salt accumulation & slow spread (wind-biased avalanche) ===
   for (let i = 0; i < n; i++) {
     if (saltDepth[i] < 0.05) continue;
     const myElev = effectiveElev[i];
@@ -194,9 +194,11 @@ export function stepSandboxSim(state: SandboxSimState): void {
       if (ni < 0 || ni >= n) continue;
       if (d === -1 && (i % width) === 0) continue;
       if (d === 1 && (i % width) === width - 1) continue;
-      const diff = myElev - effectiveElev[ni];
-      if (diff > 3.0) {
-        const flow = Math.min(saltDepth[i] * 0.05, diff * 0.02);
+      let diff = myElev - effectiveElev[ni];
+      // Wind pushes salt crystals east
+      if (d === 1) diff += 0.5;
+      if (diff > 2.5) {
+        const flow = Math.min(saltDepth[i] * 0.06, diff * 0.025);
         saltDelta[i] -= flow;
         saltDelta[ni] += flow;
       }
