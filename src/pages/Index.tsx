@@ -780,10 +780,10 @@ const Index = () => {
             showSalinity={showSalinity}
             waterPlaygroundActive={showWaterPlayground}
             sandboxActive={sandboxMode}
-            sandboxElement={sandboxElement}
-            sandboxBrushSize={sandboxBrushSize}
-            sandboxPaused={sandboxPaused}
-            sandboxResetKey={sandboxResetKey}
+            sandboxSimState={sandboxSimRef.current}
+            sandboxRenderKey={sandboxRenderKey}
+            sandboxToolActive={sandboxMode}
+            onSandboxClick={handleSandboxClick}
           />
         )}
         {!terrain && !loading && error && (
@@ -869,11 +869,16 @@ const Index = () => {
         onBrushSize={setSandboxBrushSize}
         paused={sandboxPaused}
         onTogglePause={() => setSandboxPaused(p => !p)}
-        onReset={() => setSandboxResetKey(k => k + 1)}
+        onReset={handleSandboxReset}
         onExit={() => {
           setSandboxMode(false);
           setStarted(false);
+          if (sandboxAnimRef.current) { cancelAnimationFrame(sandboxAnimRef.current); sandboxAnimRef.current = null; }
+          sandboxSimRef.current = null;
         }}
+        activePixels={sandboxActivePixels}
+        speed={sandboxSpeed}
+        onSpeedChange={setSandboxSpeed}
       />
 
 
