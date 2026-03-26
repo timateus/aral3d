@@ -73,7 +73,8 @@ export function addElementAt(
 
       switch (element) {
         case 'water':
-          state.waterDepth[idx] += amt;
+          // Place as uniform block (cube shape) — no falloff
+          state.waterDepth[idx] += amount;
           break;
         case 'sand':
           state.sandDepth[idx] += amt;
