@@ -36,9 +36,16 @@ export function SandboxHUD({
         </button>
       </div>
 
+      {/* Title */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20">
+        <div className="text-sm font-semibold text-foreground tracking-wider bg-card/60 backdrop-blur-sm border border-border/50 px-4 py-1.5">
+          ARALSPIEL
+        </div>
+      </div>
+
       {/* Right panel */}
-      <div className="absolute top-4 right-4 z-20 w-52 bg-card/80 backdrop-blur-md border border-border/50 p-3 flex flex-col gap-3 max-h-[calc(100vh-2rem)] overflow-y-auto">
-        <div className="text-xs font-semibold text-foreground tracking-wide">Sandbox</div>
+      <div className="absolute top-4 right-4 z-20 w-56 bg-card/80 backdrop-blur-md border border-border/50 p-3 flex flex-col gap-3 max-h-[calc(100vh-2rem)] overflow-y-auto">
+        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Paint with elements</div>
 
         {/* Controls */}
         <div className="flex gap-1">
@@ -84,13 +91,13 @@ export function SandboxHUD({
 
         {/* Elements */}
         <div>
-          <div className="text-[9px] uppercase tracking-wider text-muted-foreground mb-1">Elements</div>
-          <div className="grid grid-cols-2 gap-1">
-            {SANDBOX_ELEMENTS.map(({ type, label, color }) => (
+          <div className="text-[9px] uppercase tracking-wider text-muted-foreground mb-2">Elements</div>
+          <div className="flex flex-col gap-1">
+            {SANDBOX_ELEMENTS.map(({ type, label, color, desc }) => (
               <button
                 key={type}
                 onClick={() => onSelectElement(type)}
-                className={`flex items-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium transition-all ${
+                className={`flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-all text-left ${
                   selectedElement === type
                     ? 'ring-2 ring-primary bg-primary/10 text-foreground'
                     : 'bg-muted/60 hover:bg-muted text-foreground/80'
@@ -100,16 +107,19 @@ export function SandboxHUD({
                   className="w-3 h-3 rounded-sm border border-border/40 flex-shrink-0"
                   style={{ backgroundColor: color }}
                 />
-                {label}
+                <div className="flex flex-col">
+                  <span className="font-medium">{label}</span>
+                  <span className="text-[8px] text-muted-foreground leading-tight">{desc}</span>
+                </div>
               </button>
             ))}
           </div>
         </div>
 
         {/* Stats */}
-        <div className="text-[9px] text-muted-foreground">
+        <div className="text-[9px] text-muted-foreground border-t border-border/30 pt-2">
           <p>Active pixels: {activePixels.toLocaleString()}</p>
-          <p className="mt-1">Click & drag on terrain to place elements.</p>
+          <p className="mt-1 italic">Click & drag on terrain to paint.</p>
         </div>
       </div>
     </>
