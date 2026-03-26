@@ -483,6 +483,69 @@ const Index = () => {
     }
   }, [waterFlowActive]);
 
+  // --- Sandbox simulation ---
+  const handleSandboxClick = useCallback((row: number, col: number) => {
+    if (!terrain) return;
+    if (!sandboxSimRef.current) {
+      sandboxSimRef.current = createSandboxSim(terrain);
+    }
+    addElementAt(sandboxSimRef.current, row, col, sandboxElement, 2, sandboxBrushSize);
+    setSandboxRenderKey(k => k + 1);
+    setSandboxActivePixels(countActivePixels(sandboxSimRef.current));
+    // Start animation if not running
+    if (!sandboxAnimRef.current && !sandboxPaused) {
+      startSandboxAnim();
+    }
+  }, [terrain, sandboxElement, sandboxBrushSize, sandboxPaused]);
+
+  const startSandboxAnim = useCallback(() => {
+    if (sandboxAnimRef.current) return;
+    let lastTime = 0;
+    const tick = (time: number) => {
+      const interval = 1000 / (sandboxSpeed * 3);
+      if (time - lastTime >= interval) {
+        lastTime = time;
+        if (sandboxSimRef.current && !sandboxPaused) {
+          const stepsPerFrame = Math.max(1, Math.floor(sandboxSpeed / 5));
+          for (let s = 0; s < stepsPerFrame; s++) {
+            stepSandboxSim(sandboxSimRef.current);
+          }
+          setSandboxRenderKey(k => k + 1);
+          setSandboxActivePixels(countActivePixels(sandboxSimRef.current));
+        }
+      }
+      sandboxAnimRef.current = requestAnimationFrame(tick);
+    };
+    sandboxAnimRef.current = requestAnimationFrame(tick);
+  }, [sandboxSpeed, sandboxPaused]);
+
+  const handleSandboxReset = useCallback(() => {
+    if (sandboxAnimRef.current) { cancelAnimationFrame(sandboxAnimRef.current); sandboxAnimRef.current = null; }
+    if (terrain) sandboxSimRef.current = createSandboxSim(terrain);
+    setSandboxRenderKey(k => k + 1);
+    setSandboxActivePixels(0);
+  }, [terrain]);
+
+  // Start/stop sandbox animation
+  useEffect(() => {
+    if (sandboxMode && !sandboxPaused && sandboxSimRef.current) {
+      startSandboxAnim();
+    } else if (sandboxPaused && sandboxAnimRef.current) {
+      cancelAnimationFrame(sandboxAnimRef.current);
+      sandboxAnimRef.current = null;
+    }
+    return () => {
+      if (sandboxAnimRef.current) { cancelAnimationFrame(sandboxAnimRef.current); sandboxAnimRef.current = null; }
+    };
+  }, [sandboxMode, sandboxPaused, startSandboxAnim]);
+
+  // Initialize sandbox sim when entering sandbox mode
+  useEffect(() => {
+    if (sandboxMode && terrain && !sandboxSimRef.current) {
+      sandboxSimRef.current = createSandboxSim(terrain);
+    }
+  }, [sandboxMode, terrain]);
+
   // Raise terrain click handler
   const handleRaiseTerrainClick = useCallback((row: number, col: number) => {
     if (!terrain) return;
