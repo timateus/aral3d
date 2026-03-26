@@ -192,7 +192,7 @@ export default function SandboxOverlay({ terrain, exaggeration, simState, render
 
     // Zero out unused dust
     for (let k = dCount; k < Math.min(dCount + 30, MAX_DUST); k++) {
-      dustPositions.current[k * 3 + 1] = -100;
+      dustPositions.current[k * 3 + 2] = -100; // z is height
     }
 
     // Update instance counts
