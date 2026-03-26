@@ -218,11 +218,11 @@ export default function SandboxOverlay({ terrain, exaggeration, simState, render
     if (!posAttr) return;
     const arr = posAttr.array as Float32Array;
     for (let i = 0; i < arr.length; i += 3) {
-      if (arr[i + 1] < -50) continue;
-      // Drift east + wobble
+      if (arr[i + 2] < -50) continue; // z is height in local space
+      // Drift east (x) + wobble on y and z
       arr[i] += delta * 0.03; // east drift
-      arr[i + 1] += Math.sin(timeRef.current * 2 + i) * delta * 0.01;
-      arr[i + 2] += Math.sin(timeRef.current * 1.5 + i * 0.7) * delta * 0.005;
+      arr[i + 1] += Math.sin(timeRef.current * 1.5 + i * 0.7) * delta * 0.005;
+      arr[i + 2] += Math.sin(timeRef.current * 2 + i) * delta * 0.008; // height wobble
     }
     posAttr.needsUpdate = true;
   });
