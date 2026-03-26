@@ -90,22 +90,20 @@ export default function SandboxOverlay({ terrain, exaggeration, simState, render
 
     // Side faces — at boundaries between active and inactive pixels
     const addSideQuad = (
-      i1: number, j1: number, i2: number, j2: number,
+      fi1: number, fj1: number, fi2: number, fj2: number,
       idx: number
     ) => {
       const [cr, cg, cb] = getColor(waterDepth[idx], sandDepth[idx], fireIntensity[idx], plantDensity[idx], lavaDepth[idx]);
-      // Darken sides slightly
       const dr = cr * 0.7, dg = cg * 0.7, db = cb * 0.7;
 
       const topDepth = Math.max(waterDepth[idx], lavaDepth[idx]);
       const topZ = toZ(effectiveElev[idx], topDepth) + 0.02;
       const baseZ = toZ(effectiveElev[idx], 0);
 
-      const [x1, y1] = toXY(i1, j1);
-      const [x2, y2] = toXY(i2, j2);
+      const [x1, y1] = toXY(fi1, fj1);
+      const [x2, y2] = toXY(fi2, fj2);
 
       const base = positions.length / 3;
-      // top-left, top-right, bottom-left, bottom-right
       positions.push(x1, y1, topZ);  colors.push(dr, dg, db);
       positions.push(x2, y2, topZ);  colors.push(dr, dg, db);
       positions.push(x1, y1, baseZ); colors.push(dr, dg, db);
