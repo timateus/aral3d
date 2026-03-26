@@ -31,6 +31,7 @@ import { BookOpen } from 'lucide-react';
 import { SandboxHUD } from '@/components/SandboxHUD';
 import type { SandboxElement } from '@/lib/sandbox-simulation';
 import { createSandboxSim, addElementAt, stepSandboxSim, countActivePixels } from '@/lib/sandbox-simulation';
+import { spawnFallingCubes } from '@/components/SandboxOverlay';
 import type { SandboxSimState } from '@/lib/sandbox-simulation';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useUserLocation } from '@/hooks/useUserLocation';
@@ -489,7 +490,9 @@ const Index = () => {
     if (!sandboxSimRef.current) {
       sandboxSimRef.current = createSandboxSim(terrain);
     }
-    addElementAt(sandboxSimRef.current, row, col, sandboxElement, 2, sandboxBrushSize);
+    addElementAt(sandboxSimRef.current, row, col, sandboxElement, 4, sandboxBrushSize);
+    // Spawn dramatic falling cubes
+    spawnFallingCubes(row, col, sandboxElement, 12);
     setSandboxRenderKey(k => k + 1);
     setSandboxActivePixels(countActivePixels(sandboxSimRef.current));
     // Start animation if not running
