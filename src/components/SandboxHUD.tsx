@@ -77,7 +77,7 @@ export function SandboxHUD({
             value={[brushSize]}
             onValueChange={([v]) => onBrushSize(v)}
             min={1}
-            max={10}
+            max={20}
             step={1}
           />
         </div>

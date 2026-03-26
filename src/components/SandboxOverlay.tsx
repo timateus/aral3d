@@ -82,14 +82,14 @@ export default function SandboxOverlay({ terrain, exaggeration, simState, render
           b /= totalWeight;
         }
 
-        // Position: slightly above terrain (or on top of accumulated material)
+        // Position: above terrain, stacking visible
         const elev = effectiveElev[idx];
-        const topDepth = Math.max(w, l);
-        const normalized = (elev + topDepth - terrain.minElevation) / elevRange;
+        const stackHeight = s + Math.max(w, l) + p * 0.3; // All elements contribute to visible height
+        const normalized = (elev + stackHeight - terrain.minElevation) / elevRange;
 
         const x = (i / (width - 1) - 0.5) * 10;
         const y = (0.5 - j / (height - 1)) * 10 * (height / width);
-        const z = normalized * maxHeight + 0.02;
+        const z = normalized * maxHeight + 0.05;
 
         const vIdx = positions.length / 3;
         vertexMap.set(idx, vIdx);
