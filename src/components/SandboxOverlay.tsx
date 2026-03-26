@@ -171,7 +171,6 @@ export default function SandboxOverlay({ terrain, exaggeration, simState, render
             dustPositions.current[pi] = x + Math.sin(idx * 3 + p) * 0.05;
             dustPositions.current[pi + 1] = y + Math.cos(idx * 5 + p) * 0.05;
             dustPositions.current[pi + 2] = z + floatH * (maxHeight / 10);
-            dustPositions.current[pi + 2] = z + Math.cos(idx * 5 + p) * 0.05;
             const intensity = Math.min(d / 50, 1);
             dustColors.current[pi] = 0.78;
             dustColors.current[pi + 1] = 0.66 - intensity * 0.1;
