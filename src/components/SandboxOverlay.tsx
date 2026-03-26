@@ -85,7 +85,7 @@ export default function SandboxOverlay({ terrain, exaggeration, simState, render
           for (let layer = 0; layer < layers && wCount < MAX_INSTANCES; layer++) {
             const [x, y, z] = toWorldPos(i, j, elev + layer * 0.8, terrain, elevRange, maxHeight);
             _mat4.compose(
-              _pos.set(x, y + CUBE_SIZE * 0.5, z),
+              _pos.set(x, y, z + CUBE_SIZE * 0.5),
               _quat.identity(),
               _scale.set(1, 1, 1)
             );
@@ -102,7 +102,7 @@ export default function SandboxOverlay({ terrain, exaggeration, simState, render
           for (let layer = 0; layer < layers && iCount < MAX_INSTANCES; layer++) {
             const [x, y, z] = toWorldPos(i, j, elev + layer * 0.8, terrain, elevRange, maxHeight);
             _mat4.compose(
-              _pos.set(x, y + CUBE_SIZE * 0.5, z),
+              _pos.set(x, y, z + CUBE_SIZE * 0.5),
               _quat.identity(),
               _scale.set(1, 1, 1)
             );
@@ -118,9 +118,9 @@ export default function SandboxOverlay({ terrain, exaggeration, simState, render
           for (let layer = 0; layer < layers && sCount < MAX_INSTANCES; layer++) {
             const [x, y, z] = toWorldPos(i, j, elev + layer * 0.5, terrain, elevRange, maxHeight);
             _mat4.compose(
-              _pos.set(x, y + CUBE_SIZE * 0.3, z),
+              _pos.set(x, y, z + CUBE_SIZE * 0.3),
               _quat.identity(),
-              _scale.set(1.3, 0.6, 1.3) // flatter cubes for salt
+              _scale.set(1.3, 1.3, 0.6) // flatter cubes for salt (z is up)
             );
             saltRef.current?.setMatrixAt(sCount, _mat4);
             saltRef.current?.setColorAt(sCount, SALT_COLOR);
@@ -128,29 +128,31 @@ export default function SandboxOverlay({ terrain, exaggeration, simState, render
           }
         }
 
-        // Reeds - tall thin cylinders
+        // Reeds - tall thin cylinders (cylinder is Y-aligned, but we need Z-aligned in local space)
         if (re > 0.01 && rCount < MAX_INSTANCES) {
           const stalks = Math.min(Math.ceil(re / 3), 4);
+          const reedRotation = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0));
           for (let stalk = 0; stalk < stalks && rCount < MAX_INSTANCES; stalk++) {
             const offsetX = (Math.sin(idx * 7 + stalk * 3) * 0.5) * CUBE_SIZE * 2;
-            const offsetZ = (Math.cos(idx * 11 + stalk * 5) * 0.5) * CUBE_SIZE * 2;
+            const offsetY = (Math.cos(idx * 11 + stalk * 5) * 0.5) * CUBE_SIZE * 2;
             const reedH = REED_HEIGHT * (0.6 + re * 0.04);
             const [x, y, z] = toWorldPos(i, j, elev, terrain, elevRange, maxHeight);
-            // Stem
+            // Stem - rotate cylinder from Y-up to Z-up in local space
+            const stalkTilt = new THREE.Quaternion().setFromEuler(new THREE.Euler(
+              Math.PI / 2 + Math.sin(idx * 3 + stalk) * 0.15, 0,
+              Math.cos(idx * 5 + stalk) * 0.15
+            ));
             _mat4.compose(
-              _pos.set(x + offsetX, y + reedH * 0.5, z + offsetZ),
-              _quat.setFromEuler(new THREE.Euler(
-                Math.sin(idx * 3 + stalk) * 0.15, 0,
-                Math.cos(idx * 5 + stalk) * 0.15
-              )),
+              _pos.set(x + offsetX, y + offsetY, z + reedH * 0.5),
+              stalkTilt,
               _scale.set(1, reedH / REED_HEIGHT, 1)
             );
             reedRef.current?.setMatrixAt(rCount, _mat4);
             reedRef.current?.setColorAt(rCount, REED_COLOR.clone().multiplyScalar(0.8 + stalk * 0.1));
             // Top tuft
             _mat4.compose(
-              _pos.set(x + offsetX, y + reedH + 0.01, z + offsetZ),
-              _quat.identity(),
+              _pos.set(x + offsetX, y + offsetY, z + reedH + 0.01),
+              reedRotation,
               _scale.set(1 + re * 0.02, 1, 1 + re * 0.02)
             );
             reedTopRef.current?.setMatrixAt(rCount, _mat4);
@@ -159,7 +161,7 @@ export default function SandboxOverlay({ terrain, exaggeration, simState, render
           }
         }
 
-        // Dust particles - float above terrain
+        // Dust particles - float above terrain (z is up in local space)
         if (d > 0.1 && dCount < MAX_DUST) {
           const particles = Math.min(Math.ceil(d / 10), 3);
           for (let p = 0; p < particles && dCount < MAX_DUST; p++) {
@@ -167,7 +169,8 @@ export default function SandboxOverlay({ terrain, exaggeration, simState, render
             const [x, y, z] = toWorldPos(i, j, elev, terrain, elevRange, maxHeight);
             const pi = dCount * 3;
             dustPositions.current[pi] = x + Math.sin(idx * 3 + p) * 0.05;
-            dustPositions.current[pi + 1] = y + floatH * (maxHeight / 10);
+            dustPositions.current[pi + 1] = y + Math.cos(idx * 5 + p) * 0.05;
+            dustPositions.current[pi + 2] = z + floatH * (maxHeight / 10);
             dustPositions.current[pi + 2] = z + Math.cos(idx * 5 + p) * 0.05;
             const intensity = Math.min(d / 50, 1);
             dustColors.current[pi] = 0.78;
