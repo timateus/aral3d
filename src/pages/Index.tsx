@@ -129,6 +129,7 @@ const Index = () => {
   const [sandboxBrushSize, setSandboxBrushSize] = useState(3);
   const [sandboxPaused, setSandboxPaused] = useState(false);
   const [sandboxSpeed, setSandboxSpeed] = useState(5);
+  const [sandboxAmount, setSandboxAmount] = useState(10);
   const sandboxSimRef = useRef<SandboxSimState | null>(null);
   const [sandboxRenderKey, setSandboxRenderKey] = useState(0);
   const [sandboxActivePixels, setSandboxActivePixels] = useState(0);
@@ -489,7 +490,7 @@ const Index = () => {
     if (!sandboxSimRef.current) {
       sandboxSimRef.current = createSandboxSim(terrain);
     }
-    addElementAt(sandboxSimRef.current, row, col, sandboxElement, 2, sandboxBrushSize);
+    addElementAt(sandboxSimRef.current, row, col, sandboxElement, sandboxAmount, sandboxBrushSize);
     setSandboxRenderKey(k => k + 1);
     setSandboxActivePixels(countActivePixels(sandboxSimRef.current));
     // Start animation if not running
@@ -930,6 +931,8 @@ const Index = () => {
         onSelectElement={setSandboxElement}
         brushSize={sandboxBrushSize}
         onBrushSize={setSandboxBrushSize}
+        amount={sandboxAmount}
+        onAmountChange={setSandboxAmount}
         paused={sandboxPaused}
         onTogglePause={() => setSandboxPaused(p => !p)}
         onReset={handleSandboxReset}
