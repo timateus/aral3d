@@ -878,6 +878,7 @@ const Index = () => {
             setStarted(true);
             setSandboxMode(true);
             setShowWaterExtent(false);
+            setWaterLevel(-10);
           }}
         />
       )}
