@@ -88,8 +88,8 @@ export default function SandboxOverlay({ terrain, exaggeration, simState, render
         const normalized = (elev + topDepth - terrain.minElevation) / elevRange;
 
         const x = (i / (width - 1) - 0.5) * 10;
-        const z = -(0.5 - j / (height - 1)) * 10 * (height / width);
-        const y = normalized * maxHeight + 0.02;
+        const y = (0.5 - j / (height - 1)) * 10 * (height / width);
+        const z = normalized * maxHeight + 0.02;
 
         const vIdx = positions.length / 3;
         vertexMap.set(idx, vIdx);
