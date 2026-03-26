@@ -60,20 +60,22 @@ export function addElementAt(
   radius: number = 3,
 ): void {
   const { width, height } = state;
+  // Water uses a square footprint (cube look), others use circular falloff
+  const isWater = element === 'water';
   for (let dr = -radius; dr <= radius; dr++) {
     for (let dc = -radius; dc <= radius; dc++) {
       const r = row + dr;
       const c = col + dc;
       if (r < 0 || r >= height || c < 0 || c >= width) continue;
       const dist = Math.sqrt(dr * dr + dc * dc);
-      if (dist > radius) continue;
-      const falloff = 1 - dist / (radius + 1);
+      if (!isWater && dist > radius) continue;
+      const falloff = isWater ? 1 : 1 - dist / (radius + 1);
       const idx = r * width + c;
       const amt = amount * falloff;
 
       switch (element) {
         case 'water':
-          state.waterDepth[idx] += amt;
+          state.waterDepth[idx] += amount;
           break;
         case 'sand':
           state.sandDepth[idx] += amt;
