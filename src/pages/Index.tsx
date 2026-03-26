@@ -28,8 +28,10 @@ import DamToolPanel from '@/components/DamToolPanel';
 import CanalToolPanel from '@/components/CanalToolPanel';
 import WaterFlowPanel from '@/components/WaterFlowPanel';
 import { BookOpen } from 'lucide-react';
-import { SandboxHUD } from '@/components/SandboxMode';
-import type { ElementType } from '@/lib/sandbox-simulation';
+import { SandboxHUD } from '@/components/SandboxHUD';
+import type { SandboxElement } from '@/lib/sandbox-simulation';
+import { createSandboxSim, addElementAt, stepSandboxSim, countActivePixels } from '@/lib/sandbox-simulation';
+import type { SandboxSimState } from '@/lib/sandbox-simulation';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useUserLocation } from '@/hooks/useUserLocation';
 
