@@ -125,10 +125,14 @@ const Index = () => {
   const [agmarTourActive, setAgmarTourActive] = useState(false);
   const [agmarTourStep, setAgmarTourStep] = useState(0);
   const [sandboxMode, setSandboxMode] = useState(false);
-  const [sandboxElement, setSandboxElement] = useState<ElementType>('sand');
+  const [sandboxElement, setSandboxElement] = useState<SandboxElement>('water');
   const [sandboxBrushSize, setSandboxBrushSize] = useState(3);
   const [sandboxPaused, setSandboxPaused] = useState(false);
-  const [sandboxResetKey, setSandboxResetKey] = useState(0);
+  const [sandboxSpeed, setSandboxSpeed] = useState(5);
+  const sandboxSimRef = useRef<SandboxSimState | null>(null);
+  const [sandboxRenderKey, setSandboxRenderKey] = useState(0);
+  const [sandboxActivePixels, setSandboxActivePixels] = useState(0);
+  const sandboxAnimRef = useRef<number | null>(null);
   
   const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
   const [flowRenderKey, setFlowRenderKey] = useState(0);

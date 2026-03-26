@@ -117,10 +117,10 @@ interface TerrainViewerProps {
   showSalinity?: boolean;
   waterPlaygroundActive?: boolean;
   sandboxActive?: boolean;
-  sandboxElement?: import('@/lib/sandbox-simulation').ElementType;
-  sandboxBrushSize?: number;
-  sandboxPaused?: boolean;
-  sandboxResetKey?: number;
+  sandboxSimState?: SandboxSimState | null;
+  sandboxRenderKey?: number;
+  sandboxToolActive?: boolean;
+  onSandboxClick?: (row: number, col: number) => void;
 }
 
 function CameraAnimator({ started, skip }: { started: boolean; skip?: boolean }) {
