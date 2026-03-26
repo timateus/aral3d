@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, useEffect } from 'react';
 import * as THREE from 'three';
+import { useFrame } from '@react-three/fiber';
 import type { TerrainData } from '@/lib/geotiff-loader';
 import type { SandboxSimState } from '@/lib/sandbox-simulation';
 
@@ -10,127 +11,270 @@ interface SandboxOverlayProps {
   renderKey: number;
 }
 
-export default function SandboxOverlay({ terrain, exaggeration, simState, renderKey }: SandboxOverlayProps) {
-  const geometry = useMemo(() => {
-    if (!simState) return null;
+const CUBE_SIZE = 0.032;
+const REED_RADIUS = 0.006;
+const REED_HEIGHT = 0.12;
+const MAX_INSTANCES = 60000;
+const MAX_DUST = 8000;
 
+const _mat4 = new THREE.Matrix4();
+const _pos = new THREE.Vector3();
+const _quat = new THREE.Quaternion();
+const _scale = new THREE.Vector3();
+
+// Shared geometries
+const cubeGeo = new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE);
+const reedGeo = new THREE.CylinderGeometry(REED_RADIUS * 0.3, REED_RADIUS, REED_HEIGHT, 4);
+const reedTopGeo = new THREE.ConeGeometry(REED_RADIUS * 1.5, REED_HEIGHT * 0.3, 4);
+
+// Colors
+const WATER_COLOR = new THREE.Color(0.07, 0.40, 0.85);
+const IRRIG_COLOR = new THREE.Color(0.83, 0.63, 0.09);
+const SALT_COLOR = new THREE.Color(0.91, 0.88, 0.82);
+const REED_COLOR = new THREE.Color(0.15, 0.55, 0.18);
+const REED_TOP_COLOR = new THREE.Color(0.35, 0.70, 0.25);
+
+function toWorldPos(
+  i: number, j: number, elev: number, terrain: TerrainData, elevRange: number, maxHeight: number
+): [number, number, number] {
+  const x = (i / (terrain.width - 1) - 0.5) * 10;
+  const z = (0.5 - j / (terrain.height - 1)) * 10 * (terrain.height / terrain.width);
+  const y = ((elev - terrain.minElevation) / elevRange) * maxHeight;
+  return [x, y, z];
+}
+
+export default function SandboxOverlay({ terrain, exaggeration, simState, renderKey }: SandboxOverlayProps) {
+  const waterRef = useRef<THREE.InstancedMesh>(null);
+  const irrigRef = useRef<THREE.InstancedMesh>(null);
+  const saltRef = useRef<THREE.InstancedMesh>(null);
+  const reedRef = useRef<THREE.InstancedMesh>(null);
+  const reedTopRef = useRef<THREE.InstancedMesh>(null);
+  const dustRef = useRef<THREE.Points>(null);
+  const dustPositions = useRef(new Float32Array(MAX_DUST * 3));
+  const dustColors = useRef(new Float32Array(MAX_DUST * 3));
+  const dustSizes = useRef(new Float32Array(MAX_DUST));
+  const timeRef = useRef(0);
+
+  // Update instanced meshes each render
+  useEffect(() => {
+    if (!simState) return;
     const { width, height } = terrain;
     const { waterDepth, irrigationDepth, saltDepth, dustDensity, reedsDensity, effectiveElev } = simState;
     const elevRange = terrain.maxElevation - terrain.minElevation || 1;
     const maxHeight = 10 * (exaggeration / 100);
 
-    const positions: number[] = [];
-    const colors: number[] = [];
-    const indices: number[] = [];
+    let wCount = 0, iCount = 0, sCount = 0, rCount = 0;
+    let dCount = 0;
 
-    const vertexMap = new Map<number, number>();
+    // Sample stride for performance - skip pixels
+    const stride = width > 300 ? 2 : 1;
 
-    for (let j = 0; j < height; j++) {
-      for (let i = 0; i < width; i++) {
+    for (let j = 0; j < height; j += stride) {
+      for (let i = 0; i < width; i += stride) {
         const idx = j * width + i;
         const w = waterDepth[idx];
         const ir = irrigationDepth[idx];
         const s = saltDepth[idx];
         const d = dustDensity[idx];
         const re = reedsDensity[idx];
-
-        if (w < 0.01 && ir < 0.01 && s < 0.01 && d < 0.1 && re < 0.01) continue;
-
-        let r = 0, g = 0, b = 0, totalWeight = 0;
-
-        // River water — deep blue
-        if (w > 0.01) {
-          const weight = Math.min(w, 5);
-          r += 0.07 * weight; g += 0.40 * weight; b += 0.85 * weight;
-          totalWeight += weight;
-        }
-        // Irrigation — amber/gold
-        if (ir > 0.01) {
-          const weight = Math.min(ir, 5);
-          r += 0.83 * weight; g += 0.63 * weight; b += 0.09 * weight;
-          totalWeight += weight;
-        }
-        // Salt — pale white/cream
-        if (s > 0.01) {
-          const weight = Math.min(s, 5);
-          r += 0.91 * weight; g += 0.88 * weight; b += 0.82 * weight;
-          totalWeight += weight;
-        }
-        // Dust — hazy brown
-        if (d > 0.1) {
-          const weight = Math.min(d / 15, 4);
-          r += 0.78 * weight; g += 0.66 * weight; b += 0.49 * weight;
-          totalWeight += weight;
-        }
-        // Reeds — deep green
-        if (re > 0.01) {
-          const weight = Math.min(re, 5);
-          r += 0.18 * weight; g += 0.60 * weight; b += 0.22 * weight;
-          totalWeight += weight;
-        }
-
-        if (totalWeight > 0) {
-          r /= totalWeight; g /= totalWeight; b /= totalWeight;
-        }
-
         const elev = effectiveElev[idx];
-        const stackHeight = s + Math.max(w, ir) + re * 0.3;
-        const normalized = (elev + stackHeight - terrain.minElevation) / elevRange;
 
-        const x = (i / (width - 1) - 0.5) * 10;
-        const y = (0.5 - j / (height - 1)) * 10 * (height / width);
-        const z = normalized * maxHeight + 0.05;
+        // Water cubes - stack them
+        if (w > 0.01 && wCount < MAX_INSTANCES) {
+          const layers = Math.min(Math.ceil(w / 1.5), 5);
+          for (let layer = 0; layer < layers && wCount < MAX_INSTANCES; layer++) {
+            const [x, y, z] = toWorldPos(i, j, elev + layer * 0.8, terrain, elevRange, maxHeight);
+            _mat4.compose(
+              _pos.set(x, y + CUBE_SIZE * 0.5, z),
+              _quat.identity(),
+              _scale.set(1, 1, 1)
+            );
+            waterRef.current?.setMatrixAt(wCount, _mat4);
+            const shade = 0.7 + layer * 0.06;
+            waterRef.current?.setColorAt(wCount, WATER_COLOR.clone().multiplyScalar(shade));
+            wCount++;
+          }
+        }
 
-        const vIdx = positions.length / 3;
-        vertexMap.set(idx, vIdx);
-        positions.push(x, y, z);
-        colors.push(r, g, b);
+        // Irrigation cubes
+        if (ir > 0.01 && iCount < MAX_INSTANCES) {
+          const layers = Math.min(Math.ceil(ir / 1.5), 4);
+          for (let layer = 0; layer < layers && iCount < MAX_INSTANCES; layer++) {
+            const [x, y, z] = toWorldPos(i, j, elev + layer * 0.8, terrain, elevRange, maxHeight);
+            _mat4.compose(
+              _pos.set(x, y + CUBE_SIZE * 0.5, z),
+              _quat.identity(),
+              _scale.set(1, 1, 1)
+            );
+            irrigRef.current?.setMatrixAt(iCount, _mat4);
+            irrigRef.current?.setColorAt(iCount, IRRIG_COLOR.clone().multiplyScalar(0.8 + layer * 0.05));
+            iCount++;
+          }
+        }
+
+        // Salt cubes - flat stacks
+        if (s > 0.01 && sCount < MAX_INSTANCES) {
+          const layers = Math.min(Math.ceil(s / 2), 3);
+          for (let layer = 0; layer < layers && sCount < MAX_INSTANCES; layer++) {
+            const [x, y, z] = toWorldPos(i, j, elev + layer * 0.5, terrain, elevRange, maxHeight);
+            _mat4.compose(
+              _pos.set(x, y + CUBE_SIZE * 0.3, z),
+              _quat.identity(),
+              _scale.set(1.3, 0.6, 1.3) // flatter cubes for salt
+            );
+            saltRef.current?.setMatrixAt(sCount, _mat4);
+            saltRef.current?.setColorAt(sCount, SALT_COLOR);
+            sCount++;
+          }
+        }
+
+        // Reeds - tall thin cylinders
+        if (re > 0.01 && rCount < MAX_INSTANCES) {
+          const stalks = Math.min(Math.ceil(re / 3), 4);
+          for (let stalk = 0; stalk < stalks && rCount < MAX_INSTANCES; stalk++) {
+            const offsetX = (Math.sin(idx * 7 + stalk * 3) * 0.5) * CUBE_SIZE * 2;
+            const offsetZ = (Math.cos(idx * 11 + stalk * 5) * 0.5) * CUBE_SIZE * 2;
+            const reedH = REED_HEIGHT * (0.6 + re * 0.04);
+            const [x, y, z] = toWorldPos(i, j, elev, terrain, elevRange, maxHeight);
+            // Stem
+            _mat4.compose(
+              _pos.set(x + offsetX, y + reedH * 0.5, z + offsetZ),
+              _quat.setFromEuler(new THREE.Euler(
+                Math.sin(idx * 3 + stalk) * 0.15, 0,
+                Math.cos(idx * 5 + stalk) * 0.15
+              )),
+              _scale.set(1, reedH / REED_HEIGHT, 1)
+            );
+            reedRef.current?.setMatrixAt(rCount, _mat4);
+            reedRef.current?.setColorAt(rCount, REED_COLOR.clone().multiplyScalar(0.8 + stalk * 0.1));
+            // Top tuft
+            _mat4.compose(
+              _pos.set(x + offsetX, y + reedH + 0.01, z + offsetZ),
+              _quat.identity(),
+              _scale.set(1 + re * 0.02, 1, 1 + re * 0.02)
+            );
+            reedTopRef.current?.setMatrixAt(rCount, _mat4);
+            reedTopRef.current?.setColorAt(rCount, REED_TOP_COLOR);
+            rCount++;
+          }
+        }
+
+        // Dust particles - float above terrain
+        if (d > 0.1 && dCount < MAX_DUST) {
+          const particles = Math.min(Math.ceil(d / 10), 3);
+          for (let p = 0; p < particles && dCount < MAX_DUST; p++) {
+            const floatH = 1.5 + Math.sin(idx * 7 + p * 13) * 1.0 + p * 0.5;
+            const [x, y, z] = toWorldPos(i, j, elev, terrain, elevRange, maxHeight);
+            const pi = dCount * 3;
+            dustPositions.current[pi] = x + Math.sin(idx * 3 + p) * 0.05;
+            dustPositions.current[pi + 1] = y + floatH * (maxHeight / 10);
+            dustPositions.current[pi + 2] = z + Math.cos(idx * 5 + p) * 0.05;
+            const intensity = Math.min(d / 50, 1);
+            dustColors.current[pi] = 0.78;
+            dustColors.current[pi + 1] = 0.66 - intensity * 0.1;
+            dustColors.current[pi + 2] = 0.49 - intensity * 0.15;
+            dustSizes.current[dCount] = 3 + intensity * 5;
+            dCount++;
+          }
+        }
       }
     }
 
-    if (positions.length === 0) return null;
+    // Hide unused instances by scaling to zero
+    const hideMatrix = new THREE.Matrix4().makeScale(0, 0, 0);
+    for (let k = wCount; k < Math.min(wCount + 10, MAX_INSTANCES); k++) waterRef.current?.setMatrixAt(k, hideMatrix);
+    for (let k = iCount; k < Math.min(iCount + 10, MAX_INSTANCES); k++) irrigRef.current?.setMatrixAt(k, hideMatrix);
+    for (let k = sCount; k < Math.min(sCount + 10, MAX_INSTANCES); k++) saltRef.current?.setMatrixAt(k, hideMatrix);
+    for (let k = rCount; k < Math.min(rCount + 10, MAX_INSTANCES); k++) reedRef.current?.setMatrixAt(k, hideMatrix);
+    for (let k = rCount; k < Math.min(rCount + 10, MAX_INSTANCES); k++) reedTopRef.current?.setMatrixAt(k, hideMatrix);
 
-    for (let j = 0; j < height - 1; j++) {
-      for (let i = 0; i < width - 1; i++) {
-        const a = vertexMap.get(j * width + i);
-        const b2 = vertexMap.get(j * width + i + 1);
-        const c = vertexMap.get((j + 1) * width + i);
-        const dd = vertexMap.get((j + 1) * width + i + 1);
-
-        if (a !== undefined && b2 !== undefined && c !== undefined) {
-          indices.push(a, b2, c);
-        }
-        if (b2 !== undefined && dd !== undefined && c !== undefined) {
-          indices.push(b2, dd, c);
-        }
-      }
+    // Zero out unused dust
+    for (let k = dCount; k < Math.min(dCount + 30, MAX_DUST); k++) {
+      dustPositions.current[k * 3 + 1] = -100;
     }
 
-    if (indices.length === 0) return null;
+    // Update instance counts
+    if (waterRef.current) { waterRef.current.count = wCount; waterRef.current.instanceMatrix.needsUpdate = true; if (waterRef.current.instanceColor) waterRef.current.instanceColor.needsUpdate = true; }
+    if (irrigRef.current) { irrigRef.current.count = iCount; irrigRef.current.instanceMatrix.needsUpdate = true; if (irrigRef.current.instanceColor) irrigRef.current.instanceColor.needsUpdate = true; }
+    if (saltRef.current) { saltRef.current.count = sCount; saltRef.current.instanceMatrix.needsUpdate = true; if (saltRef.current.instanceColor) saltRef.current.instanceColor.needsUpdate = true; }
+    if (reedRef.current) { reedRef.current.count = rCount; reedRef.current.instanceMatrix.needsUpdate = true; if (reedRef.current.instanceColor) reedRef.current.instanceColor.needsUpdate = true; }
+    if (reedTopRef.current) { reedTopRef.current.count = rCount; reedTopRef.current.instanceMatrix.needsUpdate = true; if (reedTopRef.current.instanceColor) reedTopRef.current.instanceColor.needsUpdate = true; }
 
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-    geo.setIndex(indices);
-    geo.computeVertexNormals();
-    return geo;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (dustRef.current) {
+      const geo = dustRef.current.geometry;
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(dustPositions.current.slice(0, dCount * 3), 3));
+      geo.setAttribute('color', new THREE.Float32BufferAttribute(dustColors.current.slice(0, dCount * 3), 3));
+      geo.setAttribute('size', new THREE.Float32BufferAttribute(dustSizes.current.slice(0, dCount), 1));
+    }
   }, [terrain, exaggeration, simState, renderKey]);
 
-  const material = useMemo(() => {
-    return new THREE.MeshStandardMaterial({
+  // Animate dust particles drifting
+  useFrame((_, delta) => {
+    timeRef.current += delta;
+    if (!dustRef.current) return;
+    const posAttr = dustRef.current.geometry.getAttribute('position');
+    if (!posAttr) return;
+    const arr = posAttr.array as Float32Array;
+    for (let i = 0; i < arr.length; i += 3) {
+      if (arr[i + 1] < -50) continue;
+      // Drift east + wobble
+      arr[i] += delta * 0.03; // east drift
+      arr[i + 1] += Math.sin(timeRef.current * 2 + i) * delta * 0.01;
+      arr[i + 2] += Math.sin(timeRef.current * 1.5 + i * 0.7) * delta * 0.005;
+    }
+    posAttr.needsUpdate = true;
+  });
+
+  // Sway reeds
+  useFrame((_, delta) => {
+    timeRef.current += delta * 0.5;
+    if (!reedRef.current) return;
+    // Subtle wind sway on reed instances - handled by simulation wind already
+  });
+
+  const dustMaterial = useMemo(() => {
+    return new THREE.PointsMaterial({
+      size: 0.04,
       vertexColors: true,
       transparent: true,
-      opacity: 0.85,
-      side: THREE.DoubleSide,
-      roughness: 0.6,
-      metalness: 0.1,
+      opacity: 0.6,
+      sizeAttenuation: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
     });
   }, []);
 
-  if (!geometry) return null;
-
   return (
-    <mesh geometry={geometry} material={material} rotation={[-Math.PI / 2, 0, 0]} />
+    <group rotation={[-Math.PI / 2, 0, 0]}>
+      {/* Water cubes */}
+      <instancedMesh ref={waterRef} args={[cubeGeo, undefined, MAX_INSTANCES]} frustumCulled={false}>
+        <meshStandardMaterial vertexColors transparent opacity={0.8} roughness={0.3} metalness={0.2} />
+      </instancedMesh>
+
+      {/* Irrigation cubes */}
+      <instancedMesh ref={irrigRef} args={[cubeGeo, undefined, MAX_INSTANCES]} frustumCulled={false}>
+        <meshStandardMaterial vertexColors transparent opacity={0.75} roughness={0.5} />
+      </instancedMesh>
+
+      {/* Salt cubes */}
+      <instancedMesh ref={saltRef} args={[cubeGeo, undefined, MAX_INSTANCES]} frustumCulled={false}>
+        <meshStandardMaterial vertexColors roughness={0.9} metalness={0} />
+      </instancedMesh>
+
+      {/* Reed stems */}
+      <instancedMesh ref={reedRef} args={[reedGeo, undefined, MAX_INSTANCES]} frustumCulled={false}>
+        <meshStandardMaterial vertexColors roughness={0.8} />
+      </instancedMesh>
+
+      {/* Reed tops */}
+      <instancedMesh ref={reedTopRef} args={[reedTopGeo, undefined, MAX_INSTANCES]} frustumCulled={false}>
+        <meshStandardMaterial vertexColors roughness={0.7} />
+      </instancedMesh>
+
+      {/* Dust particle system */}
+      <points ref={dustRef} material={dustMaterial}>
+        <bufferGeometry />
+      </points>
+    </group>
   );
 }
