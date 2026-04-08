@@ -9,7 +9,7 @@ interface WaterwayFeature {
   name: string | null;
   type: string;
   width: number | null;
-  segments: [number, number][][]; // array of line strings, each is array of [lon, lat]
+  segments: [number, number][][]; // [lon, lat][][]
 }
 
 interface WaterwaysLayerProps {
@@ -30,32 +30,40 @@ const TYPE_COLORS: Record<string, string> = {
   default: '#6b7280',
 };
 
-/** Sample terrain elevation at a geo coordinate and return [x, y, z] in mesh space */
+/** Same projection as GeoFeatures.geoToMeshPos */
 function geoToMeshPos(
-  lon: number, lat: number,
+  lat: number, lon: number,
   bounds: { minLon: number; maxLon: number; minLat: number; maxLat: number },
-  meshW: number, meshH: number,
   terrain: TerrainData,
   exaggeration: number,
-): [number, number, number] {
+  meshWidth: number, meshHeight: number,
+): [number, number, number] | null {
   const nx = (lon - bounds.minLon) / (bounds.maxLon - bounds.minLon);
   const ny = (lat - bounds.minLat) / (bounds.maxLat - bounds.minLat);
-  const x = (nx - 0.5) * meshW;
-  const z = -(ny - 0.5) * meshH;
 
-  // Sample elevation from terrain grid
-  const col = Math.round(nx * (terrain.width - 1));
-  const row = Math.round((1 - ny) * (terrain.height - 1));
-  let y = 0.12; // fallback above flat plane
-  if (col >= 0 && col < terrain.width && row >= 0 && row < terrain.height) {
-    const elev = terrain.elevations[row * terrain.width + col];
-    if (elev > -9000) {
-      const scale = meshW / terrain.width;
-      y = elev * scale * exaggeration + 0.03; // slight offset above terrain surface
+  const x = (nx - 0.5) * meshWidth;
+  const planeY = (ny - 0.5) * meshHeight;
+
+  const inBounds = nx >= 0 && nx <= 1 && ny >= 0 && ny <= 1;
+  let zHeight = 0;
+
+  if (inBounds) {
+    const pixelX = Math.floor(nx * (terrain.width - 1));
+    const pixelY = Math.floor((1 - ny) * (terrain.height - 1));
+    const idx = pixelY * terrain.width + pixelX;
+    let elev = terrain.elevations[idx] || terrain.minElevation;
+    if (terrain.noDataValue !== null && elev === terrain.noDataValue) {
+      elev = terrain.minElevation;
     }
+    const elevRange = terrain.maxElevation - terrain.minElevation || 1;
+    const normalized = (elev - terrain.minElevation) / elevRange;
+    const maxMeshHeight = 10 * (exaggeration / 100);
+    zHeight = normalized * maxMeshHeight;
+  } else {
+    return null;
   }
 
-  return [x, y, z];
+  return [x, zHeight + 0.03, -planeY];
 }
 
 const WaterwaysLayer = ({ terrain, exaggeration, typeFilter }: WaterwaysLayerProps) => {
@@ -115,13 +123,17 @@ const WaterwaysLayer = ({ terrain, exaggeration, typeFilter }: WaterwaysLayerPro
 
       for (const seg of f.segments) {
         for (let i = 0; i < seg.length - 1; i++) {
-          const [x1, y1, z1] = geoToMeshPos(seg[i][0], seg[i][1], bounds, meshWidth, meshHeight, terrain, exaggeration);
-          const [x2, y2, z2] = geoToMeshPos(seg[i + 1][0], seg[i + 1][1], bounds, meshWidth, meshHeight, terrain, exaggeration);
-          positions.push(x1, y1, z1, x2, y2, z2);
+          // GeoJSON is [lon, lat]
+          const p1 = geoToMeshPos(seg[i][1], seg[i][0], bounds, terrain, exaggeration, meshWidth, meshHeight);
+          const p2 = geoToMeshPos(seg[i + 1][1], seg[i + 1][0], bounds, terrain, exaggeration, meshWidth, meshHeight);
+          if (!p1 || !p2) continue;
+          positions.push(p1[0], p1[1], p1[2], p2[0], p2[1], p2[2]);
           colors.push(color.r, color.g, color.b, color.r, color.g, color.b);
         }
       }
     }
+
+    if (positions.length === 0) return null;
 
     const geom = new THREE.BufferGeometry();
     geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
@@ -130,7 +142,7 @@ const WaterwaysLayer = ({ terrain, exaggeration, typeFilter }: WaterwaysLayerPro
     return geom;
   }, [filtered, bounds, meshWidth, meshHeight, terrain, exaggeration]);
 
-  // Click handler: use raycasted point to find nearest named feature
+  // Click: find nearest named feature
   const handleClick = useCallback((e: any) => {
     e.stopPropagation();
     if (filtered.length === 0) return;
@@ -145,11 +157,11 @@ const WaterwaysLayer = ({ terrain, exaggeration, typeFilter }: WaterwaysLayerPro
     for (let fi = 0; fi < filtered.length; fi++) {
       const f = filtered[fi];
       for (const seg of f.segments) {
-        // Sample every few vertices for perf
-        const step = Math.max(1, Math.floor(seg.length / 20));
+        const step = Math.max(1, Math.floor(seg.length / 10));
         for (let i = 0; i < seg.length; i += step) {
-          const [x, y, z] = geoToMeshPos(seg[i][0], seg[i][1], bounds, meshWidth, meshHeight, terrain, exaggeration);
-          const d = (x - px) ** 2 + (y - py) ** 2 + (z - pz) ** 2;
+          const p = geoToMeshPos(seg[i][1], seg[i][0], bounds, terrain, exaggeration, meshWidth, meshHeight);
+          if (!p) continue;
+          const d = (p[0] - px) ** 2 + (p[1] - py) ** 2 + (p[2] - pz) ** 2;
           if (d < bestDist) {
             bestDist = d;
             bestIdx = fi;
@@ -158,34 +170,32 @@ const WaterwaysLayer = ({ terrain, exaggeration, typeFilter }: WaterwaysLayerPro
       }
     }
 
-    if (bestDist < 0.25 && bestIdx >= 0) {
+    if (bestDist < 0.15 && bestIdx >= 0) {
       setSelectedIdx(prev => prev === bestIdx ? null : bestIdx);
     } else {
       setSelectedIdx(null);
     }
   }, [filtered, bounds, meshWidth, meshHeight, terrain, exaggeration]);
 
-  // Selected feature label position
   const selectedLabel = useMemo(() => {
     if (selectedIdx === null || !filtered[selectedIdx]) return null;
     const f = filtered[selectedIdx];
     const seg = f.segments[0];
     if (!seg || seg.length === 0) return null;
     const mid = seg[Math.floor(seg.length / 2)];
-    const [x, y, z] = geoToMeshPos(mid[0], mid[1], bounds, meshWidth, meshHeight, terrain, exaggeration);
-    return { x, y: y + 0.2, z, name: f.name, type: f.type, width: f.width };
+    const p = geoToMeshPos(mid[1], mid[0], bounds, terrain, exaggeration, meshWidth, meshHeight);
+    if (!p) return null;
+    return { x: p[0], y: p[1] + 0.15, z: p[2], name: f.name, type: f.type, width: f.width };
   }, [selectedIdx, filtered, bounds, meshWidth, meshHeight, terrain, exaggeration]);
 
   if (!lineGeometry) return null;
 
   return (
     <group>
-      {/* Invisible terrain-following click surface — use the terrain mesh itself via onClick on the lineSegments */}
       <lineSegments geometry={lineGeometry} onClick={handleClick}>
         <lineBasicMaterial vertexColors transparent opacity={0.9} />
       </lineSegments>
 
-      {/* Selected label */}
       {selectedLabel && (
         <group position={[selectedLabel.x, selectedLabel.y, selectedLabel.z]}>
           <Html center distanceFactor={10} style={{ pointerEvents: 'none' }}>
