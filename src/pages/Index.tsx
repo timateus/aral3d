@@ -75,7 +75,8 @@ const Index = () => {
   const [showGroundwater, setShowGroundwater] = useState(false);
   const [showPrecipitation, setShowPrecipitation] = useState(false);
   const [showSalinity, setShowSalinity] = useState(false);
-  const [showEnvironmentalIssues, setShowEnvironmentalIssues] = useState(false);
+  const [showWaterways, setShowWaterways] = useState(false);
+  const [waterwayTypeFilter, setWaterwayTypeFilter] = useState<'all' | 'canal' | 'river' | 'stream' | 'drain' | 'ditch' | 'dam'>('all');
   const [waterExtentYear, setWaterExtentYear] = useState(1960);
   
   const [started, setStarted] = useState(false);
@@ -849,7 +850,8 @@ const Index = () => {
             sandboxRenderKey={sandboxRenderKey}
             sandboxToolActive={sandboxMode}
             onSandboxClick={handleSandboxClick}
-            showEnvironmentalIssues={showEnvironmentalIssues}
+            showWaterways={showWaterways}
+            waterwayTypeFilter={waterwayTypeFilter}
           />
         )}
         {!terrain && !loading && error && (
@@ -1112,8 +1114,10 @@ const Index = () => {
             onToggleGroundwater={setShowGroundwater}
             showPrecipitation={showPrecipitation}
             onTogglePrecipitation={setShowPrecipitation}
-            showEnvironmentalIssues={showEnvironmentalIssues}
-            onToggleEnvironmentalIssues={setShowEnvironmentalIssues}
+            showWaterways={showWaterways}
+            onToggleWaterways={setShowWaterways}
+            waterwayTypeFilter={waterwayTypeFilter}
+            onWaterwayTypeFilterChange={setWaterwayTypeFilter}
           />
           {terrain && (
             <WaterVolumeDisplay
