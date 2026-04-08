@@ -50,9 +50,11 @@ interface LegendProps {
   onToggleGroundwater: (val: boolean) => void;
   showPrecipitation: boolean;
   onTogglePrecipitation: (val: boolean) => void;
+  showEnvironmentalIssues: boolean;
+  onToggleEnvironmentalIssues: (val: boolean) => void;
 }
 
-const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin, show21stBasin, onToggle21stBasin, showKhorezm, onToggleKhorezm, showWatershed, onToggleWatershed, showLandcover, onToggleLandcover, landcoverVisibleClasses, landcoverAvailableClasses, onLandcoverVisibleClassesChange, showLakes, onToggleLakes, show21cLakes, onToggle21cLakes, showPopDensity, onTogglePopDensity, popHexSize, onPopHexSizeChange, popHexHeight, onPopHexHeightChange, showMigration, onToggleMigration, showChoropleth, onToggleChoropleth, choroplethIndicator, onChoroplethIndicatorChange, choroplethExaggeration, onChoroplethExaggerationChange, showSchools, onToggleSchools, showVocabulary, onToggleVocabulary, showGroundwater, onToggleGroundwater, showPrecipitation, onTogglePrecipitation }: LegendProps) => {
+const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin, show21stBasin, onToggle21stBasin, showKhorezm, onToggleKhorezm, showWatershed, onToggleWatershed, showLandcover, onToggleLandcover, landcoverVisibleClasses, landcoverAvailableClasses, onLandcoverVisibleClassesChange, showLakes, onToggleLakes, show21cLakes, onToggle21cLakes, showPopDensity, onTogglePopDensity, popHexSize, onPopHexSizeChange, popHexHeight, onPopHexHeightChange, showMigration, onToggleMigration, showChoropleth, onToggleChoropleth, choroplethIndicator, onChoroplethIndicatorChange, choroplethExaggeration, onChoroplethExaggerationChange, showSchools, onToggleSchools, showVocabulary, onToggleVocabulary, showGroundwater, onToggleGroundwater, showPrecipitation, onTogglePrecipitation, showEnvironmentalIssues, onToggleEnvironmentalIssues }: LegendProps) => {
   // Only show classes present in data
   const lcClasses = landcoverAvailableClasses ?? [];
 
@@ -314,6 +316,12 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
       <div className="flex items-center justify-between">
         <span className="text-xs text-muted-foreground">Precipitation</span>
         <Switch checked={showPrecipitation} onCheckedChange={onTogglePrecipitation} />
+      </div>
+
+      {/* Environmental Issues */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-muted-foreground">Environmental Issues</span>
+        <Switch checked={showEnvironmentalIssues} onCheckedChange={onToggleEnvironmentalIssues} />
       </div>
     </div>
   );

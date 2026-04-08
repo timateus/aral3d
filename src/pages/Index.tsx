@@ -75,6 +75,7 @@ const Index = () => {
   const [showGroundwater, setShowGroundwater] = useState(false);
   const [showPrecipitation, setShowPrecipitation] = useState(false);
   const [showSalinity, setShowSalinity] = useState(false);
+  const [showEnvironmentalIssues, setShowEnvironmentalIssues] = useState(false);
   const [waterExtentYear, setWaterExtentYear] = useState(1960);
   
   const [started, setStarted] = useState(false);
@@ -848,6 +849,7 @@ const Index = () => {
             sandboxRenderKey={sandboxRenderKey}
             sandboxToolActive={sandboxMode}
             onSandboxClick={handleSandboxClick}
+            showEnvironmentalIssues={showEnvironmentalIssues}
           />
         )}
         {!terrain && !loading && error && (
@@ -1110,6 +1112,8 @@ const Index = () => {
             onToggleGroundwater={setShowGroundwater}
             showPrecipitation={showPrecipitation}
             onTogglePrecipitation={setShowPrecipitation}
+            showEnvironmentalIssues={showEnvironmentalIssues}
+            onToggleEnvironmentalIssues={setShowEnvironmentalIssues}
           />
           {terrain && (
             <WaterVolumeDisplay
