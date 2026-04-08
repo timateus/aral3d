@@ -376,6 +376,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
               {showGroundwater && <GroundwaterLayer terrain={terrain} exaggeration={exaggeration} />}
               {showPrecipitation && <PrecipitationLayer terrain={terrain} exaggeration={exaggeration} />}
               {showSalinity && <SalinityLayer terrain={terrain} exaggeration={exaggeration} />}
+              {showEnvironmentalIssues && <EnvironmentalIssuesLayer terrain={terrain} exaggeration={exaggeration} year={waterExtentYear} />}
               <WaterPlaygroundOverlay terrain={terrain} exaggeration={exaggeration} active={!!waterPlaygroundActive} />
               {waterPlaygroundActive && <NoahsArk terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} />}
             </>
