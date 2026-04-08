@@ -317,6 +317,12 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
         <span className="text-xs text-muted-foreground">Precipitation</span>
         <Switch checked={showPrecipitation} onCheckedChange={onTogglePrecipitation} />
       </div>
+
+      {/* Environmental Issues */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-muted-foreground">Environmental Issues</span>
+        <Switch checked={showEnvironmentalIssues} onCheckedChange={onToggleEnvironmentalIssues} />
+      </div>
     </div>
   );
 };
