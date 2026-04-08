@@ -50,11 +50,13 @@ interface LegendProps {
   onToggleGroundwater: (val: boolean) => void;
   showPrecipitation: boolean;
   onTogglePrecipitation: (val: boolean) => void;
-  showEnvironmentalIssues: boolean;
-  onToggleEnvironmentalIssues: (val: boolean) => void;
+  showWaterways: boolean;
+  onToggleWaterways: (val: boolean) => void;
+  waterwayTypeFilter: string;
+  onWaterwayTypeFilterChange: (val: any) => void;
 }
 
-const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin, show21stBasin, onToggle21stBasin, showKhorezm, onToggleKhorezm, showWatershed, onToggleWatershed, showLandcover, onToggleLandcover, landcoverVisibleClasses, landcoverAvailableClasses, onLandcoverVisibleClassesChange, showLakes, onToggleLakes, show21cLakes, onToggle21cLakes, showPopDensity, onTogglePopDensity, popHexSize, onPopHexSizeChange, popHexHeight, onPopHexHeightChange, showMigration, onToggleMigration, showChoropleth, onToggleChoropleth, choroplethIndicator, onChoroplethIndicatorChange, choroplethExaggeration, onChoroplethExaggerationChange, showSchools, onToggleSchools, showVocabulary, onToggleVocabulary, showGroundwater, onToggleGroundwater, showPrecipitation, onTogglePrecipitation, showEnvironmentalIssues, onToggleEnvironmentalIssues }: LegendProps) => {
+const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin, show21stBasin, onToggle21stBasin, showKhorezm, onToggleKhorezm, showWatershed, onToggleWatershed, showLandcover, onToggleLandcover, landcoverVisibleClasses, landcoverAvailableClasses, onLandcoverVisibleClassesChange, showLakes, onToggleLakes, show21cLakes, onToggle21cLakes, showPopDensity, onTogglePopDensity, popHexSize, onPopHexSizeChange, popHexHeight, onPopHexHeightChange, showMigration, onToggleMigration, showChoropleth, onToggleChoropleth, choroplethIndicator, onChoroplethIndicatorChange, choroplethExaggeration, onChoroplethExaggerationChange, showSchools, onToggleSchools, showVocabulary, onToggleVocabulary, showGroundwater, onToggleGroundwater, showPrecipitation, onTogglePrecipitation, showWaterways, onToggleWaterways, waterwayTypeFilter, onWaterwayTypeFilterChange }: LegendProps) => {
   // Only show classes present in data
   const lcClasses = landcoverAvailableClasses ?? [];
 
@@ -318,11 +320,29 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
         <Switch checked={showPrecipitation} onCheckedChange={onTogglePrecipitation} />
       </div>
 
-      {/* Environmental Issues */}
+      {/* Waterways */}
       <div className="flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">Environmental Issues</span>
-        <Switch checked={showEnvironmentalIssues} onCheckedChange={onToggleEnvironmentalIssues} />
+        <span className="text-xs text-muted-foreground">Waterways</span>
+        <Switch checked={showWaterways} onCheckedChange={onToggleWaterways} />
       </div>
+      {showWaterways && (
+        <div className="ml-2">
+          <Select value={waterwayTypeFilter} onValueChange={onWaterwayTypeFilterChange}>
+            <SelectTrigger className="h-7 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="canal">Canals</SelectItem>
+              <SelectItem value="river">Rivers</SelectItem>
+              <SelectItem value="stream">Streams</SelectItem>
+              <SelectItem value="drain">Drains</SelectItem>
+              <SelectItem value="ditch">Ditches</SelectItem>
+              <SelectItem value="dam">Dams</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
     </div>
   );
 };
