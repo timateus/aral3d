@@ -48,7 +48,7 @@ function geoToMeshPos(
   const row = Math.round((1 - ny) * (terrain.height - 1));
   let y = 0.12; // fallback above flat plane
   if (col >= 0 && col < terrain.width && row >= 0 && row < terrain.height) {
-    const elev = terrain.data[row * terrain.width + col];
+    const elev = terrain.elevations[row * terrain.width + col];
     if (elev > -9000) {
       const scale = meshW / terrain.width;
       y = elev * scale * exaggeration + 0.03; // slight offset above terrain surface
