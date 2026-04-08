@@ -26,6 +26,7 @@ import GameMode from './GameMode';
 import BowlWorld from './BowlWorld';
 import AryqWorld from './AryqWorld';
 import SandboxOverlay from './SandboxOverlay';
+import EnvironmentalIssuesLayer from './EnvironmentalIssuesLayer';
 import type { SandboxSimState } from '@/lib/sandbox-simulation';
 import { TerrainData } from '@/lib/geotiff-loader';
 import type { ScenarioAction } from '@/types/scenario';
@@ -121,6 +122,7 @@ interface TerrainViewerProps {
   sandboxRenderKey?: number;
   sandboxToolActive?: boolean;
   onSandboxClick?: (row: number, col: number) => void;
+  showEnvironmentalIssues?: boolean;
 }
 
 function CameraAnimator({ started, skip }: { started: boolean; skip?: boolean }) {
