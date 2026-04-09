@@ -56,6 +56,10 @@ function geoToMeshPos(
   return [x, zHeight, -planeY];
 }
 
+// Module-level cache
+const _cachedExtents = new Map<number, GeoJSONCollection>();
+let _extentsFetched = false;
+
 const WaterExtentLayer = ({ terrain, exaggeration, year }: WaterExtentLayerProps) => {
   const bounds = terrain.bounds;
   const w = terrain.width;
@@ -63,13 +67,19 @@ const WaterExtentLayer = ({ terrain, exaggeration, year }: WaterExtentLayerProps
   const meshWidth = 10;
   const meshHeight = 10 * (h / w);
 
-  const [datasets, setDatasets] = useState<Map<number, GeoJSONCollection>>(new Map());
+  const [datasets, setDatasets] = useState<Map<number, GeoJSONCollection>>(_cachedExtents.size > 0 ? new Map(_cachedExtents) : new Map());
 
   useEffect(() => {
+    if (_extentsFetched) { if (_cachedExtents.size > 0) setDatasets(new Map(_cachedExtents)); return; }
+    _extentsFetched = true;
     for (const yd of YEAR_DATA) {
+      if (_cachedExtents.has(yd.year)) continue;
       fetch(yd.file)
         .then((r) => r.json())
-        .then((data) => setDatasets((prev) => new Map(prev).set(yd.year, data)))
+        .then((data) => {
+          _cachedExtents.set(yd.year, data);
+          setDatasets((prev) => new Map(prev).set(yd.year, data));
+        })
         .catch((err) => console.warn(`Failed to load ${yd.file}:`, err));
     }
   }, []);
