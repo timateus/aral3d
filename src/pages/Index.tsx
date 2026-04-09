@@ -89,6 +89,43 @@ const Index = () => {
   const markLayerReady = useCallback((layer: string) => {
     setLoadingLayers(prev => { const n = new Set(prev); n.delete(layer); return n; });
   }, []);
+
+  // Track loading state for heavy layers
+  useEffect(() => {
+    const checks: { show: boolean; layer: string; isCached: () => boolean }[] = [
+      { show: showWaterways, layer: 'waterways', isCached: isWaterwaysCached },
+      { show: showLandcover, layer: 'landcover', isCached: isLandcoverCached },
+      { show: showChoropleth, layer: 'choropleth', isCached: isChoroplethCached },
+      { show: showPopDensity, layer: 'popDensity', isCached: () => false }, // popDensity loads its own tiff
+    ];
+    
+    const pending: string[] = [];
+    for (const c of checks) {
+      if (c.show && !c.isCached()) {
+        markLayerLoading(c.layer);
+        pending.push(c.layer);
+      } else {
+        markLayerReady(c.layer);
+      }
+    }
+    
+    if (pending.length === 0) return;
+    
+    // Poll until caches are ready
+    const interval = setInterval(() => {
+      let allDone = true;
+      for (const c of checks) {
+        if (c.show && c.isCached()) {
+          markLayerReady(c.layer);
+        } else if (c.show && !c.isCached()) {
+          allDone = false;
+        }
+      }
+      if (allDone) clearInterval(interval);
+    }, 200);
+    
+    return () => clearInterval(interval);
+  }, [showWaterways, showLandcover, showChoropleth, showPopDensity, markLayerLoading, markLayerReady]);
   
   const [started, setStarted] = useState(false);
   const [recording, setRecording] = useState(false);
