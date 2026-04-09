@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import * as THREE from 'three';
 import { Html } from '@react-three/drei';
+import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js';
+import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js';
+import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
+import { useThree } from '@react-three/fiber';
 import { TerrainData } from '@/lib/geotiff-loader';
 
 export type WaterwayTypeFilter = 'all' | 'canal' | 'river' | 'stream' | 'drain' | 'ditch' | 'dam';
@@ -167,8 +171,10 @@ const WaterwaysLayer = ({ terrain, exaggeration, typeFilter }: WaterwaysLayerPro
     return { positions: new Float32Array(positions), colors: new Float32Array(colors), elevIndices };
   }, [filtered, bounds, meshWidth, meshHeight, terrain.width, terrain.height]);
 
-  // Apply elevation - only recalc Y values when exaggeration changes
-  const lineGeometry = useMemo(() => {
+  // Apply elevation and build fat line geometry
+  const { size } = useThree();
+
+  const fatLines = useMemo(() => {
     if (!flatPositions) return null;
 
     const { positions, colors, elevIndices } = flatPositions;
@@ -187,9 +193,37 @@ const WaterwaysLayer = ({ terrain, exaggeration, typeFilter }: WaterwaysLayerPro
       posArray[v * 3 + 1] = normalized * maxMeshHeight + 0.03;
     }
 
+    const geo = new LineSegmentsGeometry();
+    geo.setPositions(posArray);
+    geo.setColors(colors);
+
+    const mat = new LineMaterial({
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.9,
+      linewidth: 2, // pixels
+      resolution: new THREE.Vector2(size.width, size.height),
+    });
+
+    return { geo, mat };
+  }, [flatPositions, exaggeration, terrain.elevations, terrain.minElevation, terrain.maxElevation, terrain.noDataValue, size.width, size.height]);
+
+  // Also keep a thin invisible lineSegments for click raycasting (Line2 doesn't raycast well)
+  const lineGeometry = useMemo(() => {
+    if (!flatPositions) return null;
+    const { positions, elevIndices } = flatPositions;
+    const elevRange = terrain.maxElevation - terrain.minElevation || 1;
+    const maxMeshHeight = 10 * (exaggeration / 100);
+    const posArray = new Float32Array(positions);
+    for (let v = 0; v < elevIndices.length; v++) {
+      const idx = elevIndices[v];
+      let elev = terrain.elevations[idx] || terrain.minElevation;
+      if (terrain.noDataValue !== null && elev === terrain.noDataValue) elev = terrain.minElevation;
+      const normalized = (elev - terrain.minElevation) / elevRange;
+      posArray[v * 3 + 1] = normalized * maxMeshHeight + 0.03;
+    }
     const geom = new THREE.BufferGeometry();
     geom.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-    geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     return geom;
   }, [flatPositions, exaggeration, terrain.elevations, terrain.minElevation, terrain.maxElevation, terrain.noDataValue]);
 
@@ -240,13 +274,20 @@ const WaterwaysLayer = ({ terrain, exaggeration, typeFilter }: WaterwaysLayerPro
     return { x: p[0], y: p[1] + 0.15, z: p[2], name: f.name, type: f.type, width: f.width };
   }, [selectedIdx, filtered, bounds, meshWidth, meshHeight, terrain, exaggeration]);
 
-  if (!lineGeometry) return null;
+  if (!fatLines && !lineGeometry) return null;
 
   return (
     <group>
-      <lineSegments geometry={lineGeometry} onClick={handleClick}>
-        <lineBasicMaterial vertexColors transparent opacity={0.9} />
-      </lineSegments>
+      {/* Fat visible lines */}
+      {fatLines && (
+        <primitive object={new LineSegments2(fatLines.geo, fatLines.mat)} />
+      )}
+      {/* Invisible clickable lines for raycasting */}
+      {lineGeometry && (
+        <lineSegments geometry={lineGeometry} onClick={handleClick}>
+          <lineBasicMaterial transparent opacity={0} depthWrite={false} />
+        </lineSegments>
+      )}
 
       {selectedLabel && (
         <group position={[selectedLabel.x, selectedLabel.y, selectedLabel.z]}>
