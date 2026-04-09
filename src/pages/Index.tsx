@@ -11,7 +11,7 @@ import IntroOverlay from '@/components/IntroOverlay';
 import ScenarioChat from '@/components/ScenarioChat';
 import WaterVolumeDisplay from '@/components/WaterVolumeDisplay';
 import DataPanel, { AralAnnual, SEA_SERIES } from '@/components/DataPanel';
-import { Camera, Video, BarChart3, Navigation, MapPin, Loader2, Crosshair, Download, Waves, Gamepad2, Link2, ArrowLeft } from 'lucide-react';
+import { Camera, Video, BarChart3, Navigation, MapPin, Loader2, Crosshair, Download, Waves, Gamepad2, Link2, ArrowLeft, Circle } from 'lucide-react';
 import { exportTerrainSTL } from '@/lib/stl-exporter';
 import GameMissionHUD from '@/components/GameMissionHUD';
 import { isWaterwaysCached } from '@/components/WaterwaysLayer';
@@ -871,11 +871,59 @@ const Index = () => {
 
   const handleCopyLink = useCallback(() => {
     navigator.clipboard.writeText(window.location.href).then(() => {
-      // brief visual feedback via a toast or alert
       const el = document.getElementById('copy-link-feedback');
       if (el) { el.textContent = 'Copied!'; setTimeout(() => { el.textContent = ''; }, 1500); }
     });
   }, []);
+
+  // Screen recording
+  const [screenRecording, setScreenRecording] = useState(false);
+  const screenRecorderRef = useRef<MediaRecorder | null>(null);
+  const screenChunksRef = useRef<Blob[]>([]);
+
+  const toggleScreenRecording = useCallback(async () => {
+    if (screenRecording && screenRecorderRef.current) {
+      screenRecorderRef.current.stop();
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+      const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+      screenChunksRef.current = [];
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) screenChunksRef.current.push(e.data); };
+      recorder.onstop = () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(screenChunksRef.current, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.download = `aral-recording-${Date.now()}.webm`;
+        a.href = url;
+        a.click();
+        URL.revokeObjectURL(url);
+        setScreenRecording(false);
+      };
+      recorder.start();
+      screenRecorderRef.current = recorder;
+      setScreenRecording(true);
+      // If user stops sharing via browser UI
+      stream.getVideoTracks()[0].onended = () => { if (recorder.state !== 'inactive') recorder.stop(); };
+    } catch {
+      // user cancelled the share dialog
+    }
+  }, [screenRecording]);
+
+  // Keyboard shortcut: R to toggle screen recording
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault();
+        toggleScreenRecording();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [toggleScreenRecording]);
 
   const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode;
 
