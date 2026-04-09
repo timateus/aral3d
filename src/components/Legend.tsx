@@ -3,6 +3,7 @@ import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { INDICATORS } from '@/lib/demographic-data';
 import { CLASS_COLORS, CLASS_NAMES } from '@/components/LandcoverLayer';
+import { Loader2 } from 'lucide-react';
 
 interface LegendProps {
   showBorders: boolean;
@@ -54,6 +55,7 @@ interface LegendProps {
   onToggleWaterways: (val: boolean) => void;
   waterwayTypeFilter: string;
   onWaterwayTypeFilterChange: (val: any) => void;
+  loadingLayers?: Set<string>;
 }
 
 const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin, show21stBasin, onToggle21stBasin, showKhorezm, onToggleKhorezm, showWatershed, onToggleWatershed, showLandcover, onToggleLandcover, landcoverVisibleClasses, landcoverAvailableClasses, onLandcoverVisibleClassesChange, showLakes, onToggleLakes, show21cLakes, onToggle21cLakes, showPopDensity, onTogglePopDensity, popHexSize, onPopHexSizeChange, popHexHeight, onPopHexHeightChange, showMigration, onToggleMigration, showChoropleth, onToggleChoropleth, choroplethIndicator, onChoroplethIndicatorChange, choroplethExaggeration, onChoroplethExaggerationChange, showSchools, onToggleSchools, showVocabulary, onToggleVocabulary, showGroundwater, onToggleGroundwater, showPrecipitation, onTogglePrecipitation, showWaterways, onToggleWaterways, waterwayTypeFilter, onWaterwayTypeFilterChange }: LegendProps) => {
