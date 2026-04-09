@@ -1245,6 +1245,7 @@ const Index = () => {
             <Circle className={`w-3 h-3 ${screenRecording ? 'fill-destructive' : ''}`} />
             {screenRecording ? 'Stop (R)' : 'Record (R)'}
           </button>
+        </div>
       )}
 
       {/* Controls - desktop only, hide in game mode unless toggled */}
