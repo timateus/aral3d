@@ -4,7 +4,7 @@ import { Html } from '@react-three/drei';
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js';
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
-import { extend, useThree } from '@react-three/fiber';
+import { useThree } from '@react-three/fiber';
 import { TerrainData } from '@/lib/geotiff-loader';
 
 export type WaterwayTypeFilter = 'all' | 'canal' | 'river' | 'stream' | 'drain' | 'ditch' | 'dam';
