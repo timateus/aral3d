@@ -169,7 +169,7 @@ function CanvasRecorder({ onReady }: { onReady: (controls: { start: () => void; 
   return null;
 }
 
-
+function CameraAnimator({ started, skip }: { started: boolean; skip?: boolean }) {
   const { camera } = useThree();
   const progress = useRef(0);
   const animating = useRef(false);
