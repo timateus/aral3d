@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import * as THREE from 'three';
 import { Html } from '@react-three/drei';
 import { TerrainData } from '@/lib/geotiff-loader';
@@ -30,6 +30,18 @@ const TYPE_COLORS: Record<string, string> = {
   default: '#6b7280',
 };
 
+/** Simplify a segment by keeping every Nth point (Douglas-Peucker lite) */
+function simplifySegment(seg: [number, number][], maxPoints: number): [number, number][] {
+  if (seg.length <= maxPoints) return seg;
+  const step = (seg.length - 1) / (maxPoints - 1);
+  const result: [number, number][] = [];
+  for (let i = 0; i < maxPoints - 1; i++) {
+    result.push(seg[Math.round(i * step)]);
+  }
+  result.push(seg[seg.length - 1]); // always keep last
+  return result;
+}
+
 /** Same projection as GeoFeatures.geoToMeshPos */
 function geoToMeshPos(
   lat: number, lon: number,
@@ -41,27 +53,22 @@ function geoToMeshPos(
   const nx = (lon - bounds.minLon) / (bounds.maxLon - bounds.minLon);
   const ny = (lat - bounds.minLat) / (bounds.maxLat - bounds.minLat);
 
+  if (nx < 0 || nx > 1 || ny < 0 || ny > 1) return null;
+
   const x = (nx - 0.5) * meshWidth;
   const planeY = (ny - 0.5) * meshHeight;
 
-  const inBounds = nx >= 0 && nx <= 1 && ny >= 0 && ny <= 1;
-  let zHeight = 0;
-
-  if (inBounds) {
-    const pixelX = Math.floor(nx * (terrain.width - 1));
-    const pixelY = Math.floor((1 - ny) * (terrain.height - 1));
-    const idx = pixelY * terrain.width + pixelX;
-    let elev = terrain.elevations[idx] || terrain.minElevation;
-    if (terrain.noDataValue !== null && elev === terrain.noDataValue) {
-      elev = terrain.minElevation;
-    }
-    const elevRange = terrain.maxElevation - terrain.minElevation || 1;
-    const normalized = (elev - terrain.minElevation) / elevRange;
-    const maxMeshHeight = 10 * (exaggeration / 100);
-    zHeight = normalized * maxMeshHeight;
-  } else {
-    return null;
+  const pixelX = Math.floor(nx * (terrain.width - 1));
+  const pixelY = Math.floor((1 - ny) * (terrain.height - 1));
+  const idx = pixelY * terrain.width + pixelX;
+  let elev = terrain.elevations[idx] || terrain.minElevation;
+  if (terrain.noDataValue !== null && elev === terrain.noDataValue) {
+    elev = terrain.minElevation;
   }
+  const elevRange = terrain.maxElevation - terrain.minElevation || 1;
+  const normalized = (elev - terrain.minElevation) / elevRange;
+  const maxMeshHeight = 10 * (exaggeration / 100);
+  const zHeight = normalized * maxMeshHeight;
 
   return [x, zHeight + 0.03, -planeY];
 }
@@ -69,11 +76,13 @@ function geoToMeshPos(
 const WaterwaysLayer = ({ terrain, exaggeration, typeFilter }: WaterwaysLayerProps) => {
   const [features, setFeatures] = useState<WaterwayFeature[]>([]);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
+  const prevExagg = useRef(exaggeration);
 
   const meshWidth = 10;
   const meshHeight = 10 * (terrain.height / terrain.width);
   const bounds = terrain.bounds || { minLon: 56, maxLon: 62, minLat: 42, maxLat: 47 };
 
+  // Parse & simplify on load (once)
   useEffect(() => {
     fetch('/data/waterwaysRegion.geojson')
       .then(r => r.json())
@@ -91,11 +100,15 @@ const WaterwaysLayer = ({ terrain, exaggeration, typeFilter }: WaterwaysLayerPro
               line.map((c: number[]) => [c[0], c[1]] as [number, number])
             );
           } else continue;
+
+          // Simplify long segments to max 30 points each
+          const simplified = segments.map(s => simplifySegment(s, 30));
+
           parsed.push({
             name: props.name || null,
             type: props.type || 'unknown',
             width: props.width || null,
-            segments,
+            segments: simplified,
           });
         }
         setFeatures(parsed);
@@ -108,41 +121,79 @@ const WaterwaysLayer = ({ terrain, exaggeration, typeFilter }: WaterwaysLayerPro
     return features.filter(f => f.type === typeFilter);
   }, [features, typeFilter]);
 
-  // Build merged LineSegments geometry projected onto terrain
-  const lineGeometry = useMemo(() => {
+  // Pre-compute normalized XZ positions (terrain-independent) and only apply Y on exaggeration change
+  const flatPositions = useMemo(() => {
     if (filtered.length === 0) return null;
 
     const positions: number[] = [];
     const colors: number[] = [];
+    const elevIndices: number[] = []; // terrain pixel index for each vertex
     const color = new THREE.Color();
 
-    for (let fi = 0; fi < filtered.length; fi++) {
-      const f = filtered[fi];
-      const c = TYPE_COLORS[f.type] || TYPE_COLORS.default;
-      color.set(c);
+    for (const f of filtered) {
+      color.set(TYPE_COLORS[f.type] || TYPE_COLORS.default);
 
       for (const seg of f.segments) {
         for (let i = 0; i < seg.length - 1; i++) {
-          // GeoJSON is [lon, lat]
-          const p1 = geoToMeshPos(seg[i][1], seg[i][0], bounds, terrain, exaggeration, meshWidth, meshHeight);
-          const p2 = geoToMeshPos(seg[i + 1][1], seg[i + 1][0], bounds, terrain, exaggeration, meshWidth, meshHeight);
-          if (!p1 || !p2) continue;
-          positions.push(p1[0], p1[1], p1[2], p2[0], p2[1], p2[2]);
+          const lon1 = seg[i][0], lat1 = seg[i][1];
+          const lon2 = seg[i + 1][0], lat2 = seg[i + 1][1];
+
+          const nx1 = (lon1 - bounds.minLon) / (bounds.maxLon - bounds.minLon);
+          const ny1 = (lat1 - bounds.minLat) / (bounds.maxLat - bounds.minLat);
+          const nx2 = (lon2 - bounds.minLon) / (bounds.maxLon - bounds.minLon);
+          const ny2 = (lat2 - bounds.minLat) / (bounds.maxLat - bounds.minLat);
+
+          if (nx1 < 0 || nx1 > 1 || ny1 < 0 || ny1 > 1) continue;
+          if (nx2 < 0 || nx2 > 1 || ny2 < 0 || ny2 > 1) continue;
+
+          const x1 = (nx1 - 0.5) * meshWidth;
+          const z1 = -((ny1 - 0.5) * meshHeight);
+          const x2 = (nx2 - 0.5) * meshWidth;
+          const z2 = -((ny2 - 0.5) * meshHeight);
+
+          const px1 = Math.floor(nx1 * (terrain.width - 1));
+          const py1 = Math.floor((1 - ny1) * (terrain.height - 1));
+          const px2 = Math.floor(nx2 * (terrain.width - 1));
+          const py2 = Math.floor((1 - ny2) * (terrain.height - 1));
+
+          positions.push(x1, 0, z1, x2, 0, z2); // Y=0 placeholder
+          elevIndices.push(py1 * terrain.width + px1, py2 * terrain.width + px2);
           colors.push(color.r, color.g, color.b, color.r, color.g, color.b);
         }
       }
     }
 
     if (positions.length === 0) return null;
+    return { positions: new Float32Array(positions), colors: new Float32Array(colors), elevIndices };
+  }, [filtered, bounds, meshWidth, meshHeight, terrain.width, terrain.height]);
+
+  // Apply elevation - only recalc Y values when exaggeration changes
+  const lineGeometry = useMemo(() => {
+    if (!flatPositions) return null;
+
+    const { positions, colors, elevIndices } = flatPositions;
+    const elevRange = terrain.maxElevation - terrain.minElevation || 1;
+    const maxMeshHeight = 10 * (exaggeration / 100);
+
+    // Update Y for each vertex
+    const posArray = new Float32Array(positions); // copy
+    for (let v = 0; v < elevIndices.length; v++) {
+      const idx = elevIndices[v];
+      let elev = terrain.elevations[idx] || terrain.minElevation;
+      if (terrain.noDataValue !== null && elev === terrain.noDataValue) {
+        elev = terrain.minElevation;
+      }
+      const normalized = (elev - terrain.minElevation) / elevRange;
+      posArray[v * 3 + 1] = normalized * maxMeshHeight + 0.03;
+    }
 
     const geom = new THREE.BufferGeometry();
-    geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    geom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-
+    geom.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+    geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     return geom;
-  }, [filtered, bounds, meshWidth, meshHeight, terrain, exaggeration]);
+  }, [flatPositions, exaggeration, terrain.elevations, terrain.minElevation, terrain.maxElevation, terrain.noDataValue]);
 
-  // Click: find nearest named feature
+  // Click: find nearest named feature (sample every 3rd vertex pair)
   const handleClick = useCallback((e: any) => {
     e.stopPropagation();
     if (filtered.length === 0) return;
@@ -157,7 +208,8 @@ const WaterwaysLayer = ({ terrain, exaggeration, typeFilter }: WaterwaysLayerPro
     for (let fi = 0; fi < filtered.length; fi++) {
       const f = filtered[fi];
       for (const seg of f.segments) {
-        const step = Math.max(1, Math.floor(seg.length / 10));
+        // Sample sparsely
+        const step = Math.max(1, Math.floor(seg.length / 5));
         for (let i = 0; i < seg.length; i += step) {
           const p = geoToMeshPos(seg[i][1], seg[i][0], bounds, terrain, exaggeration, meshWidth, meshHeight);
           if (!p) continue;
