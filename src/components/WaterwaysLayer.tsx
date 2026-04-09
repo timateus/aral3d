@@ -274,13 +274,20 @@ const WaterwaysLayer = ({ terrain, exaggeration, typeFilter }: WaterwaysLayerPro
     return { x: p[0], y: p[1] + 0.15, z: p[2], name: f.name, type: f.type, width: f.width };
   }, [selectedIdx, filtered, bounds, meshWidth, meshHeight, terrain, exaggeration]);
 
-  if (!lineGeometry) return null;
+  if (!fatLines && !lineGeometry) return null;
 
   return (
     <group>
-      <lineSegments geometry={lineGeometry} onClick={handleClick}>
-        <lineBasicMaterial vertexColors transparent opacity={0.9} linewidth={2} />
-      </lineSegments>
+      {/* Fat visible lines */}
+      {fatLines && (
+        <primitive object={new LineSegments2(fatLines.geo, fatLines.mat)} />
+      )}
+      {/* Invisible clickable lines for raycasting */}
+      {lineGeometry && (
+        <lineSegments geometry={lineGeometry} onClick={handleClick}>
+          <lineBasicMaterial transparent opacity={0} depthWrite={false} />
+        </lineSegments>
+      )}
 
       {selectedLabel && (
         <group position={[selectedLabel.x, selectedLabel.y, selectedLabel.z]}>
