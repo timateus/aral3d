@@ -11,7 +11,7 @@ import IntroOverlay from '@/components/IntroOverlay';
 import ScenarioChat from '@/components/ScenarioChat';
 import WaterVolumeDisplay from '@/components/WaterVolumeDisplay';
 import DataPanel, { AralAnnual, SEA_SERIES } from '@/components/DataPanel';
-import { Camera, Video, BarChart3, Navigation, MapPin, Loader2, Crosshair, Download, Waves, Gamepad2 } from 'lucide-react';
+import { Camera, Video, BarChart3, Navigation, MapPin, Loader2, Crosshair, Download, Waves, Gamepad2, Link2, ArrowLeft } from 'lucide-react';
 import { exportTerrainSTL } from '@/lib/stl-exporter';
 import GameMissionHUD from '@/components/GameMissionHUD';
 import type { GameModeState } from '@/components/GameMode';
