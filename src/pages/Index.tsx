@@ -97,7 +97,7 @@ const Index = () => {
       { show: showWaterways, layer: 'waterways', isCached: isWaterwaysCached },
       { show: showLandcover, layer: 'landcover', isCached: isLandcoverCached },
       { show: showChoropleth, layer: 'choropleth', isCached: isChoroplethCached },
-      { show: showPopDensity, layer: 'popDensity', isCached: () => false }, // popDensity loads its own tiff
+      { show: showPopDensity, layer: 'popDensity', isCached: isPopDensityCached },
     ];
     
     const pending: string[] = [];
