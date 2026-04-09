@@ -103,57 +103,68 @@ function getClassColor(val: number): [number, number, number] | null {
   return [r, g, b];
 }
 
+// Module-level cache for landcover data
+let _cachedLcData: LandcoverRasterData | null = null;
+let _cachedLcClasses: number[] | null = null;
+let _lcFetchPromise: Promise<{ data: LandcoverRasterData; classes: number[] }> | null = null;
+
+function fetchLandcoverData(): Promise<{ data: LandcoverRasterData; classes: number[] }> {
+  if (_cachedLcData && _cachedLcClasses) return Promise.resolve({ data: _cachedLcData, classes: _cachedLcClasses });
+  if (_lcFetchPromise) return _lcFetchPromise;
+  _lcFetchPromise = (async () => {
+    const resp = await fetch('/data/landcover.tif');
+    const buf = await resp.arrayBuffer();
+    const tiff = await fromArrayBuffer(buf);
+    const image = await tiff.getImage();
+    const fw = image.getWidth();
+    const fh = image.getHeight();
+    const maxDim = 512;
+    const sx = Math.max(1, Math.ceil(fw / maxDim));
+    const sy = Math.max(1, Math.ceil(fh / maxDim));
+    const w = Math.floor(fw / sx);
+    const h = Math.floor(fh / sy);
+    const rasters = await image.readRasters({ width: w, height: h, resampleMethod: 'nearest' });
+    const values = rasters[0] as any;
+    let bounds: GeoBounds | null = null;
+    try {
+      const bbox = image.getBoundingBox();
+      if (bbox && bbox.length === 4) bounds = { minLon: bbox[0], minLat: bbox[1], maxLon: bbox[2], maxLat: bbox[3] };
+    } catch {}
+    if (!bounds) {
+      try {
+        const o = image.getOrigin();
+        const r = image.getResolution();
+        if (o && r) bounds = { minLon: o[0], maxLon: o[0] + fw * Math.abs(r[0]), maxLat: o[1], minLat: o[1] - fh * Math.abs(r[1]) };
+      } catch {}
+    }
+    if (!bounds) throw new Error('No bounds');
+    const unique = new Set<number>();
+    for (let i = 0; i < values.length; i++) { if (values[i] !== 0) unique.add(values[i]); }
+    const sortedClasses = Array.from(unique).sort((a, b) => a - b);
+    console.log('Landcover loaded:', { w, h, bounds, uniqueClasses: sortedClasses });
+    const data: LandcoverRasterData = { width: w, height: h, values, bounds };
+    _cachedLcData = data;
+    _cachedLcClasses = sortedClasses;
+    return { data, classes: sortedClasses };
+  })();
+  return _lcFetchPromise;
+}
+
 const LandcoverLayer = ({ terrain, exaggeration, visibleClasses, onDataLoaded, onAvailableClasses }: LandcoverLayerProps) => {
-  const [lcData, setLcData] = useState<LandcoverRasterData | null>(null);
+  const [lcData, setLcData] = useState<LandcoverRasterData | null>(_cachedLcData);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const resp = await fetch('/data/landcover.tif');
-        const buf = await resp.arrayBuffer();
-        const tiff = await fromArrayBuffer(buf);
-        const image = await tiff.getImage();
-        const fw = image.getWidth();
-        const fh = image.getHeight();
-        const maxDim = 512;
-        const sx = Math.max(1, Math.ceil(fw / maxDim));
-        const sy = Math.max(1, Math.ceil(fh / maxDim));
-        const w = Math.floor(fw / sx);
-        const h = Math.floor(fh / sy);
-        const rasters = await image.readRasters({ width: w, height: h, resampleMethod: 'nearest' });
-        const values = rasters[0] as any;
-
-        // Get bounds
-        let bounds: GeoBounds | null = null;
-        try {
-          const bbox = image.getBoundingBox();
-          if (bbox && bbox.length === 4) bounds = { minLon: bbox[0], minLat: bbox[1], maxLon: bbox[2], maxLat: bbox[3] };
-        } catch {}
-        if (!bounds) {
-          try {
-            const o = image.getOrigin();
-            const r = image.getResolution();
-            if (o && r) bounds = { minLon: o[0], maxLon: o[0] + fw * Math.abs(r[0]), maxLat: o[1], minLat: o[1] - fh * Math.abs(r[1]) };
-          } catch {}
-        }
-        if (!bounds) return;
-
-        // Compute unique classes present in data
-        const unique = new Set<number>();
-        for (let i = 0; i < values.length; i++) {
-          if (values[i] !== 0) unique.add(values[i]);
-        }
-        const sortedClasses = Array.from(unique).sort((a, b) => a - b);
-        console.log('Landcover loaded:', { w, h, bounds, uniqueClasses: sortedClasses });
-        onAvailableClasses?.(sortedClasses);
-
-        const data: LandcoverRasterData = { width: w, height: h, values, bounds };
-        setLcData(data);
-        onDataLoaded?.(data);
-      } catch (e) {
-        console.warn('Landcover load failed:', e);
-      }
-    })();
+    if (_cachedLcData && _cachedLcClasses) {
+      setLcData(_cachedLcData);
+      onAvailableClasses?.(_cachedLcClasses);
+      onDataLoaded?.(_cachedLcData);
+      return;
+    }
+    fetchLandcoverData().then(({ data, classes }) => {
+      setLcData(data);
+      onAvailableClasses?.(classes);
+      onDataLoaded?.(data);
+    }).catch(e => console.warn('Landcover load failed:', e));
   }, []);
 
   // Clean up on unmount

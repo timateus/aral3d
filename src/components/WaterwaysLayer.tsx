@@ -77,8 +77,40 @@ function geoToMeshPos(
   return [x, zHeight + 0.03, -planeY];
 }
 
+// Module-level cache so data survives unmount/remount
+let _cachedFeatures: WaterwayFeature[] | null = null;
+let _featuresFetchPromise: Promise<WaterwayFeature[]> | null = null;
+
+function fetchWaterwayFeatures(): Promise<WaterwayFeature[]> {
+  if (_cachedFeatures) return Promise.resolve(_cachedFeatures);
+  if (_featuresFetchPromise) return _featuresFetchPromise;
+  _featuresFetchPromise = fetch('/data/waterwaysRegion.geojson')
+    .then(r => r.json())
+    .then(data => {
+      const parsed: WaterwayFeature[] = [];
+      for (const f of data.features) {
+        const props = f.properties || {};
+        const geom = f.geometry;
+        if (!geom) continue;
+        let segments: [number, number][][] = [];
+        if (geom.type === 'LineString') {
+          segments = [geom.coordinates.map((c: number[]) => [c[0], c[1]] as [number, number])];
+        } else if (geom.type === 'MultiLineString') {
+          segments = geom.coordinates.map((line: number[][]) =>
+            line.map((c: number[]) => [c[0], c[1]] as [number, number])
+          );
+        } else continue;
+        const simplified = segments.map(s => simplifySegment(s, 30));
+        parsed.push({ name: props.name || null, type: props.type || 'unknown', width: props.width || null, segments: simplified });
+      }
+      _cachedFeatures = parsed;
+      return parsed;
+    });
+  return _featuresFetchPromise;
+}
+
 const WaterwaysLayer = ({ terrain, exaggeration, typeFilter }: WaterwaysLayerProps) => {
-  const [features, setFeatures] = useState<WaterwayFeature[]>([]);
+  const [features, setFeatures] = useState<WaterwayFeature[]>(_cachedFeatures || []);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const prevExagg = useRef(exaggeration);
 
@@ -86,38 +118,9 @@ const WaterwaysLayer = ({ terrain, exaggeration, typeFilter }: WaterwaysLayerPro
   const meshHeight = 10 * (terrain.height / terrain.width);
   const bounds = terrain.bounds || { minLon: 56, maxLon: 62, minLat: 42, maxLat: 47 };
 
-  // Parse & simplify on load (once)
   useEffect(() => {
-    fetch('/data/waterwaysRegion.geojson')
-      .then(r => r.json())
-      .then(data => {
-        const parsed: WaterwayFeature[] = [];
-        for (const f of data.features) {
-          const props = f.properties || {};
-          const geom = f.geometry;
-          if (!geom) continue;
-          let segments: [number, number][][] = [];
-          if (geom.type === 'LineString') {
-            segments = [geom.coordinates.map((c: number[]) => [c[0], c[1]] as [number, number])];
-          } else if (geom.type === 'MultiLineString') {
-            segments = geom.coordinates.map((line: number[][]) =>
-              line.map((c: number[]) => [c[0], c[1]] as [number, number])
-            );
-          } else continue;
-
-          // Simplify long segments to max 30 points each
-          const simplified = segments.map(s => simplifySegment(s, 30));
-
-          parsed.push({
-            name: props.name || null,
-            type: props.type || 'unknown',
-            width: props.width || null,
-            segments: simplified,
-          });
-        }
-        setFeatures(parsed);
-      })
-      .catch(console.error);
+    if (_cachedFeatures) { setFeatures(_cachedFeatures); return; }
+    fetchWaterwayFeatures().then(setFeatures).catch(console.error);
   }, []);
 
   const filtered = useMemo(() => {
