@@ -170,7 +170,10 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
           <span className="inline-block w-3 h-3 rounded-sm" style={{ background: 'linear-gradient(135deg, #2d6a4f, #95d5b2)' }} />
           Landcover
         </span>
-        <Switch className="scale-75" checked={showLandcover} onCheckedChange={onToggleLandcover} />
+        <span className="flex items-center gap-1">
+          <LoadingSpinner layer="landcover" />
+          <Switch className="scale-75" checked={showLandcover} onCheckedChange={onToggleLandcover} />
+        </span>
       </label>
 
       {showLandcover && lcClasses.length > 0 && (
@@ -202,7 +205,10 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
           <span className="inline-block w-3 h-3 rounded-sm" style={{ background: 'linear-gradient(135deg, #440154, #31688e, #35b779, #fde725)' }} />
           Population Density
         </span>
-        <Switch className="scale-75" checked={showPopDensity} onCheckedChange={onTogglePopDensity} />
+        <span className="flex items-center gap-1">
+          <LoadingSpinner layer="popDensity" />
+          <Switch className="scale-75" checked={showPopDensity} onCheckedChange={onTogglePopDensity} />
+        </span>
       </label>
 
       <label className="flex items-center justify-between cursor-pointer">
@@ -218,7 +224,10 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
           <span className="inline-block w-3 h-3 rounded-sm" style={{ background: 'linear-gradient(135deg, rgb(220,60,50), rgb(220,220,50), rgb(40,200,50))' }} />
           Demographics
         </span>
-        <Switch className="scale-75" checked={showChoropleth} onCheckedChange={onToggleChoropleth} />
+        <span className="flex items-center gap-1">
+          <LoadingSpinner layer="choropleth" />
+          <Switch className="scale-75" checked={showChoropleth} onCheckedChange={onToggleChoropleth} />
+        </span>
       </label>
 
       <label className="flex items-center justify-between cursor-pointer">
@@ -328,7 +337,10 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
       {/* Waterways */}
       <div className="flex items-center justify-between">
         <span className="text-xs text-muted-foreground">Waterways</span>
-        <Switch checked={showWaterways} onCheckedChange={onToggleWaterways} />
+        <span className="flex items-center gap-1">
+          <LoadingSpinner layer="waterways" />
+          <Switch checked={showWaterways} onCheckedChange={onToggleWaterways} />
+        </span>
       </div>
       {showWaterways && (
         <div className="ml-2">
