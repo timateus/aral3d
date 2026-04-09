@@ -1,35 +1,37 @@
 
 
-## Fix: Waterways Layer Not Visible
+## Plan: Shareable URL State + Game Mode Back Button
 
-### Root Cause
-Line 283 in `WaterwaysLayer.tsx` creates `new LineSegments2(fatLines.geo, fatLines.mat)` **inline inside JSX** on every render. This means:
-1. A new Three.js object is created each render cycle
-2. The old object is orphaned (not properly disposed)
-3. R3F's reconciler struggles with `primitive` objects that change identity every frame
+### 1. Shareable Link via URL Search Params
 
-### Solution
-Memoize the `LineSegments2` instance so it has a stable identity, and update it only when the geometry/material actually change. Also dispose old instances properly.
+**File: `src/pages/Index.tsx`**
 
-### Changes
+Encode key app state into URL search parameters so users can share a link that restores a specific view. On mount, read params and apply them. On state change, update the URL (using `replaceState` to avoid polluting history).
 
-**File: `src/components/WaterwaysLayer.tsx`**
+**State to encode** (all optional params):
+- `started=1` — skip intro
+- `mode` — `game`, `sandbox`, `bodies`, `agmar`, `soap`, `canal`
+- `year` — water extent year (1960–2020)
+- `exag` — exaggeration value
+- `wl` — water level
+- Layers as comma-separated: `layers=rivers,borders,khorezm,waterways,schools,...`
+- `waterway` — waterway filter type
+- `lat,lon,zoom` — camera position (optional, future enhancement)
 
-1. Combine the `fatLines` memo to return a fully constructed `LineSegments2` object instead of separate `{ geo, mat }`:
-   - Create the `LineSegments2` inside the `useMemo` that builds `fatLines`
-   - Return the object directly so it has a stable reference
+**Implementation:**
+- Add a `useEffect` that reads `window.location.search` on mount and sets state accordingly
+- Add a `useEffect` that builds search params from current state and calls `window.history.replaceState` (debounced ~500ms)
+- Add a "Copy Link" button in the header toolbar
 
-2. Change the render from:
-   ```tsx
-   <primitive object={new LineSegments2(fatLines.geo, fatLines.mat)} />
-   ```
-   to:
-   ```tsx
-   <primitive object={fatLinesObject} />
-   ```
-   where `fatLinesObject` is the memoized `LineSegments2` instance.
+### 2. Back to Menu Button in Game Mode
 
-3. Add cleanup via `useEffect` to dispose the old geometry/material when they change.
+**File: `src/pages/Index.tsx`**
 
-This is a single-file fix in `WaterwaysLayer.tsx` — no other files need changes.
+The header with the "Menu" button is only shown when `isMapExploration` is true, which excludes game mode. Add a dedicated "← Menu" button that appears when game mode is active.
+
+- In the game mode HUD section (around line 1266), add a "← Back to menu" button that calls `setStarted(false); setGameModeActive(false);`
+- Alternatively, render a small persistent back button when `gameModeActive && started` is true, positioned top-left above the mission HUD
+
+### Files Changed
+- **`src/pages/Index.tsx`** — URL state sync logic, copy-link button, game mode back button
 
