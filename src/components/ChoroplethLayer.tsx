@@ -150,9 +150,28 @@ function buildRegionMesh(
   };
 }
 
+// Module-level cache for GeoJSON boundaries
+let _cachedAdm2: GeoJSONCollection | null = null;
+let _cachedAdm1: GeoJSONCollection | null = null;
+let _admFetchPromise: Promise<[GeoJSONCollection, GeoJSONCollection]> | null = null;
+
+function fetchAdmBoundaries(): Promise<[GeoJSONCollection, GeoJSONCollection]> {
+  if (_cachedAdm2 && _cachedAdm1) return Promise.resolve([_cachedAdm2, _cachedAdm1]);
+  if (_admFetchPromise) return _admFetchPromise;
+  _admFetchPromise = Promise.all([
+    fetch('/data/geoBoundaries-UZB-ADM2.geojson').then(r => r.json()),
+    fetch('/data/geoBoundaries-UZB-ADM1.geojson').then(r => r.json()),
+  ]).then(([a2, a1]) => {
+    _cachedAdm2 = a2;
+    _cachedAdm1 = a1;
+    return [a2, a1] as [GeoJSONCollection, GeoJSONCollection];
+  });
+  return _admFetchPromise;
+}
+
 const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage', choroplethExaggeration = 1.0 }: ChoroplethLayerProps) => {
-  const [adm2Geo, setAdm2Geo] = useState<GeoJSONCollection | null>(null);
-  const [adm1Geo, setAdm1Geo] = useState<GeoJSONCollection | null>(null);
+  const [adm2Geo, setAdm2Geo] = useState<GeoJSONCollection | null>(_cachedAdm2);
+  const [adm1Geo, setAdm1Geo] = useState<GeoJSONCollection | null>(_cachedAdm1);
   const [selected, setSelected] = useState<string | null>(null);
   const [csvData, setCsvData] = useState<CsvData | null>(null);
 
@@ -160,14 +179,8 @@ const ChoroplethLayer = ({ terrain, exaggeration, year, indicatorId = 'sewage', 
   const isSewage = indicator.id === 'sewage';
 
   useEffect(() => {
-    Promise.all([
-      fetch('/data/geoBoundaries-UZB-ADM2.geojson').then(r => r.json()),
-      fetch('/data/geoBoundaries-UZB-ADM1.geojson').then(r => r.json()),
-    ]).then(([a2, a1]) => {
-      console.log('[Choropleth] Loaded ADM2 features:', a2.features.length, 'ADM1 features:', a1.features.length);
-      setAdm2Geo(a2);
-      setAdm1Geo(a1);
-    });
+    if (_cachedAdm2 && _cachedAdm1) { setAdm2Geo(_cachedAdm2); setAdm1Geo(_cachedAdm1); return; }
+    fetchAdmBoundaries().then(([a2, a1]) => { setAdm2Geo(a2); setAdm1Geo(a1); });
   }, []);
 
   useEffect(() => {
