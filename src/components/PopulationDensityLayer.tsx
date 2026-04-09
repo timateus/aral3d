@@ -57,8 +57,16 @@ function viridisColor(t: number): [number, number, number] {
   ];
 }
 
+// Module-level cache
+let _cachedPopData: PopData | null = null;
+let _popFetchPromise: Promise<PopData> | null = null;
+
+export function isPopDensityCached(): boolean { return _cachedPopData !== null; }
+
 function loadPopulationTiff(): Promise<PopData> {
-  return fetch('/data/population_density.tif')
+  if (_cachedPopData) return Promise.resolve(_cachedPopData);
+  if (_popFetchPromise) return _popFetchPromise;
+  _popFetchPromise = fetch('/data/population_density.tif')
     .then(r => r.arrayBuffer())
     .then(async buf => {
       const tiff = await fromArrayBuffer(buf);
@@ -95,8 +103,11 @@ function loadPopulationTiff(): Promise<PopData> {
         if (v > maxVal) maxVal = v;
       }
 
-      return { width: fullW, height: fullH, values, bounds, noDataValue, maxVal };
+      const data = { width: fullW, height: fullH, values, bounds, noDataValue, maxVal };
+      _cachedPopData = data;
+      return data;
     });
+  return _popFetchPromise;
 }
 
 /** Convert axial hex coords to pixel (flat-top) center */
@@ -177,9 +188,10 @@ interface HexBin {
 }
 
 const PopulationDensityLayer = ({ terrain, exaggeration, onDataLoaded, hexSize = 0.15, hexHeightExag = 1.0 }: PopulationDensityLayerProps) => {
-  const [popData, setPopData] = useState<PopData | null>(null);
+  const [popData, setPopData] = useState<PopData | null>(_cachedPopData);
 
   useEffect(() => {
+    if (_cachedPopData) { setPopData(_cachedPopData); onDataLoaded?.(_cachedPopData); return; }
     loadPopulationTiff()
       .then(data => {
         setPopData(data);

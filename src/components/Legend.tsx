@@ -3,6 +3,7 @@ import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { INDICATORS } from '@/lib/demographic-data';
 import { CLASS_COLORS, CLASS_NAMES } from '@/components/LandcoverLayer';
+import { Loader2 } from 'lucide-react';
 
 interface LegendProps {
   showBorders: boolean;
@@ -54,9 +55,13 @@ interface LegendProps {
   onToggleWaterways: (val: boolean) => void;
   waterwayTypeFilter: string;
   onWaterwayTypeFilterChange: (val: any) => void;
+  loadingLayers?: Set<string>;
 }
 
-const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin, show21stBasin, onToggle21stBasin, showKhorezm, onToggleKhorezm, showWatershed, onToggleWatershed, showLandcover, onToggleLandcover, landcoverVisibleClasses, landcoverAvailableClasses, onLandcoverVisibleClassesChange, showLakes, onToggleLakes, show21cLakes, onToggle21cLakes, showPopDensity, onTogglePopDensity, popHexSize, onPopHexSizeChange, popHexHeight, onPopHexHeightChange, showMigration, onToggleMigration, showChoropleth, onToggleChoropleth, choroplethIndicator, onChoroplethIndicatorChange, choroplethExaggeration, onChoroplethExaggerationChange, showSchools, onToggleSchools, showVocabulary, onToggleVocabulary, showGroundwater, onToggleGroundwater, showPrecipitation, onTogglePrecipitation, showWaterways, onToggleWaterways, waterwayTypeFilter, onWaterwayTypeFilterChange }: LegendProps) => {
+const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin, show21stBasin, onToggle21stBasin, showKhorezm, onToggleKhorezm, showWatershed, onToggleWatershed, showLandcover, onToggleLandcover, landcoverVisibleClasses, landcoverAvailableClasses, onLandcoverVisibleClassesChange, showLakes, onToggleLakes, show21cLakes, onToggle21cLakes, showPopDensity, onTogglePopDensity, popHexSize, onPopHexSizeChange, popHexHeight, onPopHexHeightChange, showMigration, onToggleMigration, showChoropleth, onToggleChoropleth, choroplethIndicator, onChoroplethIndicatorChange, choroplethExaggeration, onChoroplethExaggerationChange, showSchools, onToggleSchools, showVocabulary, onToggleVocabulary, showGroundwater, onToggleGroundwater, showPrecipitation, onTogglePrecipitation, showWaterways, onToggleWaterways, waterwayTypeFilter, onWaterwayTypeFilterChange, loadingLayers }: LegendProps) => {
+
+  const isLayerLoading = (layer: string) => loadingLayers?.has(layer) ?? false;
+  const LoadingSpinner = ({ layer }: { layer: string }) => isLayerLoading(layer) ? <Loader2 className="w-3 h-3 animate-spin text-primary flex-shrink-0" /> : null;
   // Only show classes present in data
   const lcClasses = landcoverAvailableClasses ?? [];
 
@@ -165,7 +170,10 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
           <span className="inline-block w-3 h-3 rounded-sm" style={{ background: 'linear-gradient(135deg, #2d6a4f, #95d5b2)' }} />
           Landcover
         </span>
-        <Switch className="scale-75" checked={showLandcover} onCheckedChange={onToggleLandcover} />
+        <span className="flex items-center gap-1">
+          <LoadingSpinner layer="landcover" />
+          <Switch className="scale-75" checked={showLandcover} onCheckedChange={onToggleLandcover} />
+        </span>
       </label>
 
       {showLandcover && lcClasses.length > 0 && (
@@ -197,7 +205,10 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
           <span className="inline-block w-3 h-3 rounded-sm" style={{ background: 'linear-gradient(135deg, #440154, #31688e, #35b779, #fde725)' }} />
           Population Density
         </span>
-        <Switch className="scale-75" checked={showPopDensity} onCheckedChange={onTogglePopDensity} />
+        <span className="flex items-center gap-1">
+          <LoadingSpinner layer="popDensity" />
+          <Switch className="scale-75" checked={showPopDensity} onCheckedChange={onTogglePopDensity} />
+        </span>
       </label>
 
       <label className="flex items-center justify-between cursor-pointer">
@@ -213,7 +224,10 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
           <span className="inline-block w-3 h-3 rounded-sm" style={{ background: 'linear-gradient(135deg, rgb(220,60,50), rgb(220,220,50), rgb(40,200,50))' }} />
           Demographics
         </span>
-        <Switch className="scale-75" checked={showChoropleth} onCheckedChange={onToggleChoropleth} />
+        <span className="flex items-center gap-1">
+          <LoadingSpinner layer="choropleth" />
+          <Switch className="scale-75" checked={showChoropleth} onCheckedChange={onToggleChoropleth} />
+        </span>
       </label>
 
       <label className="flex items-center justify-between cursor-pointer">
@@ -323,7 +337,10 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
       {/* Waterways */}
       <div className="flex items-center justify-between">
         <span className="text-xs text-muted-foreground">Waterways</span>
-        <Switch checked={showWaterways} onCheckedChange={onToggleWaterways} />
+        <span className="flex items-center gap-1">
+          <LoadingSpinner layer="waterways" />
+          <Switch checked={showWaterways} onCheckedChange={onToggleWaterways} />
+        </span>
       </div>
       {showWaterways && (
         <div className="ml-2">

@@ -155,6 +155,8 @@ let _cachedAdm2: GeoJSONCollection | null = null;
 let _cachedAdm1: GeoJSONCollection | null = null;
 let _admFetchPromise: Promise<[GeoJSONCollection, GeoJSONCollection]> | null = null;
 
+export function isChoroplethCached(): boolean { return _cachedAdm2 !== null && _cachedAdm1 !== null; }
+
 function fetchAdmBoundaries(): Promise<[GeoJSONCollection, GeoJSONCollection]> {
   if (_cachedAdm2 && _cachedAdm1) return Promise.resolve([_cachedAdm2, _cachedAdm1]);
   if (_admFetchPromise) return _admFetchPromise;

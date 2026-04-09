@@ -14,6 +14,10 @@ import DataPanel, { AralAnnual, SEA_SERIES } from '@/components/DataPanel';
 import { Camera, Video, BarChart3, Navigation, MapPin, Loader2, Crosshair, Download, Waves, Gamepad2, Link2, ArrowLeft } from 'lucide-react';
 import { exportTerrainSTL } from '@/lib/stl-exporter';
 import GameMissionHUD from '@/components/GameMissionHUD';
+import { isWaterwaysCached } from '@/components/WaterwaysLayer';
+import { isLandcoverCached } from '@/components/LandcoverLayer';
+import { isChoroplethCached } from '@/components/ChoroplethLayer';
+import { isPopDensityCached } from '@/components/PopulationDensityLayer';
 import type { GameModeState } from '@/components/GameMode';
 import type { ScenarioAction } from '@/types/scenario';
 import { NARRATIVE_STEPS } from '@/lib/narrative-steps';
@@ -78,6 +82,51 @@ const Index = () => {
   const [showWaterways, setShowWaterways] = useState(false);
   const [waterwayTypeFilter, setWaterwayTypeFilter] = useState<'all' | 'canal' | 'river' | 'stream' | 'drain' | 'ditch' | 'dam'>('all');
   const [waterExtentYear, setWaterExtentYear] = useState(1960);
+  const [loadingLayers, setLoadingLayers] = useState<Set<string>>(new Set());
+  
+  const markLayerLoading = useCallback((layer: string) => {
+    setLoadingLayers(prev => { const n = new Set(prev); n.add(layer); return n; });
+  }, []);
+  const markLayerReady = useCallback((layer: string) => {
+    setLoadingLayers(prev => { const n = new Set(prev); n.delete(layer); return n; });
+  }, []);
+
+  // Track loading state for heavy layers
+  useEffect(() => {
+    const checks: { show: boolean; layer: string; isCached: () => boolean }[] = [
+      { show: showWaterways, layer: 'waterways', isCached: isWaterwaysCached },
+      { show: showLandcover, layer: 'landcover', isCached: isLandcoverCached },
+      { show: showChoropleth, layer: 'choropleth', isCached: isChoroplethCached },
+      { show: showPopDensity, layer: 'popDensity', isCached: isPopDensityCached },
+    ];
+    
+    const pending: string[] = [];
+    for (const c of checks) {
+      if (c.show && !c.isCached()) {
+        markLayerLoading(c.layer);
+        pending.push(c.layer);
+      } else {
+        markLayerReady(c.layer);
+      }
+    }
+    
+    if (pending.length === 0) return;
+    
+    // Poll until caches are ready
+    const interval = setInterval(() => {
+      let allDone = true;
+      for (const c of checks) {
+        if (c.show && c.isCached()) {
+          markLayerReady(c.layer);
+        } else if (c.show && !c.isCached()) {
+          allDone = false;
+        }
+      }
+      if (allDone) clearInterval(interval);
+    }, 200);
+    
+    return () => clearInterval(interval);
+  }, [showWaterways, showLandcover, showChoropleth, showPopDensity, markLayerLoading, markLayerReady]);
   
   const [started, setStarted] = useState(false);
   const [recording, setRecording] = useState(false);
@@ -1213,6 +1262,7 @@ const Index = () => {
             onToggleWaterways={setShowWaterways}
             waterwayTypeFilter={waterwayTypeFilter}
             onWaterwayTypeFilterChange={setWaterwayTypeFilter}
+            loadingLayers={loadingLayers}
           />
           {terrain && (
             <WaterVolumeDisplay

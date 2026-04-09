@@ -108,6 +108,8 @@ let _cachedLcData: LandcoverRasterData | null = null;
 let _cachedLcClasses: number[] | null = null;
 let _lcFetchPromise: Promise<{ data: LandcoverRasterData; classes: number[] }> | null = null;
 
+export function isLandcoverCached(): boolean { return _cachedLcData !== null; }
+
 function fetchLandcoverData(): Promise<{ data: LandcoverRasterData; classes: number[] }> {
   if (_cachedLcData && _cachedLcClasses) return Promise.resolve({ data: _cachedLcData, classes: _cachedLcClasses });
   if (_lcFetchPromise) return _lcFetchPromise;
