@@ -1137,6 +1137,7 @@ const Index = () => {
             Copy Link
             <span id="copy-link-feedback" className="text-primary font-bold" />
           </button>
+        </div>
       )}
 
       {/* Controls - desktop only, hide in game mode unless toggled */}
