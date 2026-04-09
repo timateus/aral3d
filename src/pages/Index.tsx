@@ -1234,7 +1234,17 @@ const Index = () => {
             Copy Link
             <span id="copy-link-feedback" className="text-primary font-bold" />
           </button>
-        </div>
+          <button
+            onClick={toggleScreenRecording}
+            className={`text-[10px] tracking-[0.15em] uppercase transition-colors border px-3 py-1.5 backdrop-blur-sm flex items-center gap-1.5 ${
+              screenRecording
+                ? 'text-destructive border-destructive/50 bg-destructive/10 animate-pulse'
+                : 'text-muted-foreground hover:text-primary border-border/50 bg-card/60'
+            }`}
+          >
+            <Circle className={`w-3 h-3 ${screenRecording ? 'fill-destructive' : ''}`} />
+            {screenRecording ? 'Stop (R)' : 'Record (R)'}
+          </button>
       )}
 
       {/* Controls - desktop only, hide in game mode unless toggled */}
