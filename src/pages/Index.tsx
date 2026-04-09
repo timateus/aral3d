@@ -1358,6 +1358,17 @@ const Index = () => {
       )}
 
       {/* Game Mode HUD */}
+      {started && gameModeActive && (
+        <div className="absolute top-4 left-4 z-20">
+          <button
+            onClick={() => { setStarted(false); setGameModeActive(false); }}
+            className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground hover:text-primary transition-colors border border-border/50 px-3 py-1.5 bg-card/80 backdrop-blur-sm flex items-center gap-1.5"
+          >
+            <ArrowLeft className="w-3 h-3" />
+            Menu
+          </button>
+        </div>
+      )}
       {started && gameModeActive && gameModeState && (
         <GameMissionHUD
           currentMission={gameModeState.currentMission}
