@@ -37,6 +37,8 @@ import * as THREE from 'three';
 export interface TerrainViewerHandle {
   screenshot: () => void;
   recordVideo: () => void;
+  startCanvasRecording: () => void;
+  stopCanvasRecording: () => void;
 }
 
 interface MetricItem {
@@ -125,6 +127,46 @@ interface TerrainViewerProps {
   onSandboxClick?: (row: number, col: number) => void;
   showWaterways?: boolean;
   waterwayTypeFilter?: WaterwayTypeFilter;
+}
+
+/* ── Canvas Recorder (captures WebGL canvas stream, no camera animation) ── */
+function CanvasRecorder({ onReady }: { onReady: (controls: { start: () => void; stop: () => void }) => void }) {
+  const { gl } = useThree();
+  const mediaRecorder = useRef<MediaRecorder | null>(null);
+  const chunks = useRef<Blob[]>([]);
+
+  useEffect(() => {
+    onReady({
+      start: () => {
+        chunks.current = [];
+        const stream = gl.domElement.captureStream(30);
+        const recorder = new MediaRecorder(stream, {
+          mimeType: 'video/webm;codecs=vp9',
+          videoBitsPerSecond: 8_000_000,
+        });
+        recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.current.push(e.data); };
+        recorder.onstop = () => {
+          const blob = new Blob(chunks.current, { type: 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.download = `aral-recording-${Date.now()}.webm`;
+          a.href = url;
+          a.click();
+          URL.revokeObjectURL(url);
+        };
+        recorder.start();
+        mediaRecorder.current = recorder;
+      },
+      stop: () => {
+        if (mediaRecorder.current && mediaRecorder.current.state !== 'inactive') {
+          mediaRecorder.current.stop();
+        }
+        mediaRecorder.current = null;
+      },
+    });
+  }, [gl, onReady]);
+
+  return null;
 }
 
 function CameraAnimator({ started, skip }: { started: boolean; skip?: boolean }) {
@@ -334,14 +376,21 @@ function NoahsArk({ terrain, exaggeration, waterLevel }: { terrain: TerrainData;
 
 const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, showWaterExtent, waterExtentYear, showPopDensity, popHexSize, popHexHeight, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone, riverInflow, userLocation, inspectorEnabled, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, flowState, flowRenderKey, terrainVersion, raisedPixels, dugPixels, showMigration, migrationYear, showChoropleth, choroplethIndicator, choroplethExaggeration, canalHighlights, highlightedCanalNames, canalTourActive, showObjectLibrary, onObjectSelect, gameModeActive, onGameAddWater, bowlWorldActive, onBowlWorldComplete, showLandcover, landcoverVisibleClasses, onLandcoverAvailableClasses, showSchools, showVocabulary, agmarShowProposalSites, aryqWorldActive, onAryqWorldComplete, onNukusClick, showOverlayMetrics, showGroundwater, showPrecipitation, showSalinity, waterPlaygroundActive, sandboxActive, sandboxSimState, sandboxRenderKey, sandboxToolActive, onSandboxClick, showWaterways, waterwayTypeFilter }, ref) => {
   const screenshotFn = useRef<(() => void) | null>(null);
+  const canvasRecorderControls = useRef<{ start: () => void; stop: () => void } | null>(null);
   const orbitRef = useRef<any>(null);
   const [flyoverAnimating, setFlyoverAnimating] = useState(false);
   const [popData, setPopData] = useState<PopData | null>(null);
   const [lcData, setLcData] = useState<LandcoverRasterData | null>(null);
 
+  const handleCanvasRecorderReady = useCallback((controls: { start: () => void; stop: () => void }) => {
+    canvasRecorderControls.current = controls;
+  }, []);
+
   useImperativeHandle(ref, () => ({
     screenshot: () => screenshotFn.current?.(),
     recordVideo: () => {},
+    startCanvasRecording: () => canvasRecorderControls.current?.start(),
+    stopCanvasRecording: () => canvasRecorderControls.current?.stop(),
   }));
 
   return (
@@ -356,6 +405,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
       <ambientLight intensity={0.3} />
       <directionalLight position={[5, 10, 5]} intensity={1.2} castShadow />
       <directionalLight position={[-3, 5, -3]} intensity={0.4} color="#8ec8e8" />
+      <CanvasRecorder onReady={handleCanvasRecorderReady} />
 
       {!aryqWorldActive && (
         <>
