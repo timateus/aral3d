@@ -81,6 +81,8 @@ function geoToMeshPos(
 let _cachedFeatures: WaterwayFeature[] | null = null;
 let _featuresFetchPromise: Promise<WaterwayFeature[]> | null = null;
 
+export function isWaterwaysCached(): boolean { return _cachedFeatures !== null; }
+
 function fetchWaterwayFeatures(): Promise<WaterwayFeature[]> {
   if (_cachedFeatures) return Promise.resolve(_cachedFeatures);
   if (_featuresFetchPromise) return _featuresFetchPromise;
