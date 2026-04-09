@@ -171,8 +171,10 @@ const WaterwaysLayer = ({ terrain, exaggeration, typeFilter }: WaterwaysLayerPro
     return { positions: new Float32Array(positions), colors: new Float32Array(colors), elevIndices };
   }, [filtered, bounds, meshWidth, meshHeight, terrain.width, terrain.height]);
 
-  // Apply elevation - only recalc Y values when exaggeration changes
-  const lineGeometry = useMemo(() => {
+  // Apply elevation and build fat line geometry
+  const { size } = useThree();
+
+  const fatLines = useMemo(() => {
     if (!flatPositions) return null;
 
     const { positions, colors, elevIndices } = flatPositions;
@@ -191,9 +193,37 @@ const WaterwaysLayer = ({ terrain, exaggeration, typeFilter }: WaterwaysLayerPro
       posArray[v * 3 + 1] = normalized * maxMeshHeight + 0.03;
     }
 
+    const geo = new LineSegmentsGeometry();
+    geo.setPositions(posArray);
+    geo.setColors(colors);
+
+    const mat = new LineMaterial({
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.9,
+      linewidth: 2, // pixels
+      resolution: new THREE.Vector2(size.width, size.height),
+    });
+
+    return { geo, mat };
+  }, [flatPositions, exaggeration, terrain.elevations, terrain.minElevation, terrain.maxElevation, terrain.noDataValue, size.width, size.height]);
+
+  // Also keep a thin invisible lineSegments for click raycasting (Line2 doesn't raycast well)
+  const lineGeometry = useMemo(() => {
+    if (!flatPositions) return null;
+    const { positions, elevIndices } = flatPositions;
+    const elevRange = terrain.maxElevation - terrain.minElevation || 1;
+    const maxMeshHeight = 10 * (exaggeration / 100);
+    const posArray = new Float32Array(positions);
+    for (let v = 0; v < elevIndices.length; v++) {
+      const idx = elevIndices[v];
+      let elev = terrain.elevations[idx] || terrain.minElevation;
+      if (terrain.noDataValue !== null && elev === terrain.noDataValue) elev = terrain.minElevation;
+      const normalized = (elev - terrain.minElevation) / elevRange;
+      posArray[v * 3 + 1] = normalized * maxMeshHeight + 0.03;
+    }
     const geom = new THREE.BufferGeometry();
     geom.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-    geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     return geom;
   }, [flatPositions, exaggeration, terrain.elevations, terrain.minElevation, terrain.maxElevation, terrain.noDataValue]);
 
