@@ -174,15 +174,14 @@ const WaterwaysLayer = ({ terrain, exaggeration, typeFilter }: WaterwaysLayerPro
   // Apply elevation and build fat line geometry
   const { size } = useThree();
 
-  const fatLines = useMemo(() => {
+  const fatLinesObject = useMemo(() => {
     if (!flatPositions) return null;
 
     const { positions, colors, elevIndices } = flatPositions;
     const elevRange = terrain.maxElevation - terrain.minElevation || 1;
     const maxMeshHeight = 10 * (exaggeration / 100);
 
-    // Update Y for each vertex
-    const posArray = new Float32Array(positions); // copy
+    const posArray = new Float32Array(positions);
     for (let v = 0; v < elevIndices.length; v++) {
       const idx = elevIndices[v];
       let elev = terrain.elevations[idx] || terrain.minElevation;
@@ -201,12 +200,24 @@ const WaterwaysLayer = ({ terrain, exaggeration, typeFilter }: WaterwaysLayerPro
       vertexColors: true,
       transparent: true,
       opacity: 0.9,
-      linewidth: 2, // pixels
+      linewidth: 2,
       resolution: new THREE.Vector2(size.width, size.height),
     });
 
-    return { geo, mat };
+    const line = new LineSegments2(geo, mat);
+    line.computeLineDistances();
+    return line;
   }, [flatPositions, exaggeration, terrain.elevations, terrain.minElevation, terrain.maxElevation, terrain.noDataValue, size.width, size.height]);
+
+  // Dispose old fat lines
+  useEffect(() => {
+    return () => {
+      if (fatLinesObject) {
+        fatLinesObject.geometry.dispose();
+        (fatLinesObject.material as LineMaterial).dispose();
+      }
+    };
+  }, [fatLinesObject]);
 
   // Also keep a thin invisible lineSegments for click raycasting (Line2 doesn't raycast well)
   const lineGeometry = useMemo(() => {
@@ -242,7 +253,6 @@ const WaterwaysLayer = ({ terrain, exaggeration, typeFilter }: WaterwaysLayerPro
     for (let fi = 0; fi < filtered.length; fi++) {
       const f = filtered[fi];
       for (const seg of f.segments) {
-        // Sample sparsely
         const step = Math.max(1, Math.floor(seg.length / 5));
         for (let i = 0; i < seg.length; i += step) {
           const p = geoToMeshPos(seg[i][1], seg[i][0], bounds, terrain, exaggeration, meshWidth, meshHeight);
@@ -274,13 +284,12 @@ const WaterwaysLayer = ({ terrain, exaggeration, typeFilter }: WaterwaysLayerPro
     return { x: p[0], y: p[1] + 0.15, z: p[2], name: f.name, type: f.type, width: f.width };
   }, [selectedIdx, filtered, bounds, meshWidth, meshHeight, terrain, exaggeration]);
 
-  if (!fatLines && !lineGeometry) return null;
+  if (!fatLinesObject && !lineGeometry) return null;
 
   return (
     <group>
-      {/* Fat visible lines */}
-      {fatLines && (
-        <primitive object={new LineSegments2(fatLines.geo, fatLines.mat)} />
+      {fatLinesObject && (
+        <primitive object={fatLinesObject} />
       )}
       {/* Invisible clickable lines for raycasting */}
       {lineGeometry && (
