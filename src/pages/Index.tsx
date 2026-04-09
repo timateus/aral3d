@@ -1261,6 +1261,7 @@ const Index = () => {
             onToggleWaterways={setShowWaterways}
             waterwayTypeFilter={waterwayTypeFilter}
             onWaterwayTypeFilterChange={setWaterwayTypeFilter}
+            loadingLayers={loadingLayers}
           />
           {terrain && (
             <WaterVolumeDisplay
