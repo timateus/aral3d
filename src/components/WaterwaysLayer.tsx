@@ -245,7 +245,7 @@ const WaterwaysLayer = ({ terrain, exaggeration, typeFilter }: WaterwaysLayerPro
   return (
     <group>
       <lineSegments geometry={lineGeometry} onClick={handleClick}>
-        <lineBasicMaterial vertexColors transparent opacity={0.9} />
+        <lineBasicMaterial vertexColors transparent opacity={0.9} linewidth={2} />
       </lineSegments>
 
       {selectedLabel && (
