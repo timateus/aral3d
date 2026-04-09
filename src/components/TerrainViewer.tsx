@@ -129,7 +129,47 @@ interface TerrainViewerProps {
   waterwayTypeFilter?: WaterwayTypeFilter;
 }
 
-function CameraAnimator({ started, skip }: { started: boolean; skip?: boolean }) {
+/* ── Canvas Recorder (captures WebGL canvas stream, no camera animation) ── */
+function CanvasRecorder({ onReady }: { onReady: (controls: { start: () => void; stop: () => void }) => void }) {
+  const { gl } = useThree();
+  const mediaRecorder = useRef<MediaRecorder | null>(null);
+  const chunks = useRef<Blob[]>([]);
+
+  useEffect(() => {
+    onReady({
+      start: () => {
+        chunks.current = [];
+        const stream = gl.domElement.captureStream(30);
+        const recorder = new MediaRecorder(stream, {
+          mimeType: 'video/webm;codecs=vp9',
+          videoBitsPerSecond: 8_000_000,
+        });
+        recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.current.push(e.data); };
+        recorder.onstop = () => {
+          const blob = new Blob(chunks.current, { type: 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.download = `aral-recording-${Date.now()}.webm`;
+          a.href = url;
+          a.click();
+          URL.revokeObjectURL(url);
+        };
+        recorder.start();
+        mediaRecorder.current = recorder;
+      },
+      stop: () => {
+        if (mediaRecorder.current && mediaRecorder.current.state !== 'inactive') {
+          mediaRecorder.current.stop();
+        }
+        mediaRecorder.current = null;
+      },
+    });
+  }, [gl, onReady]);
+
+  return null;
+}
+
+
   const { camera } = useThree();
   const progress = useRef(0);
   const animating = useRef(false);
