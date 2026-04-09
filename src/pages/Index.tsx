@@ -78,6 +78,14 @@ const Index = () => {
   const [showWaterways, setShowWaterways] = useState(false);
   const [waterwayTypeFilter, setWaterwayTypeFilter] = useState<'all' | 'canal' | 'river' | 'stream' | 'drain' | 'ditch' | 'dam'>('all');
   const [waterExtentYear, setWaterExtentYear] = useState(1960);
+  const [loadingLayers, setLoadingLayers] = useState<Set<string>>(new Set());
+  
+  const markLayerLoading = useCallback((layer: string) => {
+    setLoadingLayers(prev => { const n = new Set(prev); n.add(layer); return n; });
+  }, []);
+  const markLayerReady = useCallback((layer: string) => {
+    setLoadingLayers(prev => { const n = new Set(prev); n.delete(layer); return n; });
+  }, []);
   
   const [started, setStarted] = useState(false);
   const [recording, setRecording] = useState(false);
