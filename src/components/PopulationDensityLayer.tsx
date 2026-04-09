@@ -188,9 +188,10 @@ interface HexBin {
 }
 
 const PopulationDensityLayer = ({ terrain, exaggeration, onDataLoaded, hexSize = 0.15, hexHeightExag = 1.0 }: PopulationDensityLayerProps) => {
-  const [popData, setPopData] = useState<PopData | null>(null);
+  const [popData, setPopData] = useState<PopData | null>(_cachedPopData);
 
   useEffect(() => {
+    if (_cachedPopData) { setPopData(_cachedPopData); onDataLoaded?.(_cachedPopData); return; }
     loadPopulationTiff()
       .then(data => {
         setPopData(data);

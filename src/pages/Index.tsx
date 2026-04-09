@@ -17,6 +17,7 @@ import GameMissionHUD from '@/components/GameMissionHUD';
 import { isWaterwaysCached } from '@/components/WaterwaysLayer';
 import { isLandcoverCached } from '@/components/LandcoverLayer';
 import { isChoroplethCached } from '@/components/ChoroplethLayer';
+import { isPopDensityCached } from '@/components/PopulationDensityLayer';
 import type { GameModeState } from '@/components/GameMode';
 import type { ScenarioAction } from '@/types/scenario';
 import { NARRATIVE_STEPS } from '@/lib/narrative-steps';
