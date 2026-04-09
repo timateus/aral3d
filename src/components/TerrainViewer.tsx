@@ -37,6 +37,8 @@ import * as THREE from 'three';
 export interface TerrainViewerHandle {
   screenshot: () => void;
   recordVideo: () => void;
+  startCanvasRecording: () => void;
+  stopCanvasRecording: () => void;
 }
 
 interface MetricItem {
