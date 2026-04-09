@@ -741,6 +741,93 @@ const Index = () => {
     }
   }, [terrain]);
 
+  // ─── URL State Sync ───
+  // Read URL params on mount
+  const urlInitRef = useRef(false);
+  useEffect(() => {
+    if (urlInitRef.current) return;
+    urlInitRef.current = true;
+    const p = new URLSearchParams(window.location.search);
+    if (p.get('started') === '1') setStarted(true);
+    if (p.get('mode') === 'game') { setGameModeActive(true); setStarted(true); }
+    if (p.get('mode') === 'sandbox') { setSandboxMode(true); setStarted(true); }
+    if (p.get('year')) setWaterExtentYear(Number(p.get('year')));
+    if (p.get('exag')) setExaggeration(Number(p.get('exag')));
+    if (p.get('wl')) { setWaterLevelManual(true); setWaterLevel(Number(p.get('wl'))); }
+    if (p.get('waterway')) setWaterwayTypeFilter(p.get('waterway') as any);
+    if (p.get('layers')) {
+      const layers = p.get('layers')!.split(',');
+      const has = (k: string) => layers.includes(k);
+      setShowBorders(has('borders'));
+      setShowRivers(has('rivers'));
+      setShowKhorezm(has('khorezm'));
+      setShowWaterways(has('waterways'));
+      setShowSchools(has('schools'));
+      setShowVocabulary(has('vocabulary'));
+      setShowGroundwater(has('groundwater'));
+      setShowPrecipitation(has('precipitation'));
+      setShowLandcover(has('landcover'));
+      setShowPopDensity(has('popDensity'));
+      setShowMigration(has('migration'));
+      setShowChoropleth(has('choropleth'));
+      setShowSalinity(has('salinity'));
+      setShowWaterExtent(has('waterExtent'));
+      setShow13thBasin(has('13basin'));
+      setShow19thBasin(has('19basin'));
+      setShow21stBasin(has('21basin'));
+    }
+  }, []);
+
+  // Write URL params on state change (debounced)
+  const urlTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!urlInitRef.current) return;
+    if (urlTimerRef.current) clearTimeout(urlTimerRef.current);
+    urlTimerRef.current = setTimeout(() => {
+      const p = new URLSearchParams();
+      if (started) p.set('started', '1');
+      if (gameModeActive) p.set('mode', 'game');
+      else if (sandboxMode) p.set('mode', 'sandbox');
+      p.set('year', String(waterExtentYear));
+      p.set('exag', String(exaggeration));
+      p.set('wl', String(waterLevel));
+      if (waterwayTypeFilter !== 'all') p.set('waterway', waterwayTypeFilter);
+      const layers: string[] = [];
+      if (showBorders) layers.push('borders');
+      if (showRivers) layers.push('rivers');
+      if (showKhorezm) layers.push('khorezm');
+      if (showWaterways) layers.push('waterways');
+      if (showSchools) layers.push('schools');
+      if (showVocabulary) layers.push('vocabulary');
+      if (showGroundwater) layers.push('groundwater');
+      if (showPrecipitation) layers.push('precipitation');
+      if (showLandcover) layers.push('landcover');
+      if (showPopDensity) layers.push('popDensity');
+      if (showMigration) layers.push('migration');
+      if (showChoropleth) layers.push('choropleth');
+      if (showSalinity) layers.push('salinity');
+      if (showWaterExtent) layers.push('waterExtent');
+      if (show13thBasin) layers.push('13basin');
+      if (show19thBasin) layers.push('19basin');
+      if (show21stBasin) layers.push('21basin');
+      if (layers.length) p.set('layers', layers.join(','));
+      const qs = p.toString();
+      window.history.replaceState({}, '', qs ? `?${qs}` : window.location.pathname);
+    }, 500);
+  }, [started, gameModeActive, sandboxMode, waterExtentYear, exaggeration, waterLevel,
+      showBorders, showRivers, showKhorezm, showWaterways, showSchools, showVocabulary,
+      showGroundwater, showPrecipitation, showLandcover, showPopDensity, showMigration,
+      showChoropleth, showSalinity, showWaterExtent, show13thBasin, show19thBasin,
+      show21stBasin, waterwayTypeFilter]);
+
+  const handleCopyLink = useCallback(() => {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      // brief visual feedback via a toast or alert
+      const el = document.getElementById('copy-link-feedback');
+      if (el) { el.textContent = 'Copied!'; setTimeout(() => { el.textContent = ''; }, 1500); }
+    });
+  }, []);
+
   const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode;
 
   return (
