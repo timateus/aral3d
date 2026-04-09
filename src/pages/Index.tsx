@@ -876,40 +876,17 @@ const Index = () => {
     });
   }, []);
 
-  // Screen recording
+  // Screen recording (canvas-based)
   const [screenRecording, setScreenRecording] = useState(false);
-  const screenRecorderRef = useRef<MediaRecorder | null>(null);
-  const screenChunksRef = useRef<Blob[]>([]);
 
-  const toggleScreenRecording = useCallback(async () => {
-    if (screenRecording && screenRecorderRef.current) {
-      screenRecorderRef.current.stop();
+  const toggleScreenRecording = useCallback(() => {
+    if (screenRecording) {
+      viewerRef.current?.stopCanvasRecording();
+      setScreenRecording(false);
       return;
     }
-    try {
-      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-      const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
-      screenChunksRef.current = [];
-      recorder.ondataavailable = (e) => { if (e.data.size > 0) screenChunksRef.current.push(e.data); };
-      recorder.onstop = () => {
-        stream.getTracks().forEach(t => t.stop());
-        const blob = new Blob(screenChunksRef.current, { type: 'video/webm' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.download = `aral-recording-${Date.now()}.webm`;
-        a.href = url;
-        a.click();
-        URL.revokeObjectURL(url);
-        setScreenRecording(false);
-      };
-      recorder.start();
-      screenRecorderRef.current = recorder;
-      setScreenRecording(true);
-      // If user stops sharing via browser UI
-      stream.getVideoTracks()[0].onended = () => { if (recorder.state !== 'inactive') recorder.stop(); };
-    } catch {
-      // user cancelled the share dialog
-    }
+    viewerRef.current?.startCanvasRecording();
+    setScreenRecording(true);
   }, [screenRecording]);
 
   // Keyboard shortcut: R to toggle screen recording
