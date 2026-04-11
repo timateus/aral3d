@@ -984,6 +984,7 @@ const Index = () => {
               console.log('Selected object:', obj.name, obj.lat, obj.lon);
             }}
             gameModeActive={gameModeActive}
+            gameCharacter={gameCharacter}
             onGameAddWater={handleGameAddWater}
             bowlWorldActive={bowlWorldActive}
             onBowlWorldComplete={() => {
@@ -1172,9 +1173,7 @@ const Index = () => {
           {!gameModeActive && (
             <button
               onClick={() => {
-                setGameModeActive(true);
-                setWaterExtentYear(2024);
-                setFlowSpeed(20);
+                setShowCharacterSelect(true);
               }}
               className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground hover:text-primary transition-colors border border-border/50 px-3 py-1.5 bg-card/60 backdrop-blur-sm flex items-center gap-1.5"
             >
