@@ -159,6 +159,8 @@ const Index = () => {
   const autoDigPixelsRef = useRef<Set<number>>(new Set());
   const [showObjectLibrary, setShowObjectLibrary] = useState(false);
   const [gameModeActive, setGameModeActive] = useState(false);
+  const [showCharacterSelect, setShowCharacterSelect] = useState(false);
+  const [gameCharacter, setGameCharacter] = useState<import('@/components/CharacterSelect').CharacterDef | null>(null);
   const [gameModeState, setGameModeState] = useState<GameModeState | null>(null);
   const [bowlWorldActive, setBowlWorldActive] = useState(false);
   const [aryqWorldActive, setAryqWorldActive] = useState(false);
