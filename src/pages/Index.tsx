@@ -1035,11 +1035,8 @@ const Index = () => {
           onAgmarTour={startAgmarTour}
           onObjectSelect={(lat, lon, name) => { setStarted(true); }}
           onStartGame={() => {
-            setStarted(true);
-            setGameModeActive(true);
-            setWaterExtentYear(2024);
-            setFlowSpeed(20);
-            setShowWaterExtent(true);
+            setShowCharacterSelect(true);
+          }}
           }}
           onQuadrants={() => setQuadrantViewActive(true)}
           onSandbox={() => {
