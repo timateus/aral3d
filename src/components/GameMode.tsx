@@ -179,6 +179,7 @@ export interface GameModeProps {
   terrain: TerrainData;
   exaggeration: number;
   active: boolean;
+  character?: CharacterDef | null;
   onAddWater?: (row: number, col: number) => void;
   orbitRef?: React.MutableRefObject<any>;
 }
@@ -195,7 +196,7 @@ export interface GameModeState {
   inBowlWorld: boolean;
 }
 
-export default function GameMode({ terrain, exaggeration, active, onAddWater, orbitRef }: GameModeProps) {
+export default function GameMode({ terrain, exaggeration, active, character, onAddWater, orbitRef }: GameModeProps) {
   const [avatarPos, setAvatarPos] = useState<[number, number, number]>([0, 1, 0]);
   const [facing, setFacing] = useState(0);
   const [completedMissions, setCompletedMissions] = useState<Set<string>>(new Set());
@@ -404,7 +405,14 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater, or
 
   return (
     <>
-      <Avatar position={avatarPos} facing={facing} />
+      <Avatar
+        position={avatarPos}
+        facing={facing}
+        bodyColor={character?.bodyColor}
+        hatColor={character?.hatColor}
+        glowColor={character?.glowColor}
+        cheekColor={character?.cheekColor}
+      />
       <WaterPourEffect position={avatarPos} active={waterPouring} />
 
       {/* Mission beacon */}
