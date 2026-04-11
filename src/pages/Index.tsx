@@ -8,6 +8,7 @@ import ControlPanel from '@/components/ControlPanel';
 import Legend from '@/components/Legend';
 import TimelineSlider from '@/components/TimelineSlider';
 import IntroOverlay from '@/components/IntroOverlay';
+import CharacterSelect from '@/components/CharacterSelect';
 import ScenarioChat from '@/components/ScenarioChat';
 import WaterVolumeDisplay from '@/components/WaterVolumeDisplay';
 import DataPanel, { AralAnnual, SEA_SERIES } from '@/components/DataPanel';
@@ -1111,6 +1112,21 @@ const Index = () => {
         onSpeedChange={setSandboxSpeed}
       />
 
+      {/* Character Selection */}
+      {showCharacterSelect && (
+        <CharacterSelect
+          onSelect={(char) => {
+            setGameCharacter(char);
+            setShowCharacterSelect(false);
+            setStarted(true);
+            setGameModeActive(true);
+            setWaterExtentYear(2024);
+            setFlowSpeed(20);
+            setShowWaterExtent(true);
+          }}
+          onBack={() => setShowCharacterSelect(false)}
+        />
+      )}
 
       {narrativeActive && (
         <NarrativeOverlay
