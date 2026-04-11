@@ -4,6 +4,7 @@ import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { TerrainData } from '@/lib/geotiff-loader';
 import { buildMissions, Mission } from '@/lib/game-missions';
+import type { CharacterDef } from '@/components/CharacterSelect';
 
 function geoToMeshPos(
   lat: number, lon: number,
@@ -69,8 +70,11 @@ function worldToPixel(
   return { row, col };
 }
 
-// Avatar with facing direction
-function Avatar({ position, facing }: { position: [number, number, number]; facing: number }) {
+// Avatar with facing direction and character colors
+function Avatar({ position, facing, bodyColor = '#f0c674', hatColor = '#8ec8e8', glowColor = '#f0c674', cheekColor = '#e8a0bf' }: {
+  position: [number, number, number]; facing: number;
+  bodyColor?: string; hatColor?: string; glowColor?: string; cheekColor?: string;
+}) {
   const groupRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
@@ -84,7 +88,7 @@ function Avatar({ position, facing }: { position: [number, number, number]; faci
     <group ref={groupRef}>
       <mesh>
         <sphereGeometry args={[0.12, 16, 16]} />
-        <meshStandardMaterial color="#f0c674" emissive="#f0c674" emissiveIntensity={0.3} />
+        <meshStandardMaterial color={bodyColor} emissive={bodyColor} emissiveIntensity={0.3} />
       </mesh>
       <mesh position={[-0.04, 0.03, 0.1]}>
         <sphereGeometry args={[0.025, 8, 8]} />
@@ -96,17 +100,17 @@ function Avatar({ position, facing }: { position: [number, number, number]; faci
       </mesh>
       <mesh position={[-0.07, -0.01, 0.09]}>
         <sphereGeometry args={[0.02, 8, 8]} />
-        <meshStandardMaterial color="#e8a0bf" transparent opacity={0.6} />
+        <meshStandardMaterial color={cheekColor} transparent opacity={0.6} />
       </mesh>
       <mesh position={[0.07, -0.01, 0.09]}>
         <sphereGeometry args={[0.02, 8, 8]} />
-        <meshStandardMaterial color="#e8a0bf" transparent opacity={0.6} />
+        <meshStandardMaterial color={cheekColor} transparent opacity={0.6} />
       </mesh>
       <mesh position={[0, 0.1, 0]}>
         <coneGeometry args={[0.06, 0.1, 8]} />
-        <meshStandardMaterial color="#8ec8e8" />
+        <meshStandardMaterial color={hatColor} />
       </mesh>
-      <pointLight color="#f0c674" intensity={0.5} distance={1} />
+      <pointLight color={glowColor} intensity={0.5} distance={1} />
     </group>
   );
 }
@@ -175,6 +179,7 @@ export interface GameModeProps {
   terrain: TerrainData;
   exaggeration: number;
   active: boolean;
+  character?: CharacterDef | null;
   onAddWater?: (row: number, col: number) => void;
   orbitRef?: React.MutableRefObject<any>;
 }
@@ -191,7 +196,7 @@ export interface GameModeState {
   inBowlWorld: boolean;
 }
 
-export default function GameMode({ terrain, exaggeration, active, onAddWater, orbitRef }: GameModeProps) {
+export default function GameMode({ terrain, exaggeration, active, character, onAddWater, orbitRef }: GameModeProps) {
   const [avatarPos, setAvatarPos] = useState<[number, number, number]>([0, 1, 0]);
   const [facing, setFacing] = useState(0);
   const [completedMissions, setCompletedMissions] = useState<Set<string>>(new Set());
@@ -400,7 +405,14 @@ export default function GameMode({ terrain, exaggeration, active, onAddWater, or
 
   return (
     <>
-      <Avatar position={avatarPos} facing={facing} />
+      <Avatar
+        position={avatarPos}
+        facing={facing}
+        bodyColor={character?.bodyColor}
+        hatColor={character?.hatColor}
+        glowColor={character?.glowColor}
+        cheekColor={character?.cheekColor}
+      />
       <WaterPourEffect position={avatarPos} active={waterPouring} />
 
       {/* Mission beacon */}

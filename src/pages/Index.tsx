@@ -8,6 +8,7 @@ import ControlPanel from '@/components/ControlPanel';
 import Legend from '@/components/Legend';
 import TimelineSlider from '@/components/TimelineSlider';
 import IntroOverlay from '@/components/IntroOverlay';
+import CharacterSelect from '@/components/CharacterSelect';
 import ScenarioChat from '@/components/ScenarioChat';
 import WaterVolumeDisplay from '@/components/WaterVolumeDisplay';
 import DataPanel, { AralAnnual, SEA_SERIES } from '@/components/DataPanel';
@@ -159,6 +160,8 @@ const Index = () => {
   const autoDigPixelsRef = useRef<Set<number>>(new Set());
   const [showObjectLibrary, setShowObjectLibrary] = useState(false);
   const [gameModeActive, setGameModeActive] = useState(false);
+  const [showCharacterSelect, setShowCharacterSelect] = useState(false);
+  const [gameCharacter, setGameCharacter] = useState<import('@/components/CharacterSelect').CharacterDef | null>(null);
   const [gameModeState, setGameModeState] = useState<GameModeState | null>(null);
   const [bowlWorldActive, setBowlWorldActive] = useState(false);
   const [aryqWorldActive, setAryqWorldActive] = useState(false);
@@ -982,6 +985,7 @@ const Index = () => {
               console.log('Selected object:', obj.name, obj.lat, obj.lon);
             }}
             gameModeActive={gameModeActive}
+            gameCharacter={gameCharacter}
             onGameAddWater={handleGameAddWater}
             bowlWorldActive={bowlWorldActive}
             onBowlWorldComplete={() => {
@@ -1033,11 +1037,7 @@ const Index = () => {
           onAgmarTour={startAgmarTour}
           onObjectSelect={(lat, lon, name) => { setStarted(true); }}
           onStartGame={() => {
-            setStarted(true);
-            setGameModeActive(true);
-            setWaterExtentYear(2024);
-            setFlowSpeed(20);
-            setShowWaterExtent(true);
+            setShowCharacterSelect(true);
           }}
           onQuadrants={() => setQuadrantViewActive(true)}
           onSandbox={() => {
@@ -1112,6 +1112,21 @@ const Index = () => {
         onSpeedChange={setSandboxSpeed}
       />
 
+      {/* Character Selection */}
+      {showCharacterSelect && (
+        <CharacterSelect
+          onSelect={(char) => {
+            setGameCharacter(char);
+            setShowCharacterSelect(false);
+            setStarted(true);
+            setGameModeActive(true);
+            setWaterExtentYear(2024);
+            setFlowSpeed(20);
+            setShowWaterExtent(true);
+          }}
+          onBack={() => setShowCharacterSelect(false)}
+        />
+      )}
 
       {narrativeActive && (
         <NarrativeOverlay
@@ -1174,9 +1189,7 @@ const Index = () => {
           {!gameModeActive && (
             <button
               onClick={() => {
-                setGameModeActive(true);
-                setWaterExtentYear(2024);
-                setFlowSpeed(20);
+                setShowCharacterSelect(true);
               }}
               className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground hover:text-primary transition-colors border border-border/50 px-3 py-1.5 bg-card/60 backdrop-blur-sm flex items-center gap-1.5"
             >
