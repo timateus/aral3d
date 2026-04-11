@@ -103,6 +103,7 @@ interface TerrainViewerProps {
   showObjectLibrary?: boolean;
   onObjectSelect?: (obj: LibraryObject) => void;
   gameModeActive?: boolean;
+  gameCharacter?: import('@/components/CharacterSelect').CharacterDef | null;
   onGameAddWater?: (row: number, col: number) => void;
   bowlWorldActive?: boolean;
   onBowlWorldComplete?: () => void;
@@ -482,7 +483,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
             </Html>
             </group>
           )}
-          {!sandboxActive && <GameMode terrain={terrain} exaggeration={exaggeration} active={!!gameModeActive} onAddWater={onGameAddWater} orbitRef={orbitRef} />}
+          {!sandboxActive && <GameMode terrain={terrain} exaggeration={exaggeration} active={!!gameModeActive} character={gameCharacter} onAddWater={onGameAddWater} orbitRef={orbitRef} />}
           {!sandboxActive && <gridHelper args={[20, 20, '#1a2332', '#1a2332']} position={[0, -0.01, 0]} />}
         </>
       )}
