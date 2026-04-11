@@ -1037,7 +1037,6 @@ const Index = () => {
           onStartGame={() => {
             setShowCharacterSelect(true);
           }}
-          }}
           onQuadrants={() => setQuadrantViewActive(true)}
           onSandbox={() => {
             setStarted(true);
