@@ -334,8 +334,8 @@ const WaterwaysLayer = ({ terrain, exaggeration, typeFilter, traceMode = false, 
     }
 
     if (traceMode) {
-      if (bestDist < 0.4 && bestIdx >= 0) {
-        // bestIdx is into `features` directly
+      // Plane-based picking — always pick the nearest waterway within a generous radius
+      if (bestIdx >= 0 && bestDist < 1.5) {
         setTracedIdxs(traceFrom(bestIdx));
       } else {
         setTracedIdxs(new Set());
