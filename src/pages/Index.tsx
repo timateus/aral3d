@@ -1748,6 +1748,37 @@ const Index = () => {
           )}
         </div>
       )}
+
+      {/* Trace mode HUD */}
+      {traceMode && started && (
+        <>
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 glass-panel px-4 py-2">
+            <p className="text-xs text-foreground tracking-wide">
+              <span className="text-cyan-400 font-semibold">Trace mode</span>
+              <span className="text-muted-foreground ml-2">— click any canal to follow the connected water network</span>
+            </p>
+          </div>
+          <div className="absolute bottom-6 left-6 z-20 flex flex-col gap-2">
+            <button
+              onClick={() => {
+                setTraceMode(false);
+                setShowWaterways(false);
+                setStarted(false);
+                setTraceClearSignal(s => s + 1);
+              }}
+              className="text-[10px] tracking-[0.12em] uppercase text-muted-foreground hover:text-primary transition-colors border border-border/50 px-3 py-1.5 bg-card/60 backdrop-blur-sm"
+            >
+              ← Menu
+            </button>
+            <button
+              onClick={() => setTraceClearSignal(s => s + 1)}
+              className="text-[11px] tracking-[0.08em] uppercase font-mono px-4 py-2 border bg-card/60 border-border/50 text-muted-foreground hover:text-primary hover:border-primary/40 backdrop-blur-sm transition-all"
+            >
+              Clear trace
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 };
