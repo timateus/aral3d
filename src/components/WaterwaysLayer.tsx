@@ -135,6 +135,61 @@ const WaterwaysLayer = ({ terrain, exaggeration, typeFilter, traceMode = false, 
     return features.filter(f => f.type === typeFilter);
   }, [features, typeFilter]);
 
+  // Clear traced highlight when external signal changes or trace mode toggles off
+  useEffect(() => { setTracedIdxs(new Set()); }, [clearTraceSignal, traceMode, typeFilter]);
+
+  // Build adjacency graph on the *full* feature list (so traces follow into Amu Darya
+  // even when typeFilter hides other types). Snap endpoints to a small grid to merge near-identical points.
+  const graph = useMemo(() => {
+    if (features.length === 0) return null;
+    const SNAP = 0.0005; // ~50m
+    const key = (lon: number, lat: number) =>
+      `${Math.round(lon / SNAP)}:${Math.round(lat / SNAP)}`;
+
+    const featureKeys: string[][] = features.map(f => {
+      const ks: string[] = [];
+      for (const seg of f.segments) {
+        if (seg.length === 0) continue;
+        ks.push(key(seg[0][0], seg[0][1]));
+        ks.push(key(seg[seg.length - 1][0], seg[seg.length - 1][1]));
+      }
+      return ks;
+    });
+
+    const keyToFeatures = new Map<string, Set<number>>();
+    featureKeys.forEach((ks, fi) => {
+      for (const k of ks) {
+        if (!keyToFeatures.has(k)) keyToFeatures.set(k, new Set());
+        keyToFeatures.get(k)!.add(fi);
+      }
+    });
+
+    return { featureKeys, keyToFeatures };
+  }, [features]);
+
+  /** BFS expand from a starting feature index across connected endpoints */
+  const traceFrom = useCallback((startIdx: number): Set<number> => {
+    if (!graph) return new Set([startIdx]);
+    const visited = new Set<number>([startIdx]);
+    const queue: number[] = [startIdx];
+    let safety = 5000;
+    while (queue.length && safety-- > 0) {
+      const cur = queue.shift()!;
+      const ks = graph.featureKeys[cur];
+      for (const k of ks) {
+        const nbrs = graph.keyToFeatures.get(k);
+        if (!nbrs) continue;
+        for (const n of nbrs) {
+          if (!visited.has(n)) {
+            visited.add(n);
+            queue.push(n);
+          }
+        }
+      }
+    }
+    return visited;
+  }, [graph]);
+
   // Pre-compute normalized XZ positions (terrain-independent) and only apply Y on exaggeration change
   const flatPositions = useMemo(() => {
     if (filtered.length === 0) return null;
