@@ -176,6 +176,8 @@ const Index = () => {
   const [canalMode, setCanalMode] = useState(false);
   const [canalActiveLayer, setCanalActiveLayer] = useState<'none' | 'playground'>('none');
   const [showWaterPlayground, setShowWaterPlayground] = useState(false);
+  const [traceMode, setTraceMode] = useState(false);
+  const [traceClearSignal, setTraceClearSignal] = useState(0);
   const [agmarTourActive, setAgmarTourActive] = useState(false);
   const [agmarTourStep, setAgmarTourStep] = useState(0);
   const [sandboxMode, setSandboxMode] = useState(false);
