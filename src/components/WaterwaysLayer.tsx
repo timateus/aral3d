@@ -334,8 +334,8 @@ const WaterwaysLayer = ({ terrain, exaggeration, typeFilter, traceMode = false, 
     }
 
     if (traceMode) {
-      if (bestDist < 0.4 && bestIdx >= 0) {
-        // bestIdx is into `features` directly
+      // Plane-based picking — always pick the nearest waterway within a generous radius
+      if (bestIdx >= 0 && bestDist < 1.5) {
         setTracedIdxs(traceFrom(bestIdx));
       } else {
         setTracedIdxs(new Set());
@@ -435,11 +435,24 @@ const WaterwaysLayer = ({ terrain, exaggeration, typeFilter, traceMode = false, 
       {tracedLinesObject && (
         <primitive object={tracedLinesObject} />
       )}
-      {/* Invisible clickable lines for raycasting */}
-      {lineGeometry && (
-        <lineSegments geometry={lineGeometry} onClick={handleClick}>
-          <lineBasicMaterial transparent opacity={0} depthWrite={false} />
-        </lineSegments>
+      {/* Invisible plane catches clicks anywhere over the terrain extent.
+          Without this, raycasting against thin lines misses almost every click.
+          Only enabled in traceMode so normal exploration keeps tooltip-on-line behavior. */}
+      {traceMode ? (
+        <mesh
+          rotation={[-Math.PI / 2, 0, 0]}
+          position={[0, 0.05, 0]}
+          onClick={handleClick}
+        >
+          <planeGeometry args={[meshWidth * 1.2, meshHeight * 1.2]} />
+          <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+        </mesh>
+      ) : (
+        lineGeometry && (
+          <lineSegments geometry={lineGeometry} onClick={handleClick}>
+            <lineBasicMaterial transparent opacity={0} depthWrite={false} />
+          </lineSegments>
+        )
       )}
 
       {selectedLabel && (
