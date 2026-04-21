@@ -20,6 +20,10 @@ interface WaterwaysLayerProps {
   terrain: TerrainData;
   exaggeration: number;
   typeFilter: WaterwayTypeFilter;
+  /** When true, clicks trace connected waterway network instead of showing tooltip */
+  traceMode?: boolean;
+  /** External signal to clear current trace */
+  clearTraceSignal?: number;
 }
 
 const TYPE_COLORS: Record<string, string> = {
