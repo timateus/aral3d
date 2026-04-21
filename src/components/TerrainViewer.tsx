@@ -128,6 +128,8 @@ interface TerrainViewerProps {
   onSandboxClick?: (row: number, col: number) => void;
   showWaterways?: boolean;
   waterwayTypeFilter?: WaterwayTypeFilter;
+  waterwayTraceMode?: boolean;
+  waterwayClearTraceSignal?: number;
 }
 
 /* ── Canvas Recorder (captures WebGL canvas stream, no camera animation) ── */
