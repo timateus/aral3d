@@ -303,20 +303,22 @@ const WaterwaysLayer = ({ terrain, exaggeration, typeFilter, traceMode = false, 
     return geom;
   }, [flatPositions, exaggeration, terrain.elevations, terrain.minElevation, terrain.maxElevation, terrain.noDataValue]);
 
-  // Click: find nearest named feature (sample every 3rd vertex pair)
+  // Click: find nearest feature; in trace mode also expand connected network
   const handleClick = useCallback((e: any) => {
     e.stopPropagation();
-    if (filtered.length === 0) return;
+    // In trace mode we search ALL features (so we can pick the underlying river too).
+    const searchPool = traceMode ? features : filtered;
+    if (searchPool.length === 0) return;
 
     const px = e.point.x;
     const py = e.point.y;
     const pz = e.point.z;
 
     let bestDist = Infinity;
-    let bestIdx = -1;
+    let bestIdx = -1; // index into `features` (when traceMode) or `filtered`
 
-    for (let fi = 0; fi < filtered.length; fi++) {
-      const f = filtered[fi];
+    for (let fi = 0; fi < searchPool.length; fi++) {
+      const f = searchPool[fi];
       for (const seg of f.segments) {
         const step = Math.max(1, Math.floor(seg.length / 5));
         for (let i = 0; i < seg.length; i += step) {
@@ -331,12 +333,22 @@ const WaterwaysLayer = ({ terrain, exaggeration, typeFilter, traceMode = false, 
       }
     }
 
+    if (traceMode) {
+      if (bestDist < 0.4 && bestIdx >= 0) {
+        // bestIdx is into `features` directly
+        setTracedIdxs(traceFrom(bestIdx));
+      } else {
+        setTracedIdxs(new Set());
+      }
+      return;
+    }
+
     if (bestDist < 0.15 && bestIdx >= 0) {
       setSelectedIdx(prev => prev === bestIdx ? null : bestIdx);
     } else {
       setSelectedIdx(null);
     }
-  }, [filtered, bounds, meshWidth, meshHeight, terrain, exaggeration]);
+  }, [filtered, features, bounds, meshWidth, meshHeight, terrain, exaggeration, traceMode, traceFrom]);
 
   const selectedLabel = useMemo(() => {
     if (selectedIdx === null || !filtered[selectedIdx]) return null;
@@ -348,6 +360,70 @@ const WaterwaysLayer = ({ terrain, exaggeration, typeFilter, traceMode = false, 
     if (!p) return null;
     return { x: p[0], y: p[1] + 0.15, z: p[2], name: f.name, type: f.type, width: f.width };
   }, [selectedIdx, filtered, bounds, meshWidth, meshHeight, terrain, exaggeration]);
+
+  // Build a bright fat-line overlay for the traced network
+  const tracedLinesObject = useMemo(() => {
+    if (tracedIdxs.size === 0) return null;
+    const positions: number[] = [];
+    const elevRange = terrain.maxElevation - terrain.minElevation || 1;
+    const maxMeshHeight = 10 * (exaggeration / 100);
+
+    for (const fi of tracedIdxs) {
+      const f = features[fi];
+      if (!f) continue;
+      for (const seg of f.segments) {
+        for (let i = 0; i < seg.length - 1; i++) {
+          const lon1 = seg[i][0], lat1 = seg[i][1];
+          const lon2 = seg[i + 1][0], lat2 = seg[i + 1][1];
+          const nx1 = (lon1 - bounds.minLon) / (bounds.maxLon - bounds.minLon);
+          const ny1 = (lat1 - bounds.minLat) / (bounds.maxLat - bounds.minLat);
+          const nx2 = (lon2 - bounds.minLon) / (bounds.maxLon - bounds.minLon);
+          const ny2 = (lat2 - bounds.minLat) / (bounds.maxLat - bounds.minLat);
+          if (nx1 < 0 || nx1 > 1 || ny1 < 0 || ny1 > 1) continue;
+          if (nx2 < 0 || nx2 > 1 || ny2 < 0 || ny2 > 1) continue;
+          const x1 = (nx1 - 0.5) * meshWidth;
+          const z1 = -((ny1 - 0.5) * meshHeight);
+          const x2 = (nx2 - 0.5) * meshWidth;
+          const z2 = -((ny2 - 0.5) * meshHeight);
+          const px1 = Math.floor(nx1 * (terrain.width - 1));
+          const py1 = Math.floor((1 - ny1) * (terrain.height - 1));
+          const px2 = Math.floor(nx2 * (terrain.width - 1));
+          const py2 = Math.floor((1 - ny2) * (terrain.height - 1));
+          let e1 = terrain.elevations[py1 * terrain.width + px1] || terrain.minElevation;
+          let e2 = terrain.elevations[py2 * terrain.width + px2] || terrain.minElevation;
+          if (terrain.noDataValue !== null && e1 === terrain.noDataValue) e1 = terrain.minElevation;
+          if (terrain.noDataValue !== null && e2 === terrain.noDataValue) e2 = terrain.minElevation;
+          const y1 = ((e1 - terrain.minElevation) / elevRange) * maxMeshHeight + 0.06;
+          const y2 = ((e2 - terrain.minElevation) / elevRange) * maxMeshHeight + 0.06;
+          positions.push(x1, y1, z1, x2, y2, z2);
+        }
+      }
+    }
+    if (positions.length === 0) return null;
+
+    const geo = new LineSegmentsGeometry();
+    geo.setPositions(new Float32Array(positions));
+    const mat = new LineMaterial({
+      color: 0x22d3ee,
+      transparent: true,
+      opacity: 1.0,
+      linewidth: 5,
+      resolution: new THREE.Vector2(size.width, size.height),
+    });
+    const line = new LineSegments2(geo, mat);
+    line.computeLineDistances();
+    return line;
+  }, [tracedIdxs, features, bounds, terrain, exaggeration, meshWidth, meshHeight, size.width, size.height]);
+
+  // Dispose traced lines
+  useEffect(() => {
+    return () => {
+      if (tracedLinesObject) {
+        tracedLinesObject.geometry.dispose();
+        (tracedLinesObject.material as LineMaterial).dispose();
+      }
+    };
+  }, [tracedLinesObject]);
 
   if (!fatLinesObject && !lineGeometry) return null;
 
