@@ -432,6 +432,9 @@ const WaterwaysLayer = ({ terrain, exaggeration, typeFilter, traceMode = false, 
       {fatLinesObject && (
         <primitive object={fatLinesObject} />
       )}
+      {tracedLinesObject && (
+        <primitive object={tracedLinesObject} />
+      )}
       {/* Invisible clickable lines for raycasting */}
       {lineGeometry && (
         <lineSegments geometry={lineGeometry} onClick={handleClick}>
