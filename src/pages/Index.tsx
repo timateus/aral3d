@@ -1019,6 +1019,8 @@ const Index = () => {
             onSandboxClick={handleSandboxClick}
             showWaterways={showWaterways}
             waterwayTypeFilter={waterwayTypeFilter}
+            waterwayTraceMode={traceMode}
+            waterwayClearTraceSignal={traceClearSignal}
           />
         )}
         {!terrain && !loading && error && (
