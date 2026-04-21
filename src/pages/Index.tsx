@@ -1049,6 +1049,34 @@ const Index = () => {
             setSandboxMode(true);
             setShowWaterExtent(false);
           }}
+          onTraceCanals={() => {
+            // Enter Trace mode: show only waterways, hide everything else
+            setStarted(true);
+            setTraceMode(true);
+            setShowWaterways(true);
+            setWaterwayTypeFilter('all');
+            // Hide other layers for a clean view
+            setShowBorders(false);
+            setShowRivers(false);
+            setShow13thBasin(false);
+            setShow19thBasin(false);
+            setShow21stBasin(false);
+            setShowKhorezm(false);
+            setShowLakes(false);
+            setShow21cLakes(false);
+            setShowWatershed(false);
+            setShowLandcover(false);
+            setShowPopDensity(false);
+            setShowMigration(false);
+            setShowChoropleth(false);
+            setShowWaterExtent(false);
+            setShowSchools(false);
+            setShowVocabulary(false);
+            setShowGroundwater(false);
+            setShowPrecipitation(false);
+            setShowSalinity(false);
+            setTraceClearSignal(s => s + 1);
+          }}
         />
       )}
 
