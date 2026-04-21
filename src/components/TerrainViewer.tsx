@@ -128,6 +128,8 @@ interface TerrainViewerProps {
   onSandboxClick?: (row: number, col: number) => void;
   showWaterways?: boolean;
   waterwayTypeFilter?: WaterwayTypeFilter;
+  waterwayTraceMode?: boolean;
+  waterwayClearTraceSignal?: number;
 }
 
 /* ── Canvas Recorder (captures WebGL canvas stream, no camera animation) ── */
@@ -375,7 +377,7 @@ function NoahsArk({ terrain, exaggeration, waterLevel }: { terrain: TerrainData;
   );
 }
 
-const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, showWaterExtent, waterExtentYear, showPopDensity, popHexSize, popHexHeight, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone, riverInflow, userLocation, inspectorEnabled, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, flowState, flowRenderKey, terrainVersion, raisedPixels, dugPixels, showMigration, migrationYear, showChoropleth, choroplethIndicator, choroplethExaggeration, canalHighlights, highlightedCanalNames, canalTourActive, showObjectLibrary, onObjectSelect, gameModeActive, gameCharacter, onGameAddWater, bowlWorldActive, onBowlWorldComplete, showLandcover, landcoverVisibleClasses, onLandcoverAvailableClasses, showSchools, showVocabulary, agmarShowProposalSites, aryqWorldActive, onAryqWorldComplete, onNukusClick, showOverlayMetrics, showGroundwater, showPrecipitation, showSalinity, waterPlaygroundActive, sandboxActive, sandboxSimState, sandboxRenderKey, sandboxToolActive, onSandboxClick, showWaterways, waterwayTypeFilter }, ref) => {
+const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, showWaterExtent, waterExtentYear, showPopDensity, popHexSize, popHexHeight, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone, riverInflow, userLocation, inspectorEnabled, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, flowState, flowRenderKey, terrainVersion, raisedPixels, dugPixels, showMigration, migrationYear, showChoropleth, choroplethIndicator, choroplethExaggeration, canalHighlights, highlightedCanalNames, canalTourActive, showObjectLibrary, onObjectSelect, gameModeActive, gameCharacter, onGameAddWater, bowlWorldActive, onBowlWorldComplete, showLandcover, landcoverVisibleClasses, onLandcoverAvailableClasses, showSchools, showVocabulary, agmarShowProposalSites, aryqWorldActive, onAryqWorldComplete, onNukusClick, showOverlayMetrics, showGroundwater, showPrecipitation, showSalinity, waterPlaygroundActive, sandboxActive, sandboxSimState, sandboxRenderKey, sandboxToolActive, onSandboxClick, showWaterways, waterwayTypeFilter, waterwayTraceMode, waterwayClearTraceSignal }, ref) => {
   const screenshotFn = useRef<(() => void) | null>(null);
   const canvasRecorderControls = useRef<{ start: () => void; stop: () => void } | null>(null);
   const orbitRef = useRef<any>(null);
@@ -429,7 +431,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
               {showGroundwater && <GroundwaterLayer terrain={terrain} exaggeration={exaggeration} />}
               {showPrecipitation && <PrecipitationLayer terrain={terrain} exaggeration={exaggeration} />}
               {showSalinity && <SalinityLayer terrain={terrain} exaggeration={exaggeration} />}
-              {showWaterways && <WaterwaysLayer terrain={terrain} exaggeration={exaggeration} typeFilter={waterwayTypeFilter || 'all'} />}
+              {showWaterways && <WaterwaysLayer terrain={terrain} exaggeration={exaggeration} typeFilter={waterwayTypeFilter || 'all'} traceMode={!!waterwayTraceMode} clearTraceSignal={waterwayClearTraceSignal || 0} />}
               <WaterPlaygroundOverlay terrain={terrain} exaggeration={exaggeration} active={!!waterPlaygroundActive} />
               {waterPlaygroundActive && <NoahsArk terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} />}
             </>

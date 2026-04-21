@@ -213,11 +213,12 @@ interface IntroOverlayProps {
   onStartGame?: () => void;
   onQuadrants?: () => void;
   onSandbox?: () => void;
+  onTraceCanals?: () => void;
 }
 
 type LandingView = 'main' | 'artifacts';
 
-const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onAgmarTour, onObjectSelect, onStartGame, onQuadrants, onSandbox }: IntroOverlayProps) => {
+const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onAgmarTour, onObjectSelect, onStartGame, onQuadrants, onSandbox, onTraceCanals }: IntroOverlayProps) => {
   const [view, setView] = useState<LandingView>('main');
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
@@ -449,11 +450,11 @@ const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onAgmarTour, onObjec
             </button>
           </div>
 
-          {/* Third row — Sandbox */}
-          <div className="flex justify-center">
+          {/* Third row — Sandbox + Trace */}
+          <div className="grid grid-cols-2 gap-4">
             <button
               onClick={() => onSandbox?.()}
-              className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-5 hover:bg-card/70 hover:border-orange-500/40 transition-all duration-500 text-left overflow-hidden w-full max-w-[calc(33.333%-0.667rem)]"
+              className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-5 hover:bg-card/70 hover:border-orange-500/40 transition-all duration-500 text-left overflow-hidden"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <div className="relative z-10">
@@ -463,6 +464,20 @@ const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onAgmarTour, onObjec
                 </p>
               </div>
               <ArrowRight className="absolute bottom-3 right-3 w-4 h-4 text-foreground/20 group-hover:text-orange-500/60 transition-all duration-300 group-hover:translate-x-1" />
+            </button>
+
+            <button
+              onClick={() => onTraceCanals?.()}
+              className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-5 hover:bg-card/70 hover:border-cyan-500/40 transition-all duration-500 text-left overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="relative z-10">
+                <p className="text-base font-semibold text-foreground tracking-wide mb-1">Trace</p>
+                <p className="text-[11px] text-foreground/50 leading-relaxed">
+                  Click a canal to follow it to the Amu Darya
+                </p>
+              </div>
+              <ArrowRight className="absolute bottom-3 right-3 w-4 h-4 text-foreground/20 group-hover:text-cyan-500/60 transition-all duration-300 group-hover:translate-x-1" />
             </button>
           </div>
         </div>

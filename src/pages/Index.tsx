@@ -176,6 +176,8 @@ const Index = () => {
   const [canalMode, setCanalMode] = useState(false);
   const [canalActiveLayer, setCanalActiveLayer] = useState<'none' | 'playground'>('none');
   const [showWaterPlayground, setShowWaterPlayground] = useState(false);
+  const [traceMode, setTraceMode] = useState(false);
+  const [traceClearSignal, setTraceClearSignal] = useState(0);
   const [agmarTourActive, setAgmarTourActive] = useState(false);
   const [agmarTourStep, setAgmarTourStep] = useState(0);
   const [sandboxMode, setSandboxMode] = useState(false);
@@ -905,7 +907,7 @@ const Index = () => {
     return () => window.removeEventListener('keydown', handler);
   }, [toggleScreenRecording]);
 
-  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode;
+  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode && !traceMode;
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
@@ -1017,6 +1019,8 @@ const Index = () => {
             onSandboxClick={handleSandboxClick}
             showWaterways={showWaterways}
             waterwayTypeFilter={waterwayTypeFilter}
+            waterwayTraceMode={traceMode}
+            waterwayClearTraceSignal={traceClearSignal}
           />
         )}
         {!terrain && !loading && error && (
@@ -1044,6 +1048,34 @@ const Index = () => {
             setStarted(true);
             setSandboxMode(true);
             setShowWaterExtent(false);
+          }}
+          onTraceCanals={() => {
+            // Enter Trace mode: show only waterways, hide everything else
+            setStarted(true);
+            setTraceMode(true);
+            setShowWaterways(true);
+            setWaterwayTypeFilter('all');
+            // Hide other layers for a clean view
+            setShowBorders(false);
+            setShowRivers(false);
+            setShow13thBasin(false);
+            setShow19thBasin(false);
+            setShow21stBasin(false);
+            setShowKhorezm(false);
+            setShowLakes(false);
+            setShow21cLakes(false);
+            setShowWatershed(false);
+            setShowLandcover(false);
+            setShowPopDensity(false);
+            setShowMigration(false);
+            setShowChoropleth(false);
+            setShowWaterExtent(false);
+            setShowSchools(false);
+            setShowVocabulary(false);
+            setShowGroundwater(false);
+            setShowPrecipitation(false);
+            setShowSalinity(false);
+            setTraceClearSignal(s => s + 1);
           }}
         />
       )}
@@ -1715,6 +1747,37 @@ const Index = () => {
             </button>
           )}
         </div>
+      )}
+
+      {/* Trace mode HUD */}
+      {traceMode && started && (
+        <>
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 glass-panel px-4 py-2">
+            <p className="text-xs text-foreground tracking-wide">
+              <span className="text-cyan-400 font-semibold">Trace mode</span>
+              <span className="text-muted-foreground ml-2">— click any canal to follow the connected water network</span>
+            </p>
+          </div>
+          <div className="absolute bottom-6 left-6 z-20 flex flex-col gap-2">
+            <button
+              onClick={() => {
+                setTraceMode(false);
+                setShowWaterways(false);
+                setStarted(false);
+                setTraceClearSignal(s => s + 1);
+              }}
+              className="text-[10px] tracking-[0.12em] uppercase text-muted-foreground hover:text-primary transition-colors border border-border/50 px-3 py-1.5 bg-card/60 backdrop-blur-sm"
+            >
+              ← Menu
+            </button>
+            <button
+              onClick={() => setTraceClearSignal(s => s + 1)}
+              className="text-[11px] tracking-[0.08em] uppercase font-mono px-4 py-2 border bg-card/60 border-border/50 text-muted-foreground hover:text-primary hover:border-primary/40 backdrop-blur-sm transition-all"
+            >
+              Clear trace
+            </button>
+          </div>
+        </>
       )}
     </div>
   );
