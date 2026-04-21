@@ -115,9 +115,10 @@ function fetchWaterwayFeatures(): Promise<WaterwayFeature[]> {
   return _featuresFetchPromise;
 }
 
-const WaterwaysLayer = ({ terrain, exaggeration, typeFilter }: WaterwaysLayerProps) => {
+const WaterwaysLayer = ({ terrain, exaggeration, typeFilter, traceMode = false, clearTraceSignal = 0 }: WaterwaysLayerProps) => {
   const [features, setFeatures] = useState<WaterwayFeature[]>(_cachedFeatures || []);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
+  const [tracedIdxs, setTracedIdxs] = useState<Set<number>>(new Set());
   const prevExagg = useRef(exaggeration);
 
   const meshWidth = 10;
