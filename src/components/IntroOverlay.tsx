@@ -207,6 +207,7 @@ function ParticleField() {
 interface IntroOverlayProps {
   onStart: () => void;
   onGuidedTour: () => void;
+  onReading?: () => void;
   onCanalTour: () => void;
   onAgmarTour?: () => void;
   onObjectSelect?: (lat: number, lon: number, name: string) => void;
@@ -218,7 +219,7 @@ interface IntroOverlayProps {
 
 type LandingView = 'main' | 'artifacts';
 
-const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onAgmarTour, onObjectSelect, onStartGame, onQuadrants, onSandbox, onTraceCanals }: IntroOverlayProps) => {
+const IntroOverlay = ({ onStart, onGuidedTour, onReading, onCanalTour, onAgmarTour, onObjectSelect, onStartGame, onQuadrants, onSandbox, onTraceCanals }: IntroOverlayProps) => {
   const [view, setView] = useState<LandingView>('main');
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
@@ -450,8 +451,8 @@ const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onAgmarTour, onObjec
             </button>
           </div>
 
-          {/* Third row — Sandbox + Trace */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Third row — Sandbox + Trace + Read */}
+          <div className="grid grid-cols-3 gap-4">
             <button
               onClick={() => onSandbox?.()}
               className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-5 hover:bg-card/70 hover:border-orange-500/40 transition-all duration-500 text-left overflow-hidden"
@@ -478,6 +479,20 @@ const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onAgmarTour, onObjec
                 </p>
               </div>
               <ArrowRight className="absolute bottom-3 right-3 w-4 h-4 text-foreground/20 group-hover:text-cyan-500/60 transition-all duration-300 group-hover:translate-x-1" />
+            </button>
+
+            <button
+              onClick={() => onReading?.()}
+              className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-5 hover:bg-card/70 hover:border-stone-300/50 transition-all duration-500 text-left overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-stone-200/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="relative z-10">
+                <p className="text-base font-semibold text-foreground tracking-wide mb-1" style={{ fontFamily: 'serif', fontStyle: 'italic' }}>Read</p>
+                <p className="text-[11px] text-foreground/50 leading-relaxed">
+                  A field notebook — scroll the map slowly
+                </p>
+              </div>
+              <ArrowRight className="absolute bottom-3 right-3 w-4 h-4 text-foreground/20 group-hover:text-stone-300/80 transition-all duration-300 group-hover:translate-x-1" />
             </button>
           </div>
         </div>

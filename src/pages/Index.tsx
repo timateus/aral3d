@@ -25,6 +25,8 @@ import { NARRATIVE_STEPS } from '@/lib/narrative-steps';
 import { CANAL_TOUR_STEPS, getEthnicityColor } from '@/lib/canal-tour-steps';
 import { AGMAR_TOUR_STEPS } from '@/lib/agmar-tour-steps';
 import NarrativeOverlay from '@/components/NarrativeOverlay';
+import ReadingOverlay from '@/components/ReadingOverlay';
+import { READING_PASSAGES } from '@/lib/reading-passages';
 import CanalTourOverlay from '@/components/CanalTourOverlay';
 import AgmarTourOverlay from '@/components/AgmarTourOverlay';
 import QuadrantView from '@/components/QuadrantView';
@@ -135,6 +137,8 @@ const Index = () => {
   const [scenarioActions, setScenarioActions] = useState<ScenarioAction[]>([]);
   const [showDataPanel, setShowDataPanel] = useState(false);
   const [narrativeActive, setNarrativeActive] = useState(false);
+  const [readingActive, setReadingActive] = useState(false);
+  const [readingStep, setReadingStep] = useState(0);
   const [showInspector, setShowInspector] = useState(false);
   const [narrativeStep, setNarrativeStep] = useState(0);
   const [canalTourActive, setCanalTourActive] = useState(false);
@@ -288,6 +292,26 @@ const Index = () => {
 
   const exitNarrative = useCallback(() => {
     setNarrativeActive(false);
+  }, []);
+
+  // Reading mode — Sebald-mode scroll-driven literary overlay over the live map.
+  // Reuses NARRATIVE_STEPS for camera + year + layers; passages map onto step indices.
+  const handleReadingStepChange = useCallback((newReadingStep: number) => {
+    setReadingStep(newReadingStep);
+    const passage = READING_PASSAGES[newReadingStep];
+    if (!passage) return;
+    handleNarrativeStepChange(passage.stepIndex);
+  }, [handleNarrativeStepChange]);
+
+  const startReading = useCallback(() => {
+    setStarted(true);
+    setReadingActive(true);
+    setReadingStep(0);
+    handleNarrativeStepChange(READING_PASSAGES[0].stepIndex);
+  }, [handleNarrativeStepChange]);
+
+  const exitReading = useCallback(() => {
+    setReadingActive(false);
   }, []);
 
   // Canal tour handlers
@@ -939,14 +963,16 @@ const Index = () => {
             onRecordingDone={() => setRecording(false)}
             scenarioActions={scenarioActions}
             currentMetrics={currentMetrics}
-            narrativeActive={narrativeActive || canalTourActive || agmarTourActive}
+            narrativeActive={narrativeActive || readingActive || canalTourActive || agmarTourActive}
             narrativeCameraPosition={
+              readingActive ? NARRATIVE_STEPS[READING_PASSAGES[readingStep]?.stepIndex ?? 0]?.camera.position :
               narrativeActive ? NARRATIVE_STEPS[narrativeStep]?.camera.position :
               canalTourActive ? CANAL_TOUR_STEPS[canalTourStep]?.camera.position :
               agmarTourActive ? AGMAR_TOUR_STEPS[agmarTourStep]?.camera.position :
               undefined
             }
             narrativeCameraTarget={
+              readingActive ? NARRATIVE_STEPS[READING_PASSAGES[readingStep]?.stepIndex ?? 0]?.camera.target :
               narrativeActive ? NARRATIVE_STEPS[narrativeStep]?.camera.target :
               canalTourActive ? CANAL_TOUR_STEPS[canalTourStep]?.camera.target :
               agmarTourActive ? AGMAR_TOUR_STEPS[agmarTourStep]?.camera.target :
@@ -1037,6 +1063,7 @@ const Index = () => {
         <IntroOverlay
           onStart={() => setStarted(true)}
           onGuidedTour={startNarrative}
+          onReading={startReading}
           onCanalTour={startCanalTour}
           onAgmarTour={startAgmarTour}
           onObjectSelect={(lat, lon, name) => { setStarted(true); }}
@@ -1165,6 +1192,14 @@ const Index = () => {
           step={narrativeStep}
           onStepChange={handleNarrativeStepChange}
           onExit={exitNarrative}
+        />
+      )}
+
+      {readingActive && (
+        <ReadingOverlay
+          step={readingStep}
+          onStepChange={handleReadingStepChange}
+          onExit={exitReading}
         />
       )}
 
