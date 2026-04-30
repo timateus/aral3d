@@ -963,14 +963,16 @@ const Index = () => {
             onRecordingDone={() => setRecording(false)}
             scenarioActions={scenarioActions}
             currentMetrics={currentMetrics}
-            narrativeActive={narrativeActive || canalTourActive || agmarTourActive}
+            narrativeActive={narrativeActive || readingActive || canalTourActive || agmarTourActive}
             narrativeCameraPosition={
+              readingActive ? NARRATIVE_STEPS[READING_PASSAGES[readingStep]?.stepIndex ?? 0]?.camera.position :
               narrativeActive ? NARRATIVE_STEPS[narrativeStep]?.camera.position :
               canalTourActive ? CANAL_TOUR_STEPS[canalTourStep]?.camera.position :
               agmarTourActive ? AGMAR_TOUR_STEPS[agmarTourStep]?.camera.position :
               undefined
             }
             narrativeCameraTarget={
+              readingActive ? NARRATIVE_STEPS[READING_PASSAGES[readingStep]?.stepIndex ?? 0]?.camera.target :
               narrativeActive ? NARRATIVE_STEPS[narrativeStep]?.camera.target :
               canalTourActive ? CANAL_TOUR_STEPS[canalTourStep]?.camera.target :
               agmarTourActive ? AGMAR_TOUR_STEPS[agmarTourStep]?.camera.target :
