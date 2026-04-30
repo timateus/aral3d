@@ -1216,6 +1216,11 @@ const Index = () => {
             setShowSalinity(false);
             setTraceClearSignal(s => s + 1);
           }}
+          onDustStorm={() => {
+            setStarted(true);
+            setDustMode(true);
+            setShowWaterExtent(false);
+          }}
         />
       )}
 
