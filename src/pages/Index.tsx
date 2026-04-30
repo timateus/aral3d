@@ -41,6 +41,7 @@ import { createSandboxSim, addElementAt, stepSandboxSim, countActivePixels } fro
 import type { SandboxSimState } from '@/lib/sandbox-simulation';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useUserLocation } from '@/hooks/useUserLocation';
+import MirageToggle from '@/components/MirageToggle';
 
 export type DataSource = 'regional' | 'seabed' | 'merged';
 
