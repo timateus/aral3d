@@ -648,6 +648,90 @@ const Index = () => {
     }
   }, [sandboxMode, terrain]);
 
+  // --- Dust storm handlers ---
+  const ensureDustState = useCallback(() => {
+    if (!dustStateRef.current) {
+      // dynamic import would split out — use sync import via top-level
+      // (createDustState is imported lazily through helper below)
+      const mod = dustModule;
+      dustStateRef.current = mod.createDustState({
+        windDir: dustWindDir,
+        windSpeed: dustWindSpeed,
+        turbulence: dustTurbulence,
+        particleLife: dustParticleLife,
+        spawnRate: dustSpawnRate,
+      });
+    }
+    return dustStateRef.current!;
+  }, [dustWindDir, dustWindSpeed, dustTurbulence, dustParticleLife, dustSpawnRate]);
+
+  const handleDustClick = useCallback((row: number, col: number) => {
+    if (!terrain) return;
+    const state = ensureDustState();
+    dustModule.addEmitter(state, terrain, row, col, 0.5, 80);
+    setDustEmitterCount(state.emitters.length);
+    setDustRenderKey(k => k + 1);
+  }, [terrain, ensureDustState]);
+
+  const handleDustSeedAralkum = useCallback(() => {
+    if (!terrain) return;
+    const state = ensureDustState();
+    dustModule.autoSeedAralkum(state, terrain, 53, 14, 25);
+    setDustEmitterCount(state.emitters.length);
+    setDustRenderKey(k => k + 1);
+  }, [terrain, ensureDustState]);
+
+  const handleDustClearEmitters = useCallback(() => {
+    if (dustStateRef.current) {
+      dustModule.clearEmitters(dustStateRef.current);
+      setDustEmitterCount(0);
+    }
+  }, []);
+
+  const handleDustReset = useCallback(() => {
+    if (dustStateRef.current) {
+      dustModule.clearDust(dustStateRef.current);
+      setDustParticleCount(0);
+      setDustRenderKey(k => k + 1);
+    }
+  }, []);
+
+  // Sync HUD params -> live state
+  useEffect(() => {
+    if (!dustStateRef.current) return;
+    dustStateRef.current.windDir = dustWindDir;
+    dustStateRef.current.windSpeed = dustWindSpeed;
+    dustStateRef.current.turbulence = dustTurbulence;
+    dustStateRef.current.particleLife = dustParticleLife;
+    dustStateRef.current.spawnRate = dustSpawnRate;
+  }, [dustWindDir, dustWindSpeed, dustTurbulence, dustParticleLife, dustSpawnRate]);
+
+  // Animation loop
+  useEffect(() => {
+    if (!dustMode || !terrain) return;
+    ensureDustState();
+    let cancelled = false;
+    dustLastTimeRef.current = performance.now();
+    const tick = (now: number) => {
+      if (cancelled) return;
+      const dt = Math.min(0.05, (now - dustLastTimeRef.current) / 1000);
+      dustLastTimeRef.current = now;
+      if (!dustPaused && dustStateRef.current) {
+        dustModule.stepDust(dustStateRef.current, terrain, dt);
+        setDustRenderKey(k => k + 1);
+        setDustParticleCount(dustStateRef.current.count);
+      }
+      dustAnimRef.current = requestAnimationFrame(tick);
+    };
+    dustAnimRef.current = requestAnimationFrame(tick);
+    return () => {
+      cancelled = true;
+      if (dustAnimRef.current) cancelAnimationFrame(dustAnimRef.current);
+      dustAnimRef.current = null;
+    };
+  }, [dustMode, dustPaused, terrain, ensureDustState]);
+
+
   // Raise terrain click handler
   const handleRaiseTerrainClick = useCallback((row: number, col: number) => {
     if (!terrain) return;
