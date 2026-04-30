@@ -435,7 +435,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
       {!aryqWorldActive && (
         <>
           <group>
-            <TerrainMesh terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} hideNoData={hideNoData} waterBounds={waterBounds} inspectorEnabled={inspectorEnabled} popData={showPopDensity ? popData : null} lcData={showLandcover ? lcData : null} damToolActive={damToolActive} onDamPlace={onDamPlace} canalToolActive={canalToolActive} onCanalDig={onCanalDig} waterFlowActive={waterFlowActive || sandboxToolActive} onWaterFlowClick={sandboxToolActive ? onSandboxClick : onWaterFlowClick} terrainVersion={terrainVersion} raisedPixels={raisedPixels} dugPixels={dugPixels} sandboxActive={false} />
+            <TerrainMesh terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} hideNoData={hideNoData} waterBounds={waterBounds} inspectorEnabled={inspectorEnabled} popData={showPopDensity ? popData : null} lcData={showLandcover ? lcData : null} damToolActive={damToolActive} onDamPlace={onDamPlace} canalToolActive={canalToolActive} onCanalDig={onCanalDig} waterFlowActive={waterFlowActive || sandboxToolActive || dustToolActive} onWaterFlowClick={dustToolActive ? onDustClick : (sandboxToolActive ? onSandboxClick : onWaterFlowClick)} terrainVersion={terrainVersion} raisedPixels={raisedPixels} dugPixels={dugPixels} sandboxActive={false} />
             {!sandboxActive && flowState && flowRenderKey !== undefined && (
               <WaterFlowOverlay terrain={terrain} exaggeration={exaggeration} flowState={flowState} renderKey={flowRenderKey} />
             )}
@@ -460,6 +460,9 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
           )}
           {sandboxActive && sandboxSimState && sandboxRenderKey !== undefined && (
             <SandboxOverlay terrain={terrain} exaggeration={exaggeration} simState={sandboxSimState} renderKey={sandboxRenderKey} />
+          )}
+          {dustActive && dustState && dustRenderKey !== undefined && (
+            <DustOverlay terrain={terrain} exaggeration={exaggeration} state={dustState} renderKey={dustRenderKey} />
           )}
           {!sandboxActive && scenarioActions && scenarioActions.length > 0 && (
             <ScenarioOverlay actions={scenarioActions} terrain={terrain} exaggeration={exaggeration} />
