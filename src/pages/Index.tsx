@@ -1322,7 +1322,7 @@ const Index = () => {
 
       {/* Designer panel — only when in 'designer' visual mode */}
       {visualMode === 'designer' && isMapExploration && !isMobile && (
-        <DesignerPanel onClose={() => { /* exit designer mode */ }} />
+        <DesignerPanel onClose={() => { document.documentElement.classList.remove('designer'); window.location.reload(); }} />
       )}
 
       {/* Controls - desktop only, hide in game mode unless toggled */}
