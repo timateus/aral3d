@@ -1320,6 +1320,11 @@ const Index = () => {
         </div>
       )}
 
+      {/* Designer panel — only when in 'designer' visual mode */}
+      {visualMode === 'designer' && isMapExploration && !isMobile && (
+        <DesignerPanel onClose={() => { /* exit designer mode */ }} />
+      )}
+
       {/* Controls - desktop only, hide in game mode unless toggled */}
       {isMapExploration && !isMobile && !sidePanelHidden && (
         <div className="absolute top-4 right-4 z-10 space-y-3 max-h-[calc(100vh-2rem)] overflow-y-auto w-[280px] scrollbar-thin pr-1">
