@@ -33,6 +33,24 @@ import { TerrainData } from '@/lib/geotiff-loader';
 import type { ScenarioAction } from '@/types/scenario';
 import type { WaterFlowState } from '@/lib/water-flow-simulation';
 import * as THREE from 'three';
+import { useVisualMode } from '@/lib/visual-mode';
+
+/* ── Scene background + fog reactive to mirage/dark mode ── */
+function SceneBackground() {
+  const [mode] = useVisualMode();
+  const isMirage = mode === 'mirage';
+  const bg = isMirage ? '#f0ead8' : '#0d1117';
+  // In mirage we push fog much further out so the map reads as a flat
+  // drafting plate rather than a moody horizon.
+  const near = isMirage ? 28 : 20;
+  const far = isMirage ? 80 : 50;
+  return (
+    <>
+      <color attach="background" args={[bg]} />
+      <fog attach="fog" args={[bg, near, far]} />
+    </>
+  );
+}
 
 export interface TerrainViewerHandle {
   screenshot: () => void;
@@ -402,9 +420,8 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
       className="w-full h-full"
       gl={{ antialias: true, toneMapping: 3, preserveDrawingBuffer: true }}
     >
-      <color attach="background" args={['#0d1117']} />
-      <fog attach="fog" args={['#0d1117', 20, 50]} />
-      
+      <SceneBackground />
+
       <ambientLight intensity={0.3} />
       <directionalLight position={[5, 10, 5]} intensity={1.2} castShadow />
       <directionalLight position={[-3, 5, -3]} intensity={0.4} color="#8ec8e8" />
