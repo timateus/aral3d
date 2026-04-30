@@ -1038,7 +1038,7 @@ const Index = () => {
     return () => window.removeEventListener('keydown', handler);
   }, [toggleScreenRecording]);
 
-  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode && !traceMode;
+  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode && !dustMode && !traceMode;
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
