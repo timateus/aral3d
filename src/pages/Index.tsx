@@ -42,6 +42,9 @@ import type { SandboxSimState } from '@/lib/sandbox-simulation';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import MirageToggle from '@/components/MirageToggle';
+import DesignerPanel from '@/components/DesignerPanel';
+import { useVisualMode } from '@/lib/visual-mode';
+import { PanelRightClose, PanelRightOpen } from 'lucide-react';
 
 export type DataSource = 'regional' | 'seabed' | 'merged';
 
