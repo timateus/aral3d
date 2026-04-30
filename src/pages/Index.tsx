@@ -39,6 +39,8 @@ import { SandboxHUD } from '@/components/SandboxHUD';
 import type { SandboxElement } from '@/lib/sandbox-simulation';
 import { createSandboxSim, addElementAt, stepSandboxSim, countActivePixels } from '@/lib/sandbox-simulation';
 import type { SandboxSimState } from '@/lib/sandbox-simulation';
+import * as dustModule from '@/lib/dust-simulation';
+import { DustHUD } from '@/components/DustHUD';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import MirageToggle from '@/components/MirageToggle';
@@ -200,6 +202,21 @@ const Index = () => {
   const [sandboxRenderKey, setSandboxRenderKey] = useState(0);
   const [sandboxActivePixels, setSandboxActivePixels] = useState(0);
   const sandboxAnimRef = useRef<number | null>(null);
+
+  // --- Dust storm state ---
+  const [dustMode, setDustMode] = useState(false);
+  const [dustPaused, setDustPaused] = useState(false);
+  const [dustWindDir, setDustWindDir] = useState(Math.PI * 0.85); // NW->SE-ish
+  const [dustWindSpeed, setDustWindSpeed] = useState(1.4);
+  const [dustTurbulence, setDustTurbulence] = useState(0.35);
+  const [dustParticleLife, setDustParticleLife] = useState(6);
+  const [dustSpawnRate, setDustSpawnRate] = useState(100);
+  const [dustRenderKey, setDustRenderKey] = useState(0);
+  const [dustParticleCount, setDustParticleCount] = useState(0);
+  const [dustEmitterCount, setDustEmitterCount] = useState(0);
+  const dustStateRef = useRef<import('@/lib/dust-simulation').DustState | null>(null);
+  const dustAnimRef = useRef<number | null>(null);
+  const dustLastTimeRef = useRef<number>(0);
   
   const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
   const [flowRenderKey, setFlowRenderKey] = useState(0);
@@ -633,6 +650,90 @@ const Index = () => {
     }
   }, [sandboxMode, terrain]);
 
+  // --- Dust storm handlers ---
+  const ensureDustState = useCallback(() => {
+    if (!dustStateRef.current) {
+      // dynamic import would split out — use sync import via top-level
+      // (createDustState is imported lazily through helper below)
+      const mod = dustModule;
+      dustStateRef.current = mod.createDustState({
+        windDir: dustWindDir,
+        windSpeed: dustWindSpeed,
+        turbulence: dustTurbulence,
+        particleLife: dustParticleLife,
+        spawnRate: dustSpawnRate,
+      });
+    }
+    return dustStateRef.current!;
+  }, [dustWindDir, dustWindSpeed, dustTurbulence, dustParticleLife, dustSpawnRate]);
+
+  const handleDustClick = useCallback((row: number, col: number) => {
+    if (!terrain) return;
+    const state = ensureDustState();
+    dustModule.addEmitter(state, terrain, row, col, 0.5, 80);
+    setDustEmitterCount(state.emitters.length);
+    setDustRenderKey(k => k + 1);
+  }, [terrain, ensureDustState]);
+
+  const handleDustSeedAralkum = useCallback(() => {
+    if (!terrain) return;
+    const state = ensureDustState();
+    dustModule.autoSeedAralkum(state, terrain, 53, 14, 25);
+    setDustEmitterCount(state.emitters.length);
+    setDustRenderKey(k => k + 1);
+  }, [terrain, ensureDustState]);
+
+  const handleDustClearEmitters = useCallback(() => {
+    if (dustStateRef.current) {
+      dustModule.clearEmitters(dustStateRef.current);
+      setDustEmitterCount(0);
+    }
+  }, []);
+
+  const handleDustReset = useCallback(() => {
+    if (dustStateRef.current) {
+      dustModule.clearDust(dustStateRef.current);
+      setDustParticleCount(0);
+      setDustRenderKey(k => k + 1);
+    }
+  }, []);
+
+  // Sync HUD params -> live state
+  useEffect(() => {
+    if (!dustStateRef.current) return;
+    dustStateRef.current.windDir = dustWindDir;
+    dustStateRef.current.windSpeed = dustWindSpeed;
+    dustStateRef.current.turbulence = dustTurbulence;
+    dustStateRef.current.particleLife = dustParticleLife;
+    dustStateRef.current.spawnRate = dustSpawnRate;
+  }, [dustWindDir, dustWindSpeed, dustTurbulence, dustParticleLife, dustSpawnRate]);
+
+  // Animation loop
+  useEffect(() => {
+    if (!dustMode || !terrain) return;
+    ensureDustState();
+    let cancelled = false;
+    dustLastTimeRef.current = performance.now();
+    const tick = (now: number) => {
+      if (cancelled) return;
+      const dt = Math.min(0.05, (now - dustLastTimeRef.current) / 1000);
+      dustLastTimeRef.current = now;
+      if (!dustPaused && dustStateRef.current) {
+        dustModule.stepDust(dustStateRef.current, terrain, dt);
+        setDustRenderKey(k => k + 1);
+        setDustParticleCount(dustStateRef.current.count);
+      }
+      dustAnimRef.current = requestAnimationFrame(tick);
+    };
+    dustAnimRef.current = requestAnimationFrame(tick);
+    return () => {
+      cancelled = true;
+      if (dustAnimRef.current) cancelAnimationFrame(dustAnimRef.current);
+      dustAnimRef.current = null;
+    };
+  }, [dustMode, dustPaused, terrain, ensureDustState]);
+
+
   // Raise terrain click handler
   const handleRaiseTerrainClick = useCallback((row: number, col: number) => {
     if (!terrain) return;
@@ -937,7 +1038,7 @@ const Index = () => {
     return () => window.removeEventListener('keydown', handler);
   }, [toggleScreenRecording]);
 
-  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode && !traceMode;
+  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode && !dustMode && !traceMode;
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
@@ -1049,6 +1150,11 @@ const Index = () => {
             sandboxRenderKey={sandboxRenderKey}
             sandboxToolActive={sandboxMode}
             onSandboxClick={handleSandboxClick}
+            dustActive={dustMode}
+            dustState={dustStateRef.current}
+            dustRenderKey={dustRenderKey}
+            dustToolActive={dustMode}
+            onDustClick={handleDustClick}
             showWaterways={showWaterways}
             waterwayTypeFilter={waterwayTypeFilter}
             waterwayTraceMode={traceMode}
@@ -1109,6 +1215,11 @@ const Index = () => {
             setShowPrecipitation(false);
             setShowSalinity(false);
             setTraceClearSignal(s => s + 1);
+          }}
+          onDustStorm={() => {
+            setStarted(true);
+            setDustMode(true);
+            setShowWaterExtent(false);
           }}
         />
       )}
@@ -1175,6 +1286,36 @@ const Index = () => {
         activePixels={sandboxActivePixels}
         speed={sandboxSpeed}
         onSpeedChange={setSandboxSpeed}
+      />
+
+      {/* Dust Storm HUD */}
+      <DustHUD
+        active={dustMode && started}
+        windDir={dustWindDir}
+        onWindDir={setDustWindDir}
+        windSpeed={dustWindSpeed}
+        onWindSpeed={setDustWindSpeed}
+        turbulence={dustTurbulence}
+        onTurbulence={setDustTurbulence}
+        particleLife={dustParticleLife}
+        onParticleLife={setDustParticleLife}
+        spawnRate={dustSpawnRate}
+        onSpawnRate={setDustSpawnRate}
+        paused={dustPaused}
+        onTogglePause={() => setDustPaused(p => !p)}
+        onReset={handleDustReset}
+        onSeedAralkum={handleDustSeedAralkum}
+        onClearEmitters={handleDustClearEmitters}
+        onExit={() => {
+          setDustMode(false);
+          setStarted(false);
+          if (dustAnimRef.current) { cancelAnimationFrame(dustAnimRef.current); dustAnimRef.current = null; }
+          dustStateRef.current = null;
+          setDustParticleCount(0);
+          setDustEmitterCount(0);
+        }}
+        particleCount={dustParticleCount}
+        emitterCount={dustEmitterCount}
       />
 
       {/* Character Selection */}
