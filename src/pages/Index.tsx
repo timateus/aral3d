@@ -200,6 +200,21 @@ const Index = () => {
   const [sandboxRenderKey, setSandboxRenderKey] = useState(0);
   const [sandboxActivePixels, setSandboxActivePixels] = useState(0);
   const sandboxAnimRef = useRef<number | null>(null);
+
+  // --- Dust storm state ---
+  const [dustMode, setDustMode] = useState(false);
+  const [dustPaused, setDustPaused] = useState(false);
+  const [dustWindDir, setDustWindDir] = useState(Math.PI * 0.85); // NW->SE-ish
+  const [dustWindSpeed, setDustWindSpeed] = useState(1.4);
+  const [dustTurbulence, setDustTurbulence] = useState(0.35);
+  const [dustParticleLife, setDustParticleLife] = useState(6);
+  const [dustSpawnRate, setDustSpawnRate] = useState(100);
+  const [dustRenderKey, setDustRenderKey] = useState(0);
+  const [dustParticleCount, setDustParticleCount] = useState(0);
+  const [dustEmitterCount, setDustEmitterCount] = useState(0);
+  const dustStateRef = useRef<import('@/lib/dust-simulation').DustState | null>(null);
+  const dustAnimRef = useRef<number | null>(null);
+  const dustLastTimeRef = useRef<number>(0);
   
   const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
   const [flowRenderKey, setFlowRenderKey] = useState(0);
