@@ -207,6 +207,7 @@ function ParticleField() {
 interface IntroOverlayProps {
   onStart: () => void;
   onGuidedTour: () => void;
+  onReading?: () => void;
   onCanalTour: () => void;
   onAgmarTour?: () => void;
   onObjectSelect?: (lat: number, lon: number, name: string) => void;
@@ -218,7 +219,7 @@ interface IntroOverlayProps {
 
 type LandingView = 'main' | 'artifacts';
 
-const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onAgmarTour, onObjectSelect, onStartGame, onQuadrants, onSandbox, onTraceCanals }: IntroOverlayProps) => {
+const IntroOverlay = ({ onStart, onGuidedTour, onReading, onCanalTour, onAgmarTour, onObjectSelect, onStartGame, onQuadrants, onSandbox, onTraceCanals }: IntroOverlayProps) => {
   const [view, setView] = useState<LandingView>('main');
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
@@ -450,8 +451,8 @@ const IntroOverlay = ({ onStart, onGuidedTour, onCanalTour, onAgmarTour, onObjec
             </button>
           </div>
 
-          {/* Third row — Sandbox + Trace */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Third row — Sandbox + Trace + Read */}
+          <div className="grid grid-cols-3 gap-4">
             <button
               onClick={() => onSandbox?.()}
               className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-5 hover:bg-card/70 hover:border-orange-500/40 transition-all duration-500 text-left overflow-hidden"
