@@ -294,6 +294,26 @@ const Index = () => {
     setNarrativeActive(false);
   }, []);
 
+  // Reading mode — Sebald-mode scroll-driven literary overlay over the live map.
+  // Reuses NARRATIVE_STEPS for camera + year + layers; passages map onto step indices.
+  const handleReadingStepChange = useCallback((newReadingStep: number) => {
+    setReadingStep(newReadingStep);
+    const passage = READING_PASSAGES[newReadingStep];
+    if (!passage) return;
+    handleNarrativeStepChange(passage.stepIndex);
+  }, [handleNarrativeStepChange]);
+
+  const startReading = useCallback(() => {
+    setStarted(true);
+    setReadingActive(true);
+    setReadingStep(0);
+    handleNarrativeStepChange(READING_PASSAGES[0].stepIndex);
+  }, [handleNarrativeStepChange]);
+
+  const exitReading = useCallback(() => {
+    setReadingActive(false);
+  }, []);
+
   // Canal tour handlers
   const handleCanalTourStepChange = useCallback((newStep: number) => {
     setCanalTourStep(newStep);
