@@ -1063,6 +1063,7 @@ const Index = () => {
         <IntroOverlay
           onStart={() => setStarted(true)}
           onGuidedTour={startNarrative}
+          onReading={startReading}
           onCanalTour={startCanalTour}
           onAgmarTour={startAgmarTour}
           onObjectSelect={(lat, lon, name) => { setStarted(true); }}
