@@ -42,6 +42,9 @@ import type { SandboxSimState } from '@/lib/sandbox-simulation';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import MirageToggle from '@/components/MirageToggle';
+import DesignerPanel from '@/components/DesignerPanel';
+import { useVisualMode } from '@/lib/visual-mode';
+import { PanelRightClose, PanelRightOpen } from 'lucide-react';
 
 export type DataSource = 'regional' | 'seabed' | 'merged';
 
@@ -49,6 +52,8 @@ const Index = () => {
   const isMobile = useIsMobile();
   const { location: userLocation, loading: locating, requestLocation } = useUserLocation();
   const [baseTerrain, setBaseTerrain] = useState<TerrainData | null>(null);
+  const [visualMode, setVisualMode] = useVisualMode();
+  const [sidePanelHidden, setSidePanelHidden] = useState(false);
   const [seabedTerrain, setSeabedTerrain] = useState<TerrainData | null>(null);
   const [khorezmTerrain, setKhorezmTerrain] = useState<TerrainData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -1255,6 +1260,14 @@ const Index = () => {
             Menu
           </button>
           <MirageToggle />
+          <button
+            onClick={() => setSidePanelHidden(v => !v)}
+            title={sidePanelHidden ? 'Show side panel' : 'Hide side panel'}
+            className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground hover:text-primary transition-colors border border-border/50 px-3 py-1.5 bg-card/60 backdrop-blur-sm flex items-center gap-1.5"
+          >
+            {sidePanelHidden ? <PanelRightOpen className="w-3 h-3" /> : <PanelRightClose className="w-3 h-3" />}
+            {sidePanelHidden ? 'Show panel' : 'Hide panel'}
+          </button>
           {!gameModeActive && (
             <button
               onClick={() => {
@@ -1307,8 +1320,13 @@ const Index = () => {
         </div>
       )}
 
+      {/* Designer panel — only when in 'designer' visual mode */}
+      {visualMode === 'designer' && isMapExploration && !isMobile && (
+        <DesignerPanel onClose={() => setVisualMode('mirage')} />
+      )}
+
       {/* Controls - desktop only, hide in game mode unless toggled */}
-      {isMapExploration && !isMobile && (
+      {isMapExploration && !isMobile && !sidePanelHidden && (
         <div className="absolute top-4 right-4 z-10 space-y-3 max-h-[calc(100vh-2rem)] overflow-y-auto w-[280px] scrollbar-thin pr-1">
           <ControlPanel
             terrain={terrain}

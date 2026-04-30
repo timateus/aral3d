@@ -128,15 +128,25 @@ html.mirage {
   --sidebar-border: 0 0% 10%;
   --sidebar-ring: 0 0% 10%;
 
-  /* One unified type scale */
-  --mirage-fs-xs: 9px;
-  --mirage-fs-sm: 10px;
-  --mirage-fs-base: 11px;
-  --mirage-fs-md: 12px;
-  --mirage-fs-lg: 14px;
+  /* Designer-overridable defaults */
+  --m-border-width: 1px;
+  --m-grid-opacity: 0.012;
+  --m-grid-spacing: 48px;
+  --m-font-weight: 200;
+  --m-fs-base: 11px;
+  --m-fs-label: 9px;
+  --m-radius: 0px;
+  --m-svg-stroke: 0.5;
+
+  /* Type scale derived from base */
+  --mirage-fs-xs: calc(var(--m-fs-base) - 2px);
+  --mirage-fs-sm: calc(var(--m-fs-base) - 1px);
+  --mirage-fs-base: var(--m-fs-base);
+  --mirage-fs-md: calc(var(--m-fs-base) + 1px);
+  --mirage-fs-lg: calc(var(--m-fs-base) + 3px);
 }
 
-/* One font, one weight family — Inter ultralight */
+/* One font, one weight family — Inter ultralight (designer-tunable) */
 html.mirage,
 html.mirage body,
 html.mirage button,
@@ -150,11 +160,11 @@ html.mirage p,
 html.mirage label,
 html.mirage a {
   font-family: 'Inter', system-ui, sans-serif;
-  font-weight: 200;
+  font-weight: var(--m-font-weight);
   letter-spacing: 0.01em;
   -webkit-font-smoothing: antialiased;
 }
-html.mirage body { font-size: var(--mirage-fs-base); }
+html.mirage body { font-size: var(--m-fs-base); }
 
 html.mirage .font-mono,
 html.mirage code,
@@ -250,30 +260,25 @@ html.mirage [data-orientation="horizontal"] {
 /* Quiet primary text accents */
 html.mirage .text-primary { color: hsl(0 0% 10%); }
 
-/* Ruled-paper background — much thinner, fainter, wider spacing */
+/* Ruled-paper background — designer-tunable */
 html.mirage body {
+  background-color: hsl(var(--background));
   background-image:
-    linear-gradient(to bottom, hsl(40 30% 98%), hsl(40 30% 98%)),
     repeating-linear-gradient(
       to bottom,
       transparent 0,
-      transparent 47px,
-      hsl(0 0% 10% / 0.012) 47px,
-      hsl(0 0% 10% / 0.012) 48px
+      transparent calc(var(--m-grid-spacing) - 1px),
+      hsl(0 0% 10% / var(--m-grid-opacity)) calc(var(--m-grid-spacing) - 1px),
+      hsl(0 0% 10% / var(--m-grid-opacity)) var(--m-grid-spacing)
     );
 }
 
-/* ── Floating 3D labels (drei <Html>) ──
-   Quiet black side-notes: tiny, ultralight, no chrome. */
+/* Floating 3D labels */
 html.mirage .terrain-glow { box-shadow: none; }
-
-/* Drei <Html> renders absolute-positioned divs. Style their text. */
 html.mirage canvas + div [style*="position"] {
   font-family: 'Inter', sans-serif !important;
-  font-weight: 200 !important;
+  font-weight: var(--m-font-weight) !important;
 }
-
-/* Generic floating-label hooks */
 html.mirage .floating-label,
 html.mirage .map-label,
 html.mirage .metric-label,
@@ -282,15 +287,15 @@ html.mirage [data-floating="number"] {
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
-  color: #1A1A1A !important;
+  color: hsl(var(--foreground)) !important;
   font-family: 'Inter', sans-serif !important;
-  font-weight: 200 !important;
-  font-size: 9px !important;
+  font-weight: var(--m-font-weight) !important;
+  font-size: var(--m-fs-label) !important;
   letter-spacing: 0.04em !important;
-  text-shadow: 0 0 2px hsl(40 30% 98% / 0.95);
+  text-shadow: 0 0 2px hsl(var(--background) / 0.95);
   padding: 0 !important;
 }
 
-/* SVG: hairline strokes */
-html.mirage svg * { stroke-width: 0.5 !important; }
-html.mirage svg [data-emphasis="true"] { stroke-width: 1 !important; }
+/* SVG strokes — designer-tunable */
+html.mirage svg * { stroke-width: var(--m-svg-stroke) !important; }
+html.mirage svg [data-emphasis="true"] { stroke-width: calc(var(--m-svg-stroke) * 2) !important; }
