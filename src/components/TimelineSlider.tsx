@@ -64,7 +64,7 @@ const TimelineSlider = ({ year, onYearChange, visible, onToggleVisible }: Timeli
             />
             <div className="flex justify-between text-[10px] text-muted-foreground font-mono px-1">
               <span>{MIN_YEAR}</span>
-              <span className="text-foreground font-semibold text-xs">{year}</span>
+              <span className="text-foreground font-semibold text-xs tabular-nums">{year}</span>
               <span>{MAX_YEAR}</span>
             </div>
           </div>
