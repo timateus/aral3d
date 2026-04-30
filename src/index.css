@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=IBM+Plex+Mono:wght@200;300;400;500&family=Inter:wght@300;400;500;600;700&display=swap');
 
 @layer base {
   :root {
@@ -75,4 +75,119 @@
   .terrain-glow {
     box-shadow: 0 0 40px -10px hsl(var(--primary) / 0.3);
   }
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   MIRAGE MODE — off-white paper, hairline strokes, monospace.
+   Activated by adding `.mirage` to <html>. We override the design
+   tokens so every component that uses semantic colors recolors
+   automatically; on top of that we restyle .glass-panel and the
+   typography globally.
+   ────────────────────────────────────────────────────────────────── */
+html.mirage {
+  --background: 38 24% 94%;          /* off-white paper */
+  --foreground: 25 12% 22%;          /* warm ink */
+
+  --card: 38 30% 97%;
+  --card-foreground: 25 12% 22%;
+
+  --popover: 38 30% 97%;
+  --popover-foreground: 25 12% 22%;
+
+  --primary: 12 55% 52%;             /* faded sienna ink */
+  --primary-foreground: 38 30% 97%;
+
+  --secondary: 35 18% 88%;
+  --secondary-foreground: 25 12% 28%;
+
+  --muted: 35 18% 90%;
+  --muted-foreground: 25 8% 45%;
+
+  --accent: 195 30% 55%;             /* dusty mirage blue */
+  --accent-foreground: 38 30% 97%;
+
+  --destructive: 6 60% 48%;
+  --destructive-foreground: 38 30% 97%;
+
+  --border: 25 12% 22%;              /* hairline strokes */
+  --input: 25 12% 22%;
+  --ring: 12 55% 52%;
+
+  --terrain-low: 195 25% 60%;
+  --terrain-mid: 35 35% 70%;
+  --terrain-high: 18 30% 60%;
+  --terrain-peak: 35 20% 92%;
+
+  --sidebar-background: 38 30% 97%;
+  --sidebar-foreground: 25 12% 22%;
+  --sidebar-primary: 12 55% 52%;
+  --sidebar-primary-foreground: 38 30% 97%;
+  --sidebar-accent: 35 18% 90%;
+  --sidebar-accent-foreground: 25 12% 22%;
+  --sidebar-border: 25 12% 22%;
+  --sidebar-ring: 12 55% 52%;
+}
+
+html.mirage body {
+  font-family: 'IBM Plex Mono', 'JetBrains Mono', monospace;
+  font-weight: 300;
+  letter-spacing: 0.01em;
+}
+
+html.mirage .font-mono,
+html.mirage code,
+html.mirage pre {
+  font-family: 'IBM Plex Mono', 'JetBrains Mono', monospace;
+  font-weight: 300;
+}
+
+/* Headings: lighter weight in mirage */
+html.mirage h1, html.mirage h2, html.mirage h3,
+html.mirage h4, html.mirage h5, html.mirage h6 {
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+/* Hairline borders everywhere */
+html.mirage * {
+  border-color: hsl(var(--border) / 0.18);
+}
+
+/* Glass panels become tracing-paper */
+html.mirage .glass-panel {
+  background: hsl(38 30% 97% / 0.78);
+  backdrop-filter: blur(6px);
+  border: 1px solid hsl(25 12% 22% / 0.18);
+  border-radius: 0;            /* sharper, technical */
+  box-shadow: 0 1px 0 hsl(25 12% 22% / 0.04);
+}
+
+/* Buttons / inputs: thin hairline outline, no fills */
+html.mirage button,
+html.mirage [role="button"] {
+  font-weight: 400;
+}
+
+/* Make rounded UI slightly squarer in mirage for that drafting feel */
+html.mirage .rounded-lg,
+html.mirage .rounded-md {
+  border-radius: 2px;
+}
+
+/* Primary brand text accents — make them quieter */
+html.mirage .text-primary {
+  color: hsl(12 45% 38%);
+}
+
+/* Subtle ruled-paper background (very faint horizontal rule lines) */
+html.mirage body {
+  background-image:
+    linear-gradient(to bottom, hsl(38 24% 94%), hsl(38 24% 94%)),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 31px,
+      hsl(25 12% 22% / 0.04) 31px,
+      hsl(25 12% 22% / 0.04) 32px
+    );
 }
