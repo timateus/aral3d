@@ -1288,6 +1288,36 @@ const Index = () => {
         onSpeedChange={setSandboxSpeed}
       />
 
+      {/* Dust Storm HUD */}
+      <DustHUD
+        active={dustMode && started}
+        windDir={dustWindDir}
+        onWindDir={setDustWindDir}
+        windSpeed={dustWindSpeed}
+        onWindSpeed={setDustWindSpeed}
+        turbulence={dustTurbulence}
+        onTurbulence={setDustTurbulence}
+        particleLife={dustParticleLife}
+        onParticleLife={setDustParticleLife}
+        spawnRate={dustSpawnRate}
+        onSpawnRate={setDustSpawnRate}
+        paused={dustPaused}
+        onTogglePause={() => setDustPaused(p => !p)}
+        onReset={handleDustReset}
+        onSeedAralkum={handleDustSeedAralkum}
+        onClearEmitters={handleDustClearEmitters}
+        onExit={() => {
+          setDustMode(false);
+          setStarted(false);
+          if (dustAnimRef.current) { cancelAnimationFrame(dustAnimRef.current); dustAnimRef.current = null; }
+          dustStateRef.current = null;
+          setDustParticleCount(0);
+          setDustEmitterCount(0);
+        }}
+        particleCount={dustParticleCount}
+        emitterCount={dustEmitterCount}
+      />
+
       {/* Character Selection */}
       {showCharacterSelect && (
         <CharacterSelect
