@@ -1253,6 +1253,7 @@ const Index = () => {
           >
             Menu
           </button>
+          <MirageToggle />
           {!gameModeActive && (
             <button
               onClick={() => {
