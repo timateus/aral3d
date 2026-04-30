@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=IBM+Plex+Mono:wght@200;300;400;500&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=IBM+Plex+Mono:wght@100;200;300;400;500&family=Inter:wght@100;200;300;400;500;600;700&display=swap');
 
 @layer base {
   :root {
@@ -85,109 +85,186 @@
    typography globally.
    ────────────────────────────────────────────────────────────────── */
 html.mirage {
-  --background: 38 24% 94%;          /* off-white paper */
-  --foreground: 25 12% 22%;          /* warm ink */
+  /* Spec palette — F4F1EA bg, 1A1A1A ink, 6B6B6B secondary */
+  --background: 42 28% 94%;          /* #F4F1EA */
+  --foreground: 0 0% 10%;             /* #1A1A1A */
 
-  --card: 38 30% 97%;
-  --card-foreground: 25 12% 22%;
+  --card: 42 28% 96%;
+  --card-foreground: 0 0% 10%;
 
-  --popover: 38 30% 97%;
-  --popover-foreground: 25 12% 22%;
+  --popover: 42 28% 96%;
+  --popover-foreground: 0 0% 10%;
 
-  --primary: 12 55% 52%;             /* faded sienna ink */
-  --primary-foreground: 38 30% 97%;
+  --primary: 0 0% 10%;                /* ink as primary — neutral */
+  --primary-foreground: 42 28% 96%;
 
-  --secondary: 35 18% 88%;
-  --secondary-foreground: 25 12% 28%;
+  --secondary: 42 16% 88%;
+  --secondary-foreground: 0 0% 20%;
 
-  --muted: 35 18% 90%;
-  --muted-foreground: 25 8% 45%;
+  --muted: 42 16% 90%;
+  --muted-foreground: 0 0% 42%;       /* #6B6B6B */
 
-  --accent: 195 30% 55%;             /* dusty mirage blue */
-  --accent-foreground: 38 30% 97%;
+  --accent: 199 30% 58%;              /* water #6FA3B8 */
+  --accent-foreground: 0 0% 10%;
 
-  --destructive: 6 60% 48%;
-  --destructive-foreground: 38 30% 97%;
+  --destructive: 0 42% 55%;           /* alert #C05A5A */
+  --destructive-foreground: 42 28% 96%;
 
-  --border: 25 12% 22%;              /* hairline strokes */
-  --input: 25 12% 22%;
-  --ring: 12 55% 52%;
+  --border: 0 0% 10%;                 /* hairline ink */
+  --input: 0 0% 10%;
+  --ring: 0 0% 10%;
 
-  --terrain-low: 195 25% 60%;
-  --terrain-mid: 35 35% 70%;
-  --terrain-high: 18 30% 60%;
-  --terrain-peak: 35 20% 92%;
+  /* Functional terrain — water / land / vegetation */
+  --terrain-low: 199 30% 58%;         /* water */
+  --terrain-mid: 40 26% 80%;          /* land  #D9D2C3 */
+  --terrain-high: 117 11% 60%;        /* vegetation #8FA68E */
+  --terrain-peak: 42 20% 92%;
 
-  --sidebar-background: 38 30% 97%;
-  --sidebar-foreground: 25 12% 22%;
-  --sidebar-primary: 12 55% 52%;
-  --sidebar-primary-foreground: 38 30% 97%;
-  --sidebar-accent: 35 18% 90%;
-  --sidebar-accent-foreground: 25 12% 22%;
-  --sidebar-border: 25 12% 22%;
-  --sidebar-ring: 12 55% 52%;
+  --sidebar-background: 42 28% 96%;
+  --sidebar-foreground: 0 0% 10%;
+  --sidebar-primary: 0 0% 10%;
+  --sidebar-primary-foreground: 42 28% 96%;
+  --sidebar-accent: 42 16% 90%;
+  --sidebar-accent-foreground: 0 0% 10%;
+  --sidebar-border: 0 0% 10%;
+  --sidebar-ring: 0 0% 10%;
 }
 
-html.mirage body {
-  font-family: 'IBM Plex Mono', 'JetBrains Mono', monospace;
-  font-weight: 300;
-  letter-spacing: 0.01em;
+/* Ultralight neutral sans — Inter 200 — across everything */
+html.mirage body,
+html.mirage button,
+html.mirage input,
+html.mirage select,
+html.mirage textarea,
+html.mirage [role="button"] {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 200;
+  letter-spacing: 0.005em;
+  -webkit-font-smoothing: antialiased;
 }
 
 html.mirage .font-mono,
 html.mirage code,
 html.mirage pre {
-  font-family: 'IBM Plex Mono', 'JetBrains Mono', monospace;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 200;
+}
+
+/* Headings — only size & weight create hierarchy */
+html.mirage h1, html.mirage h2, html.mirage h3,
+html.mirage h4, html.mirage h5, html.mirage h6 {
+  font-weight: 300;
+  letter-spacing: 0;
+}
+html.mirage h1 { font-size: 18px; }
+html.mirage h2 { font-size: 15px; }
+html.mirage h3 { font-size: 13px; }
+
+/* Hairline borders everywhere — 0.5pt feel */
+html.mirage * {
+  border-color: hsl(0 0% 10% / 0.14);
+}
+
+/* Glass panels: tracing paper, hairline */
+html.mirage .glass-panel {
+  background: hsl(42 28% 96% / 0.82);
+  backdrop-filter: blur(4px);
+  border: 1px solid hsl(0 0% 10% / 0.16);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+html.mirage .rounded-lg,
+html.mirage .rounded-md,
+html.mirage .rounded-sm,
+html.mirage .rounded {
+  border-radius: 0;
+}
+
+/* Quiet primary text accents */
+html.mirage .text-primary { color: hsl(0 0% 10%); }
+
+/* Buttons: hairline, no fills */
+html.mirage button {
   font-weight: 300;
 }
 
-/* Headings: lighter weight in mirage */
-html.mirage h1, html.mirage h2, html.mirage h3,
-html.mirage h4, html.mirage h5, html.mirage h6 {
-  font-weight: 400;
-  letter-spacing: 0;
-}
-
-/* Hairline borders everywhere */
-html.mirage * {
-  border-color: hsl(var(--border) / 0.18);
-}
-
-/* Glass panels become tracing-paper */
-html.mirage .glass-panel {
-  background: hsl(38 30% 97% / 0.78);
-  backdrop-filter: blur(6px);
-  border: 1px solid hsl(25 12% 22% / 0.18);
-  border-radius: 0;            /* sharper, technical */
-  box-shadow: 0 1px 0 hsl(25 12% 22% / 0.04);
-}
-
-/* Buttons / inputs: thin hairline outline, no fills */
-html.mirage button,
-html.mirage [role="button"] {
-  font-weight: 400;
-}
-
-/* Make rounded UI slightly squarer in mirage for that drafting feel */
-html.mirage .rounded-lg,
-html.mirage .rounded-md {
-  border-radius: 2px;
-}
-
-/* Primary brand text accents — make them quieter */
-html.mirage .text-primary {
-  color: hsl(12 45% 38%);
-}
-
-/* Subtle ruled-paper background (very faint horizontal rule lines) */
+/* Subtle ruled-paper background */
 html.mirage body {
   background-image:
-    linear-gradient(to bottom, hsl(38 24% 94%), hsl(38 24% 94%)),
+    linear-gradient(to bottom, hsl(42 28% 94%), hsl(42 28% 94%)),
     repeating-linear-gradient(
       to bottom,
       transparent 0,
-      transparent 31px,
-      hsl(25 12% 22% / 0.04) 31px,
-      hsl(25 12% 22% / 0.04) 32px
+      transparent 39px,
+      hsl(0 0% 10% / 0.025) 39px,
+      hsl(0 0% 10% / 0.025) 40px
     );
+}
+
+/* ── Floating 3D labels (drei <Html>) — strip the dark glassy look ──
+   These render as absolutely-positioned divs inside the canvas wrapper.
+   In mirage we want quiet black side-notes: small, ultralight, no
+   background, no border, no glow. */
+html.mirage .terrain-glow { box-shadow: none; }
+
+html.mirage [class*="bg-card"],
+html.mirage [class*="bg-background"],
+html.mirage [class*="bg-popover"] {
+  /* keep using tokens but soften */
+}
+
+/* Generic: any inline-styled label inside the R3F canvas wrapper */
+html.mirage canvas + div div,
+html.mirage [class*="r3f"] div,
+html.mirage .r3f-html-label {
+  /* fall-through styling for floating labels */
+}
+
+/* The most reliable hook: drei's <Html> uses pointer-events on a div
+   absolutely positioned. We target labels by their typical inline style
+   attributes via attribute selectors. */
+html.mirage div[style*="position: absolute"][style*="pointer-events"] {
+  /* don't override layout, only typography for nested text */
+}
+
+/* Make ALL text inside floating labels small, black, ultralight */
+html.mirage .floating-label,
+html.mirage .map-label,
+html.mirage .metric-label {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #1A1A1A !important;
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 200 !important;
+  font-size: 10px !important;
+  letter-spacing: 0.02em !important;
+  text-shadow: 0 0 2px hsl(42 28% 94% / 0.9);
+}
+
+/* Catch-all for any drei Html children: kill heavy backgrounds / borders
+   so floating numbers read as quiet side-notes on paper */
+html.mirage .pointer-events-none > div,
+html.mirage .pointer-events-auto > div {
+  /* leave structural divs alone */
+}
+
+/* Remove any colored pill / badge styling on floating labels */
+html.mirage [data-floating="label"],
+html.mirage [data-floating="number"] {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #1A1A1A !important;
+  font-weight: 200 !important;
+  font-size: 10px !important;
+}
+
+/* Slimmer SVG strokes everywhere (charts, leader lines) */
+html.mirage svg * {
+  stroke-width: 0.5 !important;
+}
+html.mirage svg [data-emphasis="true"] {
+  stroke-width: 1 !important;
 }
