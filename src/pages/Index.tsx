@@ -1260,6 +1260,14 @@ const Index = () => {
             Menu
           </button>
           <MirageToggle />
+          <button
+            onClick={() => setSidePanelHidden(v => !v)}
+            title={sidePanelHidden ? 'Show side panel' : 'Hide side panel'}
+            className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground hover:text-primary transition-colors border border-border/50 px-3 py-1.5 bg-card/60 backdrop-blur-sm flex items-center gap-1.5"
+          >
+            {sidePanelHidden ? <PanelRightOpen className="w-3 h-3" /> : <PanelRightClose className="w-3 h-3" />}
+            {sidePanelHidden ? 'Show panel' : 'Hide panel'}
+          </button>
           {!gameModeActive && (
             <button
               onClick={() => {
@@ -1313,7 +1321,7 @@ const Index = () => {
       )}
 
       {/* Controls - desktop only, hide in game mode unless toggled */}
-      {isMapExploration && !isMobile && (
+      {isMapExploration && !isMobile && !sidePanelHidden && (
         <div className="absolute top-4 right-4 z-10 space-y-3 max-h-[calc(100vh-2rem)] overflow-y-auto w-[280px] scrollbar-thin pr-1">
           <ControlPanel
             terrain={terrain}
