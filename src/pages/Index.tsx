@@ -25,6 +25,8 @@ import { NARRATIVE_STEPS } from '@/lib/narrative-steps';
 import { CANAL_TOUR_STEPS, getEthnicityColor } from '@/lib/canal-tour-steps';
 import { AGMAR_TOUR_STEPS } from '@/lib/agmar-tour-steps';
 import NarrativeOverlay from '@/components/NarrativeOverlay';
+import ReadingOverlay from '@/components/ReadingOverlay';
+import { READING_PASSAGES } from '@/lib/reading-passages';
 import CanalTourOverlay from '@/components/CanalTourOverlay';
 import AgmarTourOverlay from '@/components/AgmarTourOverlay';
 import QuadrantView from '@/components/QuadrantView';
@@ -135,6 +137,8 @@ const Index = () => {
   const [scenarioActions, setScenarioActions] = useState<ScenarioAction[]>([]);
   const [showDataPanel, setShowDataPanel] = useState(false);
   const [narrativeActive, setNarrativeActive] = useState(false);
+  const [readingActive, setReadingActive] = useState(false);
+  const [readingStep, setReadingStep] = useState(0);
   const [showInspector, setShowInspector] = useState(false);
   const [narrativeStep, setNarrativeStep] = useState(0);
   const [canalTourActive, setCanalTourActive] = useState(false);
