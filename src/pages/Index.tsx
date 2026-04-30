@@ -1194,6 +1194,14 @@ const Index = () => {
         />
       )}
 
+      {readingActive && (
+        <ReadingOverlay
+          step={readingStep}
+          onStepChange={handleReadingStepChange}
+          onExit={exitReading}
+        />
+      )}
+
       {/* Canal Tour Overlay */}
       {canalTourActive && (
         <CanalTourOverlay
