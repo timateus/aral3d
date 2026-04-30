@@ -1150,6 +1150,11 @@ const Index = () => {
             sandboxRenderKey={sandboxRenderKey}
             sandboxToolActive={sandboxMode}
             onSandboxClick={handleSandboxClick}
+            dustActive={dustMode}
+            dustState={dustStateRef.current}
+            dustRenderKey={dustRenderKey}
+            dustToolActive={dustMode}
+            onDustClick={handleDustClick}
             showWaterways={showWaterways}
             waterwayTypeFilter={waterwayTypeFilter}
             waterwayTraceMode={traceMode}
