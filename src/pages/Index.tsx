@@ -52,7 +52,7 @@ const Index = () => {
   const isMobile = useIsMobile();
   const { location: userLocation, loading: locating, requestLocation } = useUserLocation();
   const [baseTerrain, setBaseTerrain] = useState<TerrainData | null>(null);
-  const [visualMode] = useVisualMode();
+  const [visualMode, setVisualMode] = useVisualMode();
   const [sidePanelHidden, setSidePanelHidden] = useState(false);
   const [seabedTerrain, setSeabedTerrain] = useState<TerrainData | null>(null);
   const [khorezmTerrain, setKhorezmTerrain] = useState<TerrainData | null>(null);
@@ -1322,7 +1322,7 @@ const Index = () => {
 
       {/* Designer panel — only when in 'designer' visual mode */}
       {visualMode === 'designer' && isMapExploration && !isMobile && (
-        <DesignerPanel onClose={() => { document.documentElement.classList.remove('designer'); window.location.reload(); }} />
+        <DesignerPanel onClose={() => setVisualMode('mirage')} />
       )}
 
       {/* Controls - desktop only, hide in game mode unless toggled */}
