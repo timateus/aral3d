@@ -1429,6 +1429,44 @@ const Index = () => {
               </button>
             ))}
           </div>
+          {terrainStyle === 'contours' && (
+            <label className="flex items-center gap-1.5 text-[10px] tracking-[0.15em] uppercase text-muted-foreground border border-border/50 px-2 py-1.5 bg-card/60 backdrop-blur-sm">
+              <span>Interval</span>
+              <select
+                value={contourInterval}
+                onChange={(e) => setContourInterval(Number(e.target.value))}
+                className="bg-transparent text-foreground outline-none text-[10px]"
+              >
+                {[5, 10, 25, 50, 100, 200, 500].map(v => (
+                  <option key={v} value={v}>{v} m</option>
+                ))}
+              </select>
+            </label>
+          )}
+          {terrainStyle === 'vectors' && (
+            <label className="flex items-center gap-1.5 text-[10px] tracking-[0.15em] uppercase text-muted-foreground border border-border/50 px-2 py-1.5 bg-card/60 backdrop-blur-sm">
+              <span>Spacing</span>
+              <select
+                value={vectorInterval}
+                onChange={(e) => setVectorInterval(Number(e.target.value))}
+                className="bg-transparent text-foreground outline-none text-[10px]"
+              >
+                {[10, 25, 50, 100, 200, 500, 1000].map(v => (
+                  <option key={v} value={v}>{v} m</option>
+                ))}
+              </select>
+            </label>
+          )}
+          {terrainStyle !== 'none' && (
+            <button
+              onClick={() => setHideTerrainSurface(v => !v)}
+              className={`text-[10px] tracking-[0.15em] uppercase px-2.5 py-1.5 transition-colors border border-border/50 bg-card/60 backdrop-blur-sm ${
+                hideTerrainSurface ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-primary'
+              }`}
+            >
+              {hideTerrainSurface ? 'Show surface' : 'Hide surface'}
+            </button>
+          )}
           <button
             onClick={() => setSidePanelHidden(v => !v)}
             title={sidePanelHidden ? 'Show side panel' : 'Hide side panel'}
