@@ -228,6 +228,9 @@ const Index = () => {
   const flowAnimRef = useRef<number | null>(null);
   const viewerRef = useRef<TerrainViewerHandle>(null);
   const [terrainStyle, setTerrainStyle] = useState<'none' | 'contours' | 'vectors'>('none');
+  const [contourInterval, setContourInterval] = useState<number>(25);
+  const [vectorInterval, setVectorInterval] = useState<number>(50);
+  const [hideTerrainSurface, setHideTerrainSurface] = useState<boolean>(false);
 
   // Lifted data panel state
   const [annualData, setAnnualData] = useState<AralAnnual[]>([]);
