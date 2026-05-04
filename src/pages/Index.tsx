@@ -1429,6 +1429,12 @@ const Index = () => {
               </button>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Terrain style sub-controls (second row) */}
+      {isMapExploration && !isMobile && terrainStyle !== 'none' && (
+        <div className="absolute top-14 left-4 z-10 flex items-center gap-2">
           {terrainStyle === 'contours' && (
             <label className="flex items-center gap-1.5 text-[10px] tracking-[0.15em] uppercase text-muted-foreground border border-border/50 px-2 py-1.5 bg-card/60 backdrop-blur-sm">
               <span>Interval</span>
@@ -1438,7 +1444,7 @@ const Index = () => {
                 className="bg-transparent text-foreground outline-none text-[10px]"
               >
                 {[5, 10, 25, 50, 100, 200, 500].map(v => (
-                  <option key={v} value={v}>{v} m</option>
+                  <option key={v} value={v} className="bg-card text-foreground">{v} m</option>
                 ))}
               </select>
             </label>
@@ -1452,21 +1458,25 @@ const Index = () => {
                 className="bg-transparent text-foreground outline-none text-[10px]"
               >
                 {[10, 25, 50, 100, 200, 500, 1000].map(v => (
-                  <option key={v} value={v}>{v} m</option>
+                  <option key={v} value={v} className="bg-card text-foreground">{v} m</option>
                 ))}
               </select>
             </label>
           )}
-          {terrainStyle !== 'none' && (
-            <button
-              onClick={() => setHideTerrainSurface(v => !v)}
-              className={`text-[10px] tracking-[0.15em] uppercase px-2.5 py-1.5 transition-colors border border-border/50 bg-card/60 backdrop-blur-sm ${
-                hideTerrainSurface ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-primary'
-              }`}
-            >
-              {hideTerrainSurface ? 'Show surface' : 'Hide surface'}
-            </button>
-          )}
+          <button
+            onClick={() => setHideTerrainSurface(v => !v)}
+            className={`text-[10px] tracking-[0.15em] uppercase px-2.5 py-1.5 transition-colors border border-border/50 bg-card/60 backdrop-blur-sm ${
+              hideTerrainSurface ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-primary'
+            }`}
+          >
+            {hideTerrainSurface ? 'Show surface' : 'Hide surface'}
+          </button>
+        </div>
+      )}
+
+      {isMapExploration && !isMobile && (
+        <div className="absolute top-4 left-4 z-10 flex items-center gap-3 invisible pointer-events-none">
+          {/* spacer placeholder kept empty intentionally */}
           <button
             onClick={() => setSidePanelHidden(v => !v)}
             title={sidePanelHidden ? 'Show side panel' : 'Hide side panel'}
