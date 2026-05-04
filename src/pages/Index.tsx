@@ -1490,8 +1490,8 @@ const Index = () => {
       )}
 
       {/* Terrain style sub-controls (second row, only when active) */}
-      {isMapExploration && !isMobile && terrainStyle !== 'none' && (
-        <div className="absolute top-14 left-4 z-10 flex items-center gap-2">
+      {isMapExploration && terrainStyle !== 'none' && (
+        <div className="absolute top-16 left-4 right-4 z-10 flex flex-wrap items-center gap-2">
           {terrainStyle === 'contours' && (
             <label className="flex items-center gap-1.5 text-[10px] tracking-[0.15em] uppercase text-muted-foreground border border-border/50 px-2 py-1.5 bg-card/60 backdrop-blur-sm">
               <span>Interval</span>
