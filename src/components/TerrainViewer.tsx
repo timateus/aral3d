@@ -155,6 +155,9 @@ interface TerrainViewerProps {
   waterwayTraceMode?: boolean;
   waterwayClearTraceSignal?: number;
   terrainStyle?: TerrainStyle;
+  contourInterval?: number;
+  vectorInterval?: number;
+  hideTerrainSurface?: boolean;
 }
 
 /* ── Canvas Recorder (captures WebGL canvas stream, no camera animation) ── */
@@ -402,7 +405,7 @@ function NoahsArk({ terrain, exaggeration, waterLevel }: { terrain: TerrainData;
   );
 }
 
-const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, showWaterExtent, waterExtentYear, showPopDensity, popHexSize, popHexHeight, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone, riverInflow, userLocation, inspectorEnabled, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, flowState, flowRenderKey, terrainVersion, raisedPixels, dugPixels, showMigration, migrationYear, showChoropleth, choroplethIndicator, choroplethExaggeration, canalHighlights, highlightedCanalNames, canalTourActive, showObjectLibrary, onObjectSelect, gameModeActive, gameCharacter, onGameAddWater, bowlWorldActive, onBowlWorldComplete, showLandcover, landcoverVisibleClasses, onLandcoverAvailableClasses, showSchools, showVocabulary, agmarShowProposalSites, aryqWorldActive, onAryqWorldComplete, onNukusClick, showOverlayMetrics, showGroundwater, showPrecipitation, showSalinity, waterPlaygroundActive, sandboxActive, sandboxSimState, sandboxRenderKey, sandboxToolActive, onSandboxClick, dustActive, dustState, dustRenderKey, dustToolActive, onDustClick, showWaterways, waterwayTypeFilter, waterwayTraceMode, waterwayClearTraceSignal, terrainStyle }, ref) => {
+const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, showWaterExtent, waterExtentYear, showPopDensity, popHexSize, popHexHeight, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone, riverInflow, userLocation, inspectorEnabled, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, flowState, flowRenderKey, terrainVersion, raisedPixels, dugPixels, showMigration, migrationYear, showChoropleth, choroplethIndicator, choroplethExaggeration, canalHighlights, highlightedCanalNames, canalTourActive, showObjectLibrary, onObjectSelect, gameModeActive, gameCharacter, onGameAddWater, bowlWorldActive, onBowlWorldComplete, showLandcover, landcoverVisibleClasses, onLandcoverAvailableClasses, showSchools, showVocabulary, agmarShowProposalSites, aryqWorldActive, onAryqWorldComplete, onNukusClick, showOverlayMetrics, showGroundwater, showPrecipitation, showSalinity, waterPlaygroundActive, sandboxActive, sandboxSimState, sandboxRenderKey, sandboxToolActive, onSandboxClick, dustActive, dustState, dustRenderKey, dustToolActive, onDustClick, showWaterways, waterwayTypeFilter, waterwayTraceMode, waterwayClearTraceSignal, terrainStyle, contourInterval, vectorInterval, hideTerrainSurface }, ref) => {
   const screenshotFn = useRef<(() => void) | null>(null);
   const canvasRecorderControls = useRef<{ start: () => void; stop: () => void } | null>(null);
   const orbitRef = useRef<any>(null);
@@ -437,9 +440,11 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
       {!aryqWorldActive && (
         <>
           <group>
-            <TerrainMesh terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} hideNoData={hideNoData} waterBounds={waterBounds} inspectorEnabled={inspectorEnabled} popData={showPopDensity ? popData : null} lcData={showLandcover ? lcData : null} damToolActive={damToolActive} onDamPlace={onDamPlace} canalToolActive={canalToolActive} onCanalDig={onCanalDig} waterFlowActive={waterFlowActive || sandboxToolActive || dustToolActive} onWaterFlowClick={dustToolActive ? onDustClick : (sandboxToolActive ? onSandboxClick : onWaterFlowClick)} terrainVersion={terrainVersion} raisedPixels={raisedPixels} dugPixels={dugPixels} sandboxActive={false} />
+            {!hideTerrainSurface && (
+              <TerrainMesh terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} hideNoData={hideNoData} waterBounds={waterBounds} inspectorEnabled={inspectorEnabled} popData={showPopDensity ? popData : null} lcData={showLandcover ? lcData : null} damToolActive={damToolActive} onDamPlace={onDamPlace} canalToolActive={canalToolActive} onCanalDig={onCanalDig} waterFlowActive={waterFlowActive || sandboxToolActive || dustToolActive} onWaterFlowClick={dustToolActive ? onDustClick : (sandboxToolActive ? onSandboxClick : onWaterFlowClick)} terrainVersion={terrainVersion} raisedPixels={raisedPixels} dugPixels={dugPixels} sandboxActive={false} />
+            )}
             {terrainStyle && terrainStyle !== 'none' && (
-              <TerrainStyleOverlay terrain={terrain} exaggeration={exaggeration} style={terrainStyle} />
+              <TerrainStyleOverlay terrain={terrain} exaggeration={exaggeration} style={terrainStyle} contourInterval={contourInterval} vectorInterval={vectorInterval} />
             )}
             {!sandboxActive && flowState && flowRenderKey !== undefined && (
               <WaterFlowOverlay terrain={terrain} exaggeration={exaggeration} flowState={flowState} renderKey={flowRenderKey} />
