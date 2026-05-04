@@ -155,6 +155,9 @@ interface TerrainViewerProps {
   waterwayTraceMode?: boolean;
   waterwayClearTraceSignal?: number;
   terrainStyle?: TerrainStyle;
+  contourInterval?: number;
+  vectorInterval?: number;
+  hideTerrainSurface?: boolean;
 }
 
 /* ── Canvas Recorder (captures WebGL canvas stream, no camera animation) ── */
