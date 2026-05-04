@@ -440,9 +440,11 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
       {!aryqWorldActive && (
         <>
           <group>
-            <TerrainMesh terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} hideNoData={hideNoData} waterBounds={waterBounds} inspectorEnabled={inspectorEnabled} popData={showPopDensity ? popData : null} lcData={showLandcover ? lcData : null} damToolActive={damToolActive} onDamPlace={onDamPlace} canalToolActive={canalToolActive} onCanalDig={onCanalDig} waterFlowActive={waterFlowActive || sandboxToolActive || dustToolActive} onWaterFlowClick={dustToolActive ? onDustClick : (sandboxToolActive ? onSandboxClick : onWaterFlowClick)} terrainVersion={terrainVersion} raisedPixels={raisedPixels} dugPixels={dugPixels} sandboxActive={false} />
+            {!hideTerrainSurface && (
+              <TerrainMesh terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} hideNoData={hideNoData} waterBounds={waterBounds} inspectorEnabled={inspectorEnabled} popData={showPopDensity ? popData : null} lcData={showLandcover ? lcData : null} damToolActive={damToolActive} onDamPlace={onDamPlace} canalToolActive={canalToolActive} onCanalDig={onCanalDig} waterFlowActive={waterFlowActive || sandboxToolActive || dustToolActive} onWaterFlowClick={dustToolActive ? onDustClick : (sandboxToolActive ? onSandboxClick : onWaterFlowClick)} terrainVersion={terrainVersion} raisedPixels={raisedPixels} dugPixels={dugPixels} sandboxActive={false} />
+            )}
             {terrainStyle && terrainStyle !== 'none' && (
-              <TerrainStyleOverlay terrain={terrain} exaggeration={exaggeration} style={terrainStyle} />
+              <TerrainStyleOverlay terrain={terrain} exaggeration={exaggeration} style={terrainStyle} contourInterval={contourInterval} vectorInterval={vectorInterval} />
             )}
             {!sandboxActive && flowState && flowRenderKey !== undefined && (
               <WaterFlowOverlay terrain={terrain} exaggeration={exaggeration} flowState={flowState} renderKey={flowRenderKey} />
