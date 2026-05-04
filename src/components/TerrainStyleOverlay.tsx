@@ -176,8 +176,8 @@ const TerrainStyleOverlay = ({
 
   if (style === 'vectors' && vectorGeometry) {
     return (
-      <lineSegments geometry={vectorGeometry} renderOrder={10}>
-        <lineBasicMaterial color="#d81b60" transparent opacity={1} depthTest={false} />
+      <lineSegments geometry={vectorGeometry} renderOrder={999} frustumCulled={false}>
+        <lineBasicMaterial color="#ff2d92" transparent={false} depthTest={false} depthWrite={false} toneMapped={false} />
       </lineSegments>
     );
   }
