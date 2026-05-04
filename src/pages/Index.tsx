@@ -227,6 +227,7 @@ const Index = () => {
   const flowStateRef = useRef<WaterFlowState | null>(null);
   const flowAnimRef = useRef<number | null>(null);
   const viewerRef = useRef<TerrainViewerHandle>(null);
+  const [terrainStyle, setTerrainStyle] = useState<'none' | 'contours' | 'vectors'>('none');
 
   // Lifted data panel state
   const [annualData, setAnnualData] = useState<AralAnnual[]>([]);
