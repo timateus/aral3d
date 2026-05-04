@@ -102,8 +102,8 @@ const TerrainStyleOverlay = ({
     const isND = (v: number) => isNaN(v) || (noDataValue !== null && v === noDataValue) || v <= -9999;
 
     const positions: number[] = [];
-    const lift = 0.05;
-    const arrowScale = 0.5;
+    const lift = 0.15;
+    const arrowScale = 1.2;
 
     // Map vector interval (meters) → pixel step. Approximate using elevRange ratios is wrong;
     // use the terrain's degree extent if available, otherwise fall back to a sensible pixel step.
