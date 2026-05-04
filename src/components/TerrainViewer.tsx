@@ -154,6 +154,7 @@ interface TerrainViewerProps {
   waterwayTypeFilter?: WaterwayTypeFilter;
   waterwayTraceMode?: boolean;
   waterwayClearTraceSignal?: number;
+  terrainStyle?: TerrainStyle;
 }
 
 /* ── Canvas Recorder (captures WebGL canvas stream, no camera animation) ── */
