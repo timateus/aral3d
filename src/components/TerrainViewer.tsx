@@ -27,6 +27,7 @@ import BowlWorld from './BowlWorld';
 import AryqWorld from './AryqWorld';
 import SandboxOverlay from './SandboxOverlay';
 import DustOverlay from './DustOverlay';
+import TerrainStyleOverlay, { TerrainStyle } from './TerrainStyleOverlay';
 import WaterwaysLayer from './WaterwaysLayer';
 import type { WaterwayTypeFilter } from './WaterwaysLayer';
 import type { SandboxSimState } from '@/lib/sandbox-simulation';
