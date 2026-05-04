@@ -1064,6 +1064,7 @@ const Index = () => {
             popHexSize={popHexSize}
             popHexHeight={popHexHeight}
             started={started}
+            terrainStyle={terrainStyle}
             recording={recording}
             hideNoData={hideNoData}
             waterBounds={baseTerrain?.bounds}
