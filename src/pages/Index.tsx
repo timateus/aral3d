@@ -227,6 +227,7 @@ const Index = () => {
   const flowStateRef = useRef<WaterFlowState | null>(null);
   const flowAnimRef = useRef<number | null>(null);
   const viewerRef = useRef<TerrainViewerHandle>(null);
+  const [terrainStyle, setTerrainStyle] = useState<'none' | 'contours' | 'vectors'>('none');
 
   // Lifted data panel state
   const [annualData, setAnnualData] = useState<AralAnnual[]>([]);
@@ -1063,6 +1064,7 @@ const Index = () => {
             popHexSize={popHexSize}
             popHexHeight={popHexHeight}
             started={started}
+            terrainStyle={terrainStyle}
             recording={recording}
             hideNoData={hideNoData}
             waterBounds={baseTerrain?.bounds}
@@ -1401,6 +1403,26 @@ const Index = () => {
             Menu
           </button>
           <MirageToggle />
+          <div className="flex items-center border border-border/50 bg-card/60 backdrop-blur-sm">
+            {([
+              { id: 'none', label: 'Surface' },
+              { id: 'contours', label: 'Contours' },
+              { id: 'vectors', label: 'Vectors' },
+            ] as const).map(opt => (
+              <button
+                key={opt.id}
+                onClick={() => setTerrainStyle(opt.id)}
+                title={opt.id === 'contours' ? 'Show terrain as elevation contour lines' : opt.id === 'vectors' ? 'Show terrain as gradient vector field' : 'Show terrain surface only'}
+                className={`text-[10px] tracking-[0.15em] uppercase px-2.5 py-1.5 transition-colors ${
+                  terrainStyle === opt.id
+                    ? 'text-primary bg-primary/10'
+                    : 'text-muted-foreground hover:text-primary'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
           <button
             onClick={() => setSidePanelHidden(v => !v)}
             title={sidePanelHidden ? 'Show side panel' : 'Hide side panel'}
