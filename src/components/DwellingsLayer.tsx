@@ -1,7 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Html } from '@react-three/drei';
 import { TerrainData } from '@/lib/geotiff-loader';
-import * as THREE from 'three';
 
 interface DwellingLocation { name: string; lat: number; lon: number; }
 interface Dwelling {
@@ -18,24 +17,30 @@ interface Props {
   exaggeration: number;
 }
 
-function geoToMeshPos(
+// Mirror of TerrainMesh:
+//   x = (i/(w-1) - 0.5) * 10
+//   y = (0.5 - j/(h-1)) * 10 * (h/w)
+//   z = normalized * (exaggeration / 10)
+// Mesh is rotated -PI/2 around X => world: (x, z, -y)
+function geoToWorld(
   lon: number, lat: number,
-  bounds: { minLon: number; maxLon: number; minLat: number; maxLat: number },
-  width: number, height: number,
-  elevations: Float32Array | Float64Array,
+  terrain: TerrainData,
   meshW: number, meshH: number,
   exaggeration: number,
 ): [number, number, number] {
+  const { width, height, elevations, minElevation, maxElevation, bounds, noDataValue } = terrain;
   const u = (lon - bounds.minLon) / (bounds.maxLon - bounds.minLon);
   const v = (lat - bounds.minLat) / (bounds.maxLat - bounds.minLat);
   const px = Math.max(0, Math.min(width - 1, Math.floor(u * (width - 1))));
   const py = Math.max(0, Math.min(height - 1, Math.floor((1 - v) * (height - 1))));
-  const idx = py * width + px;
-  const elev = elevations[idx] ?? 0;
+  let elev = elevations[py * width + px];
+  if (isNaN(elev) || (noDataValue !== null && elev === noDataValue) || elev <= -9999) elev = minElevation;
+  const range = (maxElevation - minElevation) || 1;
+  const normalized = (elev - minElevation) / range;
+  const surfaceY = normalized * (exaggeration / 10);
   const x = (u - 0.5) * meshW;
   const z = -(v - 0.5) * meshH;
-  const y = (elev / 800) * exaggeration;
-  return [x, y, z];
+  return [x, surfaceY, z];
 }
 
 function useIsMirage() {
@@ -65,88 +70,60 @@ export default function DwellingsLayer({ terrain, exaggeration }: Props) {
   const meshH = 10 * (terrain.height / terrain.width);
 
   const markers = useMemo(() => {
-    type M = { key: string; dwelling: Dwelling; loc: DwellingLocation; pos: [number, number, number]; labelY: number };
+    type M = { key: string; dwelling: Dwelling; loc: DwellingLocation; pos: [number, number, number] };
     const flat: M[] = [];
-    // Group by rounded coordinates to detect overlaps (precision ~ ~0.01°)
-    const buckets = new Map<string, number>();
     dwellings.forEach(d => {
       d.locations.forEach((loc, i) => {
         const key = `${d.type}-${i}`;
-        const pos = geoToMeshPos(loc.lon, loc.lat, terrain.bounds, terrain.width, terrain.height, terrain.elevations, meshW, meshH, exaggeration);
-        const bucketKey = `${loc.lat.toFixed(2)},${loc.lon.toFixed(2)}`;
-        const stackIdx = buckets.get(bucketKey) ?? 0;
-        buckets.set(bucketKey, stackIdx + 1);
-        // Stack labels vertically when multiple share a spot
-        const labelY = 0.18 + stackIdx * 0.32;
-        flat.push({ key, dwelling: d, loc, pos, labelY });
+        const pos = geoToWorld(loc.lon, loc.lat, terrain, meshW, meshH, exaggeration);
+        flat.push({ key, dwelling: d, loc, pos });
       });
     });
     return flat;
   }, [dwellings, terrain, exaggeration]);
 
+  const labelBg = isMirage ? 'rgba(255,255,255,0.95)' : 'rgba(13,17,23,0.85)';
+  const labelFg = isMirage ? '#0d1117' : '#fff';
+
   return (
     <group>
-      {markers.map(({ key, dwelling, loc, pos, labelY }) => {
+      {markers.map(({ key, dwelling, loc, pos }) => {
         const isSelected = selected === key;
-        const pinHeight = 0.14;
+        const pinH = 0.12;
         return (
           <group key={key} position={pos}>
-            {/* Pin sitting ON the surface */}
-            <mesh position={[0, pinHeight / 2, 0]} castShadow>
-              <coneGeometry args={[0.04, pinHeight, 12]} />
-              <meshStandardMaterial color={dwelling.color} emissive={dwelling.color} emissiveIntensity={0.4} />
+            {/* Pin shaft anchored ON the surface */}
+            <mesh position={[0, pinH / 2, 0]} castShadow>
+              <coneGeometry args={[0.022, pinH, 10]} />
+              <meshStandardMaterial color={dwelling.color} emissive={dwelling.color} emissiveIntensity={0.5} />
             </mesh>
-            <mesh position={[0, pinHeight + 0.035, 0]}>
-              <sphereGeometry args={[0.045, 16, 12]} />
-              <meshStandardMaterial color={dwelling.color} emissive={dwelling.color} emissiveIntensity={0.6} />
+            <mesh
+              position={[0, pinH + 0.025, 0]}
+              onClick={(e) => { e.stopPropagation(); setSelected(isSelected ? null : key); }}
+              onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'pointer'; }}
+              onPointerOut={() => { document.body.style.cursor = 'default'; }}
+            >
+              <sphereGeometry args={[0.038, 16, 12]} />
+              <meshStandardMaterial color={dwelling.color} emissive={dwelling.color} emissiveIntensity={0.7} />
             </mesh>
-
-            {/* Label stacked above pin (offset to avoid overlap with co-located pins) */}
-            <Html center distanceFactor={10} position={[0, pinHeight + 0.1 + labelY, 0]} style={{ pointerEvents: 'auto' }}>
-              <div
-                onClick={(e) => { e.stopPropagation(); setSelected(isSelected ? null : key); }}
-                style={{
-                  cursor: 'pointer',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center',
-                  padding: '3px 7px',
-                  background: isSelected ? `${dwelling.color}` : 'rgba(13,17,23,0.78)',
-                  border: `1px solid ${dwelling.color}`,
-                  fontFamily: "'Inter', system-ui, sans-serif",
-                  whiteSpace: 'nowrap',
-                  transform: isSelected ? 'scale(1.05)' : 'scale(1)',
-                  transition: 'transform 0.15s ease',
-                }}
-              >
-                <div style={{
-                  fontSize: 10, fontWeight: 700,
-                  color: isSelected ? '#0d1117' : '#fff',
-                  letterSpacing: '0.02em',
-                }}>{dwelling.type}</div>
-                <div style={{
-                  fontSize: 8,
-                  color: isSelected ? '#0d1117' : '#cfd8dc',
-                  marginTop: 1,
-                }}>{loc.name}</div>
-              </div>
-            </Html>
 
             {isSelected && (
-              <Html center distanceFactor={7} position={[0, pinHeight + 0.1 + labelY + 1.1, 0]} style={{ pointerEvents: 'auto' }}>
+              <Html center distanceFactor={7} position={[0, pinH + 0.6, 0]} style={{ pointerEvents: 'auto' }}>
                 <div
                   onClick={(e) => e.stopPropagation()}
                   style={{
                     width: 280,
-                    background: isMirage ? 'rgba(255,255,255,0.97)' : 'rgba(13,17,23,0.97)',
+                    background: labelBg,
                     border: `1px solid ${dwelling.color}`,
                     fontFamily: "'Inter', system-ui, sans-serif",
-                    color: isMirage ? '#0d1117' : '#e6edf3',
+                    color: labelFg,
                     padding: '12px 14px',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                     <span style={{ width: 12, height: 12, background: dwelling.color, display: 'inline-block' }} />
                     <div>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: isMirage ? '#0d1117' : '#fff' }}>{dwelling.type}</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: labelFg }}>{dwelling.type}</div>
                       <div style={{ fontSize: 10, color: isMirage ? '#5a6470' : '#9aa4ad', fontStyle: 'italic' }}>{dwelling.subtitle}</div>
                     </div>
                   </div>
@@ -162,7 +139,7 @@ export default function DwellingsLayer({ terrain, exaggeration }: Props) {
                       {dwelling.places}
                     </div>
                     <div style={{ marginTop: 4 }}>
-                      Here: <span style={{ color: isMirage ? '#0d1117' : '#fff' }}>{loc.name}</span>
+                      Here: <span style={{ color: labelFg }}>{loc.name}</span>
                     </div>
                   </div>
                   <button

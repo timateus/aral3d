@@ -132,12 +132,27 @@ export async function loadGeoTiff(url: string): Promise<TerrainData> {
 }
 
 export function getElevationColor(normalized: number, rawElevation?: number): [number, number, number] {
-  // Use absolute elevation when available for better color distribution
-  if (rawElevation !== undefined) {
-    return getElevationColorAbsolute(rawElevation);
+  const isMirage = typeof document !== 'undefined' && document.documentElement.classList.contains('mirage');
+  const elev = rawElevation !== undefined ? rawElevation : normalized * 300;
+  const c = getElevationColorAbsolute(elev);
+  if (!isMirage) return c;
+  // Mirage: paper-toned, desaturated palette. Pull toward warm off-white,
+  // keep just enough variation to read elevation. Water stays cooler.
+  const luminance = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  if (elev < 0) {
+    // Water/below sea — pale slate-blue
+    const t = Math.max(0, Math.min(1, (elev + 12) / 12));
+    return [0.62 + t * 0.06, 0.70 + t * 0.04, 0.74 + t * 0.02];
   }
-  // Fallback to normalized
-  return getElevationColorAbsolute(normalized * 300);
+  // Land — warm paper, slight elevation tint
+  const paper: [number, number, number] = [0.93, 0.90, 0.84];
+  const shadow: [number, number, number] = [0.78, 0.72, 0.62];
+  const t = Math.max(0, Math.min(1, luminance));
+  return [
+    shadow[0] + (paper[0] - shadow[0]) * t,
+    shadow[1] + (paper[1] - shadow[1]) * t,
+    shadow[2] + (paper[2] - shadow[2]) * t,
+  ];
 }
 
 function getElevationColorAbsolute(elev: number): [number, number, number] {

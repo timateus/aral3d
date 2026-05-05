@@ -1,10 +1,11 @@
-import { useMemo, useState, useCallback, useRef } from 'react';
+import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import * as THREE from 'three';
 import { Html } from '@react-three/drei';
 import { ThreeEvent } from '@react-three/fiber';
 import { TerrainData, GeoBounds, getElevationColor } from '@/lib/geotiff-loader';
 import { PopData, samplePopulation } from './PopulationDensityLayer';
 import { LandcoverRasterData, sampleLandcover } from './LandcoverLayer';
+import { useVisualMode } from '@/lib/visual-mode';
 
 interface TerrainMeshProps {
   terrain: TerrainData;
@@ -36,6 +37,7 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
   const isPaintingSandbox = useRef(false);
   const [hoverInfo, setHoverInfo] = useState<{ position: THREE.Vector3; elevation: number; lat: number; lon: number; population: number | null; landcover: { classId: number; className: string; color: string } | null } | null>(null);
   const meshRef = useRef<THREE.Mesh>(null);
+  const [visualMode] = useVisualMode();
 
   // Geometry only depends on terrain shape + exaggeration (NOT waterLevel)
   const { geometry, vertexMeta } = useMemo(() => {
@@ -132,11 +134,20 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
         let color: [number, number, number];
         if (isWater) {
           const waterDepth = Math.max(0, Math.min(1, (waterLevel - elev) / (waterLevel - minElevation || 1)));
-          color = [
-            0.04 + (1 - waterDepth) * 0.12,
-            0.12 + (1 - waterDepth) * 0.2,
-            0.35 + (1 - waterDepth) * 0.25,
-          ];
+          if (visualMode === 'mirage' || visualMode === 'designer') {
+            // Pale slate-blue mirage water
+            color = [
+              0.55 + (1 - waterDepth) * 0.10,
+              0.66 + (1 - waterDepth) * 0.06,
+              0.74 + (1 - waterDepth) * 0.04,
+            ];
+          } else {
+            color = [
+              0.04 + (1 - waterDepth) * 0.12,
+              0.12 + (1 - waterDepth) * 0.2,
+              0.35 + (1 - waterDepth) * 0.25,
+            ];
+          }
         } else if (raisedPixels && raisedPixels.has(idx)) {
           // Pink for raised terrain pixels
           const base = getElevationColor(normalized, elev);
@@ -164,7 +175,7 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
 
     geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
     geometry.attributes.color.needsUpdate = true;
-  }, [geometry, vertexMeta, waterLevel, waterBounds, terrain, terrainVersion, raisedPixels, dugPixels]);
+  }, [geometry, vertexMeta, waterLevel, waterBounds, terrain, terrainVersion, raisedPixels, dugPixels, visualMode]);
 
   const material = useMemo(() => {
     return new THREE.MeshStandardMaterial({
