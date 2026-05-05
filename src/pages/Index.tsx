@@ -1223,6 +1223,7 @@ const Index = () => {
             setShowWaterExtent(false);
             setShowSchools(false);
             setShowVocabulary(false);
+            setShowDwellings(false);
             setShowGroundwater(false);
             setShowPrecipitation(false);
             setShowSalinity(false);
