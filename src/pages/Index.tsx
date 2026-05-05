@@ -1007,7 +1007,7 @@ const Index = () => {
       window.history.replaceState({}, '', qs ? `?${qs}` : window.location.pathname);
     }, 500);
   }, [started, gameModeActive, sandboxMode, waterExtentYear, exaggeration, waterLevel,
-      showBorders, showRivers, showKhorezm, showWaterways, showSchools, showVocabulary,
+      showBorders, showRivers, showKhorezm, showWaterways, showSchools, showVocabulary, showDwellings,
       showGroundwater, showPrecipitation, showLandcover, showPopDensity, showMigration,
       showChoropleth, showSalinity, showWaterExtent, show13thBasin, show19thBasin,
       show21stBasin, waterwayTypeFilter]);
