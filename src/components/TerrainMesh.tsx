@@ -37,6 +37,7 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
   const isPaintingSandbox = useRef(false);
   const [hoverInfo, setHoverInfo] = useState<{ position: THREE.Vector3; elevation: number; lat: number; lon: number; population: number | null; landcover: { classId: number; className: string; color: string } | null } | null>(null);
   const meshRef = useRef<THREE.Mesh>(null);
+  const [visualMode] = useVisualMode();
 
   // Geometry only depends on terrain shape + exaggeration (NOT waterLevel)
   const { geometry, vertexMeta } = useMemo(() => {
