@@ -954,6 +954,7 @@ const Index = () => {
       setShowWaterways(has('waterways'));
       setShowSchools(has('schools'));
       setShowVocabulary(has('vocabulary'));
+      setShowDwellings(has('dwellings'));
       setShowGroundwater(has('groundwater'));
       setShowPrecipitation(has('precipitation'));
       setShowLandcover(has('landcover'));
