@@ -1,124 +1,115 @@
 [
   {
-    "type": "Юрта",
-    "subtitle": "Отау, Кара уй",
-    "icon": "⛺",
+    "type": "Yurt",
+    "subtitle": "Otau, Kara uy",
     "color": "#f5c542",
-    "description": "Традиционное переносное каркасно-решетчатое жилище, идеально приспособленное к полуоседлому образу жизни. Каракалпакская юрта отличается от соседских (казахских, туркменских) более конусообразной формой купола и обилием коврового убранства. Состоит из деревянного остова (кереге, уык, шангарак), покрытого войлоком и циновками (ший).",
-    "places": "Плато Устюрт, Кызылкумы, у колодцев и водоёмов (как). Летнее жилище в усадьбах рыболовов и земледельцев.",
+    "description": "Traditional portable lattice-frame dwelling, perfectly adapted to a semi-nomadic way of life. The Karakalpak yurt differs from its Kazakh and Turkmen neighbours by a more conical dome and abundant carpet decoration. Built from a wooden frame (kerege, uyk, shangarak) covered with felt and reed mats (shiy).",
+    "places": "Ustyurt plateau, Kyzylkum desert, near wells and natural reservoirs (kak). A common summer dwelling in fishermen's and farmers' homesteads.",
     "locations": [
-      { "name": "Плато Устюрт", "lat": 43.6, "lon": 57.4 },
-      { "name": "Кызылкум", "lat": 42.3, "lon": 62.6 },
-      { "name": "У колодца Қақ", "lat": 41.88, "lon": 61.20 }
+      { "name": "Ustyurt Plateau", "lat": 43.6, "lon": 57.4 },
+      { "name": "Kyzylkum Desert", "lat": 42.3, "lon": 62.6 },
+      { "name": "Kak Well", "lat": 41.88, "lon": 61.20 }
     ]
   },
   {
-    "type": "Какра",
-    "subtitle": "Камышово-каркасное жилище",
-    "icon": "🏚️",
+    "type": "Kakra",
+    "subtitle": "Reed-frame dwelling",
     "color": "#9ccc65",
-    "description": "Стационарное каркасное жилище с двускатной кровлей. Стены возводились из деревянного остова, пространство которого заполнялось камышовыми снопами (шом) и обмазывалось глиной. Характерно для районов с непригодной для пахсы (глинобита) почвой.",
-    "places": "Муйнакский район, побережье Арала, протоки дельты Амударьи.",
+    "description": "Stationary frame dwelling with a gabled roof. Walls were built from a wooden frame filled with reed bundles (shom) and plastered with clay. Typical of regions where the soil was unsuitable for pakhsa (rammed earth).",
+    "places": "Moynak district, Aral Sea coast, Amu Darya delta channels.",
     "locations": [
-      { "name": "Муйнак", "lat": 43.77, "lon": 59.02 },
-      { "name": "Жана кала", "lat": 43.50, "lon": 58.70 },
-      { "name": "Досым кала", "lat": 43.30, "lon": 58.90 },
-      { "name": "Каражар", "lat": 43.60, "lon": 59.20 },
-      { "name": "Хаким ата", "lat": 43.20, "lon": 59.10 }
+      { "name": "Moynak", "lat": 43.77, "lon": 59.02 },
+      { "name": "Jana Kala", "lat": 43.50, "lon": 58.70 },
+      { "name": "Dosym Kala", "lat": 43.30, "lon": 58.90 },
+      { "name": "Karazhar", "lat": 43.60, "lon": 59.20 },
+      { "name": "Hakim Ata", "lat": 43.20, "lon": 59.10 }
     ]
   },
   {
-    "type": "Там",
-    "subtitle": "Пахса жай, Атпа там",
-    "icon": "🏠",
+    "type": "Tam",
+    "subtitle": "Pakhsa jay, Atpa tam",
     "color": "#bf8f5a",
-    "description": "Глинобитное стационарное жилище с плоской кровлей. Стены возводились методом пахсы (послойная укладка глины). Включало жилые и хозяйственные комнаты под одной крышей, часто имело навес (шертек) и помещение для установки юрты (уй жай).",
-    "places": "Земледельческие районы. Юг Кунградского, север Ходжейлийского районов.",
+    "description": "Stationary mud-walled dwelling with a flat roof. Walls were built using the pakhsa method (layer-by-layer rammed clay). Living and utility rooms shared one roof, often with a canopy (shertek) and a space for setting up a yurt (uy jay).",
+    "places": "Agricultural districts. Southern Kungrad, northern Khojeyli districts.",
     "locations": [
-      { "name": "Калалык", "lat": 42.60, "lon": 59.30 },
-      { "name": "Нокис кала (Ак-кала)", "lat": 42.45, "lon": 59.60 },
-      { "name": "Улфет ишан", "lat": 42.50, "lon": 59.40 },
-      { "name": "Сарымай", "lat": 42.55, "lon": 59.50 },
-      { "name": "Мазар Азер-баба", "lat": 42.40, "lon": 59.55 }
+      { "name": "Kalalyk", "lat": 42.60, "lon": 59.30 },
+      { "name": "Nokis Kala (Ak-kala)", "lat": 42.45, "lon": 59.60 },
+      { "name": "Ulfet Ishan", "lat": 42.50, "lon": 59.40 },
+      { "name": "Sarymay", "lat": 42.55, "lon": 59.50 },
+      { "name": "Azer-baba Mausoleum", "lat": 42.40, "lon": 59.55 }
     ]
   },
   {
-    "type": "Хаули",
-    "subtitle": "Дом-крепость",
-    "icon": "🏰",
+    "type": "Hauli",
+    "subtitle": "Fortified house",
     "color": "#ef6c5a",
-    "description": "Крупная усадьба большой неразделенной семьи, где жилые и хозяйственные постройки объединены высокой глинобитной стеной (до 7–8 метров) с башнями (гунгре). Внутри обязательно располагались открытый двор и место для юрты.",
-    "places": "Вдоль крупных каналов: Лаузан, Суенли, Шортанбай, Кегейли, Куаныш-Джарма.",
+    "description": "Large estate of an extended undivided family, where dwelling and utility buildings were unified by a tall mud-brick wall (up to 7-8 metres) with towers (gungre). An open courtyard and a place for a yurt were always inside.",
+    "places": "Along major canals: Lauzan, Suenli, Shortanbay, Kegeyli, Kuanysh-Jarma.",
     "locations": [
-      { "name": "Хаули Нуримбетбая (Ходжейли)", "lat": 42.40, "lon": 59.45 },
-      { "name": "Хаули Якупбай-ходжи (Ходжейли)", "lat": 42.42, "lon": 59.42 },
-      { "name": "Ишан-кала, Кум-озек (Кегейли)", "lat": 42.78, "lon": 58.80 },
-      { "name": "Хаули Абдуллыбая (Кегейли)", "lat": 42.80, "lon": 58.85 },
-      { "name": "Хаули Сержана-шабандоза (Турткуль)", "lat": 41.55, "lon": 61.00 },
-      { "name": "Хаули Атамурата (Турткуль)", "lat": 41.58, "lon": 61.05 },
-      { "name": "Хаули Аскарбая (Чимбай)", "lat": 42.94, "lon": 59.81 }
+      { "name": "Hauli of Nurimbetbay (Khojeyli)", "lat": 42.40, "lon": 59.45 },
+      { "name": "Hauli of Yakupbay-khoja (Khojeyli)", "lat": 42.42, "lon": 59.42 },
+      { "name": "Ishan-kala, Kum-ozek (Kegeyli)", "lat": 42.78, "lon": 58.80 },
+      { "name": "Hauli of Abdullybay (Kegeyli)", "lat": 42.80, "lon": 58.85 },
+      { "name": "Hauli of Serzhan-shabandoz (Turtkul)", "lat": 41.55, "lon": 61.00 },
+      { "name": "Hauli of Atamurat (Turtkul)", "lat": 41.58, "lon": 61.05 },
+      { "name": "Hauli of Askarbay (Chimbay)", "lat": 42.94, "lon": 59.81 }
     ]
   },
   {
-    "type": "Шопкер",
-    "subtitle": "Городское каркасное жилище",
-    "icon": "🏘️",
+    "type": "Shopker",
+    "subtitle": "Urban frame dwelling",
     "color": "#ba68c8",
-    "description": "Усовершенствованный тип каркасного жилища, где деревянный остов заполнялся камышом, сырцовым кирпичом или комками глины, после чего тщательно штукатурился. Считался более теплым и сухим, чем обычный там.",
-    "places": "Преимущественно города: Чимбай, Ходжейли, Кунград, Турткуль. Также на солончаковых почвах.",
+    "description": "An advanced type of frame dwelling, where the wooden frame was filled with reeds, raw bricks or clay lumps and then carefully plastered. Considered warmer and drier than a regular tam.",
+    "places": "Mainly cities: Chimbay, Khojeyli, Kungrad, Turtkul. Also in rural areas with damp saline soil.",
     "locations": [
-      { "name": "Чимбай", "lat": 42.94, "lon": 59.81 },
-      { "name": "Ходжейли", "lat": 42.40, "lon": 59.45 },
-      { "name": "Кунград", "lat": 43.05, "lon": 58.84 },
-      { "name": "Турткуль", "lat": 41.55, "lon": 61.00 }
+      { "name": "Chimbay", "lat": 42.94, "lon": 59.81 },
+      { "name": "Khojeyli", "lat": 42.40, "lon": 59.45 },
+      { "name": "Kungrad", "lat": 43.05, "lon": 58.84 },
+      { "name": "Turtkul", "lat": 41.55, "lon": 61.00 }
     ]
   },
   {
-    "type": "Кошки",
-    "subtitle": "Свайное жилище рыбаков",
-    "icon": "🛖",
+    "type": "Koshki",
+    "subtitle": "Fishermen's stilt house",
     "color": "#4fc3f7",
-    "description": "Свайные постройки из пучков камыша, возводимые на воде. Использовались рыбаками на побережье Аральского моря.",
-    "places": "Побережье Аральского моря.",
+    "description": "Stilt structures made of reed bundles, built on water. Used by fishermen on the Aral Sea coast.",
+    "places": "Aral Sea coast.",
     "locations": [
-      { "name": "Побережье Арала (Муйнак)", "lat": 43.78, "lon": 59.05 },
-      { "name": "Восточное побережье", "lat": 44.20, "lon": 60.10 }
+      { "name": "Aral coast (Moynak)", "lat": 43.78, "lon": 59.05 },
+      { "name": "Eastern coast", "lat": 44.20, "lon": 60.10 }
     ]
   },
   {
-    "type": "Жертоле",
-    "subtitle": "Толе — землянка",
-    "icon": "🕳️",
+    "type": "Zhertole",
+    "subtitle": "Tole - dugout",
     "color": "#8d6e63",
-    "description": "Землянки и полуземлянки, использовавшиеся беднотой или как временное жилье. Встречались в районах с отсутствием высоких грунтовых вод.",
-    "places": "Плато Устюрт.",
+    "description": "Dugouts and semi-dugouts used by the poor or as temporary shelter. Found in areas with low groundwater tables.",
+    "places": "Ustyurt plateau.",
     "locations": [
-      { "name": "Плато Устюрт (север)", "lat": 44.20, "lon": 57.80 },
-      { "name": "Плато Устюрт (юг)", "lat": 43.20, "lon": 57.60 }
+      { "name": "Ustyurt Plateau (north)", "lat": 44.20, "lon": 57.80 },
+      { "name": "Ustyurt Plateau (south)", "lat": 43.20, "lon": 57.60 }
     ]
   },
   {
-    "type": "Кеппе",
-    "subtitle": "Камыш-кепбе",
-    "icon": "🏕️",
+    "type": "Keppe",
+    "subtitle": "Reed yurt",
     "color": "#26a69a",
-    "description": "Юртообразное сооружение, полностью построенное из камыша. Использовалось рыболовами в приморских районах.",
-    "places": "Приморские районы рыболовов.",
+    "description": "A yurt-like structure built entirely from reeds. Used by fishermen in coastal areas.",
+    "places": "Coastal fishing areas.",
     "locations": [
-      { "name": "Муйнак (рыбачья стоянка)", "lat": 43.76, "lon": 58.95 },
-      { "name": "Дельтовая стоянка", "lat": 43.95, "lon": 59.25 }
+      { "name": "Moynak (fisher camp)", "lat": 43.76, "lon": 58.95 },
+      { "name": "Delta camp", "lat": 43.95, "lon": 59.25 }
     ]
   },
   {
-    "type": "Куйме",
-    "subtitle": "Свадебная кибитка",
-    "icon": "🛺",
+    "type": "Kuyme",
+    "subtitle": "Wedding cart",
     "color": "#ec407a",
-    "description": "Свадебное жилище в виде кибитки на арбе для перевозки невесты. Подвижное ритуальное сооружение, связанное со свадебным обрядом.",
-    "places": "Перемещалось вместе со свадебным караваном.",
+    "description": "A wedding dwelling in the form of a covered cart on an arba, used to transport the bride. A mobile ritual structure tied to the wedding ceremony.",
+    "places": "Travelled with the wedding caravan.",
     "locations": [
-      { "name": "Свадебный путь (Чимбай)", "lat": 42.94, "lon": 59.78 },
-      { "name": "Свадебный путь (Турткуль)", "lat": 41.56, "lon": 61.02 }
+      { "name": "Wedding route (Chimbay)", "lat": 42.94, "lon": 59.78 },
+      { "name": "Wedding route (Turtkul)", "lat": 41.56, "lon": 61.02 }
     ]
   }
 ]
