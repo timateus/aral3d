@@ -132,6 +132,7 @@ interface TerrainViewerProps {
   onLandcoverAvailableClasses?: (classes: number[]) => void;
   showSchools?: boolean;
   showVocabulary?: boolean;
+  showDwellings?: boolean;
   agmarShowProposalSites?: boolean;
   aryqWorldActive?: boolean;
   onAryqWorldComplete?: () => void;
