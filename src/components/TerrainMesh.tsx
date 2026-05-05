@@ -175,7 +175,7 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
 
     geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
     geometry.attributes.color.needsUpdate = true;
-  }, [geometry, vertexMeta, waterLevel, waterBounds, terrain, terrainVersion, raisedPixels, dugPixels]);
+  }, [geometry, vertexMeta, waterLevel, waterBounds, terrain, terrainVersion, raisedPixels, dugPixels, visualMode]);
 
   const material = useMemo(() => {
     return new THREE.MeshStandardMaterial({
