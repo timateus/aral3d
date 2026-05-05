@@ -134,11 +134,20 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
         let color: [number, number, number];
         if (isWater) {
           const waterDepth = Math.max(0, Math.min(1, (waterLevel - elev) / (waterLevel - minElevation || 1)));
-          color = [
-            0.04 + (1 - waterDepth) * 0.12,
-            0.12 + (1 - waterDepth) * 0.2,
-            0.35 + (1 - waterDepth) * 0.25,
-          ];
+          if (visualMode === 'mirage' || visualMode === 'designer') {
+            // Pale slate-blue mirage water
+            color = [
+              0.55 + (1 - waterDepth) * 0.10,
+              0.66 + (1 - waterDepth) * 0.06,
+              0.74 + (1 - waterDepth) * 0.04,
+            ];
+          } else {
+            color = [
+              0.04 + (1 - waterDepth) * 0.12,
+              0.12 + (1 - waterDepth) * 0.2,
+              0.35 + (1 - waterDepth) * 0.25,
+            ];
+          }
         } else if (raisedPixels && raisedPixels.has(idx)) {
           // Pink for raised terrain pixels
           const base = getElevationColor(normalized, elev);
