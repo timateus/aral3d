@@ -47,6 +47,8 @@ interface LegendProps {
   onToggleSchools: (val: boolean) => void;
   showVocabulary: boolean;
   onToggleVocabulary: (val: boolean) => void;
+  showDwellings: boolean;
+  onToggleDwellings: (val: boolean) => void;
   showGroundwater: boolean;
   onToggleGroundwater: (val: boolean) => void;
   showPrecipitation: boolean;
