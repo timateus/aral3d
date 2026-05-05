@@ -462,6 +462,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
               {showLandcover && <LandcoverLayer terrain={terrain} exaggeration={exaggeration} visibleClasses={landcoverVisibleClasses} onDataLoaded={setLcData} onAvailableClasses={onLandcoverAvailableClasses} />}
               {showSchools && <SchoolsLayer terrain={terrain} exaggeration={exaggeration} />}
               {showVocabulary && <VocabularyLayer terrain={terrain} exaggeration={exaggeration} />}
+              {showDwellings && <DwellingsLayer terrain={terrain} exaggeration={exaggeration} />}
               {showGroundwater && <GroundwaterLayer terrain={terrain} exaggeration={exaggeration} />}
               {showPrecipitation && <PrecipitationLayer terrain={terrain} exaggeration={exaggeration} />}
               {showSalinity && <SalinityLayer terrain={terrain} exaggeration={exaggeration} />}
