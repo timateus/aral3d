@@ -1605,6 +1605,8 @@ const Index = () => {
             onToggleSchools={setShowSchools}
             showVocabulary={showVocabulary}
             onToggleVocabulary={setShowVocabulary}
+            showDwellings={showDwellings}
+            onToggleDwellings={setShowDwellings}
             showGroundwater={showGroundwater}
             onToggleGroundwater={setShowGroundwater}
             showPrecipitation={showPrecipitation}
