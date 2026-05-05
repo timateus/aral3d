@@ -1,7 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Html } from '@react-three/drei';
 import { TerrainData } from '@/lib/geotiff-loader';
-import * as THREE from 'three';
 
 interface DwellingLocation { name: string; lat: number; lon: number; }
 interface Dwelling {
@@ -18,8 +17,12 @@ interface Props {
   exaggeration: number;
 }
 
-// Mirror of TerrainMesh height calc: z_surface = normalized * (exaggeration / 10)
-function geoToSurface(
+// Mirror of TerrainMesh:
+//   x = (i/(w-1) - 0.5) * 10
+//   y = (0.5 - j/(h-1)) * 10 * (h/w)
+//   z = normalized * (exaggeration / 10)
+// Mesh is rotated -PI/2 around X => world: (x, z, -y)
+function geoToWorld(
   lon: number, lat: number,
   terrain: TerrainData,
   meshW: number, meshH: number,
@@ -34,11 +37,10 @@ function geoToSurface(
   if (isNaN(elev) || (noDataValue !== null && elev === noDataValue) || elev <= -9999) elev = minElevation;
   const range = (maxElevation - minElevation) || 1;
   const normalized = (elev - minElevation) / range;
-  const maxHeight = exaggeration / 10;
-  const y = normalized * maxHeight;
+  const surfaceY = normalized * (exaggeration / 10);
   const x = (u - 0.5) * meshW;
   const z = -(v - 0.5) * meshH;
-  return [x, y, z];
+  return [x, surfaceY, z];
 }
 
 function useIsMirage() {
@@ -73,55 +75,55 @@ export default function DwellingsLayer({ terrain, exaggeration }: Props) {
     dwellings.forEach(d => {
       d.locations.forEach((loc, i) => {
         const key = `${d.type}-${i}`;
-        const pos = geoToSurface(loc.lon, loc.lat, terrain, meshW, meshH, exaggeration);
+        const pos = geoToWorld(loc.lon, loc.lat, terrain, meshW, meshH, exaggeration);
         flat.push({ key, dwelling: d, loc, pos });
       });
     });
     return flat;
   }, [dwellings, terrain, exaggeration]);
 
+  const labelBg = isMirage ? 'rgba(255,255,255,0.95)' : 'rgba(13,17,23,0.85)';
+  const labelFg = isMirage ? '#0d1117' : '#fff';
+
   return (
-    <group rotation={[-Math.PI / 2, 0, 0]}>
+    <group>
       {markers.map(({ key, dwelling, loc, pos }) => {
         const isSelected = selected === key;
         const pinH = 0.12;
-        // pos is in mesh-local coords (X right, Y up after mesh rotation, but our group also rotates)
-        // TerrainMesh is rotated -PI/2 around X — this group does the same so we share coords.
-        // After that rotation, the mesh's z (height) becomes world Y.
         return (
-          <group key={key} position={[pos[0], -pos[2], pos[1]]}>
-            {/* Pin shaft sitting ON the surface */}
-            <mesh position={[0, 0, pinH / 2]} castShadow>
-              <coneGeometry args={[0.025, pinH, 10]} />
+          <group key={key} position={pos}>
+            {/* Pin shaft anchored ON the surface */}
+            <mesh position={[0, pinH / 2, 0]} castShadow>
+              <coneGeometry args={[0.022, pinH, 10]} />
               <meshStandardMaterial color={dwelling.color} emissive={dwelling.color} emissiveIntensity={0.5} />
             </mesh>
             <mesh
-              position={[0, 0, pinH + 0.03]}
+              position={[0, pinH + 0.025, 0]}
               onClick={(e) => { e.stopPropagation(); setSelected(isSelected ? null : key); }}
-              onPointerOver={(e) => { (e.object as any).scale.setScalar(1.4); document.body.style.cursor = 'pointer'; }}
-              onPointerOut={(e) => { (e.object as any).scale.setScalar(1); document.body.style.cursor = 'default'; }}
+              onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'pointer'; }}
+              onPointerOut={() => { document.body.style.cursor = 'default'; }}
             >
-              <sphereGeometry args={[0.04, 16, 12]} />
+              <sphereGeometry args={[0.038, 16, 12]} />
               <meshStandardMaterial color={dwelling.color} emissive={dwelling.color} emissiveIntensity={0.7} />
             </mesh>
 
             {isSelected && (
-              <Html center distanceFactor={7} position={[0, 0, pinH + 0.6]} style={{ pointerEvents: 'auto' }}>
+              <Html center distanceFactor={7} position={[0, pinH + 0.6, 0]} style={{ pointerEvents: 'auto' }}>
                 <div
                   onClick={(e) => e.stopPropagation()}
                   style={{
                     width: 280,
-                    background: isMirage ? 'rgba(255,255,255,0.97)' : 'rgba(13,17,23,0.97)',
+                    background: labelBg,
                     border: `1px solid ${dwelling.color}`,
                     fontFamily: "'Inter', system-ui, sans-serif",
-                    color: isMirage ? '#0d1117' : '#e6edf3',
+                    color: labelFg,
                     padding: '12px 14px',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                     <span style={{ width: 12, height: 12, background: dwelling.color, display: 'inline-block' }} />
                     <div>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: isMirage ? '#0d1117' : '#fff' }}>{dwelling.type}</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: labelFg }}>{dwelling.type}</div>
                       <div style={{ fontSize: 10, color: isMirage ? '#5a6470' : '#9aa4ad', fontStyle: 'italic' }}>{dwelling.subtitle}</div>
                     </div>
                   </div>
@@ -137,7 +139,7 @@ export default function DwellingsLayer({ terrain, exaggeration }: Props) {
                       {dwelling.places}
                     </div>
                     <div style={{ marginTop: 4 }}>
-                      Here: <span style={{ color: isMirage ? '#0d1117' : '#fff' }}>{loc.name}</span>
+                      Here: <span style={{ color: labelFg }}>{loc.name}</span>
                     </div>
                   </div>
                   <button
