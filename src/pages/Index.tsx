@@ -990,6 +990,7 @@ const Index = () => {
       if (showWaterways) layers.push('waterways');
       if (showSchools) layers.push('schools');
       if (showVocabulary) layers.push('vocabulary');
+      if (showDwellings) layers.push('dwellings');
       if (showGroundwater) layers.push('groundwater');
       if (showPrecipitation) layers.push('precipitation');
       if (showLandcover) layers.push('landcover');
