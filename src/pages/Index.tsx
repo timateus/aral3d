@@ -1150,6 +1150,7 @@ const Index = () => {
             onLandcoverAvailableClasses={setLandcoverAvailableClasses}
             showSchools={showSchools}
             showVocabulary={showVocabulary}
+            showDwellings={showDwellings}
             agmarShowProposalSites={agmarTourActive && !!AGMAR_TOUR_STEPS[agmarTourStep]?.proposalSites}
             showOverlayMetrics={isMapExploration}
             showGroundwater={showGroundwater}
