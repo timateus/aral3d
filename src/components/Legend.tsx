@@ -47,6 +47,8 @@ interface LegendProps {
   onToggleSchools: (val: boolean) => void;
   showVocabulary: boolean;
   onToggleVocabulary: (val: boolean) => void;
+  showDwellings: boolean;
+  onToggleDwellings: (val: boolean) => void;
   showGroundwater: boolean;
   onToggleGroundwater: (val: boolean) => void;
   showPrecipitation: boolean;
@@ -58,7 +60,7 @@ interface LegendProps {
   loadingLayers?: Set<string>;
 }
 
-const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin, show21stBasin, onToggle21stBasin, showKhorezm, onToggleKhorezm, showWatershed, onToggleWatershed, showLandcover, onToggleLandcover, landcoverVisibleClasses, landcoverAvailableClasses, onLandcoverVisibleClassesChange, showLakes, onToggleLakes, show21cLakes, onToggle21cLakes, showPopDensity, onTogglePopDensity, popHexSize, onPopHexSizeChange, popHexHeight, onPopHexHeightChange, showMigration, onToggleMigration, showChoropleth, onToggleChoropleth, choroplethIndicator, onChoroplethIndicatorChange, choroplethExaggeration, onChoroplethExaggerationChange, showSchools, onToggleSchools, showVocabulary, onToggleVocabulary, showGroundwater, onToggleGroundwater, showPrecipitation, onTogglePrecipitation, showWaterways, onToggleWaterways, waterwayTypeFilter, onWaterwayTypeFilterChange, loadingLayers }: LegendProps) => {
+const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show13thBasin, onToggle13thBasin, show19thBasin, onToggle19thBasin, show21stBasin, onToggle21stBasin, showKhorezm, onToggleKhorezm, showWatershed, onToggleWatershed, showLandcover, onToggleLandcover, landcoverVisibleClasses, landcoverAvailableClasses, onLandcoverVisibleClassesChange, showLakes, onToggleLakes, show21cLakes, onToggle21cLakes, showPopDensity, onTogglePopDensity, popHexSize, onPopHexSizeChange, popHexHeight, onPopHexHeightChange, showMigration, onToggleMigration, showChoropleth, onToggleChoropleth, choroplethIndicator, onChoroplethIndicatorChange, choroplethExaggeration, onChoroplethExaggerationChange, showSchools, onToggleSchools, showVocabulary, onToggleVocabulary, showDwellings, onToggleDwellings, showGroundwater, onToggleGroundwater, showPrecipitation, onTogglePrecipitation, showWaterways, onToggleWaterways, waterwayTypeFilter, onWaterwayTypeFilterChange, loadingLayers }: LegendProps) => {
 
   const isLayerLoading = (layer: string) => loadingLayers?.has(layer) ?? false;
   const LoadingSpinner = ({ layer }: { layer: string }) => isLayerLoading(layer) ? <Loader2 className="w-3 h-3 animate-spin text-primary flex-shrink-0" /> : null;
@@ -244,6 +246,14 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
           Vocabulary (Photos)
         </span>
         <Switch className="scale-75" checked={showVocabulary} onCheckedChange={onToggleVocabulary} />
+      </label>
+
+      <label className="flex items-center justify-between cursor-pointer">
+        <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
+          <span className="inline-block w-3 h-3 rounded-sm" style={{ background: 'linear-gradient(135deg, #f5c542, #ef6c5a)' }} />
+          Жилища (Dwellings)
+        </span>
+        <Switch className="scale-75" checked={showDwellings} onCheckedChange={onToggleDwellings} />
       </label>
 
       {showChoropleth && (

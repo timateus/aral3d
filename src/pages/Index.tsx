@@ -87,6 +87,7 @@ const Index = () => {
   const [showWaterExtent, setShowWaterExtent] = useState(true);
   const [showSchools, setShowSchools] = useState(false);
   const [showVocabulary, setShowVocabulary] = useState(false);
+  const [showDwellings, setShowDwellings] = useState(false);
   const [showGroundwater, setShowGroundwater] = useState(false);
   const [showPrecipitation, setShowPrecipitation] = useState(false);
   const [showSalinity, setShowSalinity] = useState(false);
@@ -953,6 +954,7 @@ const Index = () => {
       setShowWaterways(has('waterways'));
       setShowSchools(has('schools'));
       setShowVocabulary(has('vocabulary'));
+      setShowDwellings(has('dwellings'));
       setShowGroundwater(has('groundwater'));
       setShowPrecipitation(has('precipitation'));
       setShowLandcover(has('landcover'));
@@ -988,6 +990,7 @@ const Index = () => {
       if (showWaterways) layers.push('waterways');
       if (showSchools) layers.push('schools');
       if (showVocabulary) layers.push('vocabulary');
+      if (showDwellings) layers.push('dwellings');
       if (showGroundwater) layers.push('groundwater');
       if (showPrecipitation) layers.push('precipitation');
       if (showLandcover) layers.push('landcover');
@@ -1004,7 +1007,7 @@ const Index = () => {
       window.history.replaceState({}, '', qs ? `?${qs}` : window.location.pathname);
     }, 500);
   }, [started, gameModeActive, sandboxMode, waterExtentYear, exaggeration, waterLevel,
-      showBorders, showRivers, showKhorezm, showWaterways, showSchools, showVocabulary,
+      showBorders, showRivers, showKhorezm, showWaterways, showSchools, showVocabulary, showDwellings,
       showGroundwater, showPrecipitation, showLandcover, showPopDensity, showMigration,
       showChoropleth, showSalinity, showWaterExtent, show13thBasin, show19thBasin,
       show21stBasin, waterwayTypeFilter]);
@@ -1147,6 +1150,7 @@ const Index = () => {
             onLandcoverAvailableClasses={setLandcoverAvailableClasses}
             showSchools={showSchools}
             showVocabulary={showVocabulary}
+            showDwellings={showDwellings}
             agmarShowProposalSites={agmarTourActive && !!AGMAR_TOUR_STEPS[agmarTourStep]?.proposalSites}
             showOverlayMetrics={isMapExploration}
             showGroundwater={showGroundwater}
@@ -1219,6 +1223,7 @@ const Index = () => {
             setShowWaterExtent(false);
             setShowSchools(false);
             setShowVocabulary(false);
+            setShowDwellings(false);
             setShowGroundwater(false);
             setShowPrecipitation(false);
             setShowSalinity(false);
@@ -1600,6 +1605,8 @@ const Index = () => {
             onToggleSchools={setShowSchools}
             showVocabulary={showVocabulary}
             onToggleVocabulary={setShowVocabulary}
+            showDwellings={showDwellings}
+            onToggleDwellings={setShowDwellings}
             showGroundwater={showGroundwater}
             onToggleGroundwater={setShowGroundwater}
             showPrecipitation={showPrecipitation}
