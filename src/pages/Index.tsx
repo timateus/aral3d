@@ -482,15 +482,51 @@ const Index = () => {
   useEffect(() => { if (!gameModeActive) setGameBounds(null); }, [gameModeActive]);
 
   // Listen for avatar-driven recentering requests in game mode (satellite only)
+  // Expand bounds (union) instead of replacing, so previously-explored terrain stays visible.
   useEffect(() => {
     if (!gameModeActive || !satelliteEnabled) return;
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<{ bounds: import('@/lib/geotiff-loader').GeoBounds }>).detail;
-      if (detail?.bounds) setGameBounds(detail.bounds);
+      if (!detail?.bounds) return;
+      setGameBounds((prev) => {
+        const base = prev ?? getRegionBounds(terrainRegion, terrainCustomBounds);
+        const next = {
+          minLon: Math.min(base.minLon, detail.bounds.minLon),
+          minLat: Math.min(base.minLat, detail.bounds.minLat),
+          maxLon: Math.max(base.maxLon, detail.bounds.maxLon),
+          maxLat: Math.max(base.maxLat, detail.bounds.maxLat),
+        };
+        // Cap area growth so DEM resolution doesn't collapse: limit span to 4x original
+        const origLonSpan = base.maxLon - base.minLon;
+        const origLatSpan = base.maxLat - base.minLat;
+        const maxLonSpan = origLonSpan * 4;
+        const maxLatSpan = origLatSpan * 4;
+        const lonSpan = next.maxLon - next.minLon;
+        const latSpan = next.maxLat - next.minLat;
+        if (lonSpan > maxLonSpan) {
+          const cx = (next.minLon + next.maxLon) / 2;
+          next.minLon = cx - maxLonSpan / 2;
+          next.maxLon = cx + maxLonSpan / 2;
+        }
+        if (latSpan > maxLatSpan) {
+          const cy = (next.minLat + next.maxLat) / 2;
+          next.minLat = cy - maxLatSpan / 2;
+          next.maxLat = cy + maxLatSpan / 2;
+        }
+        // Don't trigger reload if effectively unchanged
+        if (
+          prev &&
+          Math.abs(prev.minLon - next.minLon) < 1e-6 &&
+          Math.abs(prev.maxLon - next.maxLon) < 1e-6 &&
+          Math.abs(prev.minLat - next.minLat) < 1e-6 &&
+          Math.abs(prev.maxLat - next.maxLat) < 1e-6
+        ) return prev;
+        return next;
+      });
     };
     window.addEventListener('game-recenter-terrain', handler);
     return () => window.removeEventListener('game-recenter-terrain', handler);
-  }, [gameModeActive, satelliteEnabled]);
+  }, [gameModeActive, satelliteEnabled, terrainRegion, terrainCustomBounds]);
 
 
 
