@@ -3,7 +3,7 @@ import { loadGeoTiff, TerrainData } from '@/lib/geotiff-loader';
 import { mergeTerrains, mergeExpandTerrains } from '@/lib/terrain-merger';
 import { useTerrainMode } from '@/hooks/useTerrainMode';
 import { useMapboxTerrain } from '@/hooks/useMapboxTerrain';
-import { getRegionBounds } from '@/lib/terrain-regions';
+import { getRegionBounds, CENTRAL_ASIA_BOUNDS } from '@/lib/terrain-regions';
 import { createFlowState, addWaterAt, stepFlow, WaterFlowState } from '@/lib/water-flow-simulation';
 import { digCanalsFromBasins } from '@/lib/canal-auto-dig';
 import TerrainViewer, { TerrainViewerHandle } from '@/components/TerrainViewer';
