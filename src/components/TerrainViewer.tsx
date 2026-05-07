@@ -6,6 +6,8 @@ import PrecipitationLayer from './PrecipitationLayer';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { GizmoHelper, GizmoViewport, Html, useGLTF } from '@react-three/drei';
 import TerrainMesh from './TerrainMesh';
+import MapboxTerrainMesh from './MapboxTerrainMesh';
+import { useTerrainMode } from '@/hooks/useTerrainMode';
 import GeoFeatures from './GeoFeatures';
 import WaterExtentLayer from './WaterExtentLayer';
 import PopulationDensityLayer, { PopData } from './PopulationDensityLayer';
@@ -414,6 +416,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
   const [flyoverAnimating, setFlyoverAnimating] = useState(false);
   const [popData, setPopData] = useState<PopData | null>(null);
   const [lcData, setLcData] = useState<LandcoverRasterData | null>(null);
+  const { mode: terrainMode, token: terrainToken } = useTerrainMode();
 
   const handleCanvasRecorderReady = useCallback((controls: { start: () => void; stop: () => void }) => {
     canvasRecorderControls.current = controls;
@@ -442,8 +445,11 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
       {!aryqWorldActive && (
         <>
           <group>
-            {!hideTerrainSurface && (
+            {!hideTerrainSurface && terrainMode === 'classic' && (
               <TerrainMesh terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} hideNoData={hideNoData} waterBounds={waterBounds} inspectorEnabled={inspectorEnabled} popData={showPopDensity ? popData : null} lcData={showLandcover ? lcData : null} damToolActive={damToolActive} onDamPlace={onDamPlace} canalToolActive={canalToolActive} onCanalDig={onCanalDig} waterFlowActive={waterFlowActive || sandboxToolActive || dustToolActive} onWaterFlowClick={dustToolActive ? onDustClick : (sandboxToolActive ? onSandboxClick : onWaterFlowClick)} terrainVersion={terrainVersion} raisedPixels={raisedPixels} dugPixels={dugPixels} sandboxActive={false} />
+            )}
+            {!hideTerrainSurface && terrainMode === 'satellite' && terrainToken && (
+              <MapboxTerrainMesh terrain={terrain} exaggeration={exaggeration} token={terrainToken} />
             )}
             {terrainStyle && terrainStyle !== 'none' && (
               <TerrainStyleOverlay terrain={terrain} exaggeration={exaggeration} style={terrainStyle} contourInterval={contourInterval} vectorInterval={vectorInterval} />
