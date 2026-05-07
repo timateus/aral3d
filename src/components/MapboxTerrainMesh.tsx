@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import * as THREE from 'three';
 import { TerrainData } from '@/lib/geotiff-loader';
-import { loadMapboxTextures, MapboxTextures } from '@/lib/mapbox-tiles';
+import { loadMapboxSatellite } from '@/lib/mapbox-tiles';
 import { useVisualMode } from '@/lib/visual-mode';
 
 interface Props {
@@ -11,113 +11,102 @@ interface Props {
   onError?: (msg: string) => void;
 }
 
-const VERTEX_SHADER = /* glsl */ `
-  uniform sampler2D uTerrain;
-  uniform float uMinElev;
-  uniform float uElevRange;
-  uniform float uMaxHeight;
-  varying vec2 vUv;
-  varying float vElevNorm;
-
-  float decodeElev(vec3 c) {
-    // Mapbox terrain-RGB encoding (channels are in [0..1])
-    return -10000.0 + ((c.r * 255.0) * 65536.0 + (c.g * 255.0) * 256.0 + (c.b * 255.0)) * 0.1;
-  }
-
-  void main() {
-    vUv = uv;
-    vec3 c = texture2D(uTerrain, uv).rgb;
-    float elev = decodeElev(c);
-    float n = clamp((elev - uMinElev) / uElevRange, 0.0, 1.0);
-    vElevNorm = n;
-    vec3 displaced = position + vec3(0.0, 0.0, n * uMaxHeight);
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(displaced, 1.0);
-  }
-`;
-
-const FRAGMENT_SHADER = /* glsl */ `
-  uniform sampler2D uSatellite;
-  uniform float uMirage;
-  varying vec2 vUv;
-  varying float vElevNorm;
-
-  void main() {
-    vec3 col = texture2D(uSatellite, vUv).rgb;
-    if (uMirage > 0.5) {
-      // Desaturate + warm sepia tint for mirage mode
-      float gray = dot(col, vec3(0.299, 0.587, 0.114));
-      vec3 sepia = vec3(gray * 1.05, gray * 0.97, gray * 0.85);
-      col = mix(col, sepia, 0.7);
-    }
-    gl_FragColor = vec4(col, 1.0);
-  }
-`;
-
+/**
+ * Mapbox satellite imagery draped over the SAME GeoTIFF elevation grid that
+ * everything else (lines, pins, basins) uses. This guarantees perfect
+ * alignment of overlay features and works for ANY bounds (Khorezm, custom
+ * regions, etc.) — we just refetch the satellite texture for the new bbox.
+ */
 const MapboxTerrainMesh = ({ terrain, exaggeration, token, onError }: Props) => {
-  const [textures, setTextures] = useState<MapboxTextures | null>(null);
+  const [satellite, setSatellite] = useState<THREE.Texture | null>(null);
   const [mode] = useVisualMode();
   const isMirage = mode === 'mirage' || mode === 'designer';
 
-  // Load textures when token or bounds change
+  // Refetch satellite whenever bounds change (Khorezm toggle, custom DEM, etc.)
   useEffect(() => {
     if (!token || !terrain.bounds) return;
     let cancelled = false;
-    setTextures(null);
-    loadMapboxTextures(terrain.bounds, token)
-      .then((t) => { if (!cancelled) setTextures(t); })
+    setSatellite(null);
+    loadMapboxSatellite(terrain.bounds, token)
+      .then((t) => { if (!cancelled) setSatellite(t); })
       .catch((e) => { if (!cancelled) onError?.(e.message); });
     return () => { cancelled = true; };
   }, [token, terrain.bounds, onError]);
 
-  // Geometry: high-segment plane in world coords matching the classic mesh
+  // Build geometry from GeoTIFF — identical formula to TerrainMesh & geoToMeshPos
   const geometry = useMemo(() => {
-    const w = terrain.width, h = terrain.height;
-    const meshW = 10;
-    const meshH = 10 * (h / w);
-    const geo = new THREE.PlaneGeometry(meshW, meshH, 256, 256);
+    const { width: w, height: h, elevations, minElevation, maxElevation, noDataValue } = terrain;
+    const elevRange = maxElevation - minElevation || 1;
+    const maxHeight = 10 * (exaggeration / 100);
+    const positions: number[] = [];
+    const uvs: number[] = [];
+    for (let j = 0; j < h; j++) {
+      for (let i = 0; i < w; i++) {
+        let elev = elevations[j * w + i];
+        const nd = isNaN(elev) || (noDataValue !== null && elev === noDataValue) || elev <= -9999;
+        if (nd) elev = minElevation;
+        const normalized = (elev - minElevation) / elevRange;
+        const x = (i / (w - 1) - 0.5) * 10;
+        const y = (0.5 - j / (h - 1)) * 10 * (h / w);
+        const z = normalized * maxHeight;
+        positions.push(x, y, z);
+        uvs.push(i / (w - 1), 1 - j / (h - 1));
+      }
+    }
+    const indices: number[] = [];
+    for (let j = 0; j < h - 1; j++) {
+      for (let i = 0; i < w - 1; i++) {
+        const a = j * w + i, b = a + 1, c = a + w, d = c + 1;
+        indices.push(a, b, c, b, d, c);
+      }
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+    geo.setIndex(indices);
+    geo.computeVertexNormals();
     return geo;
-  }, [terrain.width, terrain.height]);
+  }, [terrain, exaggeration]);
 
-  const material = useMemo(() => {
-    const mat = new THREE.ShaderMaterial({
-      vertexShader: VERTEX_SHADER,
-      fragmentShader: FRAGMENT_SHADER,
-      uniforms: {
-        uSatellite: { value: null },
-        uTerrain: { value: null },
-        uMinElev: { value: 0 },
-        uElevRange: { value: 1 },
-        uMaxHeight: { value: 10 * (exaggeration / 100) },
-        uMirage: { value: isMirage ? 1.0 : 0.0 },
-      },
-      side: THREE.DoubleSide,
-    });
-    return mat;
-  }, []);
+  const material = useMemo(() => new THREE.ShaderMaterial({
+    uniforms: {
+      uSatellite: { value: null },
+      uMirage: { value: 0 },
+      uHasTex: { value: 0 },
+    },
+    vertexShader: /* glsl */ `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: /* glsl */ `
+      uniform sampler2D uSatellite;
+      uniform float uMirage;
+      uniform float uHasTex;
+      varying vec2 vUv;
+      void main() {
+        vec3 col = uHasTex > 0.5 ? texture2D(uSatellite, vUv).rgb : vec3(0.4, 0.42, 0.45);
+        if (uMirage > 0.5) {
+          float gray = dot(col, vec3(0.299, 0.587, 0.114));
+          vec3 sepia = vec3(gray * 1.05, gray * 0.97, gray * 0.85);
+          col = mix(col, sepia, 0.7);
+        }
+        gl_FragColor = vec4(col, 1.0);
+      }
+    `,
+    side: THREE.DoubleSide,
+  }), []);
 
-  // Update uniforms when inputs change
+  useEffect(() => { material.uniforms.uMirage.value = isMirage ? 1 : 0; }, [isMirage, material]);
   useEffect(() => {
-    material.uniforms.uMaxHeight.value = 10 * (exaggeration / 100);
-  }, [exaggeration, material]);
-
-  useEffect(() => {
-    material.uniforms.uMirage.value = isMirage ? 1.0 : 0.0;
-  }, [isMirage, material]);
-
-  useEffect(() => {
-    if (!textures) return;
-    material.uniforms.uSatellite.value = textures.satellite;
-    material.uniforms.uTerrain.value = textures.terrainRGB;
-    material.uniforms.uMinElev.value = textures.minElev;
-    material.uniforms.uElevRange.value = (textures.maxElev - textures.minElev) || 1;
+    material.uniforms.uSatellite.value = satellite;
+    material.uniforms.uHasTex.value = satellite ? 1 : 0;
     material.needsUpdate = true;
-  }, [textures, material]);
+  }, [satellite, material]);
 
-  if (!textures) return null;
-
-  return (
-    <mesh geometry={geometry} material={material} rotation={[-Math.PI / 2, 0, 0]} />
-  );
+  return <mesh geometry={geometry} material={material} rotation={[-Math.PI / 2, 0, 0]} />;
 };
 
 export default MapboxTerrainMesh;
