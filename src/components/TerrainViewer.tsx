@@ -6,6 +6,8 @@ import PrecipitationLayer from './PrecipitationLayer';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { GizmoHelper, GizmoViewport, Html, useGLTF } from '@react-three/drei';
 import TerrainMesh from './TerrainMesh';
+import MapboxTerrainMesh from './MapboxTerrainMesh';
+import { useTerrainMode } from '@/hooks/useTerrainMode';
 import GeoFeatures from './GeoFeatures';
 import WaterExtentLayer from './WaterExtentLayer';
 import PopulationDensityLayer, { PopData } from './PopulationDensityLayer';
