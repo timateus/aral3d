@@ -1,94 +1,67 @@
+# Mapbox-Native Elevation for Satellite Mode
 
 ## Goal
 
-Add an alternative terrain renderer using **Mapbox Satellite imagery + Terrain-RGB elevation**, with GPU vertex displacement. Toggle via a switch in the legend. All existing layers, pins, game mode, and sandbox tools continue working on top of it.
+In Satellite mode, derive elevation **entirely from Mapbox terrain-RGB tiles** (no GeoTIFF needed) so the app scales to any region on Earth. Classic mode keeps the GeoTIFF DEM unchanged. Add a region preset dropdown (Aral default, Khorezm, Custom bounds).
 
-## Architecture
+## Current state
 
-### 1. Coexistence strategy
+- ~38 files read `terrain.elevations` (Float32 grid), `terrain.bounds`, `terrain.minElevation`, `terrain.maxElevation`, `terrain.width`, `terrain.height` from a single `useTerrain()` hook backed by `geotiff-loader.ts`.
+- `MapboxTerrainMesh` currently *reuses* the GeoTIFF grid for vertex heights — Mapbox provides only the satellite drape.
+- `mapbox-tiles.ts` already fetches and decodes terrain-RGB tiles.
 
-The new terrain replaces the visual mesh **only**. The existing GeoTIFF elevation data stays loaded in memory and remains the source of truth for:
-- Surface height for dwelling/school/vocab pin snapping
-- Water flow simulation, dams, canals, sandbox painting
-- Walk/Game mode raycasting and avatar height
-- Water level extent calculation
+## Design
 
-This guarantees zero regressions. The Mapbox mesh only changes what the user *sees*.
-
-The new mesh occupies the same world coordinate box (10×10 plate-carrée plane, same Aral bounds), so `geoToWorld(lon, lat)` keeps returning the same values.
-
-### 2. Token handling
-
-Mapbox public token (`pk....`) is safe in client code. Stored as a plain constant in a config file, with a small input UI in the legend so the user can paste their own token without us hardcoding one. Persisted in `localStorage`.
-
-### 3. New files
+Introduce a second elevation provider that produces the **exact same `TerrainData` shape** as the GeoTIFF loader. The active provider is selected by terrain mode. All downstream consumers (water sim, basins, pins, STL, game, etc.) keep working with zero changes because the shape is identical.
 
 ```text
-src/components/MapboxTerrainMesh.tsx   # GPU-displaced mesh with satellite drape
-src/lib/mapbox-tiles.ts                # Tile fetch + stitch for satellite + terrain-RGB
-src/hooks/useTerrainMode.ts            # 'classic' | 'satellite' state + persistence
-src/components/TerrainModeSwitch.tsx   # Legend switch + token input
+                ┌── classic  ──► geotiff-loader.ts ──┐
+terrainMode ────┤                                    ├──► useTerrain() ─► all 38 consumers
+                └── satellite ──► mapbox-dem.ts  ────┘
+                                  (terrain-RGB → Float32 grid)
 ```
 
-### 4. Changes to existing files
+## Steps
 
-```text
-src/components/TerrainViewer.tsx    # Conditionally render TerrainMesh OR MapboxTerrainMesh
-src/components/Legend.tsx           # Mount TerrainModeSwitch
-src/components/DwellingsLayer.tsx   # No change — already reads GeoTIFF for snapping
-src/components/MirageToggle (etc.)  # No change
-```
+1. **New `src/lib/mapbox-dem.ts`**
+   - `loadMapboxDEM(bounds, token, opts)` → `TerrainData` matching `geotiff-loader.ts` output.
+   - Stitches terrain-RGB tiles at an appropriate zoom for the bbox (target ~512×512 grid).
+   - Decodes `elev = -10000 + (R*65536 + G*256 + B)*0.1` per pixel into a Float32Array.
+   - Computes `minElevation` / `maxElevation` from the decoded grid.
+   - Returns `{ elevations, width, height, bounds, minElevation, maxElevation }`.
 
-### 5. How the Mapbox mesh works
+2. **New `src/hooks/useTerrainSource.ts`** (thin wrapper)
+   - Reads `useTerrainMode()`. If `classic`, delegates to existing `useTerrain()`. If `satellite`, runs `loadMapboxDEM(activeBounds, token)` via React Query and returns the same shape.
+   - Caches per `(bounds, token)` key. Loading + error states surface to existing UI spinners.
 
-- `THREE.PlaneGeometry(10, 10, 256, 256)` — 256 segments for high displacement detail
-- Custom `ShaderMaterial`:
-  - **Vertex shader**: samples the terrain-RGB texture, decodes elevation: `elev = -10000 + (R*256² + G*256 + B) * 0.1`, displaces along Y by `(elev - minElev) * exaggeration`
-  - **Fragment shader**: samples satellite texture, applies mirage tint when `uMirage = 1.0`
-- Uniforms: `uSatellite`, `uTerrain`, `uExaggeration`, `uMinElev`, `uElevRange`, `uMirage`
-- Recompile-free exaggeration changes (just uniform updates) → matches the spec's "real-time slider"
+3. **Region presets**
+   - Add `src/lib/terrain-regions.ts`: `{ id, label, bounds }` for Aral (default), Khorezm, plus a `Custom` entry.
+   - Extend `useTerrainMode` with `region: 'aral' | 'khorezm' | 'custom'` + `customBounds` (persisted in localStorage and URL params alongside existing state).
 
-### 6. Tile fetching
+4. **`TerrainModeSwitch.tsx`**
+   - When Satellite is active, show a region dropdown. "Custom" reveals 4 inputs (minLng, minLat, maxLng, maxLat) with validation (max ~2° span to keep tile count sane).
+   - Token UI stays as-is.
 
-Compute a single static composite at load time covering the Aral bounding box:
-- Satellite: `https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/[lng_min,lat_min,lng_max,lat_max]/1280x1280@2x?access_token=...`
-- Terrain-RGB: same endpoint with `mapbox/terrain-rgb-v1` style, or stitched from raster tiles `https://api.mapbox.com/v4/mapbox.terrain-rgb/{z}/{x}/{y}.pngraw`
+5. **`TerrainViewer.tsx` and other consumers**
+   - Replace `useTerrain()` call with `useTerrainSource()`. No other API changes.
+   - `MapboxTerrainMesh` no longer needs to pull elevations from the global GeoTIFF — it just consumes the unified `TerrainData` like `TerrainMesh` does.
 
-For the fixed Aral region the static API is enough. For zoom-in fidelity later we can swap to tiled stitching, same uniform interface.
+6. **Layer behavior in Satellite mode**
+   - Layers tied to Aral-specific GeoJSON (basins, water-extent timeline, schools, vocab) only make geographic sense over the Aral region. When `region !== 'aral'`, auto-hide them and show a small note: "This layer is Aral-region only." Game mode and water-sim work over any DEM.
 
-### 7. Mirage compatibility
+7. **Cleanup**
+   - Keep GeoTIFF code intact for Classic mode (per "Satellite mode only" scope). Just route through the unified hook.
 
-Mirage mode applies a desaturation + warm-tint shader pass on the satellite texture in the fragment shader, so the new mode respects the existing visual modes.
+## Technical Details
 
-### 8. Compatibility checklist for existing systems
+- **Tile stitching:** For a bbox, pick zoom `z` so that tile count ≤ 16 (4×4). Mapbox terrain-RGB max zoom ~14. Use `@2x` 512px tiles → 2048×2048 max raster, downsample to 512×512 grid via canvas.
+- **`TerrainData` contract** stays identical, so `geoToWorld`, water-flow neighbor lookup, STL export grid, pin snap raycasting, etc. all keep working.
+- **URL state:** add `region=aral|khorezm|custom` and (if custom) `bbox=minLng,minLat,maxLng,maxLat` to existing state-link params.
+- **Performance:** decoded grid is ~1 MB Float32; same order as current GeoTIFF.
+- **Failure modes:** missing token → keep existing token-input UI; network error → show toast and fall back to Classic.
 
-| System | How it keeps working |
-|---|---|
-| Dwellings/Schools/Vocab pins | Already snap via GeoTIFF `geoToWorld` — unchanged |
-| Game mode avatar | Raycasts the visible mesh; PlaneGeometry raycasts fine. Height fallback uses GeoTIFF. |
-| Sandbox painting | Uses GeoTIFF UV mapping — unchanged |
-| Water flow / canals / dams | Reads GeoTIFF elevation array — unchanged |
-| Water level slider | Visual water plane is independent of terrain mesh — unchanged |
-| Mirage / Dark toggle | New shader respects `uMirage` uniform |
-| Screenshot / video record | Captures the WebGL canvas — unchanged |
-| Walk mode | Same raycast path |
+## Out of scope
 
-### 9. UX
-
-- Legend gets a new section "Terrain Source" with two pills: **Classic** (current colored elevation) / **Satellite** (Mapbox)
-- First time switching to Satellite, prompt for Mapbox public token (with link to mapbox.com/account)
-- Token cached in `localStorage`. Switch persists in URL (`?terrain=satellite`)
-- Exaggeration slider continues to work and now drives the GPU uniform directly
-
-### 10. Risks & mitigations
-
-- **Token rate limits**: We fetch one static image per session, not tiles — minimal usage
-- **Static image resolution at high zoom**: acceptable for Aral overview; can upgrade to tiled stitching later without API changes
-- **Memory**: One 1280×1280 satellite texture (~6MB GPU) + one 512×512 terrain-RGB (~1MB) — negligible
-- **Pin alignment drift**: Mitigated by reusing the exact same world bounds and exaggeration formula in the shader as in the existing `geoToWorld`
-
-## Out of scope (for this iteration)
-
-- Free-roam / pan-the-globe mode (we stay within the Aral bounds)
-- Time-series satellite (would need Earth Engine or Sentinel API)
-- Tiled multi-resolution stitching (use static API first; refactor later if needed)
+- Touching Classic mode's GeoTIFF pipeline.
+- Region-specific overlay redesign (just hide them outside Aral for now).
+- Worldwide bounds picker UI on a minimap (text inputs only this round).
