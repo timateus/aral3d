@@ -1,17 +1,29 @@
 import { useState } from 'react';
 import { useTerrainMode } from '@/hooks/useTerrainMode';
+import { REGION_PRESETS, validateBounds, type RegionId } from '@/lib/terrain-regions';
 
 const TerrainModeSwitch = () => {
-  const { mode, setMode, token, setToken } = useTerrainMode();
+  const { mode, setMode, token, setToken, region, setRegion, customBounds, setCustomBounds } = useTerrainMode();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(token);
+  const [bDraft, setBDraft] = useState(customBounds);
+  const [bErr, setBErr] = useState<string | null>(null);
 
   const handleSatelliteClick = () => {
-    if (!token) {
-      setEditing(true);
-      return;
-    }
+    if (!token) { setEditing(true); return; }
     setMode('satellite');
+  };
+
+  const onRegion = (r: RegionId) => {
+    setRegion(r);
+    if (r === 'custom') setBDraft(customBounds);
+  };
+
+  const saveBounds = () => {
+    const err = validateBounds(bDraft);
+    if (err) { setBErr(err); return; }
+    setBErr(null);
+    setCustomBounds(bDraft);
   };
 
   return (
@@ -23,32 +35,63 @@ const TerrainModeSwitch = () => {
         <button
           onClick={() => setMode('classic')}
           className={`flex-1 px-2 py-1 text-[10px] font-mono uppercase tracking-wider border transition-colors ${
-            mode === 'classic'
-              ? 'bg-white/10 border-white/30 text-white'
-              : 'bg-transparent border-white/10 text-muted-foreground hover:text-white'
+            mode === 'classic' ? 'bg-white/10 border-white/30 text-white' : 'bg-transparent border-white/10 text-muted-foreground hover:text-white'
           }`}
-        >
-          Classic
-        </button>
+        >Classic</button>
         <button
           onClick={handleSatelliteClick}
           className={`flex-1 px-2 py-1 text-[10px] font-mono uppercase tracking-wider border transition-colors ${
-            mode === 'satellite'
-              ? 'bg-white/10 border-white/30 text-white'
-              : 'bg-transparent border-white/10 text-muted-foreground hover:text-white'
+            mode === 'satellite' ? 'bg-white/10 border-white/30 text-white' : 'bg-transparent border-white/10 text-muted-foreground hover:text-white'
           }`}
-        >
-          Satellite
-        </button>
+        >Satellite</button>
       </div>
 
-      {mode === 'satellite' && !editing && (
-        <button
-          onClick={() => { setDraft(token); setEditing(true); }}
-          className="text-[10px] text-muted-foreground hover:text-white underline underline-offset-2"
-        >
-          Edit Mapbox token
-        </button>
+      {mode === 'satellite' && (
+        <>
+          <div className="space-y-1">
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-mono">Region</div>
+            <select
+              value={region}
+              onChange={(e) => onRegion(e.target.value as RegionId)}
+              className="w-full px-2 py-1 text-[10px] font-mono bg-black/40 border border-white/20 text-white focus:outline-none focus:border-white/40"
+            >
+              <option value="aral">{REGION_PRESETS.aral.label}</option>
+              <option value="khorezm">{REGION_PRESETS.khorezm.label}</option>
+              <option value="custom">Custom bounds…</option>
+            </select>
+          </div>
+
+          {region === 'custom' && (
+            <div className="space-y-1">
+              <div className="grid grid-cols-2 gap-1">
+                {(['minLon','maxLon','minLat','maxLat'] as const).map((k) => (
+                  <label key={k} className="flex flex-col gap-0.5">
+                    <span className="text-[9px] font-mono text-muted-foreground/70">{k}</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={bDraft[k]}
+                      onChange={(e) => setBDraft({ ...bDraft, [k]: parseFloat(e.target.value) })}
+                      className="px-1.5 py-0.5 text-[10px] font-mono bg-black/40 border border-white/20 text-white focus:outline-none focus:border-white/40"
+                    />
+                  </label>
+                ))}
+              </div>
+              {bErr && <div className="text-[9px] font-mono text-destructive">{bErr}</div>}
+              <button
+                onClick={saveBounds}
+                className="w-full px-2 py-1 text-[10px] font-mono uppercase bg-white/10 border border-white/30 text-white hover:bg-white/20"
+              >Apply bounds</button>
+            </div>
+          )}
+
+          {!editing && (
+            <button
+              onClick={() => { setDraft(token); setEditing(true); }}
+              className="text-[10px] text-muted-foreground hover:text-white underline underline-offset-2"
+            >Edit Mapbox token</button>
+          )}
+        </>
       )}
 
       {editing && (
@@ -63,27 +106,18 @@ const TerrainModeSwitch = () => {
           <div className="flex gap-1">
             <button
               onClick={() => {
-                setToken(draft);
-                setEditing(false);
+                setToken(draft); setEditing(false);
                 if (draft.trim()) setMode('satellite');
               }}
               className="flex-1 px-2 py-1 text-[10px] font-mono uppercase bg-white/10 border border-white/30 text-white hover:bg-white/20"
-            >
-              Save
-            </button>
+            >Save</button>
             <button
               onClick={() => setEditing(false)}
               className="px-2 py-1 text-[10px] font-mono uppercase border border-white/10 text-muted-foreground hover:text-white"
-            >
-              Cancel
-            </button>
+            >Cancel</button>
           </div>
-          <a
-            href="https://account.mapbox.com/access-tokens/"
-            target="_blank"
-            rel="noreferrer"
-            className="text-[9px] text-muted-foreground/70 hover:text-white underline underline-offset-2"
-          >
+          <a href="https://account.mapbox.com/access-tokens/" target="_blank" rel="noreferrer"
+            className="text-[9px] text-muted-foreground/70 hover:text-white underline underline-offset-2">
             Get a free Mapbox public token →
           </a>
         </div>
