@@ -7,7 +7,8 @@ const STORAGE_MODE = 'terrain_mode';
 
 let listeners = new Set<() => void>();
 let _mode: TerrainMode = (localStorage.getItem(STORAGE_MODE) as TerrainMode) || 'classic';
-let _token: string = localStorage.getItem(STORAGE_TOKEN) || '';
+const DEFAULT_TOKEN = 'pk.eyJ1IjoidGltYXRldXMiLCJhIjoiY2s2ZmhwMzd2MGNsbjNsbHJjeW9jeTZjeiJ9.nz7s6DdDjUYWUFSpVjFYaw';
+let _token: string = localStorage.getItem(STORAGE_TOKEN) || DEFAULT_TOKEN;
 
 function notify() { listeners.forEach((l) => l()); }
 
