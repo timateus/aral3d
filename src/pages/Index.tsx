@@ -465,68 +465,24 @@ const Index = () => {
 
   const { mode: terrainMode, setMode: setTerrainMode, token: terrainToken, region: terrainRegion, setRegion: setTerrainRegion, customBounds: terrainCustomBounds, setCustomBounds: setTerrainCustomBounds } = useTerrainMode();
   const satelliteEnabled = terrainMode === 'satellite' && !!terrainToken;
-  const [gameBounds, setGameBounds] = useState<import('@/lib/geotiff-loader').GeoBounds | null>(null);
   const satelliteBounds = useMemo(
     () => {
       if (!satelliteEnabled) return null;
-      if (gameModeActive && gameBounds) return gameBounds;
+      // In game mode, preload the full Central Asia bbox so the character can
+      // roam freely without on-demand tile fetches. Outside game mode, use the
+      // user-selected region.
+      if (gameModeActive) {
+        const { CENTRAL_ASIA_BOUNDS } = require('@/lib/terrain-regions');
+        return CENTRAL_ASIA_BOUNDS as import('@/lib/geotiff-loader').GeoBounds;
+      }
       return getRegionBounds(terrainRegion, terrainCustomBounds);
     },
-    [satelliteEnabled, terrainRegion, terrainCustomBounds, gameModeActive, gameBounds]
+    [satelliteEnabled, terrainRegion, terrainCustomBounds, gameModeActive]
   );
   const { terrain: mapboxTerrain, loading: mapboxLoading, error: mapboxError } = useMapboxTerrain(
     satelliteBounds, terrainToken, satelliteEnabled
   );
 
-  // Reset game bounds whenever game mode toggles off
-  useEffect(() => { if (!gameModeActive) setGameBounds(null); }, [gameModeActive]);
-
-  // Listen for avatar-driven recentering requests in game mode (satellite only)
-  // Expand bounds (union) instead of replacing, so previously-explored terrain stays visible.
-  useEffect(() => {
-    if (!gameModeActive || !satelliteEnabled) return;
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent<{ bounds: import('@/lib/geotiff-loader').GeoBounds }>).detail;
-      if (!detail?.bounds) return;
-      setGameBounds((prev) => {
-        const base = prev ?? getRegionBounds(terrainRegion, terrainCustomBounds);
-        const next = {
-          minLon: Math.min(base.minLon, detail.bounds.minLon),
-          minLat: Math.min(base.minLat, detail.bounds.minLat),
-          maxLon: Math.max(base.maxLon, detail.bounds.maxLon),
-          maxLat: Math.max(base.maxLat, detail.bounds.maxLat),
-        };
-        // Cap area growth so DEM resolution doesn't collapse: limit span to 4x original
-        const origLonSpan = base.maxLon - base.minLon;
-        const origLatSpan = base.maxLat - base.minLat;
-        const maxLonSpan = origLonSpan * 4;
-        const maxLatSpan = origLatSpan * 4;
-        const lonSpan = next.maxLon - next.minLon;
-        const latSpan = next.maxLat - next.minLat;
-        if (lonSpan > maxLonSpan) {
-          const cx = (next.minLon + next.maxLon) / 2;
-          next.minLon = cx - maxLonSpan / 2;
-          next.maxLon = cx + maxLonSpan / 2;
-        }
-        if (latSpan > maxLatSpan) {
-          const cy = (next.minLat + next.maxLat) / 2;
-          next.minLat = cy - maxLatSpan / 2;
-          next.maxLat = cy + maxLatSpan / 2;
-        }
-        // Don't trigger reload if effectively unchanged
-        if (
-          prev &&
-          Math.abs(prev.minLon - next.minLon) < 1e-6 &&
-          Math.abs(prev.maxLon - next.maxLon) < 1e-6 &&
-          Math.abs(prev.minLat - next.minLat) < 1e-6 &&
-          Math.abs(prev.maxLat - next.maxLat) < 1e-6
-        ) return prev;
-        return next;
-      });
-    };
-    window.addEventListener('game-recenter-terrain', handler);
-    return () => window.removeEventListener('game-recenter-terrain', handler);
-  }, [gameModeActive, satelliteEnabled, terrainRegion, terrainCustomBounds]);
 
 
 
