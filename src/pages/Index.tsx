@@ -1196,6 +1196,13 @@ const Index = () => {
             </div>
           </div>
         )}
+        {satelliteEnabled && (mapboxLoading || mapboxError) && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 glass-panel px-3 py-1.5 z-50 pointer-events-none">
+            <p className="text-[11px] font-mono text-white/80">
+              {mapboxError ? `Mapbox error: ${mapboxError}` : 'Loading Mapbox terrain…'}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Intro Overlay */}
