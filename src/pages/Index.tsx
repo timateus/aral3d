@@ -463,7 +463,20 @@ const Index = () => {
       .finally(() => setLoading(false));
   }, []);
 
+  const { mode: terrainMode, token: terrainToken, region: terrainRegion, customBounds: terrainCustomBounds } = useTerrainMode();
+  const satelliteEnabled = terrainMode === 'satellite' && !!terrainToken;
+  const satelliteBounds = useMemo(
+    () => satelliteEnabled ? getRegionBounds(terrainRegion, terrainCustomBounds) : null,
+    [satelliteEnabled, terrainRegion, terrainCustomBounds]
+  );
+  const { terrain: mapboxTerrain, loading: mapboxLoading, error: mapboxError } = useMapboxTerrain(
+    satelliteBounds, terrainToken, satelliteEnabled
+  );
+
   const { terrain, hideNoData } = useMemo(() => {
+    if (satelliteEnabled) {
+      return { terrain: mapboxTerrain, hideNoData: false };
+    }
     if (!baseTerrain) return { terrain: null, hideNoData: false };
     let result = baseTerrain;
     if (seabedTerrain) result = mergeTerrains(result, seabedTerrain);
@@ -477,7 +490,7 @@ const Index = () => {
       expanded = true;
     }
     return { terrain: result, hideNoData: expanded };
-  }, [baseTerrain, seabedTerrain, khorezmTerrain, showKhorezm, watershedTerrain, showWatershed]);
+  }, [satelliteEnabled, mapboxTerrain, baseTerrain, seabedTerrain, khorezmTerrain, showKhorezm, watershedTerrain, showWatershed]);
 
   // Listen for game mode state events
   useEffect(() => {
