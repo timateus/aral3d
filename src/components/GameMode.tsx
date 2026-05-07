@@ -362,6 +362,10 @@ export default function GameMode({ terrain, exaggeration, active, character, onA
     avatarPosRef.current = newPos;
     setAvatarPos(newPos);
 
+    // Track avatar geo position for terrain recentering
+    const geo = meshToGeo(newX, newZ);
+    if (geo) avatarGeoRef.current = geo;
+
     // Keep orbit target on avatar so mouse rotation orbits around avatar
     if (orbitRef?.current) {
       orbitRef.current.target.set(newX, newY + 0.2, newZ);
@@ -375,6 +379,26 @@ export default function GameMode({ terrain, exaggeration, active, character, onA
       camera.position.x += dx;
       camera.position.z += dz;
       camera.position.y += dy;
+    }
+
+    // Request terrain recenter when avatar approaches edge of current tile (>70% from center)
+    if (geo && terrain.bounds) {
+      const edgeFrac = Math.max(Math.abs(newX), Math.abs(newZ)) / 5;
+      const now = performance.now();
+      if (edgeFrac > 0.7 && now - lastGeoDispatchRef.current > 1500) {
+        lastGeoDispatchRef.current = now;
+        const b = terrain.bounds;
+        const halfLon = (b.maxLon - b.minLon) / 2;
+        const halfLat = (b.maxLat - b.minLat) / 2;
+        window.dispatchEvent(new CustomEvent('game-recenter-terrain', {
+          detail: {
+            bounds: {
+              minLon: geo.lon - halfLon, maxLon: geo.lon + halfLon,
+              minLat: geo.lat - halfLat, maxLat: geo.lat + halfLat,
+            },
+          },
+        }));
+      }
     }
 
     // Water pouring (SPACE key)
