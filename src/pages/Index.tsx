@@ -472,8 +472,7 @@ const Index = () => {
       // roam freely without on-demand tile fetches. Outside game mode, use the
       // user-selected region.
       if (gameModeActive) {
-        const { CENTRAL_ASIA_BOUNDS } = require('@/lib/terrain-regions');
-        return CENTRAL_ASIA_BOUNDS as import('@/lib/geotiff-loader').GeoBounds;
+        return CENTRAL_ASIA_BOUNDS;
       }
       return getRegionBounds(terrainRegion, terrainCustomBounds);
     },
