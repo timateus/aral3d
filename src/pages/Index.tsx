@@ -463,15 +463,36 @@ const Index = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const { mode: terrainMode, token: terrainToken, region: terrainRegion, customBounds: terrainCustomBounds } = useTerrainMode();
+  const { mode: terrainMode, setMode: setTerrainMode, token: terrainToken, region: terrainRegion, setRegion: setTerrainRegion, customBounds: terrainCustomBounds, setCustomBounds: setTerrainCustomBounds } = useTerrainMode();
   const satelliteEnabled = terrainMode === 'satellite' && !!terrainToken;
+  const [gameBounds, setGameBounds] = useState<import('@/lib/geotiff-loader').GeoBounds | null>(null);
   const satelliteBounds = useMemo(
-    () => satelliteEnabled ? getRegionBounds(terrainRegion, terrainCustomBounds) : null,
-    [satelliteEnabled, terrainRegion, terrainCustomBounds]
+    () => {
+      if (!satelliteEnabled) return null;
+      if (gameModeActive && gameBounds) return gameBounds;
+      return getRegionBounds(terrainRegion, terrainCustomBounds);
+    },
+    [satelliteEnabled, terrainRegion, terrainCustomBounds, gameModeActive, gameBounds]
   );
   const { terrain: mapboxTerrain, loading: mapboxLoading, error: mapboxError } = useMapboxTerrain(
     satelliteBounds, terrainToken, satelliteEnabled
   );
+
+  // Reset game bounds whenever game mode toggles off
+  useEffect(() => { if (!gameModeActive) setGameBounds(null); }, [gameModeActive]);
+
+  // Listen for avatar-driven recentering requests in game mode (satellite only)
+  useEffect(() => {
+    if (!gameModeActive || !satelliteEnabled) return;
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ bounds: import('@/lib/geotiff-loader').GeoBounds }>).detail;
+      if (detail?.bounds) setGameBounds(detail.bounds);
+    };
+    window.addEventListener('game-recenter-terrain', handler);
+    return () => window.removeEventListener('game-recenter-terrain', handler);
+  }, [gameModeActive, satelliteEnabled]);
+
+
 
   const { terrain, hideNoData } = useMemo(() => {
     if (satelliteEnabled) {

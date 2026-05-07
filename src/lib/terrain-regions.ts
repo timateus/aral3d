@@ -33,7 +33,6 @@ export function getRegionBounds(id: RegionId, custom: GeoBounds): GeoBounds {
 
 export function validateBounds(b: GeoBounds): string | null {
   if (b.minLon >= b.maxLon || b.minLat >= b.maxLat) return 'Min must be less than max.';
-  if (b.maxLon - b.minLon > 5 || b.maxLat - b.minLat > 5) return 'Max span is 5°.';
   if (Math.abs(b.minLat) > 85 || Math.abs(b.maxLat) > 85) return 'Latitude out of range.';
   return null;
 }

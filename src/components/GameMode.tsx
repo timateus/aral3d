@@ -208,10 +208,25 @@ export default function GameMode({ terrain, exaggeration, active, character, onA
   const facingRef = useRef(0);
   const { camera } = useThree();
   const avatarPosRef = useRef<[number, number, number]>([0, 1, 0]);
+  const avatarGeoRef = useRef<{ lat: number; lon: number } | null>(null);
+  const lastGeoDispatchRef = useRef(0);
   const waterCooldownRef = useRef(0);
   const initializedRef = useRef(false);
+  const lastBoundsKeyRef = useRef<string | null>(null);
+
+  const meshToGeo = useCallback((worldX: number, worldZ: number) => {
+    const b = terrain.bounds;
+    if (!b) return null;
+    const nx = (worldX / 10) + 0.5;
+    const ny = (-worldZ / 10) + 0.5;
+    return {
+      lon: b.minLon + nx * (b.maxLon - b.minLon),
+      lat: b.minLat + ny * (b.maxLat - b.minLat),
+    };
+  }, [terrain]);
 
   const missions = useMemo(() => active ? buildMissions(terrain) : [], [terrain, active]);
+
 
   const currentMission = useMemo(() => {
     return missions.find(m => !completedMissions.has(m.id)) || null;
@@ -258,6 +273,30 @@ export default function GameMode({ terrain, exaggeration, active, character, onA
       }
     }
   }, [active]);
+
+  // When terrain bounds change (recenter), reposition avatar to its geo location in new mesh
+  useEffect(() => {
+    if (!active || !terrain.bounds) return;
+    const key = `${terrain.bounds.minLon},${terrain.bounds.minLat},${terrain.bounds.maxLon},${terrain.bounds.maxLat}`;
+    if (lastBoundsKeyRef.current === key) return;
+    const prev = lastBoundsKeyRef.current;
+    lastBoundsKeyRef.current = key;
+    if (prev === null) return; // first init handled above
+    const geo = avatarGeoRef.current;
+    if (!geo) return;
+    const pos = geoToMeshPos(geo.lat, geo.lon, terrain, exaggeration);
+    const old = avatarPosRef.current;
+    const dx = pos[0] - old[0];
+    const dy = pos[1] - old[1];
+    const dz = pos[2] - old[2];
+    avatarPosRef.current = pos;
+    setAvatarPos(pos);
+    camera.position.x += dx;
+    camera.position.y += dy;
+    camera.position.z += dz;
+    if (orbitRef?.current) orbitRef.current.target.set(pos[0], pos[1] + 0.2, pos[2]);
+  }, [active, terrain, exaggeration, camera, orbitRef]);
+
 
   // Listen for bowl world completion
   useEffect(() => {
@@ -347,6 +386,10 @@ export default function GameMode({ terrain, exaggeration, active, character, onA
     avatarPosRef.current = newPos;
     setAvatarPos(newPos);
 
+    // Track avatar geo position for terrain recentering
+    const geo = meshToGeo(newX, newZ);
+    if (geo) avatarGeoRef.current = geo;
+
     // Keep orbit target on avatar so mouse rotation orbits around avatar
     if (orbitRef?.current) {
       orbitRef.current.target.set(newX, newY + 0.2, newZ);
@@ -360,6 +403,26 @@ export default function GameMode({ terrain, exaggeration, active, character, onA
       camera.position.x += dx;
       camera.position.z += dz;
       camera.position.y += dy;
+    }
+
+    // Request terrain recenter when avatar approaches edge of current tile (>70% from center)
+    if (geo && terrain.bounds) {
+      const edgeFrac = Math.max(Math.abs(newX), Math.abs(newZ)) / 5;
+      const now = performance.now();
+      if (edgeFrac > 0.7 && now - lastGeoDispatchRef.current > 1500) {
+        lastGeoDispatchRef.current = now;
+        const b = terrain.bounds;
+        const halfLon = (b.maxLon - b.minLon) / 2;
+        const halfLat = (b.maxLat - b.minLat) / 2;
+        window.dispatchEvent(new CustomEvent('game-recenter-terrain', {
+          detail: {
+            bounds: {
+              minLon: geo.lon - halfLon, maxLon: geo.lon + halfLon,
+              minLat: geo.lat - halfLat, maxLat: geo.lat + halfLat,
+            },
+          },
+        }));
+      }
     }
 
     // Water pouring (SPACE key)
