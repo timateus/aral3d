@@ -27,11 +27,12 @@ export function useMapboxTerrain(bounds: GeoBounds | null, token: string, enable
     const k = key(bounds, token);
     const cached = cache.get(k);
     if (cached) {
-      setState({ terrain: cached, loading: false, error: null });
+      setState((prev) => ({ terrain: cached, loading: false, error: null }));
       return;
     }
     let cancelled = false;
-    setState({ terrain: null, loading: true, error: null });
+    // Keep previous terrain visible while loading new tile (prevents game flicker on recenter)
+    setState((prev) => ({ terrain: prev.terrain, loading: true, error: null }));
     let promise = inflight.get(k);
     if (!promise) {
       promise = loadMapboxDEM(bounds, token).then((t) => { cache.set(k, t); return t; });
@@ -40,7 +41,7 @@ export function useMapboxTerrain(bounds: GeoBounds | null, token: string, enable
     }
     promise
       .then((t) => { if (!cancelled) setState({ terrain: t, loading: false, error: null }); })
-      .catch((e) => { if (!cancelled) setState({ terrain: null, loading: false, error: e.message }); });
+      .catch((e) => { if (!cancelled) setState((prev) => ({ terrain: prev.terrain, loading: false, error: e.message })); });
     return () => { cancelled = true; };
   }, [enabled, token, bounds?.minLon, bounds?.minLat, bounds?.maxLon, bounds?.maxLat]);
 
