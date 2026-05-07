@@ -149,3 +149,13 @@ export async function loadMapboxTextures(bounds: LonLatBounds, token: string): P
     maxElev: max,
   };
 }
+
+/** Lighter helper: only fetch + stitch satellite imagery for given bbox. */
+export async function loadMapboxSatellite(bounds: LonLatBounds, token: string): Promise<THREE.Texture> {
+  const z = pickZoom(bounds, 4);
+  const satUrl = (x: number, y: number, z: number) =>
+    `https://api.mapbox.com/v4/mapbox.satellite/${z}/${x}/${y}@2x.jpg90?access_token=${token}`;
+  const sat = await stitchTiles(bounds, z, satUrl);
+  const cropped = cropCanvas(sat.canvas, sat.pixelBounds);
+  return canvasToTexture(cropped, true);
+}
