@@ -208,10 +208,25 @@ export default function GameMode({ terrain, exaggeration, active, character, onA
   const facingRef = useRef(0);
   const { camera } = useThree();
   const avatarPosRef = useRef<[number, number, number]>([0, 1, 0]);
+  const avatarGeoRef = useRef<{ lat: number; lon: number } | null>(null);
+  const lastGeoDispatchRef = useRef(0);
   const waterCooldownRef = useRef(0);
   const initializedRef = useRef(false);
+  const lastBoundsKeyRef = useRef<string | null>(null);
+
+  const meshToGeo = useCallback((worldX: number, worldZ: number) => {
+    const b = terrain.bounds;
+    if (!b) return null;
+    const nx = (worldX / 10) + 0.5;
+    const ny = (-worldZ / 10) + 0.5;
+    return {
+      lon: b.minLon + nx * (b.maxLon - b.minLon),
+      lat: b.minLat + ny * (b.maxLat - b.minLat),
+    };
+  }, [terrain]);
 
   const missions = useMemo(() => active ? buildMissions(terrain) : [], [terrain, active]);
+
 
   const currentMission = useMemo(() => {
     return missions.find(m => !completedMissions.has(m.id)) || null;
