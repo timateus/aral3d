@@ -416,6 +416,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
   const [flyoverAnimating, setFlyoverAnimating] = useState(false);
   const [popData, setPopData] = useState<PopData | null>(null);
   const [lcData, setLcData] = useState<LandcoverRasterData | null>(null);
+  const { mode: terrainMode, token: terrainToken } = useTerrainMode();
 
   const handleCanvasRecorderReady = useCallback((controls: { start: () => void; stop: () => void }) => {
     canvasRecorderControls.current = controls;
