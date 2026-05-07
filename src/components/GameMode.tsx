@@ -405,25 +405,9 @@ export default function GameMode({ terrain, exaggeration, active, character, onA
       camera.position.y += dy;
     }
 
-    // Request terrain recenter when avatar approaches edge of current tile (>70% from center)
-    if (geo && terrain.bounds) {
-      const edgeFrac = Math.max(Math.abs(newX), Math.abs(newZ)) / 5;
-      const now = performance.now();
-      if (edgeFrac > 0.7 && now - lastGeoDispatchRef.current > 1500) {
-        lastGeoDispatchRef.current = now;
-        const b = terrain.bounds;
-        const halfLon = (b.maxLon - b.minLon) / 2;
-        const halfLat = (b.maxLat - b.minLat) / 2;
-        window.dispatchEvent(new CustomEvent('game-recenter-terrain', {
-          detail: {
-            bounds: {
-              minLon: geo.lon - halfLon, maxLon: geo.lon + halfLon,
-              minLat: geo.lat - halfLat, maxLat: geo.lat + halfLat,
-            },
-          },
-        }));
-      }
-    }
+    // Note: terrain is preloaded for the entire Central Asia bbox in game mode,
+    // so no on-demand recentering is needed. The avatar is naturally clamped to
+    // the mesh edges (±5), which equals the Central Asia bounds.
 
     // Water pouring (SPACE key)
     const spaceHeld = keys.has(' ');

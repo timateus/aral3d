@@ -437,9 +437,11 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
     >
       <SceneBackground />
 
-      <ambientLight intensity={0.3} />
+      <ambientLight intensity={0.75} />
+      <hemisphereLight args={['#cfe6ff', '#3a3a4a', 0.55]} />
       <directionalLight position={[5, 10, 5]} intensity={1.2} castShadow />
-      <directionalLight position={[-3, 5, -3]} intensity={0.4} color="#8ec8e8" />
+      <directionalLight position={[-3, 5, -3]} intensity={0.5} color="#8ec8e8" />
+      <directionalLight position={[0, 6, -8]} intensity={0.35} color="#ffd9b3" />
       <CanvasRecorder onReady={handleCanvasRecorderReady} />
 
       {!aryqWorldActive && (

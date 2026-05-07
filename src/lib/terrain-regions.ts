@@ -26,6 +26,12 @@ export const DEFAULT_CUSTOM_BOUNDS: GeoBounds = {
   minLon: 57.5, maxLon: 62.5, minLat: 43.0, maxLat: 47.5,
 };
 
+// Wide Central Asia bbox used as the play-area for game mode.
+// Spans roughly Caspian -> Tian Shan, Aral -> Hindu Kush.
+export const CENTRAL_ASIA_BOUNDS: GeoBounds = {
+  minLon: 50, maxLon: 80, minLat: 35, maxLat: 50,
+};
+
 export function getRegionBounds(id: RegionId, custom: GeoBounds): GeoBounds {
   if (id === 'custom') return custom;
   return REGION_PRESETS[id].bounds;
