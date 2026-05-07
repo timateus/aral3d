@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { INDICATORS } from '@/lib/demographic-data';
 import { CLASS_COLORS, CLASS_NAMES } from '@/components/LandcoverLayer';
 import { Loader2 } from 'lucide-react';
+import TerrainModeSwitch from './TerrainModeSwitch';
 
 interface LegendProps {
   showBorders: boolean;
@@ -101,6 +102,7 @@ const Legend = ({ showBorders, onToggleBorders, showRivers, onToggleRivers, show
 
   return (
     <div className="glass-panel p-3 space-y-2 w-72 max-h-[60vh] overflow-y-auto">
+      <TerrainModeSwitch />
       <label className="flex items-center justify-between cursor-pointer">
         <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
           <span className="inline-block w-3 h-0.5 bg-white/40 rounded" />
