@@ -274,6 +274,30 @@ export default function GameMode({ terrain, exaggeration, active, character, onA
     }
   }, [active]);
 
+  // When terrain bounds change (recenter), reposition avatar to its geo location in new mesh
+  useEffect(() => {
+    if (!active || !terrain.bounds) return;
+    const key = `${terrain.bounds.minLon},${terrain.bounds.minLat},${terrain.bounds.maxLon},${terrain.bounds.maxLat}`;
+    if (lastBoundsKeyRef.current === key) return;
+    const prev = lastBoundsKeyRef.current;
+    lastBoundsKeyRef.current = key;
+    if (prev === null) return; // first init handled above
+    const geo = avatarGeoRef.current;
+    if (!geo) return;
+    const pos = geoToMeshPos(geo.lat, geo.lon, terrain, exaggeration);
+    const old = avatarPosRef.current;
+    const dx = pos[0] - old[0];
+    const dy = pos[1] - old[1];
+    const dz = pos[2] - old[2];
+    avatarPosRef.current = pos;
+    setAvatarPos(pos);
+    camera.position.x += dx;
+    camera.position.y += dy;
+    camera.position.z += dz;
+    if (orbitRef?.current) orbitRef.current.target.set(pos[0], pos[1] + 0.2, pos[2]);
+  }, [active, terrain, exaggeration, camera, orbitRef]);
+
+
   // Listen for bowl world completion
   useEffect(() => {
     if (!active) return;
