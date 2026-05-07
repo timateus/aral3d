@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { loadGeoTiff, TerrainData } from '@/lib/geotiff-loader';
 import { mergeTerrains, mergeExpandTerrains } from '@/lib/terrain-merger';
+import { useTerrainMode } from '@/hooks/useTerrainMode';
+import { useMapboxTerrain } from '@/hooks/useMapboxTerrain';
+import { getRegionBounds } from '@/lib/terrain-regions';
 import { createFlowState, addWaterAt, stepFlow, WaterFlowState } from '@/lib/water-flow-simulation';
 import { digCanalsFromBasins } from '@/lib/canal-auto-dig';
 import TerrainViewer, { TerrainViewerHandle } from '@/components/TerrainViewer';
@@ -460,7 +463,20 @@ const Index = () => {
       .finally(() => setLoading(false));
   }, []);
 
+  const { mode: terrainMode, token: terrainToken, region: terrainRegion, customBounds: terrainCustomBounds } = useTerrainMode();
+  const satelliteEnabled = terrainMode === 'satellite' && !!terrainToken;
+  const satelliteBounds = useMemo(
+    () => satelliteEnabled ? getRegionBounds(terrainRegion, terrainCustomBounds) : null,
+    [satelliteEnabled, terrainRegion, terrainCustomBounds]
+  );
+  const { terrain: mapboxTerrain, loading: mapboxLoading, error: mapboxError } = useMapboxTerrain(
+    satelliteBounds, terrainToken, satelliteEnabled
+  );
+
   const { terrain, hideNoData } = useMemo(() => {
+    if (satelliteEnabled) {
+      return { terrain: mapboxTerrain, hideNoData: false };
+    }
     if (!baseTerrain) return { terrain: null, hideNoData: false };
     let result = baseTerrain;
     if (seabedTerrain) result = mergeTerrains(result, seabedTerrain);
@@ -474,7 +490,7 @@ const Index = () => {
       expanded = true;
     }
     return { terrain: result, hideNoData: expanded };
-  }, [baseTerrain, seabedTerrain, khorezmTerrain, showKhorezm, watershedTerrain, showWatershed]);
+  }, [satelliteEnabled, mapboxTerrain, baseTerrain, seabedTerrain, khorezmTerrain, showKhorezm, watershedTerrain, showWatershed]);
 
   // Listen for game mode state events
   useEffect(() => {
@@ -1178,6 +1194,13 @@ const Index = () => {
             <div className="glass-panel p-6 text-center">
               <p className="text-destructive text-sm font-mono">Error: {error}</p>
             </div>
+          </div>
+        )}
+        {satelliteEnabled && (mapboxLoading || mapboxError) && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 glass-panel px-3 py-1.5 z-50 pointer-events-none">
+            <p className="text-[11px] font-mono text-white/80">
+              {mapboxError ? `Mapbox error: ${mapboxError}` : 'Loading Mapbox terrain…'}
+            </p>
           </div>
         )}
       </div>
