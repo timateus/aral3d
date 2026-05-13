@@ -216,6 +216,7 @@ interface IntroOverlayProps {
   onSandbox?: () => void;
   onTraceCanals?: () => void;
   onDustStorm?: () => void;
+  onLife?: () => void;
 }
 
 type LandingView = 'main' | 'artifacts';
