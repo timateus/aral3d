@@ -30,6 +30,7 @@ import BowlWorld from './BowlWorld';
 import AryqWorld from './AryqWorld';
 import SandboxOverlay from './SandboxOverlay';
 import DustOverlay from './DustOverlay';
+import LifeOverlay from './LifeOverlay';
 import TerrainStyleOverlay, { TerrainStyle } from './TerrainStyleOverlay';
 import WaterwaysLayer from './WaterwaysLayer';
 import type { WaterwayTypeFilter } from './WaterwaysLayer';
@@ -162,6 +163,7 @@ interface TerrainViewerProps {
   contourInterval?: number;
   vectorInterval?: number;
   hideTerrainSurface?: boolean;
+  lifeActive?: boolean;
 }
 
 /* ── Canvas Recorder (captures WebGL canvas stream, no camera animation) ── */
@@ -409,7 +411,7 @@ function NoahsArk({ terrain, exaggeration, waterLevel }: { terrain: TerrainData;
   );
 }
 
-const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, showWaterExtent, waterExtentYear, showPopDensity, popHexSize, popHexHeight, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone, riverInflow, userLocation, inspectorEnabled, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, flowState, flowRenderKey, terrainVersion, raisedPixels, dugPixels, showMigration, migrationYear, showChoropleth, choroplethIndicator, choroplethExaggeration, canalHighlights, highlightedCanalNames, canalTourActive, showObjectLibrary, onObjectSelect, gameModeActive, gameCharacter, onGameAddWater, bowlWorldActive, onBowlWorldComplete, showLandcover, landcoverVisibleClasses, onLandcoverAvailableClasses, showSchools, showVocabulary, showDwellings, agmarShowProposalSites, aryqWorldActive, onAryqWorldComplete, onNukusClick, showOverlayMetrics, showGroundwater, showPrecipitation, showSalinity, waterPlaygroundActive, sandboxActive, sandboxSimState, sandboxRenderKey, sandboxToolActive, onSandboxClick, dustActive, dustState, dustRenderKey, dustToolActive, onDustClick, showWaterways, waterwayTypeFilter, waterwayTraceMode, waterwayClearTraceSignal, terrainStyle, contourInterval, vectorInterval, hideTerrainSurface }, ref) => {
+const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, showWaterExtent, waterExtentYear, showPopDensity, popHexSize, popHexHeight, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone, riverInflow, userLocation, inspectorEnabled, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, flowState, flowRenderKey, terrainVersion, raisedPixels, dugPixels, showMigration, migrationYear, showChoropleth, choroplethIndicator, choroplethExaggeration, canalHighlights, highlightedCanalNames, canalTourActive, showObjectLibrary, onObjectSelect, gameModeActive, gameCharacter, onGameAddWater, bowlWorldActive, onBowlWorldComplete, showLandcover, landcoverVisibleClasses, onLandcoverAvailableClasses, showSchools, showVocabulary, showDwellings, agmarShowProposalSites, aryqWorldActive, onAryqWorldComplete, onNukusClick, showOverlayMetrics, showGroundwater, showPrecipitation, showSalinity, waterPlaygroundActive, sandboxActive, sandboxSimState, sandboxRenderKey, sandboxToolActive, onSandboxClick, dustActive, dustState, dustRenderKey, dustToolActive, onDustClick, showWaterways, waterwayTypeFilter, waterwayTraceMode, waterwayClearTraceSignal, terrainStyle, contourInterval, vectorInterval, hideTerrainSurface, lifeActive }, ref) => {
   const screenshotFn = useRef<(() => void) | null>(null);
   const canvasRecorderControls = useRef<{ start: () => void; stop: () => void } | null>(null);
   const orbitRef = useRef<any>(null);
@@ -484,6 +486,9 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
           )}
           {dustActive && dustState && dustRenderKey !== undefined && (
             <DustOverlay terrain={terrain} exaggeration={exaggeration} state={dustState} renderKey={dustRenderKey} />
+          )}
+          {lifeActive && (
+            <LifeOverlay terrain={terrain} exaggeration={exaggeration} active={!!lifeActive} />
           )}
           {!sandboxActive && scenarioActions && scenarioActions.length > 0 && (
             <ScenarioOverlay actions={scenarioActions} terrain={terrain} exaggeration={exaggeration} />

@@ -44,6 +44,7 @@ import { createSandboxSim, addElementAt, stepSandboxSim, countActivePixels } fro
 import type { SandboxSimState } from '@/lib/sandbox-simulation';
 import * as dustModule from '@/lib/dust-simulation';
 import { DustHUD } from '@/components/DustHUD';
+import LifeHUD from '@/components/LifeHUD';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import MirageToggle from '@/components/MirageToggle';
@@ -197,6 +198,7 @@ const Index = () => {
   const [agmarTourActive, setAgmarTourActive] = useState(false);
   const [agmarTourStep, setAgmarTourStep] = useState(0);
   const [sandboxMode, setSandboxMode] = useState(false);
+  const [lifeMode, setLifeMode] = useState(false);
   const [sandboxElement, setSandboxElement] = useState<SandboxElement>('water');
   const [sandboxBrushSize, setSandboxBrushSize] = useState(3);
   const [sandboxPaused, setSandboxPaused] = useState(false);
@@ -969,6 +971,7 @@ const Index = () => {
     if (p.get('started') === '1') setStarted(true);
     if (p.get('mode') === 'game') { setGameModeActive(true); setStarted(true); }
     if (p.get('mode') === 'sandbox') { setSandboxMode(true); setStarted(true); }
+    if (p.get('mode') === 'life') { setLifeMode(true); setStarted(true); }
     if (p.get('year')) setWaterExtentYear(Number(p.get('year')));
     if (p.get('exag')) setExaggeration(Number(p.get('exag')));
     if (p.get('wl')) { setWaterLevelManual(true); setWaterLevel(Number(p.get('wl'))); }
@@ -1007,6 +1010,7 @@ const Index = () => {
       if (started) p.set('started', '1');
       if (gameModeActive) p.set('mode', 'game');
       else if (sandboxMode) p.set('mode', 'sandbox');
+      else if (lifeMode) p.set('mode', 'life');
       p.set('year', String(waterExtentYear));
       p.set('exag', String(exaggeration));
       p.set('wl', String(waterLevel));
@@ -1073,7 +1077,7 @@ const Index = () => {
     return () => window.removeEventListener('keydown', handler);
   }, [toggleScreenRecording]);
 
-  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode && !dustMode && !traceMode;
+  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode && !dustMode && !traceMode && !lifeMode;
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
@@ -1199,6 +1203,7 @@ const Index = () => {
             waterwayTypeFilter={waterwayTypeFilter}
             waterwayTraceMode={traceMode}
             waterwayClearTraceSignal={traceClearSignal}
+            lifeActive={lifeMode}
           />
         )}
         {!terrain && !loading && error && (
@@ -1269,6 +1274,11 @@ const Index = () => {
             setDustMode(true);
             setShowWaterExtent(false);
           }}
+          onLife={() => {
+            setStarted(true);
+            setLifeMode(true);
+            setShowWaterExtent(false);
+          }}
         />
       )}
 
@@ -1334,6 +1344,12 @@ const Index = () => {
         activePixels={sandboxActivePixels}
         speed={sandboxSpeed}
         onSpeedChange={setSandboxSpeed}
+      />
+
+      {/* Game of Life HUD */}
+      <LifeHUD
+        active={lifeMode && started}
+        onExit={() => { setLifeMode(false); setStarted(false); }}
       />
 
       {/* Dust Storm HUD */}
