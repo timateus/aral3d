@@ -44,6 +44,7 @@ import { createSandboxSim, addElementAt, stepSandboxSim, countActivePixels } fro
 import type { SandboxSimState } from '@/lib/sandbox-simulation';
 import * as dustModule from '@/lib/dust-simulation';
 import { DustHUD } from '@/components/DustHUD';
+import LifeHUD from '@/components/LifeHUD';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import MirageToggle from '@/components/MirageToggle';
