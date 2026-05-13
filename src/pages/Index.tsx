@@ -1274,6 +1274,11 @@ const Index = () => {
             setDustMode(true);
             setShowWaterExtent(false);
           }}
+          onLife={() => {
+            setStarted(true);
+            setLifeMode(true);
+            setShowWaterExtent(false);
+          }}
         />
       )}
 
