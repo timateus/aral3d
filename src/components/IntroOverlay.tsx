@@ -498,6 +498,20 @@ const IntroOverlay = ({ onStart, onGuidedTour, onReading, onCanalTour, onAgmarTo
             </button>
 
             <button
+              onClick={() => onLife?.()}
+              className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-5 hover:bg-card/70 hover:border-fuchsia-500/40 transition-all duration-500 text-left overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="relative z-10">
+                <p className="text-base font-semibold text-foreground tracking-wide mb-1">Life</p>
+                <p className="text-[11px] text-foreground/50 leading-relaxed">
+                  Conway's cells bloom across the terrain
+                </p>
+              </div>
+              <ArrowRight className="absolute bottom-3 right-3 w-4 h-4 text-foreground/20 group-hover:text-fuchsia-500/60 transition-all duration-300 group-hover:translate-x-1" />
+            </button>
+
+            <button
               onClick={() => onReading?.()}
               className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-5 hover:bg-card/70 hover:border-stone-300/50 transition-all duration-500 text-left overflow-hidden"
             >
