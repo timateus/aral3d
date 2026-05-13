@@ -1010,6 +1010,7 @@ const Index = () => {
       if (started) p.set('started', '1');
       if (gameModeActive) p.set('mode', 'game');
       else if (sandboxMode) p.set('mode', 'sandbox');
+      else if (lifeMode) p.set('mode', 'life');
       p.set('year', String(waterExtentYear));
       p.set('exag', String(exaggeration));
       p.set('wl', String(waterLevel));
