@@ -30,6 +30,7 @@ import BowlWorld from './BowlWorld';
 import AryqWorld from './AryqWorld';
 import SandboxOverlay from './SandboxOverlay';
 import DustOverlay from './DustOverlay';
+import LifeOverlay from './LifeOverlay';
 import TerrainStyleOverlay, { TerrainStyle } from './TerrainStyleOverlay';
 import WaterwaysLayer from './WaterwaysLayer';
 import type { WaterwayTypeFilter } from './WaterwaysLayer';
