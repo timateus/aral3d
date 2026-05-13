@@ -1339,6 +1339,12 @@ const Index = () => {
         onSpeedChange={setSandboxSpeed}
       />
 
+      {/* Game of Life HUD */}
+      <LifeHUD
+        active={lifeMode && started}
+        onExit={() => { setLifeMode(false); setStarted(false); }}
+      />
+
       {/* Dust Storm HUD */}
       <DustHUD
         active={dustMode && started}
