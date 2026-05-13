@@ -198,6 +198,7 @@ const Index = () => {
   const [agmarTourActive, setAgmarTourActive] = useState(false);
   const [agmarTourStep, setAgmarTourStep] = useState(0);
   const [sandboxMode, setSandboxMode] = useState(false);
+  const [lifeMode, setLifeMode] = useState(false);
   const [sandboxElement, setSandboxElement] = useState<SandboxElement>('water');
   const [sandboxBrushSize, setSandboxBrushSize] = useState(3);
   const [sandboxPaused, setSandboxPaused] = useState(false);
