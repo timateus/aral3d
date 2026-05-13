@@ -1199,6 +1199,7 @@ const Index = () => {
             waterwayTypeFilter={waterwayTypeFilter}
             waterwayTraceMode={traceMode}
             waterwayClearTraceSignal={traceClearSignal}
+            lifeActive={lifeMode}
           />
         )}
         {!terrain && !loading && error && (
