@@ -971,6 +971,7 @@ const Index = () => {
     if (p.get('started') === '1') setStarted(true);
     if (p.get('mode') === 'game') { setGameModeActive(true); setStarted(true); }
     if (p.get('mode') === 'sandbox') { setSandboxMode(true); setStarted(true); }
+    if (p.get('mode') === 'life') { setLifeMode(true); setStarted(true); }
     if (p.get('year')) setWaterExtentYear(Number(p.get('year')));
     if (p.get('exag')) setExaggeration(Number(p.get('exag')));
     if (p.get('wl')) { setWaterLevelManual(true); setWaterLevel(Number(p.get('wl'))); }
