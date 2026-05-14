@@ -36,7 +36,6 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
   const colorModeRef = useRef<LifeColorMode>(initialSettings.colorMode);
   const brightPaletteRef = useRef<Float32Array | null>(null);
   const [gridVersion, setGridVersion] = useState(0);
-  const [gridWidth, setGridWidth] = useState(() => gridWidthForCellSize(initialSettings.cellSize));
   const meshAspect = terrain.height / terrain.width || 1;
 
   const emitStats = (s: LifeState) => emitLifeStats({
@@ -57,7 +56,6 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
     if (s.width === nextW && s.height === nextH) return s;
     resizeLife(s, nextW, nextH);
     brightPaletteRef.current = null;
-    setGridWidth(nextW);
     setGridVersion(v => v + 1);
     return s;
   };
@@ -101,7 +99,7 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
   // Lazily build a per-cell bright palette (vivid hues)
   const getBrightPalette = (count: number) => {
     if (brightPaletteRef.current && brightPaletteRef.current.length === count * 3) return brightPaletteRef.current;
-    const arr = new Float32Array(n * 3);
+    const arr = new Float32Array(count * 3);
     const tmp = new THREE.Color();
     for (let i = 0; i < count; i++) {
       tmp.setHSL(Math.random(), 0.95, 0.6);
