@@ -98,9 +98,10 @@ export function seedRandom(s: LifeState, density = 0.28) {
  */
 export function seedQaraqalpaq(s: LifeState, sizeOpt?: number, cxOpt?: number, cyOpt?: number) {
   const w = s.width, h = s.height;
-  const size = sizeOpt ?? (8 + Math.floor(Math.random() * 18)); // 8..25 (half-extent)
-  const cx = cxOpt ?? Math.floor(size + Math.random() * (w - size * 2));
-  const cy = cyOpt ?? Math.floor(size + Math.random() * (h - size * 2));
+  const maxSize = Math.max(2, Math.floor(Math.min(w, h) / 2) - 1);
+  const size = Math.min(sizeOpt ?? (3 + Math.floor(Math.random() * Math.max(2, maxSize - 2))), maxSize);
+  const cx = cxOpt ?? Math.floor(size + Math.random() * Math.max(1, w - size * 2));
+  const cy = cyOpt ?? Math.floor(size + Math.random() * Math.max(1, h - size * 2));
   // Build a quadrant pattern of size×size, then mirror to make 4-fold symmetry.
   const quad = new Uint8Array(size * size);
   const set = (x: number, y: number) => {
@@ -175,16 +176,21 @@ export function seedPattern(s: LifeState, kind: 'gliders' | 'pulsar') {
       s.population++;
     }
   };
+  const setWrapped = (r: number, c: number) => {
+    const rr = ((r % s.height) + s.height) % s.height;
+    const cc = ((c % s.width) + s.width) % s.width;
+    setCell(rr * s.width + cc);
+  };
   if (kind === 'gliders') {
     for (let i = 0; i < 10; i++) {
-      const r0 = Math.floor(Math.random() * (s.height - 5));
-      const c0 = Math.floor(Math.random() * (s.width - 5));
-      for (const [dr, dc] of GLIDER) setCell((r0 + dr) * s.width + (c0 + dc));
+      const r0 = Math.floor(Math.random() * s.height);
+      const c0 = Math.floor(Math.random() * s.width);
+      for (const [dr, dc] of GLIDER) setWrapped(r0 + dr, c0 + dc);
     }
   } else {
     const r0 = Math.floor(s.height / 2 - 8);
     const c0 = Math.floor(s.width / 2 - 8);
-    for (const [dr, dc] of PULSAR) setCell((r0 + dr) * s.width + (c0 + dc));
+    for (const [dr, dc] of PULSAR) setWrapped(r0 + dr, c0 + dc);
   }
 }
 
