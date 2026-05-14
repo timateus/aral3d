@@ -488,7 +488,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
             <DustOverlay terrain={terrain} exaggeration={exaggeration} state={dustState} renderKey={dustRenderKey} />
           )}
           {lifeActive && (
-            <LifeOverlay terrain={terrain} exaggeration={exaggeration} active={!!lifeActive} />
+            <LifeOverlay terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} waterBounds={waterBounds} active={!!lifeActive} />
           )}
           {!sandboxActive && scenarioActions && scenarioActions.length > 0 && (
             <ScenarioOverlay actions={scenarioActions} terrain={terrain} exaggeration={exaggeration} />

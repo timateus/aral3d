@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Play, Pause, StepForward, RotateCcw, Sparkles, Zap, X } from 'lucide-react';
-import { emitLifeEvent, onLifeStats, LifeStats, LifeColorMode, getLifeSettings } from '@/lib/life-simulation';
+import { emitLifeEvent, onLifeStats, LifeStats, LifeColorMode, LifeVariant, getLifeSettings } from '@/lib/life-simulation';
 
 interface Props {
   active: boolean;
@@ -13,11 +13,13 @@ export default function LifeHUD({ active, onExit }: Props) {
   const [speed, setSpeed] = useState(8);
   const [cellSize, setCellSize] = useState(initialSettings.cellSize);
   const [colorMode, setColorMode] = useState<LifeColorMode>(initialSettings.colorMode);
+  const [variant, setVariant] = useState<LifeVariant>(initialSettings.variant);
 
   useEffect(() => onLifeStats((next) => {
     setStats(next);
     if (next.cellSize !== undefined) setCellSize(next.cellSize);
     if (next.colorMode) setColorMode(next.colorMode);
+    if (next.variant) setVariant(next.variant);
     setSpeed(next.speed);
   }), []);
 
@@ -31,7 +33,7 @@ export default function LifeHUD({ active, onExit }: Props) {
           <span className="text-primary font-semibold">Game of Life</span>
           <span className="text-muted-foreground ml-3 font-mono">
             gen {stats.generation} · pop {stats.population}
-            {stats.gridWidth && stats.gridHeight ? ` · ${stats.gridWidth}×${stats.gridHeight}` : ''}
+            {stats.gridWidth && stats.gridHeight ? ` · ${stats.gridWidth}×${stats.gridHeight}${stats.gridDepth && stats.gridDepth > 1 ? `×${stats.gridDepth}` : ''}` : ''}
           </span>
         </p>
       </div>
@@ -39,7 +41,7 @@ export default function LifeHUD({ active, onExit }: Props) {
       {/* Controls bottom-left */}
       <div className="absolute bottom-6 left-6 z-30 glass-panel p-3 flex flex-col gap-3 w-72 pointer-events-auto">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground">Conway · cyclic grid</span>
+          <span className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground">{variant === 'lenia' ? 'Lenia · continuous field' : variant === 'life3d' ? 'Conway · 3D lattice' : 'Conway · cyclic grid'}</span>
           <button
             onClick={onExit}
             className="flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-1 border border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all"
@@ -90,6 +92,30 @@ export default function LifeHUD({ active, onExit }: Props) {
         </div>
 
         <div className="h-px bg-border/40" />
+
+        {/* Automata mode */}
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground">Automata</span>
+          <div className="grid grid-cols-3 gap-1">
+            {([
+              { id: 'life2d', label: 'Life' },
+              { id: 'life3d', label: '3D Life' },
+              { id: 'lenia', label: 'Lenia' },
+            ] as const).map(opt => (
+              <button
+                key={opt.id}
+                onClick={() => { setVariant(opt.id); emitLifeEvent({ type: 'variant', variant: opt.id }); }}
+                className={`text-[10px] uppercase tracking-wider px-1.5 py-1.5 border transition-all ${
+                  variant === opt.id
+                    ? 'border-primary/60 bg-primary/15 text-primary'
+                    : 'border-border/60 bg-card/40 text-foreground hover:border-primary/40'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Color mode */}
         <div className="flex flex-col gap-1.5">
