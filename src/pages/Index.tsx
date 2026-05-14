@@ -199,6 +199,7 @@ const Index = () => {
   const [agmarTourStep, setAgmarTourStep] = useState(0);
   const [sandboxMode, setSandboxMode] = useState(false);
   const [lifeMode, setLifeMode] = useState(false);
+  const [lifeInExplore, setLifeInExplore] = useState(false);
   const [sandboxElement, setSandboxElement] = useState<SandboxElement>('water');
   const [sandboxBrushSize, setSandboxBrushSize] = useState(3);
   const [sandboxPaused, setSandboxPaused] = useState(false);
@@ -1203,7 +1204,7 @@ const Index = () => {
             waterwayTypeFilter={waterwayTypeFilter}
             waterwayTraceMode={traceMode}
             waterwayClearTraceSignal={traceClearSignal}
-            lifeActive={lifeMode}
+            lifeActive={lifeMode || (lifeInExplore && isMapExploration)}
           />
         )}
         {!terrain && !loading && error && (
@@ -1348,8 +1349,11 @@ const Index = () => {
 
       {/* Game of Life HUD */}
       <LifeHUD
-        active={lifeMode && started}
-        onExit={() => { setLifeMode(false); setStarted(false); }}
+        active={(lifeMode && started) || (lifeInExplore && isMapExploration)}
+        onExit={() => {
+          if (lifeInExplore) setLifeInExplore(false);
+          else { setLifeMode(false); setStarted(false); }
+        }}
       />
 
       {/* Dust Storm HUD */}
@@ -1511,6 +1515,19 @@ const Index = () => {
             >
               <Gamepad2 className="w-3 h-3" />
               Exit Game
+            </button>
+          )}
+          {!gameModeActive && (
+            <button
+              onClick={() => setLifeInExplore(v => !v)}
+              title="Conway's Game of Life over the terrain"
+              className={`text-[10px] tracking-[0.15em] uppercase transition-colors border px-3 py-1.5 backdrop-blur-sm flex items-center gap-1.5 ${
+                lifeInExplore
+                  ? 'text-primary border-primary/40 bg-primary/10'
+                  : 'text-muted-foreground hover:text-primary border-border/50 bg-card/60'
+              }`}
+            >
+              ✦ {lifeInExplore ? 'Life on' : 'Life'}
             </button>
           )}
           {!gameModeActive && (

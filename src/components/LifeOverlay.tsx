@@ -2,9 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import type { TerrainData } from '@/lib/geotiff-loader';
+import { getElevationColor } from '@/lib/geotiff-loader';
 import {
-  createLife, stepLife, seedRandom, seedPattern, clearLife, toggleCell,
-  onLifeEvent, emitLifeStats, LifeState,
+  createLife, stepLife, seedRandom, seedPattern, seedQaraqalpaq, clearLife, toggleCell,
+  onLifeEvent, emitLifeStats, LifeState, LifeColorMode,
 } from '@/lib/life-simulation';
 
 interface Props {
@@ -25,13 +26,16 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
   const speedRef = useRef(8); // generations per second
   const accumRef = useRef(0);
   const cellSizeRef = useRef(0.11);
+  const colorModeRef = useRef<LifeColorMode>('age');
+  const brightPaletteRef = useRef<Float32Array | null>(null);
   const [, force] = useState(0);
 
-  // Precompute base xy + elevation for each cell of the life grid
+  // Precompute base xy + elevation + surface color for each cell of the life grid
   const layout = useMemo(() => {
     const s = stateRef.current;
     const w = s.width, h = s.height;
     const positions = new Float32Array(w * h * 3);
+    const surfaceColors = new Float32Array(w * h * 3);
     const { width: tw, height: th, elevations, minElevation, maxElevation, noDataValue } = terrain;
     const elevRange = maxElevation - minElevation || 1;
     const maxHeight = 10 * (exaggeration / 100);
@@ -40,7 +44,6 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
       for (let c = 0; c < w; c++) {
         const u = (c + 0.5) / w;
         const v = (r + 0.5) / h;
-        // Sample elevation via nearest neighbor on terrain grid
         const ti = Math.min(tw - 1, Math.floor(u * tw));
         const tj = Math.min(th - 1, Math.floor(v * th));
         let elev = elevations[tj * tw + ti];
@@ -53,10 +56,30 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
         positions[idx] = x;
         positions[idx + 1] = y;
         positions[idx + 2] = z;
+        const normalized = (elev - minElevation) / elevRange;
+        const sc = getElevationColor(normalized, elev);
+        surfaceColors[idx] = sc[0];
+        surfaceColors[idx + 1] = sc[1];
+        surfaceColors[idx + 2] = sc[2];
       }
     }
-    return positions;
+    return { positions, surfaceColors };
   }, [terrain, exaggeration]);
+
+  // Lazily build a per-cell bright palette (vivid hues)
+  if (!brightPaletteRef.current || brightPaletteRef.current.length !== stateRef.current.width * stateRef.current.height * 3) {
+    const n = stateRef.current.width * stateRef.current.height;
+    const arr = new Float32Array(n * 3);
+    const tmp = new THREE.Color();
+    for (let i = 0; i < n; i++) {
+      tmp.setHSL(Math.random(), 0.95, 0.6);
+      arr[i * 3] = tmp.r;
+      arr[i * 3 + 1] = tmp.g;
+      arr[i * 3 + 2] = tmp.b;
+    }
+    brightPaletteRef.current = arr;
+  }
+
 
   // Fixed instance buffer sized to the entire grid; dead cells get scale 0.
   const total = stateRef.current.width * stateRef.current.height;
@@ -85,6 +108,8 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
         case 'clear': clearLife(s); break;
         case 'seed-random': seedRandom(s, e.density); break;
         case 'seed-pattern': seedPattern(s, e.kind); break;
+        case 'seed-qaraqalpaq': seedQaraqalpaq(s); break;
+        case 'color-mode': colorModeRef.current = e.mode; break;
         case 'speed': speedRef.current = Math.max(0.5, e.value); break;
         case 'cell-size': cellSizeRef.current = Math.max(0.04, e.value); break;
       }
@@ -104,7 +129,6 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
       accumRef.current += delta;
       const interval = 1 / speedRef.current;
       let stepped = false;
-      // Cap to avoid runaway after tab focus loss
       let safety = 0;
       while (accumRef.current >= interval && safety++ < 4) {
         accumRef.current -= interval;
@@ -115,21 +139,20 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
         emitLifeStats({ generation: s.generation, population: s.population, running: true, speed: speedRef.current });
       }
     }
-    // Update instance matrices + colors
     const cellSize = cellSizeRef.current;
     const lift = cellSize * 0.6;
-    const w = s.width;
+    const mode = colorModeRef.current;
+    const positions = layout.positions;
+    const surfaceColors = layout.surfaceColors;
+    const bright = brightPaletteRef.current!;
     for (let i = 0; i < total; i++) {
       const alive = s.cells[i] === 1;
       if (!alive) {
         dummy.scale.set(0, 0, 0);
       } else {
-        const px = layout[i * 3];
-        const py = layout[i * 3 + 1];
-        const pz = layout[i * 3 + 2];
-        // Mesh is rotated -PI/2 around X by parent group, but we render at root.
-        // Place cubes in the unrotated mesh frame: xy plane horizontal, z up;
-        // we'll let the parent group handle the rotation match.
+        const px = positions[i * 3];
+        const py = positions[i * 3 + 1];
+        const pz = positions[i * 3 + 2];
         dummy.position.set(px, py, pz + lift);
         const a = Math.min(s.age[i], 60) / 60;
         const scale = cellSize * (0.55 + 0.45 * a);
@@ -138,11 +161,16 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
       dummy.updateMatrix();
       meshRef.current.setMatrixAt(i, dummy.matrix);
       if (alive) {
-        const a = Math.min(s.age[i], 80) / 80;
-        // Young = cyan, mature = magenta, old = gold
-        if (a < 0.33) tmpColor.setRGB(0.25, 0.95, 1.0);
-        else if (a < 0.7) tmpColor.setRGB(1.0, 0.35, 0.85);
-        else tmpColor.setRGB(1.0, 0.78, 0.2);
+        if (mode === 'surface') {
+          tmpColor.setRGB(surfaceColors[i * 3], surfaceColors[i * 3 + 1], surfaceColors[i * 3 + 2]);
+        } else if (mode === 'bright') {
+          tmpColor.setRGB(bright[i * 3], bright[i * 3 + 1], bright[i * 3 + 2]);
+        } else {
+          const a = Math.min(s.age[i], 80) / 80;
+          if (a < 0.33) tmpColor.setRGB(0.25, 0.95, 1.0);
+          else if (a < 0.7) tmpColor.setRGB(1.0, 0.35, 0.85);
+          else tmpColor.setRGB(1.0, 0.78, 0.2);
+        }
         meshRef.current.setColorAt(i, tmpColor);
       }
     }
