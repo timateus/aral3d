@@ -413,9 +413,25 @@ function refreshLeniaCells(s: LifeState) {
 
 /* ── Tiny pub/sub so HUD <-> overlay can talk without prop drilling ── */
 export type LifeColorMode = 'age' | 'surface' | 'bright';
-export interface LifeSettings { cellSize: number; colorMode: LifeColorMode; variant: LifeVariant; }
-const lifeSettings: LifeSettings = { cellSize: DEFAULT_LIFE_CELL_SIZE, colorMode: 'age', variant: DEFAULT_LIFE_VARIANT };
-export function getLifeSettings(): LifeSettings { return { ...lifeSettings }; }
+export interface LeniaParams {
+  radius: number;
+  target: number;   // mu — growth center
+  sigma: number;    // growth width
+  dt: number;       // time step
+  ringCenter: number; // kernel ring peak (0..1 of radius)
+  ringWidth: number;  // kernel ring stddev
+}
+export const DEFAULT_LENIA: LeniaParams = {
+  radius: 5, target: 0.28, sigma: 0.055, dt: 0.18, ringCenter: 0.62, ringWidth: 0.16,
+};
+export interface LifeSettings { cellSize: number; colorMode: LifeColorMode; variant: LifeVariant; lenia: LeniaParams; }
+const lifeSettings: LifeSettings = {
+  cellSize: DEFAULT_LIFE_CELL_SIZE,
+  colorMode: 'age',
+  variant: DEFAULT_LIFE_VARIANT,
+  lenia: { ...DEFAULT_LENIA },
+};
+export function getLifeSettings(): LifeSettings { return { ...lifeSettings, lenia: { ...lifeSettings.lenia } }; }
 export function setLifeSettings(next: Partial<LifeSettings>) { Object.assign(lifeSettings, next); }
 
 export type LifeEvent =
@@ -430,7 +446,8 @@ export type LifeEvent =
   | { type: 'color-mode'; mode: LifeColorMode }
   | { type: 'variant'; variant: LifeVariant }
   | { type: 'speed'; value: number }
-  | { type: 'cell-size'; value: number };
+  | { type: 'cell-size'; value: number }
+  | { type: 'lenia-params'; params: Partial<LeniaParams> };
 
 const listeners = new Set<(e: LifeEvent) => void>();
 export function onLifeEvent(cb: (e: LifeEvent) => void) {
@@ -441,6 +458,7 @@ export function emitLifeEvent(e: LifeEvent) {
   if (e.type === 'color-mode') setLifeSettings({ colorMode: e.mode });
   if (e.type === 'cell-size') setLifeSettings({ cellSize: e.value });
   if (e.type === 'variant') setLifeSettings({ variant: e.variant });
+  if (e.type === 'lenia-params') Object.assign(lifeSettings.lenia, e.params);
   listeners.forEach(l => l(e));
 }
 
