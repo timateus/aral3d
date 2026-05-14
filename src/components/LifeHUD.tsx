@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Play, Pause, StepForward, RotateCcw, Sparkles, Zap, X } from 'lucide-react';
-import { emitLifeEvent, onLifeStats, LifeStats, LifeColorMode, LifeVariant, getLifeSettings } from '@/lib/life-simulation';
+import { emitLifeEvent, onLifeStats, LifeStats, LifeColorMode, LifeVariant, getLifeSettings, LeniaParams, DEFAULT_LENIA } from '@/lib/life-simulation';
 
 interface Props {
   active: boolean;
@@ -14,6 +14,7 @@ export default function LifeHUD({ active, onExit }: Props) {
   const [cellSize, setCellSize] = useState(initialSettings.cellSize);
   const [colorMode, setColorMode] = useState<LifeColorMode>(initialSettings.colorMode);
   const [variant, setVariant] = useState<LifeVariant>(initialSettings.variant);
+  const [lenia, setLenia] = useState<LeniaParams>(initialSettings.lenia);
 
   useEffect(() => onLifeStats((next) => {
     setStats(next);
@@ -22,6 +23,12 @@ export default function LifeHUD({ active, onExit }: Props) {
     if (next.variant) setVariant(next.variant);
     setSpeed(next.speed);
   }), []);
+
+  const updateLenia = (patch: Partial<LeniaParams>) => {
+    const next = { ...lenia, ...patch };
+    setLenia(next);
+    emitLifeEvent({ type: 'lenia-params', params: patch });
+  };
 
   if (!active) return null;
 
