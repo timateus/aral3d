@@ -2,9 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import type { TerrainData } from '@/lib/geotiff-loader';
+import { getElevationColor } from '@/lib/geotiff-loader';
 import {
-  createLife, stepLife, seedRandom, seedPattern, clearLife, toggleCell,
-  onLifeEvent, emitLifeStats, LifeState,
+  createLife, stepLife, seedRandom, seedPattern, seedQaraqalpaq, clearLife, toggleCell,
+  onLifeEvent, emitLifeStats, LifeState, LifeColorMode,
 } from '@/lib/life-simulation';
 
 interface Props {
