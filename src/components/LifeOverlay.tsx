@@ -5,7 +5,8 @@ import type { TerrainData } from '@/lib/geotiff-loader';
 import { getElevationColor } from '@/lib/geotiff-loader';
 import {
   createLife, stepLife, seedRandom, seedPattern, seedQaraqalpaq, clearLife, toggleCell,
-  onLifeEvent, emitLifeStats, LifeState, LifeColorMode,
+  onLifeEvent, emitLifeStats, LifeState, LifeColorMode, resizeLife, getLifeSettings,
+  DEFAULT_LIFE_CELL_SIZE,
 } from '@/lib/life-simulation';
 
 interface Props {
@@ -19,16 +20,22 @@ interface Props {
  * terrain. Cells are in their own grid (independent of terrain resolution)
  * and are positioned by sampling terrain elevation at the cell's mesh xy.
  */
+const meshWidth = 10;
+
+const gridWidthForCellSize = (cellSize: number) => Math.max(12, Math.min(160, Math.round(96 * (DEFAULT_LIFE_CELL_SIZE / cellSize))));
+
 const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
+  const initialSettings = getLifeSettings();
   const stateRef = useRef<LifeState>(createLife());
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const runningRef = useRef(true);
   const speedRef = useRef(8); // generations per second
   const accumRef = useRef(0);
-  const cellSizeRef = useRef(0.11);
-  const colorModeRef = useRef<LifeColorMode>('age');
+  const cellSizeRef = useRef(initialSettings.cellSize);
+  const colorModeRef = useRef<LifeColorMode>(initialSettings.colorMode);
   const brightPaletteRef = useRef<Float32Array | null>(null);
-  const [, force] = useState(0);
+  const [gridVersion, setGridVersion] = useState(0);
+  const [gridWidth, setGridWidth] = useState(() => gridWidthForCellSize(initialSettings.cellSize));
 
   // Precompute base xy + elevation + surface color for each cell of the life grid
   const layout = useMemo(() => {
@@ -64,7 +71,7 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
       }
     }
     return { positions, surfaceColors };
-  }, [terrain, exaggeration]);
+  }, [terrain, exaggeration, gridVersion]);
 
   // Lazily build a per-cell bright palette (vivid hues)
   if (!brightPaletteRef.current || brightPaletteRef.current.length !== stateRef.current.width * stateRef.current.height * 3) {
