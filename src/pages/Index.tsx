@@ -982,7 +982,9 @@ const Index = () => {
       const has = (k: string) => layers.includes(k);
       setShowBorders(has('borders'));
       setShowRivers(has('rivers'));
-      setShowKhorezm(has('khorezm'));
+      // Khorezm DEM extends terrain south to Khiva — keep it on by default
+      // even when older shared links don't include it in the layers list.
+      setShowKhorezm(true);
       setShowWaterways(has('waterways'));
       setShowSchools(has('schools'));
       setShowVocabulary(has('vocabulary'));
