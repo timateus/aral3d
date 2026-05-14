@@ -137,28 +137,25 @@ const PULSAR = [
 ];
 
 export function seedPattern(s: LifeState, kind: 'gliders' | 'pulsar') {
-  s.cells.fill(0);
-  s.age.fill(0);
-  s.generation = 0;
+  // Additive: stamp on top of the existing population.
+  const setCell = (i: number) => {
+    if (!s.cells[i]) {
+      s.cells[i] = 1;
+      s.age[i] = 1;
+      s.population++;
+    }
+  };
   if (kind === 'gliders') {
-    // Sprinkle ~10 gliders across the grid
     for (let i = 0; i < 10; i++) {
       const r0 = Math.floor(Math.random() * (s.height - 5));
       const c0 = Math.floor(Math.random() * (s.width - 5));
-      for (const [dr, dc] of GLIDER) {
-        s.cells[(r0 + dr) * s.width + (c0 + dc)] = 1;
-      }
+      for (const [dr, dc] of GLIDER) setCell((r0 + dr) * s.width + (c0 + dc));
     }
   } else {
     const r0 = Math.floor(s.height / 2 - 8);
     const c0 = Math.floor(s.width / 2 - 8);
-    for (const [dr, dc] of PULSAR) {
-      s.cells[(r0 + dr) * s.width + (c0 + dc)] = 1;
-    }
+    for (const [dr, dc] of PULSAR) setCell((r0 + dr) * s.width + (c0 + dc));
   }
-  let pop = 0;
-  for (let i = 0; i < s.cells.length; i++) if (s.cells[i]) pop++;
-  s.population = pop;
 }
 
 export function toggleCell(s: LifeState, r: number, c: number) {
