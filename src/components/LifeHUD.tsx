@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Play, Pause, StepForward, RotateCcw, Sparkles, Zap, X } from 'lucide-react';
-import { emitLifeEvent, onLifeStats, LifeStats, LifeColorMode, LifeVariant, getLifeSettings } from '@/lib/life-simulation';
+import { emitLifeEvent, onLifeStats, LifeStats, LifeColorMode, LifeVariant, getLifeSettings, LeniaParams, DEFAULT_LENIA } from '@/lib/life-simulation';
 
 interface Props {
   active: boolean;
@@ -14,6 +14,7 @@ export default function LifeHUD({ active, onExit }: Props) {
   const [cellSize, setCellSize] = useState(initialSettings.cellSize);
   const [colorMode, setColorMode] = useState<LifeColorMode>(initialSettings.colorMode);
   const [variant, setVariant] = useState<LifeVariant>(initialSettings.variant);
+  const [lenia, setLenia] = useState<LeniaParams>(initialSettings.lenia);
 
   useEffect(() => onLifeStats((next) => {
     setStats(next);
@@ -22,6 +23,12 @@ export default function LifeHUD({ active, onExit }: Props) {
     if (next.variant) setVariant(next.variant);
     setSpeed(next.speed);
   }), []);
+
+  const updateLenia = (patch: Partial<LeniaParams>) => {
+    const next = { ...lenia, ...patch };
+    setLenia(next);
+    emitLifeEvent({ type: 'lenia-params', params: patch });
+  };
 
   if (!active) return null;
 
@@ -140,6 +147,41 @@ export default function LifeHUD({ active, onExit }: Props) {
             ))}
           </div>
         </div>
+
+        {variant === 'lenia' && (
+          <div className="flex flex-col gap-2 pt-1 border-t border-border/40">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground">Lenia params</span>
+              <button
+                onClick={() => { setLenia({ ...DEFAULT_LENIA }); emitLifeEvent({ type: 'lenia-params', params: DEFAULT_LENIA }); }}
+                className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 border border-border/60 bg-card/40 text-muted-foreground hover:border-primary/40 hover:text-primary transition-all"
+              >
+                Reset
+              </button>
+            </div>
+            {([
+              { key: 'target',     label: 'μ growth center', min: 0.05, max: 0.5,  step: 0.005 },
+              { key: 'sigma',      label: 'σ growth width',  min: 0.005, max: 0.2, step: 0.005 },
+              { key: 'dt',         label: 'dt time step',    min: 0.02, max: 0.5,  step: 0.01 },
+              { key: 'radius',     label: 'kernel radius',   min: 2,    max: 12,   step: 1 },
+              { key: 'ringCenter', label: 'ring center',     min: 0.1,  max: 0.95, step: 0.01 },
+              { key: 'ringWidth',  label: 'ring width',      min: 0.04, max: 0.5,  step: 0.01 },
+            ] as const).map(p => (
+              <div key={p.key} className="flex flex-col gap-0.5">
+                <div className="flex justify-between items-center text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <span>{p.label}</span>
+                  <span className="font-mono text-foreground">{lenia[p.key].toFixed(p.step >= 1 ? 0 : 3)}</span>
+                </div>
+                <input
+                  type="range" min={p.min} max={p.max} step={p.step}
+                  value={lenia[p.key]}
+                  onChange={(e) => updateLenia({ [p.key]: parseFloat(e.target.value) } as Partial<LeniaParams>)}
+                  className="w-full accent-primary"
+                />
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-2">
           <button

@@ -3,6 +3,8 @@ import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import type { GeoBounds, TerrainData } from '@/lib/geotiff-loader';
 import { getElevationColor } from '@/lib/geotiff-loader';
+import { loadMapboxSatellite } from '@/lib/mapbox-tiles';
+import { useTerrainMode } from '@/hooks/useTerrainMode';
 import {
   createLife, stepLife, seedRandom, seedPattern, seedQaraqalpaq, clearLife, toggleCell,
   onLifeEvent, emitLifeStats, LifeState, LifeColorMode, resizeLife, getLifeSettings,
@@ -88,7 +90,29 @@ const LifeOverlay = ({ terrain, exaggeration, waterLevel, waterBounds, active }:
   const variantRef = useRef<LifeVariant>(initialSettings.variant);
   const brightPaletteRef = useRef<Float32Array | null>(null);
   const [gridVersion, setGridVersion] = useState(0);
+  const [satPixels, setSatPixels] = useState<{ data: Uint8ClampedArray; w: number; h: number } | null>(null);
   const meshAspect = terrain.height / terrain.width || 1;
+  const { mode: terrainMode, token: mapboxToken } = useTerrainMode();
+
+  // Fetch satellite imagery so 'surface' color mode can sample real ground colors.
+  useEffect(() => {
+    if (terrainMode !== 'satellite' || !mapboxToken || !terrain.bounds) {
+      setSatPixels(null);
+      return;
+    }
+    let cancelled = false;
+    loadMapboxSatellite(terrain.bounds, mapboxToken).then((tex) => {
+      if (cancelled) return;
+      const img = tex.image as HTMLCanvasElement;
+      try {
+        const ctx = img.getContext('2d', { willReadFrequently: true })!;
+        const data = ctx.getImageData(0, 0, img.width, img.height).data;
+        setSatPixels({ data, w: img.width, h: img.height });
+      } catch (e) { /* CORS or context fail — fallback to elevation colors */ }
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [terrainMode, mapboxToken, terrain.bounds]);
+
 
   const emitStats = (s: LifeState) => emitLifeStats({
     generation: s.generation,
@@ -141,7 +165,20 @@ const LifeOverlay = ({ terrain, exaggeration, waterLevel, waterBounds, active }:
           positions[idx] = x;
           positions[idx + 1] = y;
           positions[idx + 2] = terrainZ + (d > 1 ? (z - stackMid) * stackGap : 0);
-          const [sr, sg, sb] = enhanceTerrainColor(...surface.color);
+
+          let sr: number, sg: number, sb: number;
+          if (satPixels) {
+            // Sample real satellite imagery — UV mapping matches MapboxTerrainMesh.
+            const sx = Math.min(satPixels.w - 1, Math.max(0, Math.floor(u * satPixels.w)));
+            const sy = Math.min(satPixels.h - 1, Math.max(0, Math.floor(v * satPixels.h)));
+            const p = (sy * satPixels.w + sx) * 4;
+            // Slight brightness boost so unlit cubes match the lit terrain.
+            sr = Math.min(1, (satPixels.data[p]     / 255) * 1.25);
+            sg = Math.min(1, (satPixels.data[p + 1] / 255) * 1.25);
+            sb = Math.min(1, (satPixels.data[p + 2] / 255) * 1.25);
+          } else {
+            [sr, sg, sb] = enhanceTerrainColor(...surface.color);
+          }
           surfaceColors[idx] = sr;
           surfaceColors[idx + 1] = sg;
           surfaceColors[idx + 2] = sb;
@@ -149,7 +186,7 @@ const LifeOverlay = ({ terrain, exaggeration, waterLevel, waterBounds, active }:
       }
     }
     return { positions, surfaceColors };
-  }, [terrain, exaggeration, waterLevel, waterBounds, gridVersion]);
+  }, [terrain, exaggeration, waterLevel, waterBounds, gridVersion, satPixels]);
 
   const getBrightPalette = (count: number) => {
     if (brightPaletteRef.current && brightPaletteRef.current.length === count * 3) return brightPaletteRef.current;
