@@ -165,7 +165,20 @@ const LifeOverlay = ({ terrain, exaggeration, waterLevel, waterBounds, active }:
           positions[idx] = x;
           positions[idx + 1] = y;
           positions[idx + 2] = terrainZ + (d > 1 ? (z - stackMid) * stackGap : 0);
-          const [sr, sg, sb] = enhanceTerrainColor(...surface.color);
+
+          let sr: number, sg: number, sb: number;
+          if (satPixels) {
+            // Sample real satellite imagery — UV mapping matches MapboxTerrainMesh.
+            const sx = Math.min(satPixels.w - 1, Math.max(0, Math.floor(u * satPixels.w)));
+            const sy = Math.min(satPixels.h - 1, Math.max(0, Math.floor(v * satPixels.h)));
+            const p = (sy * satPixels.w + sx) * 4;
+            // Slight brightness boost so unlit cubes match the lit terrain.
+            sr = Math.min(1, (satPixels.data[p]     / 255) * 1.25);
+            sg = Math.min(1, (satPixels.data[p + 1] / 255) * 1.25);
+            sb = Math.min(1, (satPixels.data[p + 2] / 255) * 1.25);
+          } else {
+            [sr, sg, sb] = enhanceTerrainColor(...surface.color);
+          }
           surfaceColors[idx] = sr;
           surfaceColors[idx + 1] = sg;
           surfaceColors[idx + 2] = sb;
@@ -173,7 +186,7 @@ const LifeOverlay = ({ terrain, exaggeration, waterLevel, waterBounds, active }:
       }
     }
     return { positions, surfaceColors };
-  }, [terrain, exaggeration, waterLevel, waterBounds, gridVersion]);
+  }, [terrain, exaggeration, waterLevel, waterBounds, gridVersion, satPixels]);
 
   const getBrightPalette = (count: number) => {
     if (brightPaletteRef.current && brightPaletteRef.current.length === count * 3) return brightPaletteRef.current;
