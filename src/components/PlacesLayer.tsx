@@ -16,10 +16,10 @@ interface Place {
   population: number | null;
 }
 
-const KIND_STYLE: Record<Place['kind'], { color: string; size: number; minDist: number; fontSize: number }> = {
-  city:    { color: '#ffd24a', size: 0.10, minDist: 12, fontSize: 13 },
-  town:    { color: '#7bd3ff', size: 0.07, minDist: 18, fontSize: 11 },
-  village: { color: '#cfd8dc', size: 0.04, minDist: 28, fontSize: 10 },
+const KIND_STYLE: Record<Place['kind'], { color: string; size: number; distFactor: number; fontSize: number; minSepDeg: number }> = {
+  city:    { color: '#ffd24a', size: 0.09, distFactor: 6, fontSize: 12, minSepDeg: 0.0 },
+  town:    { color: '#7bd3ff', size: 0.055, distFactor: 4, fontSize: 10, minSepDeg: 0.20 },
+  village: { color: '#cfd8dc', size: 0.03, distFactor: 2.5, fontSize: 9, minSepDeg: 0.12 },
 };
 
 // In-memory cache keyed by bbox so toggling doesn't re-fetch.
