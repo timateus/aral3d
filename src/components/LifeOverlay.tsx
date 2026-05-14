@@ -5,7 +5,8 @@ import type { TerrainData } from '@/lib/geotiff-loader';
 import { getElevationColor } from '@/lib/geotiff-loader';
 import {
   createLife, stepLife, seedRandom, seedPattern, seedQaraqalpaq, clearLife, toggleCell,
-  onLifeEvent, emitLifeStats, LifeState, LifeColorMode,
+  onLifeEvent, emitLifeStats, LifeState, LifeColorMode, resizeLife, getLifeSettings,
+  DEFAULT_LIFE_CELL_SIZE,
 } from '@/lib/life-simulation';
 
 interface Props {
@@ -19,16 +20,45 @@ interface Props {
  * terrain. Cells are in their own grid (independent of terrain resolution)
  * and are positioned by sampling terrain elevation at the cell's mesh xy.
  */
+const meshWidth = 10;
+
+const gridWidthForCellSize = (cellSize: number) => Math.max(12, Math.min(160, Math.round(96 * (DEFAULT_LIFE_CELL_SIZE / cellSize))));
+const clampLifeCellSize = (cellSize: number) => Math.max(0.04, Math.min(1, cellSize));
+
 const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
+  const initialSettings = getLifeSettings();
   const stateRef = useRef<LifeState>(createLife());
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const runningRef = useRef(true);
   const speedRef = useRef(8); // generations per second
   const accumRef = useRef(0);
-  const cellSizeRef = useRef(0.11);
-  const colorModeRef = useRef<LifeColorMode>('age');
+  const cellSizeRef = useRef(initialSettings.cellSize);
+  const colorModeRef = useRef<LifeColorMode>(initialSettings.colorMode);
   const brightPaletteRef = useRef<Float32Array | null>(null);
-  const [, force] = useState(0);
+  const [gridVersion, setGridVersion] = useState(0);
+  const meshAspect = terrain.height / terrain.width || 1;
+
+  const emitStats = (s: LifeState) => emitLifeStats({
+    generation: s.generation,
+    population: s.population,
+    running: runningRef.current,
+    speed: speedRef.current,
+    cellSize: cellSizeRef.current,
+    colorMode: colorModeRef.current,
+    gridWidth: s.width,
+    gridHeight: s.height,
+  });
+
+  const resizeGridForCellSize = (cellSize: number) => {
+    const nextW = gridWidthForCellSize(cellSize);
+    const nextH = Math.max(12, Math.min(160, Math.round(nextW * meshAspect)));
+    const s = stateRef.current;
+    if (s.width === nextW && s.height === nextH) return s;
+    resizeLife(s, nextW, nextH);
+    brightPaletteRef.current = null;
+    setGridVersion(v => v + 1);
+    return s;
+  };
 
   // Precompute base xy + elevation + surface color for each cell of the life grid
   const layout = useMemo(() => {
@@ -64,21 +94,22 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
       }
     }
     return { positions, surfaceColors };
-  }, [terrain, exaggeration]);
+  }, [terrain, exaggeration, gridVersion]);
 
   // Lazily build a per-cell bright palette (vivid hues)
-  if (!brightPaletteRef.current || brightPaletteRef.current.length !== stateRef.current.width * stateRef.current.height * 3) {
-    const n = stateRef.current.width * stateRef.current.height;
-    const arr = new Float32Array(n * 3);
+  const getBrightPalette = (count: number) => {
+    if (brightPaletteRef.current && brightPaletteRef.current.length === count * 3) return brightPaletteRef.current;
+    const arr = new Float32Array(count * 3);
     const tmp = new THREE.Color();
-    for (let i = 0; i < n; i++) {
+    for (let i = 0; i < count; i++) {
       tmp.setHSL(Math.random(), 0.95, 0.6);
       arr[i * 3] = tmp.r;
       arr[i * 3 + 1] = tmp.g;
       arr[i * 3 + 2] = tmp.b;
     }
     brightPaletteRef.current = arr;
-  }
+    return arr;
+  };
 
 
   // Fixed instance buffer sized to the entire grid; dead cells get scale 0.
@@ -88,13 +119,13 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
   useEffect(() => {
     if (!active) return;
     const s = stateRef.current;
+    resizeGridForCellSize(cellSizeRef.current);
     if (s.population === 0) {
       seedRandom(s);
     }
     runningRef.current = true;
-    emitLifeStats({ generation: s.generation, population: s.population, running: runningRef.current, speed: speedRef.current });
-    force(n => n + 1);
-  }, [active]);
+    emitStats(s);
+  }, [active, terrain]);
 
   // HUD event handling
   useEffect(() => {
@@ -111,12 +142,12 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
         case 'seed-qaraqalpaq': seedQaraqalpaq(s); break;
         case 'color-mode': colorModeRef.current = e.mode; break;
         case 'speed': speedRef.current = Math.max(0.5, e.value); break;
-        case 'cell-size': cellSizeRef.current = Math.max(0.04, e.value); break;
+        case 'cell-size': cellSizeRef.current = clampLifeCellSize(e.value); resizeGridForCellSize(cellSizeRef.current); break;
       }
-      emitLifeStats({ generation: s.generation, population: s.population, running: runningRef.current, speed: speedRef.current });
+      emitStats(stateRef.current);
     });
     return off;
-  }, []);
+  }, [meshAspect]);
 
   // Per-frame stepping + instance update
   const dummy = useMemo(() => new THREE.Object3D(), []);
@@ -136,7 +167,7 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
         stepped = true;
       }
       if (stepped) {
-        emitLifeStats({ generation: s.generation, population: s.population, running: true, speed: speedRef.current });
+        emitStats(s);
       }
     }
     const cellSize = cellSizeRef.current;
@@ -144,10 +175,11 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
     const mode = colorModeRef.current;
     const positions = layout.positions;
     const surfaceColors = layout.surfaceColors;
-    const bright = brightPaletteRef.current!;
+    const bright = getBrightPalette(total);
     for (let i = 0; i < total; i++) {
       const alive = s.cells[i] === 1;
       if (!alive) {
+        dummy.position.set(0, 0, 0);
         dummy.scale.set(0, 0, 0);
       } else {
         const px = positions[i * 3];
@@ -183,6 +215,7 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
   return (
     <group rotation={[-Math.PI / 2, 0, 0]}>
       <instancedMesh
+        key={`life-${stateRef.current.width}x${stateRef.current.height}`}
         ref={meshRef}
         args={[undefined, undefined, total]}
         frustumCulled={false}
@@ -193,7 +226,7 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
           const r = Math.floor(e.instanceId / s.width);
           const c = e.instanceId % s.width;
           toggleCell(s, r, c);
-          emitLifeStats({ generation: s.generation, population: s.population, running: runningRef.current, speed: speedRef.current });
+          emitStats(s);
           e.stopPropagation();
         }}
       >

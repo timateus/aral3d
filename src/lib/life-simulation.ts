@@ -19,6 +19,7 @@ export interface LifeState {
 
 export const LIFE_GRID_W = 96;
 export const LIFE_GRID_H = 96;
+export const DEFAULT_LIFE_CELL_SIZE = 0.11;
 
 export function createLife(w = LIFE_GRID_W, h = LIFE_GRID_H): LifeState {
   return {
@@ -29,6 +30,35 @@ export function createLife(w = LIFE_GRID_W, h = LIFE_GRID_H): LifeState {
     generation: 0,
     population: 0,
   };
+}
+
+export function resizeLife(s: LifeState, nextW: number, nextH: number) {
+  const oldW = s.width;
+  const oldH = s.height;
+  if (nextW === oldW && nextH === oldH) return;
+
+  const nextCells = new Uint8Array(nextW * nextH);
+  const nextAge = new Uint16Array(nextW * nextH);
+  let pop = 0;
+
+  for (let r = 0; r < oldH; r++) {
+    for (let c = 0; c < oldW; c++) {
+      const oldIdx = r * oldW + c;
+      if (!s.cells[oldIdx]) continue;
+      const nr = Math.min(nextH - 1, Math.floor(((r + 0.5) / oldH) * nextH));
+      const nc = Math.min(nextW - 1, Math.floor(((c + 0.5) / oldW) * nextW));
+      const nextIdx = nr * nextW + nc;
+      if (!nextCells[nextIdx]) pop++;
+      nextCells[nextIdx] = 1;
+      nextAge[nextIdx] = Math.max(nextAge[nextIdx], s.age[oldIdx] || 1);
+    }
+  }
+
+  s.width = nextW;
+  s.height = nextH;
+  s.cells = nextCells;
+  s.age = nextAge;
+  s.population = pop;
 }
 
 export function clearLife(s: LifeState) {
@@ -68,9 +98,10 @@ export function seedRandom(s: LifeState, density = 0.28) {
  */
 export function seedQaraqalpaq(s: LifeState, sizeOpt?: number, cxOpt?: number, cyOpt?: number) {
   const w = s.width, h = s.height;
-  const size = sizeOpt ?? (8 + Math.floor(Math.random() * 18)); // 8..25 (half-extent)
-  const cx = cxOpt ?? Math.floor(size + Math.random() * (w - size * 2));
-  const cy = cyOpt ?? Math.floor(size + Math.random() * (h - size * 2));
+  const maxSize = Math.max(2, Math.floor(Math.min(w, h) / 2) - 1);
+  const size = Math.min(sizeOpt ?? (3 + Math.floor(Math.random() * Math.max(2, maxSize - 2))), maxSize);
+  const cx = cxOpt ?? Math.floor(size + Math.random() * Math.max(1, w - size * 2));
+  const cy = cyOpt ?? Math.floor(size + Math.random() * Math.max(1, h - size * 2));
   // Build a quadrant pattern of size×size, then mirror to make 4-fold symmetry.
   const quad = new Uint8Array(size * size);
   const set = (x: number, y: number) => {
@@ -145,16 +176,21 @@ export function seedPattern(s: LifeState, kind: 'gliders' | 'pulsar') {
       s.population++;
     }
   };
+  const setWrapped = (r: number, c: number) => {
+    const rr = ((r % s.height) + s.height) % s.height;
+    const cc = ((c % s.width) + s.width) % s.width;
+    setCell(rr * s.width + cc);
+  };
   if (kind === 'gliders') {
     for (let i = 0; i < 10; i++) {
-      const r0 = Math.floor(Math.random() * (s.height - 5));
-      const c0 = Math.floor(Math.random() * (s.width - 5));
-      for (const [dr, dc] of GLIDER) setCell((r0 + dr) * s.width + (c0 + dc));
+      const r0 = Math.floor(Math.random() * s.height);
+      const c0 = Math.floor(Math.random() * s.width);
+      for (const [dr, dc] of GLIDER) setWrapped(r0 + dr, c0 + dc);
     }
   } else {
     const r0 = Math.floor(s.height / 2 - 8);
     const c0 = Math.floor(s.width / 2 - 8);
-    for (const [dr, dc] of PULSAR) setCell((r0 + dr) * s.width + (c0 + dc));
+    for (const [dr, dc] of PULSAR) setWrapped(r0 + dr, c0 + dc);
   }
 }
 
@@ -207,6 +243,11 @@ export function stepLife(s: LifeState) {
 
 /* ── Tiny pub/sub so HUD <-> overlay can talk without prop drilling ── */
 export type LifeColorMode = 'age' | 'surface' | 'bright';
+export interface LifeSettings { cellSize: number; colorMode: LifeColorMode; }
+const lifeSettings: LifeSettings = { cellSize: DEFAULT_LIFE_CELL_SIZE, colorMode: 'age' };
+export function getLifeSettings(): LifeSettings { return { ...lifeSettings }; }
+export function setLifeSettings(next: Partial<LifeSettings>) { Object.assign(lifeSettings, next); }
+
 export type LifeEvent =
   | { type: 'play' }
   | { type: 'pause' }
@@ -226,11 +267,22 @@ export function onLifeEvent(cb: (e: LifeEvent) => void) {
   return () => { listeners.delete(cb); };
 }
 export function emitLifeEvent(e: LifeEvent) {
+  if (e.type === 'color-mode') setLifeSettings({ colorMode: e.mode });
+  if (e.type === 'cell-size') setLifeSettings({ cellSize: e.value });
   listeners.forEach(l => l(e));
 }
 
 /* Stats stream: overlay -> HUD */
-export interface LifeStats { generation: number; population: number; running: boolean; speed: number; }
+export interface LifeStats {
+  generation: number;
+  population: number;
+  running: boolean;
+  speed: number;
+  cellSize?: number;
+  colorMode?: LifeColorMode;
+  gridWidth?: number;
+  gridHeight?: number;
+}
 const statsListeners = new Set<(s: LifeStats) => void>();
 export function onLifeStats(cb: (s: LifeStats) => void) {
   statsListeners.add(cb);
