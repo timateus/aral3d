@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Play, Pause, StepForward, RotateCcw, Sparkles, Zap, X } from 'lucide-react';
-import { emitLifeEvent, onLifeStats, LifeStats } from '@/lib/life-simulation';
+import { emitLifeEvent, onLifeStats, LifeStats, LifeColorMode } from '@/lib/life-simulation';
 
 interface Props {
   active: boolean;
@@ -11,6 +11,7 @@ export default function LifeHUD({ active, onExit }: Props) {
   const [stats, setStats] = useState<LifeStats>({ generation: 0, population: 0, running: true, speed: 8 });
   const [speed, setSpeed] = useState(8);
   const [cellSize, setCellSize] = useState(0.11);
+  const [colorMode, setColorMode] = useState<LifeColorMode>('age');
 
   useEffect(() => onLifeStats(setStats), []);
 
