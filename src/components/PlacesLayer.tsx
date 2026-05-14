@@ -16,10 +16,10 @@ interface Place {
   population: number | null;
 }
 
-const KIND_STYLE: Record<Place['kind'], { color: string; size: number; minDist: number; fontSize: number }> = {
-  city:    { color: '#ffd24a', size: 0.10, minDist: 12, fontSize: 13 },
-  town:    { color: '#7bd3ff', size: 0.07, minDist: 18, fontSize: 11 },
-  village: { color: '#cfd8dc', size: 0.04, minDist: 28, fontSize: 10 },
+const KIND_STYLE: Record<Place['kind'], { color: string; size: number; distFactor: number; fontSize: number; minSepDeg: number }> = {
+  city:    { color: '#ffd24a', size: 0.09, distFactor: 6, fontSize: 12, minSepDeg: 0.0 },
+  town:    { color: '#7bd3ff', size: 0.055, distFactor: 4, fontSize: 10, minSepDeg: 0.20 },
+  village: { color: '#cfd8dc', size: 0.03, distFactor: 2.5, fontSize: 9, minSepDeg: 0.12 },
 };
 
 // In-memory cache keyed by bbox so toggling doesn't re-fetch.
@@ -128,7 +128,23 @@ export default function PlacesLayer({ terrain, exaggeration }: PlacesLayerProps)
       if (o !== 0) return o;
       return (b.population || 0) - (a.population || 0);
     });
-    return inside.map((p) => ({
+    // Greedy dedup: drop labels of lower-priority places too close to a kept one
+    const kept: Place[] = [];
+    for (const p of inside) {
+      const sep = KIND_STYLE[p.kind].minSepDeg;
+      if (sep > 0) {
+        const tooClose = kept.some((k) => {
+          // approximate degree distance (lat-weighted)
+          const dLat = k.lat - p.lat;
+          const dLon = (k.lon - p.lon) * Math.cos((p.lat * Math.PI) / 180);
+          return Math.hypot(dLat, dLon) < sep;
+        });
+        if (tooClose) continue;
+      }
+      kept.push(p);
+      if (kept.length >= 60) break;
+    }
+    return kept.map((p) => ({
       ...p,
       pos: geoToMeshPos(
         p.lon, p.lat,
@@ -154,11 +170,12 @@ export default function PlacesLayer({ terrain, exaggeration }: PlacesLayerProps)
               <cylinderGeometry args={[0.012, 0.012, 0.18, 6]} />
               <meshStandardMaterial color="#ffffff" opacity={0.55} transparent />
             </mesh>
-            {/* Label */}
+            {/* Label — distanceFactor caps apparent screen size; bigger = smaller on screen */}
             <Html
               center
-              distanceFactor={s.minDist}
+              distanceFactor={s.distFactor}
               position={[0, 0.32, 0]}
+              zIndexRange={[100, 0]}
               style={{ pointerEvents: 'none', userSelect: 'none' }}
             >
               <div

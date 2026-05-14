@@ -486,8 +486,17 @@ const Index = () => {
     satelliteBounds, terrainToken, satelliteEnabled
   );
 
-
-
+  // South-Khorezm extension: load a Mapbox DEM tile that extends the classic
+  // GeoTIFF terrain south past Urgench/Khiva so the surface map reaches them.
+  const southKhorezmBounds = useMemo(
+    () => (!satelliteEnabled && showKhorezm
+      ? { minLon: 59.0, maxLon: 62.8, minLat: 40.3, maxLat: 42.6 }
+      : null),
+    [satelliteEnabled, showKhorezm],
+  );
+  const { terrain: southKhorezmTerrain } = useMapboxTerrain(
+    southKhorezmBounds, terrainToken, !!southKhorezmBounds && !!terrainToken,
+  );
 
   const { terrain, hideNoData } = useMemo(() => {
     if (satelliteEnabled) {
@@ -501,12 +510,16 @@ const Index = () => {
       result = mergeExpandTerrains(result, khorezmTerrain, false);
       expanded = true;
     }
+    if (showKhorezm && southKhorezmTerrain) {
+      result = mergeExpandTerrains(result, southKhorezmTerrain, false);
+      expanded = true;
+    }
     if (showWatershed && watershedTerrain) {
       result = mergeExpandTerrains(result, watershedTerrain, false);
       expanded = true;
     }
     return { terrain: result, hideNoData: expanded };
-  }, [satelliteEnabled, mapboxTerrain, baseTerrain, seabedTerrain, khorezmTerrain, showKhorezm, watershedTerrain, showWatershed]);
+  }, [satelliteEnabled, mapboxTerrain, baseTerrain, seabedTerrain, khorezmTerrain, southKhorezmTerrain, showKhorezm, watershedTerrain, showWatershed]);
 
   // Listen for game mode state events
   useEffect(() => {
