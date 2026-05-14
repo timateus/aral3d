@@ -208,7 +208,14 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
       meshRef.current.setMatrixAt(i, dummy.matrix);
       if (alive) {
         if (mode === 'surface') {
-          tmpColor.setRGB(surfaceColors[i * 3], surfaceColors[i * 3 + 1], surfaceColors[i * 3 + 2]);
+          const sr = surfaceColors[i * 3];
+          const sg = surfaceColors[i * 3 + 1];
+          const sb = surfaceColors[i * 3 + 2];
+          tmpColor.setRGB(
+            Math.max(0.18, sr),
+            Math.max(0.18, sg),
+            Math.max(0.18, sb),
+          );
         } else if (mode === 'bright') {
           tmpColor.setRGB(bright[i * 3], bright[i * 3 + 1], bright[i * 3 + 2]);
         } else {
@@ -218,6 +225,8 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
           else tmpColor.setRGB(1.0, 0.78, 0.2);
         }
         meshRef.current.setColorAt(i, tmpColor);
+      } else {
+        meshRef.current.setColorAt(i, tmpColor.setRGB(1, 1, 1));
       }
     }
     meshRef.current.instanceMatrix.needsUpdate = true;
