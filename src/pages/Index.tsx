@@ -990,6 +990,8 @@ const Index = () => {
       setShowSchools(has('schools'));
       setShowVocabulary(has('vocabulary'));
       setShowDwellings(has('dwellings'));
+      // Places (cities/villages) default ON; treat absence as "show" for older links.
+      setShowPlaces(layers.includes('noplaces') ? false : true);
       setShowGroundwater(has('groundwater'));
       setShowPrecipitation(has('precipitation'));
       setShowLandcover(has('landcover'));
