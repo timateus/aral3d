@@ -1518,6 +1518,19 @@ const Index = () => {
             </button>
           )}
           {!gameModeActive && (
+            <button
+              onClick={() => setLifeInExplore(v => !v)}
+              title="Conway's Game of Life over the terrain"
+              className={`text-[10px] tracking-[0.15em] uppercase transition-colors border px-3 py-1.5 backdrop-blur-sm flex items-center gap-1.5 ${
+                lifeInExplore
+                  ? 'text-primary border-primary/40 bg-primary/10'
+                  : 'text-muted-foreground hover:text-primary border-border/50 bg-card/60'
+              }`}
+            >
+              ✦ {lifeInExplore ? 'Life on' : 'Life'}
+            </button>
+          )}
+          {!gameModeActive && (
             <>
               <h1 className="text-lg font-semibold text-foreground tracking-tight">
                 Aral Sea Terrain Viewer
