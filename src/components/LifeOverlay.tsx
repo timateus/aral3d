@@ -255,7 +255,7 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
         }}
       >
         <boxGeometry args={[1, 1, 1]} />
-        <meshBasicMaterial vertexColors toneMapped={false} />
+        <meshBasicMaterial toneMapped={false} />
       </instancedMesh>
     </group>
   );
