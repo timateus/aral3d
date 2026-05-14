@@ -367,12 +367,7 @@ function stepLenia(s: LifeState) {
     next = new Float32Array(values.length);
     leniaScratch.set(s, next);
   }
-  const radius = 5;
-  const target = 0.28;
-  const sigma = 0.055;
-  const dt = 0.18;
-  const ringCenter = 0.62;
-  const ringWidth = 0.16;
+  const { radius, target, sigma, dt, ringCenter, ringWidth } = lifeSettings.lenia;
   for (let r = 0; r < h; r++) {
     for (let c = 0; c < w; c++) {
       let sum = 0;
