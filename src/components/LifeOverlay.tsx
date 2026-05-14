@@ -30,11 +30,12 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
   const brightPaletteRef = useRef<Float32Array | null>(null);
   const [, force] = useState(0);
 
-  // Precompute base xy + elevation for each cell of the life grid
+  // Precompute base xy + elevation + surface color for each cell of the life grid
   const layout = useMemo(() => {
     const s = stateRef.current;
     const w = s.width, h = s.height;
     const positions = new Float32Array(w * h * 3);
+    const surfaceColors = new Float32Array(w * h * 3);
     const { width: tw, height: th, elevations, minElevation, maxElevation, noDataValue } = terrain;
     const elevRange = maxElevation - minElevation || 1;
     const maxHeight = 10 * (exaggeration / 100);
@@ -43,7 +44,6 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
       for (let c = 0; c < w; c++) {
         const u = (c + 0.5) / w;
         const v = (r + 0.5) / h;
-        // Sample elevation via nearest neighbor on terrain grid
         const ti = Math.min(tw - 1, Math.floor(u * tw));
         const tj = Math.min(th - 1, Math.floor(v * th));
         let elev = elevations[tj * tw + ti];
@@ -56,10 +56,30 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
         positions[idx] = x;
         positions[idx + 1] = y;
         positions[idx + 2] = z;
+        const normalized = (elev - minElevation) / elevRange;
+        const sc = getElevationColor(normalized, elev);
+        surfaceColors[idx] = sc[0];
+        surfaceColors[idx + 1] = sc[1];
+        surfaceColors[idx + 2] = sc[2];
       }
     }
-    return positions;
+    return { positions, surfaceColors };
   }, [terrain, exaggeration]);
+
+  // Lazily build a per-cell bright palette (vivid hues)
+  if (!brightPaletteRef.current || brightPaletteRef.current.length !== stateRef.current.width * stateRef.current.height * 3) {
+    const n = stateRef.current.width * stateRef.current.height;
+    const arr = new Float32Array(n * 3);
+    const tmp = new THREE.Color();
+    for (let i = 0; i < n; i++) {
+      tmp.setHSL(Math.random(), 0.95, 0.6);
+      arr[i * 3] = tmp.r;
+      arr[i * 3 + 1] = tmp.g;
+      arr[i * 3 + 2] = tmp.b;
+    }
+    brightPaletteRef.current = arr;
+  }
+
 
   // Fixed instance buffer sized to the entire grid; dead cells get scale 0.
   const total = stateRef.current.width * stateRef.current.height;
