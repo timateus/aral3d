@@ -1040,6 +1040,7 @@ const Index = () => {
       if (show13thBasin) layers.push('13basin');
       if (show19thBasin) layers.push('19basin');
       if (show21stBasin) layers.push('21basin');
+      if (!showPlaces) layers.push('noplaces');
       if (layers.length) p.set('layers', layers.join(','));
       const qs = p.toString();
       window.history.replaceState({}, '', qs ? `?${qs}` : window.location.pathname);
@@ -1048,7 +1049,7 @@ const Index = () => {
       showBorders, showRivers, showKhorezm, showWaterways, showSchools, showVocabulary, showDwellings,
       showGroundwater, showPrecipitation, showLandcover, showPopDensity, showMigration,
       showChoropleth, showSalinity, showWaterExtent, show13thBasin, show19thBasin,
-      show21stBasin, waterwayTypeFilter]);
+      show21stBasin, showPlaces, waterwayTypeFilter]);
 
   const handleCopyLink = useCallback(() => {
     navigator.clipboard.writeText(window.location.href).then(() => {
