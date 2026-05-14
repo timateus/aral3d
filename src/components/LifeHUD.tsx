@@ -81,6 +81,30 @@ export default function LifeHUD({ active, onExit }: Props) {
 
         <div className="h-px bg-border/40" />
 
+        {/* Color mode */}
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground">Color mode</span>
+          <div className="grid grid-cols-3 gap-1">
+            {([
+              { id: 'age', label: 'Age' },
+              { id: 'surface', label: 'Surface' },
+              { id: 'bright', label: 'Bright' },
+            ] as const).map(opt => (
+              <button
+                key={opt.id}
+                onClick={() => { setColorMode(opt.id); emitLifeEvent({ type: 'color-mode', mode: opt.id }); }}
+                className={`text-[10px] uppercase tracking-wider px-1.5 py-1.5 border transition-all ${
+                  colorMode === opt.id
+                    ? 'border-primary/60 bg-primary/15 text-primary'
+                    : 'border-border/60 bg-card/40 text-foreground hover:border-primary/40'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={() => emitLifeEvent({ type: 'seed-random' })}
@@ -101,15 +125,21 @@ export default function LifeHUD({ active, onExit }: Props) {
             ✦ Pulsar
           </button>
           <button
-            onClick={() => emitLifeEvent({ type: 'clear' })}
-            className="flex items-center justify-center gap-1.5 text-[11px] uppercase tracking-wider px-2 py-2 border border-border/60 bg-card/40 text-foreground hover:border-destructive/60 hover:text-destructive transition-all"
+            onClick={() => emitLifeEvent({ type: 'seed-qaraqalpaq' })}
+            className="flex items-center justify-center gap-1.5 text-[11px] uppercase tracking-wider px-2 py-2 border border-border/60 bg-card/40 text-foreground hover:border-primary/40 transition-all"
           >
-            <RotateCcw className="w-3 h-3" /> Clear
+            ◇ Qaraqalpaq
+          </button>
+          <button
+            onClick={() => emitLifeEvent({ type: 'clear' })}
+            className="col-span-2 flex items-center justify-center gap-1.5 text-[11px] uppercase tracking-wider px-2 py-2 border border-border/60 bg-card/40 text-foreground hover:border-destructive/60 hover:text-destructive transition-all"
+          >
+            <RotateCcw className="w-3 h-3" /> Clear all
           </button>
         </div>
 
         <p className="text-[10px] text-muted-foreground/70 leading-relaxed">
-          Click any cell to toggle. Topology wraps at the edges.
+          Click any cell to toggle. Seeds add to existing cells; topology wraps at the edges.
         </p>
       </div>
     </>
