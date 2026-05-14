@@ -90,7 +90,29 @@ const LifeOverlay = ({ terrain, exaggeration, waterLevel, waterBounds, active }:
   const variantRef = useRef<LifeVariant>(initialSettings.variant);
   const brightPaletteRef = useRef<Float32Array | null>(null);
   const [gridVersion, setGridVersion] = useState(0);
+  const [satPixels, setSatPixels] = useState<{ data: Uint8ClampedArray; w: number; h: number } | null>(null);
   const meshAspect = terrain.height / terrain.width || 1;
+  const { mode: terrainMode, token: mapboxToken } = useTerrainMode();
+
+  // Fetch satellite imagery so 'surface' color mode can sample real ground colors.
+  useEffect(() => {
+    if (terrainMode !== 'satellite' || !mapboxToken || !terrain.bounds) {
+      setSatPixels(null);
+      return;
+    }
+    let cancelled = false;
+    loadMapboxSatellite(terrain.bounds, mapboxToken).then((tex) => {
+      if (cancelled) return;
+      const img = tex.image as HTMLCanvasElement;
+      try {
+        const ctx = img.getContext('2d', { willReadFrequently: true })!;
+        const data = ctx.getImageData(0, 0, img.width, img.height).data;
+        setSatPixels({ data, w: img.width, h: img.height });
+      } catch (e) { /* CORS or context fail — fallback to elevation colors */ }
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [terrainMode, mapboxToken, terrain.bounds]);
+
 
   const emitStats = (s: LifeState) => emitLifeStats({
     generation: s.generation,
