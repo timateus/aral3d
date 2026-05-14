@@ -108,6 +108,8 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
         case 'clear': clearLife(s); break;
         case 'seed-random': seedRandom(s, e.density); break;
         case 'seed-pattern': seedPattern(s, e.kind); break;
+        case 'seed-qaraqalpaq': seedQaraqalpaq(s); break;
+        case 'color-mode': colorModeRef.current = e.mode; break;
         case 'speed': speedRef.current = Math.max(0.5, e.value); break;
         case 'cell-size': cellSizeRef.current = Math.max(0.04, e.value); break;
       }
@@ -127,7 +129,6 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
       accumRef.current += delta;
       const interval = 1 / speedRef.current;
       let stepped = false;
-      // Cap to avoid runaway after tab focus loss
       let safety = 0;
       while (accumRef.current >= interval && safety++ < 4) {
         accumRef.current -= interval;
@@ -138,21 +139,20 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
         emitLifeStats({ generation: s.generation, population: s.population, running: true, speed: speedRef.current });
       }
     }
-    // Update instance matrices + colors
     const cellSize = cellSizeRef.current;
     const lift = cellSize * 0.6;
-    const w = s.width;
+    const mode = colorModeRef.current;
+    const positions = layout.positions;
+    const surfaceColors = layout.surfaceColors;
+    const bright = brightPaletteRef.current!;
     for (let i = 0; i < total; i++) {
       const alive = s.cells[i] === 1;
       if (!alive) {
         dummy.scale.set(0, 0, 0);
       } else {
-        const px = layout[i * 3];
-        const py = layout[i * 3 + 1];
-        const pz = layout[i * 3 + 2];
-        // Mesh is rotated -PI/2 around X by parent group, but we render at root.
-        // Place cubes in the unrotated mesh frame: xy plane horizontal, z up;
-        // we'll let the parent group handle the rotation match.
+        const px = positions[i * 3];
+        const py = positions[i * 3 + 1];
+        const pz = positions[i * 3 + 2];
         dummy.position.set(px, py, pz + lift);
         const a = Math.min(s.age[i], 60) / 60;
         const scale = cellSize * (0.55 + 0.45 * a);
@@ -161,11 +161,16 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
       dummy.updateMatrix();
       meshRef.current.setMatrixAt(i, dummy.matrix);
       if (alive) {
-        const a = Math.min(s.age[i], 80) / 80;
-        // Young = cyan, mature = magenta, old = gold
-        if (a < 0.33) tmpColor.setRGB(0.25, 0.95, 1.0);
-        else if (a < 0.7) tmpColor.setRGB(1.0, 0.35, 0.85);
-        else tmpColor.setRGB(1.0, 0.78, 0.2);
+        if (mode === 'surface') {
+          tmpColor.setRGB(surfaceColors[i * 3], surfaceColors[i * 3 + 1], surfaceColors[i * 3 + 2]);
+        } else if (mode === 'bright') {
+          tmpColor.setRGB(bright[i * 3], bright[i * 3 + 1], bright[i * 3 + 2]);
+        } else {
+          const a = Math.min(s.age[i], 80) / 80;
+          if (a < 0.33) tmpColor.setRGB(0.25, 0.95, 1.0);
+          else if (a < 0.7) tmpColor.setRGB(1.0, 0.35, 0.85);
+          else tmpColor.setRGB(1.0, 0.78, 0.2);
+        }
         meshRef.current.setColorAt(i, tmpColor);
       }
     }
