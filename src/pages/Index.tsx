@@ -92,6 +92,7 @@ const Index = () => {
   const [showSchools, setShowSchools] = useState(false);
   const [showVocabulary, setShowVocabulary] = useState(false);
   const [showDwellings, setShowDwellings] = useState(false);
+  const [showPlaces, setShowPlaces] = useState(true);
   const [showGroundwater, setShowGroundwater] = useState(false);
   const [showPrecipitation, setShowPrecipitation] = useState(false);
   const [showSalinity, setShowSalinity] = useState(false);
