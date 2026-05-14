@@ -142,12 +142,12 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
         case 'seed-qaraqalpaq': seedQaraqalpaq(s); break;
         case 'color-mode': colorModeRef.current = e.mode; break;
         case 'speed': speedRef.current = Math.max(0.5, e.value); break;
-        case 'cell-size': cellSizeRef.current = Math.max(0.04, e.value); break;
+        case 'cell-size': cellSizeRef.current = clampLifeCellSize(e.value); resizeGridForCellSize(cellSizeRef.current); break;
       }
-      emitLifeStats({ generation: s.generation, population: s.population, running: runningRef.current, speed: speedRef.current });
+      emitStats(stateRef.current);
     });
     return off;
-  }, []);
+  }, [meshAspect]);
 
   // Per-frame stepping + instance update
   const dummy = useMemo(() => new THREE.Object3D(), []);
