@@ -209,14 +209,18 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
       meshRef.current.setMatrixAt(i, dummy.matrix);
       if (alive) {
         if (mode === 'surface') {
-          const sr = surfaceColors[i * 3];
-          const sg = surfaceColors[i * 3 + 1];
-          const sb = surfaceColors[i * 3 + 2];
-          tmpColor.setRGB(
-            Math.max(0.18, sr),
-            Math.max(0.18, sg),
-            Math.max(0.18, sb),
-          );
+          // Boost saturation so the pale terrain palette is readable on tiny cubes.
+          let sr = surfaceColors[i * 3];
+          let sg = surfaceColors[i * 3 + 1];
+          let sb = surfaceColors[i * 3 + 2];
+          const avg = (sr + sg + sb) / 3;
+          const sat = 2.2; // saturation boost
+          sr = Math.max(0, Math.min(1, avg + (sr - avg) * sat));
+          sg = Math.max(0, Math.min(1, avg + (sg - avg) * sat));
+          sb = Math.max(0, Math.min(1, avg + (sb - avg) * sat));
+          // Darken slightly so they don't wash out to white.
+          const darken = 0.78;
+          tmpColor.setRGB(sr * darken, sg * darken, sb * darken);
         } else if (mode === 'bright') {
           tmpColor.setRGB(bright[i * 3], bright[i * 3 + 1], bright[i * 3 + 2]);
         } else {
