@@ -215,6 +215,7 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
   return (
     <group rotation={[-Math.PI / 2, 0, 0]}>
       <instancedMesh
+        key={`life-${stateRef.current.width}x${stateRef.current.height}`}
         ref={meshRef}
         args={[undefined, undefined, total]}
         frustumCulled={false}
