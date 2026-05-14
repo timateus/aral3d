@@ -167,7 +167,7 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
         stepped = true;
       }
       if (stepped) {
-        emitLifeStats({ generation: s.generation, population: s.population, running: true, speed: speedRef.current });
+        emitStats(s);
       }
     }
     const cellSize = cellSizeRef.current;
@@ -175,10 +175,11 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
     const mode = colorModeRef.current;
     const positions = layout.positions;
     const surfaceColors = layout.surfaceColors;
-    const bright = brightPaletteRef.current!;
+    const bright = getBrightPalette(total);
     for (let i = 0; i < total; i++) {
       const alive = s.cells[i] === 1;
       if (!alive) {
+        dummy.position.set(0, 0, 0);
         dummy.scale.set(0, 0, 0);
       } else {
         const px = positions[i * 3];
