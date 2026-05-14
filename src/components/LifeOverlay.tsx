@@ -198,14 +198,7 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
         }}
       >
         <boxGeometry args={[1, 1, 1]} />
-        <meshStandardMaterial
-          vertexColors
-          emissive={'#ffffff'}
-          emissiveIntensity={0.35}
-          roughness={0.4}
-          metalness={0.1}
-          toneMapped={false}
-        />
+        <meshBasicMaterial vertexColors toneMapped={false} />
       </instancedMesh>
     </group>
   );
