@@ -206,7 +206,8 @@ export function stepLife(s: LifeState) {
 }
 
 /* ── Tiny pub/sub so HUD <-> overlay can talk without prop drilling ── */
-type LifeEvent =
+export type LifeColorMode = 'age' | 'surface' | 'bright';
+export type LifeEvent =
   | { type: 'play' }
   | { type: 'pause' }
   | { type: 'toggle' }
@@ -214,6 +215,8 @@ type LifeEvent =
   | { type: 'clear' }
   | { type: 'seed-random'; density?: number }
   | { type: 'seed-pattern'; kind: 'gliders' | 'pulsar' }
+  | { type: 'seed-qaraqalpaq' }
+  | { type: 'color-mode'; mode: LifeColorMode }
   | { type: 'speed'; value: number }
   | { type: 'cell-size'; value: number };
 
