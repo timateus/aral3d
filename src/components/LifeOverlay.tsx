@@ -225,7 +225,7 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
           const r = Math.floor(e.instanceId / s.width);
           const c = e.instanceId % s.width;
           toggleCell(s, r, c);
-          emitLifeStats({ generation: s.generation, population: s.population, running: runningRef.current, speed: speedRef.current });
+          emitStats(s);
           e.stopPropagation();
         }}
       >
