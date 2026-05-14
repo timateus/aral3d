@@ -26,6 +26,8 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
   const speedRef = useRef(8); // generations per second
   const accumRef = useRef(0);
   const cellSizeRef = useRef(0.11);
+  const colorModeRef = useRef<LifeColorMode>('age');
+  const brightPaletteRef = useRef<Float32Array | null>(null);
   const [, force] = useState(0);
 
   // Precompute base xy + elevation for each cell of the life grid
