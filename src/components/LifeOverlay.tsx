@@ -114,20 +114,21 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
 
   // Fixed instance buffer sized to the entire grid; dead cells get scale 0.
   const total = stateRef.current.width * stateRef.current.height;
-  const initialInstanceColors = useMemo(() => {
-    const colors = new Float32Array(total * 3);
-    colors.fill(1);
-    return colors;
-  }, [total]);
 
+  // Pre-create instanceColor BEFORE first render so the material compiles
+  // with the USE_INSTANCING_COLOR define. Without this, vertexColors won't
+  // pick up per-instance colors and cells render uncolored/black.
   useLayoutEffect(() => {
     const mesh = meshRef.current;
     if (!mesh) return;
-    mesh.instanceColor = new THREE.InstancedBufferAttribute(initialInstanceColors, 3);
+    const colors = new Float32Array(total * 3);
+    colors.fill(1);
+    mesh.instanceColor = new THREE.InstancedBufferAttribute(colors, 3);
+    mesh.instanceColor.setUsage(THREE.DynamicDrawUsage);
+    mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     const material = mesh.material as THREE.Material;
     material.needsUpdate = true;
-    mesh.instanceColor.needsUpdate = true;
-  }, [initialInstanceColors]);
+  }, [total, gridVersion]);
 
   // Initial seed when activated
   useEffect(() => {

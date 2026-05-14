@@ -40,8 +40,11 @@ export default function LifeHUD({ active, onExit }: Props) {
       <div className="absolute bottom-6 left-6 z-30 glass-panel p-3 flex flex-col gap-3 w-72 pointer-events-auto">
         <div className="flex items-center justify-between">
           <span className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground">Conway · cyclic grid</span>
-          <button onClick={onExit} className="text-muted-foreground hover:text-primary transition-colors">
-            <X className="w-3.5 h-3.5" />
+          <button
+            onClick={onExit}
+            className="flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-1 border border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all"
+          >
+            <X className="w-3 h-3" /> Exit
           </button>
         </div>
 
