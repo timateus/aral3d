@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Play, Pause, StepForward, RotateCcw, Sparkles, Zap, X } from 'lucide-react';
-import { emitLifeEvent, onLifeStats, LifeStats, LifeColorMode } from '@/lib/life-simulation';
+import { emitLifeEvent, onLifeStats, LifeStats, LifeColorMode, getLifeSettings } from '@/lib/life-simulation';
 
 interface Props {
   active: boolean;
@@ -8,12 +8,18 @@ interface Props {
 }
 
 export default function LifeHUD({ active, onExit }: Props) {
+  const initialSettings = getLifeSettings();
   const [stats, setStats] = useState<LifeStats>({ generation: 0, population: 0, running: true, speed: 8 });
   const [speed, setSpeed] = useState(8);
-  const [cellSize, setCellSize] = useState(0.11);
-  const [colorMode, setColorMode] = useState<LifeColorMode>('age');
+  const [cellSize, setCellSize] = useState(initialSettings.cellSize);
+  const [colorMode, setColorMode] = useState<LifeColorMode>(initialSettings.colorMode);
 
-  useEffect(() => onLifeStats(setStats), []);
+  useEffect(() => onLifeStats((next) => {
+    setStats(next);
+    if (next.cellSize !== undefined) setCellSize(next.cellSize);
+    if (next.colorMode) setColorMode(next.colorMode);
+    setSpeed(next.speed);
+  }), []);
 
   if (!active) return null;
 
@@ -25,6 +31,7 @@ export default function LifeHUD({ active, onExit }: Props) {
           <span className="text-primary font-semibold">Game of Life</span>
           <span className="text-muted-foreground ml-3 font-mono">
             gen {stats.generation} · pop {stats.population}
+            {stats.gridWidth && stats.gridHeight ? ` · ${stats.gridWidth}×${stats.gridHeight}` : ''}
           </span>
         </p>
       </div>
@@ -72,7 +79,7 @@ export default function LifeHUD({ active, onExit }: Props) {
             <span className="font-mono text-foreground">{cellSize.toFixed(2)}</span>
           </div>
           <input
-            type="range" min={0.02} max={1.0} step={0.01}
+            type="range" min={0.04} max={1.0} step={0.01}
             value={cellSize}
             onChange={(e) => { const v = parseFloat(e.target.value); setCellSize(v); emitLifeEvent({ type: 'cell-size', value: v }); }}
             className="w-full accent-primary"
