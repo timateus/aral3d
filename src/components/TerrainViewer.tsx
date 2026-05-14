@@ -136,6 +136,7 @@ interface TerrainViewerProps {
   showSchools?: boolean;
   showVocabulary?: boolean;
   showDwellings?: boolean;
+  showPlaces?: boolean;
   agmarShowProposalSites?: boolean;
   aryqWorldActive?: boolean;
   onAryqWorldComplete?: () => void;
