@@ -72,7 +72,7 @@ export default function LifeHUD({ active, onExit }: Props) {
             <span className="font-mono text-foreground">{cellSize.toFixed(2)}</span>
           </div>
           <input
-            type="range" min={0.05} max={0.25} step={0.01}
+            type="range" min={0.02} max={1.0} step={0.01}
             value={cellSize}
             onChange={(e) => { const v = parseFloat(e.target.value); setCellSize(v); emitLifeEvent({ type: 'cell-size', value: v }); }}
             className="w-full accent-primary"
