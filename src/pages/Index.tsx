@@ -1349,8 +1349,11 @@ const Index = () => {
 
       {/* Game of Life HUD */}
       <LifeHUD
-        active={lifeMode && started}
-        onExit={() => { setLifeMode(false); setStarted(false); }}
+        active={(lifeMode && started) || (lifeInExplore && isMapExploration)}
+        onExit={() => {
+          if (lifeInExplore) setLifeInExplore(false);
+          else { setLifeMode(false); setStarted(false); }
+        }}
       />
 
       {/* Dust Storm HUD */}
