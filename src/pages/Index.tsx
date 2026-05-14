@@ -92,6 +92,7 @@ const Index = () => {
   const [showSchools, setShowSchools] = useState(false);
   const [showVocabulary, setShowVocabulary] = useState(false);
   const [showDwellings, setShowDwellings] = useState(false);
+  const [showPlaces, setShowPlaces] = useState(true);
   const [showGroundwater, setShowGroundwater] = useState(false);
   const [showPrecipitation, setShowPrecipitation] = useState(false);
   const [showSalinity, setShowSalinity] = useState(false);
@@ -982,11 +983,15 @@ const Index = () => {
       const has = (k: string) => layers.includes(k);
       setShowBorders(has('borders'));
       setShowRivers(has('rivers'));
-      setShowKhorezm(has('khorezm'));
+      // Khorezm DEM extends terrain south to Khiva — keep it on by default
+      // even when older shared links don't include it in the layers list.
+      setShowKhorezm(true);
       setShowWaterways(has('waterways'));
       setShowSchools(has('schools'));
       setShowVocabulary(has('vocabulary'));
       setShowDwellings(has('dwellings'));
+      // Places (cities/villages) default ON; treat absence as "show" for older links.
+      setShowPlaces(layers.includes('noplaces') ? false : true);
       setShowGroundwater(has('groundwater'));
       setShowPrecipitation(has('precipitation'));
       setShowLandcover(has('landcover'));
@@ -1035,6 +1040,7 @@ const Index = () => {
       if (show13thBasin) layers.push('13basin');
       if (show19thBasin) layers.push('19basin');
       if (show21stBasin) layers.push('21basin');
+      if (!showPlaces) layers.push('noplaces');
       if (layers.length) p.set('layers', layers.join(','));
       const qs = p.toString();
       window.history.replaceState({}, '', qs ? `?${qs}` : window.location.pathname);
@@ -1043,7 +1049,7 @@ const Index = () => {
       showBorders, showRivers, showKhorezm, showWaterways, showSchools, showVocabulary, showDwellings,
       showGroundwater, showPrecipitation, showLandcover, showPopDensity, showMigration,
       showChoropleth, showSalinity, showWaterExtent, show13thBasin, show19thBasin,
-      show21stBasin, waterwayTypeFilter]);
+      show21stBasin, showPlaces, waterwayTypeFilter]);
 
   const handleCopyLink = useCallback(() => {
     navigator.clipboard.writeText(window.location.href).then(() => {
@@ -1184,6 +1190,7 @@ const Index = () => {
             showSchools={showSchools}
             showVocabulary={showVocabulary}
             showDwellings={showDwellings}
+            showPlaces={showPlaces}
             agmarShowProposalSites={agmarTourActive && !!AGMAR_TOUR_STEPS[agmarTourStep]?.proposalSites}
             showOverlayMetrics={isMapExploration}
             showGroundwater={showGroundwater}
@@ -1675,6 +1682,8 @@ const Index = () => {
             onToggleVocabulary={setShowVocabulary}
             showDwellings={showDwellings}
             onToggleDwellings={setShowDwellings}
+            showPlaces={showPlaces}
+            onTogglePlaces={setShowPlaces}
             showGroundwater={showGroundwater}
             onToggleGroundwater={setShowGroundwater}
             showPrecipitation={showPrecipitation}
