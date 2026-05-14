@@ -39,21 +39,88 @@ export function clearLife(s: LifeState) {
 }
 
 export function seedRandom(s: LifeState, density = 0.28) {
-  s.cells.fill(0);
-  s.age.fill(0);
-  let pop = 0;
-  // Seed in a centered region for an organic-looking bloom.
-  const padX = Math.floor(s.width * 0.12);
-  const padY = Math.floor(s.height * 0.12);
-  for (let r = padY; r < s.height - padY; r++) {
-    for (let c = padX; c < s.width - padX; c++) {
+  // Additive: keep existing cells, sprinkle new ones in a random rectangular blob.
+  const w = s.width, h = s.height;
+  const bw = Math.floor(w * (0.18 + Math.random() * 0.4));
+  const bh = Math.floor(h * (0.18 + Math.random() * 0.4));
+  const x0 = Math.floor(Math.random() * (w - bw));
+  const y0 = Math.floor(Math.random() * (h - bh));
+  let pop = s.population;
+  for (let r = y0; r < y0 + bh; r++) {
+    for (let c = x0; c < x0 + bw; c++) {
       if (Math.random() < density) {
-        s.cells[r * s.width + c] = 1;
-        pop++;
+        const i = r * w + c;
+        if (!s.cells[i]) {
+          s.cells[i] = 1;
+          s.age[i] = 1;
+          pop++;
+        }
       }
     }
   }
-  s.generation = 0;
+  s.population = pop;
+}
+
+/**
+ * Karakalpak-inspired ornamental stamp: 4-fold symmetric geometric motif at
+ * a random position with a random size. Built by drawing a few rhomboid /
+ * cross / hook strokes inside one quadrant and mirroring across both axes.
+ */
+export function seedQaraqalpaq(s: LifeState, sizeOpt?: number, cxOpt?: number, cyOpt?: number) {
+  const w = s.width, h = s.height;
+  const size = sizeOpt ?? (8 + Math.floor(Math.random() * 18)); // 8..25 (half-extent)
+  const cx = cxOpt ?? Math.floor(size + Math.random() * (w - size * 2));
+  const cy = cyOpt ?? Math.floor(size + Math.random() * (h - size * 2));
+  // Build a quadrant pattern of size×size, then mirror to make 4-fold symmetry.
+  const quad = new Uint8Array(size * size);
+  const set = (x: number, y: number) => {
+    if (x < 0 || y < 0 || x >= size || y >= size) return;
+    quad[y * size + x] = 1;
+  };
+  // Diagonal rhombus edge
+  for (let i = 0; i < size; i++) set(i, size - 1 - i);
+  // Inner diamond
+  const inner = Math.max(2, Math.floor(size * 0.55));
+  for (let i = 0; i < inner; i++) set(i, inner - 1 - i);
+  // A few random hook strokes
+  const hooks = 2 + Math.floor(Math.random() * 3);
+  for (let k = 0; k < hooks; k++) {
+    const hx = Math.floor(Math.random() * size);
+    const hy = Math.floor(Math.random() * size);
+    const len = 2 + Math.floor(Math.random() * Math.max(2, size / 3));
+    const horiz = Math.random() < 0.5;
+    for (let i = 0; i < len; i++) {
+      if (horiz) set(hx + i, hy); else set(hx, hy + i);
+    }
+    // Hook turn
+    for (let i = 0; i < Math.max(2, len / 2); i++) {
+      if (horiz) set(hx + len, hy + i); else set(hx + i, hy + len);
+    }
+  }
+  // Center cross
+  for (let i = 0; i < Math.max(2, size / 4); i++) { set(i, 0); set(0, i); }
+  // Stamp with 4-fold symmetry
+  let pop = s.population;
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      if (!quad[y * size + x]) continue;
+      const points = [
+        [cx + x, cy + y],
+        [cx - 1 - x, cy + y],
+        [cx + x, cy - 1 - y],
+        [cx - 1 - x, cy - 1 - y],
+      ];
+      for (const [px, py] of points) {
+        if (px < 0 || py < 0 || px >= w || py >= h) continue;
+        const i = py * w + px;
+        if (!s.cells[i]) {
+          s.cells[i] = 1;
+          s.age[i] = 1;
+          pop++;
+        }
+      }
+    }
+  }
   s.population = pop;
 }
 
