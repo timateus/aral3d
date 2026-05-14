@@ -25,6 +25,7 @@ import type { LibraryObject } from './ObjectLibrary3D';
 import SchoolsLayer from './SchoolsLayer';
 import VocabularyLayer from './VocabularyLayer';
 import DwellingsLayer from './DwellingsLayer';
+import PlacesLayer from './PlacesLayer';
 import GameMode from './GameMode';
 import BowlWorld from './BowlWorld';
 import AryqWorld from './AryqWorld';
