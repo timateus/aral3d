@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useLayoutEffect } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import type { TerrainData } from '@/lib/geotiff-loader';
@@ -114,6 +114,20 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
 
   // Fixed instance buffer sized to the entire grid; dead cells get scale 0.
   const total = stateRef.current.width * stateRef.current.height;
+  const initialInstanceColors = useMemo(() => {
+    const colors = new Float32Array(total * 3);
+    colors.fill(1);
+    return colors;
+  }, [total]);
+
+  useLayoutEffect(() => {
+    const mesh = meshRef.current;
+    if (!mesh) return;
+    mesh.instanceColor = new THREE.InstancedBufferAttribute(initialInstanceColors, 3);
+    const material = mesh.material as THREE.Material;
+    material.needsUpdate = true;
+    mesh.instanceColor.needsUpdate = true;
+  }, [initialInstanceColors]);
 
   // Initial seed when activated
   useEffect(() => {
@@ -194,7 +208,14 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
       meshRef.current.setMatrixAt(i, dummy.matrix);
       if (alive) {
         if (mode === 'surface') {
-          tmpColor.setRGB(surfaceColors[i * 3], surfaceColors[i * 3 + 1], surfaceColors[i * 3 + 2]);
+          const sr = surfaceColors[i * 3];
+          const sg = surfaceColors[i * 3 + 1];
+          const sb = surfaceColors[i * 3 + 2];
+          tmpColor.setRGB(
+            Math.max(0.18, sr),
+            Math.max(0.18, sg),
+            Math.max(0.18, sb),
+          );
         } else if (mode === 'bright') {
           tmpColor.setRGB(bright[i * 3], bright[i * 3 + 1], bright[i * 3 + 2]);
         } else {
@@ -204,6 +225,8 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
           else tmpColor.setRGB(1.0, 0.78, 0.2);
         }
         meshRef.current.setColorAt(i, tmpColor);
+      } else {
+        meshRef.current.setColorAt(i, tmpColor.setRGB(1, 1, 1));
       }
     }
     meshRef.current.instanceMatrix.needsUpdate = true;
