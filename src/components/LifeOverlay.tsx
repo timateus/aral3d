@@ -3,6 +3,8 @@ import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import type { GeoBounds, TerrainData } from '@/lib/geotiff-loader';
 import { getElevationColor } from '@/lib/geotiff-loader';
+import { loadMapboxSatellite } from '@/lib/mapbox-tiles';
+import { useTerrainMode } from '@/hooks/useTerrainMode';
 import {
   createLife, stepLife, seedRandom, seedPattern, seedQaraqalpaq, clearLife, toggleCell,
   onLifeEvent, emitLifeStats, LifeState, LifeColorMode, resizeLife, getLifeSettings,
