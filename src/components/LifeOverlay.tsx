@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useLayoutEffect } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import type { TerrainData } from '@/lib/geotiff-loader';
@@ -114,6 +114,20 @@ const LifeOverlay = ({ terrain, exaggeration, active }: Props) => {
 
   // Fixed instance buffer sized to the entire grid; dead cells get scale 0.
   const total = stateRef.current.width * stateRef.current.height;
+  const initialInstanceColors = useMemo(() => {
+    const colors = new Float32Array(total * 3);
+    colors.fill(1);
+    return colors;
+  }, [total]);
+
+  useLayoutEffect(() => {
+    const mesh = meshRef.current;
+    if (!mesh) return;
+    mesh.instanceColor = new THREE.InstancedBufferAttribute(initialInstanceColors, 3);
+    const material = mesh.material as THREE.Material;
+    material.needsUpdate = true;
+    mesh.instanceColor.needsUpdate = true;
+  }, [initialInstanceColors]);
 
   // Initial seed when activated
   useEffect(() => {
