@@ -25,7 +25,7 @@ function readCustom(): GeoBounds {
 let listeners = new Set<() => void>();
 let _mode: TerrainMode = (localStorage.getItem(STORAGE_MODE) as TerrainMode) || 'classic';
 let _token: string = localStorage.getItem(STORAGE_TOKEN) || DEFAULT_TOKEN;
-let _region: RegionId = (localStorage.getItem(STORAGE_REGION) as RegionId) || 'aral';
+let _region: RegionId = (localStorage.getItem(STORAGE_REGION) as RegionId) || 'custom';
 let _custom: GeoBounds = readCustom();
 
 function notify() { listeners.forEach((l) => l()); }

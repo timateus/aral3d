@@ -23,7 +23,7 @@ export const REGION_PRESETS: Record<Exclude<RegionId, 'custom'>, RegionPreset> =
 };
 
 export const DEFAULT_CUSTOM_BOUNDS: GeoBounds = {
-  minLon: 57.5, maxLon: 62.5, minLat: 43.0, maxLat: 47.5,
+  minLon: 54, maxLon: 66, minLat: 40, maxLat: 47,
 };
 
 // Wide Central Asia bbox used as the play-area for game mode.
