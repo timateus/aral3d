@@ -1481,113 +1481,123 @@ const Index = () => {
       )}
 
       {/* Header */}
-      {isMapExploration && (
-        <div className="absolute top-4 left-4 right-4 z-10 flex flex-wrap items-center gap-3">
-          <button
-            onClick={() => { setStarted(false); setGameModeActive(false); }}
-            className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground hover:text-primary transition-colors border border-border/50 px-3 py-1.5 bg-card/60 backdrop-blur-sm"
-          >
-            Menu
-          </button>
-          <MirageToggle />
-          <div className="flex items-center border border-border/50 bg-card/60 backdrop-blur-sm">
-            {([
-              { id: 'none', label: 'Surface' },
-              { id: 'contours', label: 'Contours' },
-              { id: 'vectors', label: 'Vectors' },
-            ] as const).map(opt => (
+      {isMapExploration && (() => {
+        const btnBase = "text-[10px] tracking-[0.15em] uppercase border border-border/50 px-3 py-1.5 bg-card/60 backdrop-blur-sm transition-colors flex items-center gap-1.5";
+        return (
+          <div className="absolute top-4 left-4 right-4 z-30 h-9 flex items-center gap-2 pointer-events-none">
+            {/* Left cluster */}
+            <div className="flex items-center gap-2 pointer-events-auto">
               <button
-                key={opt.id}
-                onClick={() => setTerrainStyle(opt.id)}
-                title={opt.id === 'contours' ? 'Show terrain as elevation contour lines' : opt.id === 'vectors' ? 'Show terrain as gradient vector field' : 'Show terrain surface only'}
-                className={`text-[10px] tracking-[0.15em] uppercase px-2.5 py-1.5 transition-colors ${
-                  terrainStyle === opt.id
-                    ? 'text-primary bg-primary/10'
-                    : 'text-muted-foreground hover:text-primary'
-                }`}
+                onClick={() => { setStarted(false); setGameModeActive(false); }}
+                className={`${btnBase} text-muted-foreground hover:text-primary`}
               >
-                {opt.label}
+                Menu
               </button>
-            ))}
+              <MirageToggle />
+            </div>
+
+            {/* Center: terrain style segmented */}
+            <div className="flex items-center border border-border/50 bg-card/60 backdrop-blur-sm pointer-events-auto">
+              {([
+                { id: 'none', label: 'Surface' },
+                { id: 'contours', label: 'Contours' },
+                { id: 'vectors', label: 'Vectors' },
+              ] as const).map(opt => (
+                <button
+                  key={opt.id}
+                  onClick={() => setTerrainStyle(opt.id)}
+                  title={opt.id === 'contours' ? 'Show terrain as elevation contour lines' : opt.id === 'vectors' ? 'Show terrain as gradient vector field' : 'Show terrain surface only'}
+                  className={`text-[10px] tracking-[0.15em] uppercase px-2.5 py-1.5 transition-colors ${
+                    terrainStyle === opt.id ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-primary'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Actions cluster */}
+            <div className="flex items-center gap-2 pointer-events-auto">
+              {!gameModeActive && (
+                <button
+                  onClick={() => setLifeInExplore(v => !v)}
+                  title="Conway's Game of Life over the terrain"
+                  className={`${btnBase} ${lifeInExplore ? 'text-primary border-primary/40 bg-primary/10' : 'text-muted-foreground hover:text-primary'}`}
+                >
+                  ✦ {lifeInExplore ? 'Life on' : 'Life'}
+                </button>
+              )}
+              {gameModeActive && (
+                <button
+                  onClick={() => setGameModeActive(false)}
+                  className={`${btnBase} text-primary border-primary/40 bg-primary/10`}
+                >
+                  <Gamepad2 className="w-3 h-3" />
+                  Exit Game
+                </button>
+              )}
+            </div>
+
+            {/* Title — hidden on smaller widths */}
+            {!gameModeActive && (
+              <div className="hidden xl:flex items-center gap-2 mx-2 pointer-events-auto">
+                <h1 className="text-lg font-semibold text-foreground tracking-tight">Aral Sea Terrain Viewer</h1>
+                <p className="text-xs text-muted-foreground font-mono">aral_region_30m.tif</p>
+              </div>
+            )}
+
+            {/* Right cluster — pushed to the end */}
+            <div className="ml-auto flex items-center gap-2 pointer-events-auto">
+              <button
+                onClick={handleCopyLink}
+                className={`${btnBase} text-muted-foreground hover:text-primary`}
+              >
+                <Link2 className="w-3 h-3" />
+                Copy Link
+                <span id="copy-link-feedback" className="text-primary font-bold" />
+              </button>
+              <button
+                onClick={toggleScreenRecording}
+                className={`${btnBase} ${screenRecording ? 'text-destructive border-destructive/50 bg-destructive/10 animate-pulse' : 'text-muted-foreground hover:text-primary'}`}
+              >
+                <Circle className={`w-3 h-3 ${screenRecording ? 'fill-destructive' : ''}`} />
+                {screenRecording ? 'Stop (R)' : 'Record (R)'}
+              </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    title="More controls"
+                    className={`${btnBase} text-muted-foreground hover:text-primary`}
+                  >
+                    <MoreHorizontal className="w-3 h-3" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="text-xs">
+                  <DropdownMenuItem onSelect={() => setSidePanelHidden(v => !v)}>
+                    {sidePanelHidden ? <PanelRightOpen className="w-3 h-3 mr-2" /> : <PanelRightClose className="w-3 h-3 mr-2" />}
+                    {sidePanelHidden ? 'Show side panel' : 'Hide side panel'}
+                  </DropdownMenuItem>
+                  {!gameModeActive && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onSelect={() => setShowCharacterSelect(true)}>
+                        <Gamepad2 className="w-3 h-3 mr-2" />
+                        Game Mode
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
-          <button
-            onClick={() => setSidePanelHidden(v => !v)}
-            title={sidePanelHidden ? 'Show side panel' : 'Hide side panel'}
-            className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground hover:text-primary transition-colors border border-border/50 px-3 py-1.5 bg-card/60 backdrop-blur-sm flex items-center gap-1.5"
-          >
-            {sidePanelHidden ? <PanelRightOpen className="w-3 h-3" /> : <PanelRightClose className="w-3 h-3" />}
-            {sidePanelHidden ? 'Show panel' : 'Hide panel'}
-          </button>
-          {!gameModeActive && (
-            <button
-              onClick={() => {
-                setShowCharacterSelect(true);
-              }}
-              className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground hover:text-primary transition-colors border border-border/50 px-3 py-1.5 bg-card/60 backdrop-blur-sm flex items-center gap-1.5"
-            >
-              <Gamepad2 className="w-3 h-3" />
-              Game Mode
-            </button>
-          )}
-          {gameModeActive && (
-            <button
-              onClick={() => setGameModeActive(false)}
-              className="text-[10px] tracking-[0.15em] uppercase text-primary transition-colors border border-primary/40 px-3 py-1.5 bg-primary/10 backdrop-blur-sm flex items-center gap-1.5"
-            >
-              <Gamepad2 className="w-3 h-3" />
-              Exit Game
-            </button>
-          )}
-          {!gameModeActive && (
-            <button
-              onClick={() => setLifeInExplore(v => !v)}
-              title="Conway's Game of Life over the terrain"
-              className={`text-[10px] tracking-[0.15em] uppercase transition-colors border px-3 py-1.5 backdrop-blur-sm flex items-center gap-1.5 ${
-                lifeInExplore
-                  ? 'text-primary border-primary/40 bg-primary/10'
-                  : 'text-muted-foreground hover:text-primary border-border/50 bg-card/60'
-              }`}
-            >
-              ✦ {lifeInExplore ? 'Life on' : 'Life'}
-            </button>
-          )}
-          {!gameModeActive && (
-            <>
-              <h1 className="text-lg font-semibold text-foreground tracking-tight">
-                Aral Sea Terrain Viewer
-              </h1>
-              <p className="text-xs text-muted-foreground font-mono">
-                aral_region_30m.tif
-              </p>
-            </>
-          )}
-          <button
-            onClick={handleCopyLink}
-            className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground hover:text-primary transition-colors border border-border/50 px-3 py-1.5 bg-card/60 backdrop-blur-sm flex items-center gap-1.5"
-          >
-            <Link2 className="w-3 h-3" />
-            Copy Link
-            <span id="copy-link-feedback" className="text-primary font-bold" />
-          </button>
-          <button
-            onClick={toggleScreenRecording}
-            className={`text-[10px] tracking-[0.15em] uppercase transition-colors border px-3 py-1.5 backdrop-blur-sm flex items-center gap-1.5 ${
-              screenRecording
-                ? 'text-destructive border-destructive/50 bg-destructive/10 animate-pulse'
-                : 'text-muted-foreground hover:text-primary border-border/50 bg-card/60'
-            }`}
-          >
-            <Circle className={`w-3 h-3 ${screenRecording ? 'fill-destructive' : ''}`} />
-            {screenRecording ? 'Stop (R)' : 'Record (R)'}
-          </button>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Terrain style sub-controls (second row, only when active) */}
       {isMapExploration && terrainStyle !== 'none' && (
-        <div className="absolute top-16 left-4 right-4 z-10 flex flex-wrap items-center gap-2">
+        <div className="absolute top-[3.5rem] left-4 right-4 z-20 flex flex-wrap items-center gap-2 pointer-events-none">
           {terrainStyle === 'contours' && (
-            <label className="flex items-center gap-1.5 text-[10px] tracking-[0.15em] uppercase text-muted-foreground border border-border/50 px-2 py-1.5 bg-card/60 backdrop-blur-sm">
+            <label className="pointer-events-auto flex items-center gap-1.5 text-[10px] tracking-[0.15em] uppercase text-muted-foreground border border-border/50 px-2 py-1.5 bg-card/60 backdrop-blur-sm">
               <span>Interval</span>
               <select
                 value={contourInterval}
@@ -1601,7 +1611,7 @@ const Index = () => {
             </label>
           )}
           {terrainStyle === 'vectors' && (
-            <label className="flex items-center gap-1.5 text-[10px] tracking-[0.15em] uppercase text-muted-foreground border border-border/50 px-2 py-1.5 bg-card/60 backdrop-blur-sm">
+            <label className="pointer-events-auto flex items-center gap-1.5 text-[10px] tracking-[0.15em] uppercase text-muted-foreground border border-border/50 px-2 py-1.5 bg-card/60 backdrop-blur-sm">
               <span>Spacing</span>
               <select
                 value={vectorInterval}
@@ -1616,7 +1626,7 @@ const Index = () => {
           )}
           <button
             onClick={() => setHideTerrainSurface(v => !v)}
-            className={`text-[10px] tracking-[0.15em] uppercase px-2.5 py-1.5 transition-colors border border-border/50 bg-card/60 backdrop-blur-sm ${
+            className={`pointer-events-auto text-[10px] tracking-[0.15em] uppercase px-2.5 py-1.5 transition-colors border border-border/50 bg-card/60 backdrop-blur-sm ${
               hideTerrainSurface ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-primary'
             }`}
           >
