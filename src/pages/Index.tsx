@@ -151,6 +151,7 @@ const Index = () => {
   const [riverFlyover, setRiverFlyover] = useState(false);
   const [scenarioActions, setScenarioActions] = useState<ScenarioAction[]>([]);
   const [showDataPanel, setShowDataPanel] = useState(false);
+  const [dataPanelExpanded, setDataPanelExpanded] = useState(false);
   const [narrativeActive, setNarrativeActive] = useState(false);
   const [readingActive, setReadingActive] = useState(false);
   const [readingStep, setReadingStep] = useState(0);
@@ -1476,6 +1477,7 @@ const Index = () => {
             onToggleSeries={toggleSeries}
             enabledClimate={enabledClimate}
             onToggleClimate={toggleClimate}
+            defaultExpanded={dataPanelExpanded}
           />
         </div>
       )}
@@ -1750,11 +1752,18 @@ const Index = () => {
             {riverFlyover ? 'Flying…' : 'Amu Darya Flyover'}
           </button>
           <button
-            onClick={() => setShowDataPanel(v => !v)}
+            onClick={() => { setDataPanelExpanded(false); setShowDataPanel(v => !v); }}
             className="glass-panel p-2.5 w-full flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
             <BarChart3 className="w-3.5 h-3.5" />
             {showDataPanel ? 'Hide Data Panel' : 'Show Data Panel'}
+          </button>
+          <button
+            onClick={() => { setDataPanelExpanded(true); setShowDataPanel(true); }}
+            className="glass-panel p-2.5 w-full flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+          >
+            <BarChart3 className="w-3.5 h-3.5" />
+            Show Data Table
           </button>
           <button
             onClick={startNarrative}

@@ -36,6 +36,7 @@ interface DataPanelProps {
   onToggleSeries: (key: string) => void;
   enabledClimate: Set<string>;
   onToggleClimate: (key: string) => void;
+  defaultExpanded?: boolean;
 }
 
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -58,9 +59,9 @@ export const CLIMATE_SERIES = [
   { key: 'groundwater', name: 'Avg GW (cm)', color: 'hsl(50, 70%, 55%)' },
 ];
 
-const DataPanel = ({ currentYear, onClose, annualData, enabledSeries, onToggleSeries, enabledClimate, onToggleClimate }: DataPanelProps) => {
+const DataPanel = ({ currentYear, onClose, annualData, enabledSeries, onToggleSeries, enabledClimate, onToggleClimate, defaultExpanded = false }: DataPanelProps) => {
   const [monthlyData, setMonthlyData] = useState<ClimateMonthly[]>([]);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(defaultExpanded);
 
   useEffect(() => {
     fetch('/data/karakalpakstan_monthly.json').then(r => r.json()).then(setMonthlyData);
