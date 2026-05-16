@@ -147,13 +147,21 @@ export function getElevationColor(normalized: number, rawElevation?: number): [n
       0.66 + t * 0.08,
     ];
   }
-  // Land: blend rich elevation color toward warm paper (~45% paper, 55% color).
-  const paper: [number, number, number] = [0.93, 0.90, 0.82];
-  const k = 0.45;
-  return [
+  // Land: blend rich elevation color toward warm paper (~25% paper, 75% color)
+  // and boost chroma slightly so vintage-atlas hues read clearly.
+  const paper: [number, number, number] = [0.95, 0.92, 0.84];
+  const k = 0.25;
+  const mix: [number, number, number] = [
     c[0] * (1 - k) + paper[0] * k,
     c[1] * (1 - k) + paper[1] * k,
     c[2] * (1 - k) + paper[2] * k,
+  ];
+  const m = (mix[0] + mix[1] + mix[2]) / 3;
+  const sat = 1.15;
+  return [
+    Math.max(0, Math.min(1, m + (mix[0] - m) * sat)),
+    Math.max(0, Math.min(1, m + (mix[1] - m) * sat)),
+    Math.max(0, Math.min(1, m + (mix[2] - m) * sat)),
   ];
 }
 
