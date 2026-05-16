@@ -90,8 +90,10 @@ const MapboxTerrainMesh = ({ terrain, exaggeration, token, onError }: Props) => 
         vec3 col = uHasTex > 0.5 ? texture2D(uSatellite, vUv).rgb : vec3(0.4, 0.42, 0.45);
         if (uMirage > 0.5) {
           float gray = dot(col, vec3(0.299, 0.587, 0.114));
-          vec3 sepia = vec3(gray * 1.05, gray * 0.97, gray * 0.85);
-          col = mix(col, sepia, 0.7);
+          // Mild desaturation + slight warm tint — keep land/water colors readable
+          vec3 desat = mix(col, vec3(gray), 0.35);
+          vec3 warm = desat * vec3(1.05, 1.0, 0.92);
+          col = warm;
         }
         gl_FragColor = vec4(col, 1.0);
       }
