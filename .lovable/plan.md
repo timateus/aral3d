@@ -1,67 +1,43 @@
-# Mapbox-Native Elevation for Satellite Mode
+# Color in Mirage + Toolbar Order
 
-## Goal
+## 1. Restore color to the mirage surface
 
-In Satellite mode, derive elevation **entirely from Mapbox terrain-RGB tiles** (no GeoTIFF needed) so the app scales to any region on Earth. Classic mode keeps the GeoTIFF DEM unchanged. Add a region preset dropdown (Aral default, Khorezm, Custom bounds).
+**Classic DEM mode** (`src/lib/geotiff-loader.ts` → `getElevationColor`)
+The current mirage branch maps land to a warm-paper grayscale ramp and water to slate-blue, killing all elevation hue. Replace it with a desaturated-but-tinted version of the full elevation palette:
 
-## Current state
+- Get the rich color from `getElevationColorAbsolute(elev)` as today.
+- Blend toward a warm paper base by ~55% (not 100%) so straw / ochre / sienna / sea-blue all stay visible, just softened.
+- Keep water (elev < 0) tinted toward muted teal-blue instead of slate-only.
 
-- ~38 files read `terrain.elevations` (Float32 grid), `terrain.bounds`, `terrain.minElevation`, `terrain.maxElevation`, `terrain.width`, `terrain.height` from a single `useTerrain()` hook backed by `geotiff-loader.ts`.
-- `MapboxTerrainMesh` currently *reuses* the GeoTIFF grid for vertex heights — Mapbox provides only the satellite drape.
-- `mapbox-tiles.ts` already fetches and decodes terrain-RGB tiles.
+This preserves the "paper map" feel but yields a colored map similar to a vintage atlas instead of a flat gray.
 
-## Design
+**Satellite mode** (`src/components/MapboxTerrainMesh.tsx` fragment shader)
+The shader currently force-mixes sepia at 0.7 in mirage. Change to a mild desaturation (mix toward luminance at ~0.35) with a slight warm tint, so the satellite colors of land/water remain readable in mirage.
 
-Introduce a second elevation provider that produces the **exact same `TerrainData` shape** as the GeoTIFF loader. The active provider is selected by terrain mode. All downstream consumers (water sim, basins, pins, STL, game, etc.) keep working with zero changes because the shape is identical.
+## 2. Bring order to the top toolbar
+
+Current layout (`src/pages/Index.tsx` ~lines 1483–1625) is one wide `flex-wrap` row at `top-4` containing 9+ buttons plus a title. It wraps into a second line that collides with the `top-16` contour/vector subrow and with the DataPanel mounted at `top-16 left-4`.
+
+Reorganize into three stable clusters on a single row:
 
 ```text
-                ┌── classic  ──► geotiff-loader.ts ──┐
-terrainMode ────┤                                    ├──► useTerrain() ─► all 38 consumers
-                └── satellite ──► mapbox-dem.ts  ────┘
-                                  (terrain-RGB → Float32 grid)
+[ Menu | Mirage ]   [ Surface | Contours | Vectors ]   [ Life | Game ]            <title>            [ Copy | Record | ⋯ More ]
+   left group              center group (style)            actions group       (hidden < lg)                right group
 ```
 
-## Steps
+Concrete changes in `src/pages/Index.tsx`:
 
-1. **New `src/lib/mapbox-dem.ts`**
-   - `loadMapboxDEM(bounds, token, opts)` → `TerrainData` matching `geotiff-loader.ts` output.
-   - Stitches terrain-RGB tiles at an appropriate zoom for the bbox (target ~512×512 grid).
-   - Decodes `elev = -10000 + (R*65536 + G*256 + B)*0.1` per pixel into a Float32Array.
-   - Computes `minElevation` / `maxElevation` from the decoded grid.
-   - Returns `{ elevations, width, height, bounds, minElevation, maxElevation }`.
+- Split the single wrapping row into three sibling flex groups inside one bar: left (Menu, Mirage, Hide panel), center (terrain-style segmented + Life + Game Mode), right (Copy Link, Record, More).
+- Move low-frequency buttons (Hide/Show panel, Copy Link, Record, Game Mode when not active) behind a small `⋯ More` dropdown using the existing `popover` ui component so the bar fits on one line at typical viewports.
+- Drop the inline `<h1>` title + filename on screens narrower than `lg` (`hidden lg:flex`) — they're the main reason the bar wraps today.
+- Reserve a fixed header height (`h-12`) on the top bar wrapper and shift dependent overlays down accordingly:
+  - DataPanel wrapper: `top-16` → `top-[4.5rem]` and constrain `max-height` so it scrolls instead of pushing.
+  - Terrain-style subrow (`top-16`): only render when `terrainStyle !== 'none'`, and move it to `top-[3.25rem]` with its own `h-9` so it sits flush under the bar without colliding.
+- Add `z` ordering: main bar `z-30`, subrow `z-20`, DataPanel `z-10` so a momentary overflow never hides controls.
 
-2. **New `src/hooks/useTerrainSource.ts`** (thin wrapper)
-   - Reads `useTerrainMode()`. If `classic`, delegates to existing `useTerrain()`. If `satellite`, runs `loadMapboxDEM(activeBounds, token)` via React Query and returns the same shape.
-   - Caches per `(bounds, token)` key. Loading + error states surface to existing UI spinners.
-
-3. **Region presets**
-   - Add `src/lib/terrain-regions.ts`: `{ id, label, bounds }` for Aral (default), Khorezm, plus a `Custom` entry.
-   - Extend `useTerrainMode` with `region: 'aral' | 'khorezm' | 'custom'` + `customBounds` (persisted in localStorage and URL params alongside existing state).
-
-4. **`TerrainModeSwitch.tsx`**
-   - When Satellite is active, show a region dropdown. "Custom" reveals 4 inputs (minLng, minLat, maxLng, maxLat) with validation (max ~2° span to keep tile count sane).
-   - Token UI stays as-is.
-
-5. **`TerrainViewer.tsx` and other consumers**
-   - Replace `useTerrain()` call with `useTerrainSource()`. No other API changes.
-   - `MapboxTerrainMesh` no longer needs to pull elevations from the global GeoTIFF — it just consumes the unified `TerrainData` like `TerrainMesh` does.
-
-6. **Layer behavior in Satellite mode**
-   - Layers tied to Aral-specific GeoJSON (basins, water-extent timeline, schools, vocab) only make geographic sense over the Aral region. When `region !== 'aral'`, auto-hide them and show a small note: "This layer is Aral-region only." Game mode and water-sim work over any DEM.
-
-7. **Cleanup**
-   - Keep GeoTIFF code intact for Classic mode (per "Satellite mode only" scope). Just route through the unified hook.
-
-## Technical Details
-
-- **Tile stitching:** For a bbox, pick zoom `z` so that tile count ≤ 16 (4×4). Mapbox terrain-RGB max zoom ~14. Use `@2x` 512px tiles → 2048×2048 max raster, downsample to 512×512 grid via canvas.
-- **`TerrainData` contract** stays identical, so `geoToWorld`, water-flow neighbor lookup, STL export grid, pin snap raycasting, etc. all keep working.
-- **URL state:** add `region=aral|khorezm|custom` and (if custom) `bbox=minLng,minLat,maxLng,maxLat` to existing state-link params.
-- **Performance:** decoded grid is ~1 MB Float32; same order as current GeoTIFF.
-- **Failure modes:** missing token → keep existing token-input UI; network error → show toast and fall back to Classic.
+No new components, no behavior changes — only layout grouping, a More dropdown using existing shadcn `DropdownMenu`, and coordinate adjustments.
 
 ## Out of scope
 
-- Touching Classic mode's GeoTIFF pipeline.
-- Region-specific overlay redesign (just hide them outside Aral for now).
-- Worldwide bounds picker UI on a minimap (text inputs only this round).
+- No changes to game/walk/soap/dust HUDs (those are conditional and not part of the overlap report).
+- No changes to the right-side Legend/ControlPanel column.

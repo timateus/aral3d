@@ -136,22 +136,24 @@ export function getElevationColor(normalized: number, rawElevation?: number): [n
   const elev = rawElevation !== undefined ? rawElevation : normalized * 300;
   const c = getElevationColorAbsolute(elev);
   if (!isMirage) return c;
-  // Mirage: paper-toned, desaturated palette. Pull toward warm off-white,
-  // keep just enough variation to read elevation. Water stays cooler.
-  const luminance = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  // Mirage: vintage atlas — keep elevation hue, soften toward warm paper.
+  // Water gets a muted teal-blue tint instead of slate-only.
   if (elev < 0) {
-    // Water/below sea — pale slate-blue
     const t = Math.max(0, Math.min(1, (elev + 12) / 12));
-    return [0.62 + t * 0.06, 0.70 + t * 0.04, 0.74 + t * 0.02];
+    // Deep -> shallow: muted teal -> pale aqua
+    return [
+      0.42 + t * 0.20,
+      0.62 + t * 0.12,
+      0.66 + t * 0.08,
+    ];
   }
-  // Land — warm paper, slight elevation tint
-  const paper: [number, number, number] = [0.93, 0.90, 0.84];
-  const shadow: [number, number, number] = [0.78, 0.72, 0.62];
-  const t = Math.max(0, Math.min(1, luminance));
+  // Land: blend rich elevation color toward warm paper (~45% paper, 55% color).
+  const paper: [number, number, number] = [0.93, 0.90, 0.82];
+  const k = 0.45;
   return [
-    shadow[0] + (paper[0] - shadow[0]) * t,
-    shadow[1] + (paper[1] - shadow[1]) * t,
-    shadow[2] + (paper[2] - shadow[2]) * t,
+    c[0] * (1 - k) + paper[0] * k,
+    c[1] * (1 - k) + paper[1] * k,
+    c[2] * (1 - k) + paper[2] * k,
   ];
 }
 
