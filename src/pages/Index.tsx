@@ -1497,7 +1497,7 @@ const Index = () => {
             </div>
 
             {/* Center: terrain style segmented */}
-            <div className="flex items-center border border-border/50 bg-card/60 backdrop-blur-sm pointer-events-auto">
+            <div className="flex items-center border border-border/50 bg-card/60 backdrop-blur-sm pointer-events-auto shrink-0">
               {([
                 { id: 'none', label: 'Surface' },
                 { id: 'contours', label: 'Contours' },
