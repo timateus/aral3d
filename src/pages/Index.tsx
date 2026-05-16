@@ -151,6 +151,7 @@ const Index = () => {
   const [riverFlyover, setRiverFlyover] = useState(false);
   const [scenarioActions, setScenarioActions] = useState<ScenarioAction[]>([]);
   const [showDataPanel, setShowDataPanel] = useState(false);
+  const [dataPanelExpanded, setDataPanelExpanded] = useState(false);
   const [narrativeActive, setNarrativeActive] = useState(false);
   const [readingActive, setReadingActive] = useState(false);
   const [readingStep, setReadingStep] = useState(0);
