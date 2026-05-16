@@ -1477,6 +1477,7 @@ const Index = () => {
             onToggleSeries={toggleSeries}
             enabledClimate={enabledClimate}
             onToggleClimate={toggleClimate}
+            defaultExpanded={dataPanelExpanded}
           />
         </div>
       )}
