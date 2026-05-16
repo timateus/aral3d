@@ -1467,7 +1467,7 @@ const Index = () => {
 
       {/* Data Panel - positioned left */}
       {isMapExploration && showDataPanel && !isMobile && (
-        <div className="absolute top-16 left-4 z-10">
+        <div className="absolute top-[4.5rem] left-4 z-10 max-h-[calc(100vh-6rem)] overflow-auto">
           <DataPanel
             currentYear={waterExtentYear}
             onClose={() => setShowDataPanel(false)}
