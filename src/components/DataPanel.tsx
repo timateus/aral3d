@@ -36,6 +36,7 @@ interface DataPanelProps {
   onToggleSeries: (key: string) => void;
   enabledClimate: Set<string>;
   onToggleClimate: (key: string) => void;
+  defaultExpanded?: boolean;
 }
 
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
