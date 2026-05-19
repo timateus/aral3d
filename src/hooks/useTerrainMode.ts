@@ -1,13 +1,16 @@
 import { useEffect, useState, useCallback } from 'react';
 import type { GeoBounds } from '@/lib/geotiff-loader';
 import { DEFAULT_CUSTOM_BOUNDS, type RegionId } from '@/lib/terrain-regions';
+import type { BaseStyle } from '@/lib/mapbox-tiles';
 
 export type TerrainMode = 'classic' | 'satellite';
+export type { BaseStyle };
 
 const STORAGE_TOKEN = 'mapbox_token';
 const STORAGE_MODE = 'terrain_mode';
 const STORAGE_REGION = 'terrain_region';
 const STORAGE_CUSTOM = 'terrain_custom_bounds';
+const STORAGE_BASE_STYLE = 'terrain_base_style';
 
 const DEFAULT_TOKEN = 'pk.eyJ1IjoidGltYXRldXMiLCJhIjoiY2s2ZmhwMzd2MGNsbjNsbHJjeW9jeTZjeiJ9.nz7s6DdDjUYWUFSpVjFYaw';
 
@@ -27,6 +30,7 @@ let _mode: TerrainMode = (localStorage.getItem(STORAGE_MODE) as TerrainMode) || 
 let _token: string = localStorage.getItem(STORAGE_TOKEN) || DEFAULT_TOKEN;
 let _region: RegionId = (localStorage.getItem(STORAGE_REGION) as RegionId) || 'custom';
 let _custom: GeoBounds = readCustom();
+let _baseStyle: BaseStyle = (localStorage.getItem(STORAGE_BASE_STYLE) as BaseStyle) || 'satellite';
 
 function notify() { listeners.forEach((l) => l()); }
 
@@ -35,6 +39,7 @@ export function useTerrainMode() {
   const [token, setTokenState] = useState<string>(_token);
   const [region, setRegionState] = useState<RegionId>(_region);
   const [customBounds, setCustomBoundsState] = useState<GeoBounds>(_custom);
+  const [baseStyle, setBaseStyleState] = useState<BaseStyle>(_baseStyle);
 
   useEffect(() => {
     const cb = () => {
@@ -42,6 +47,7 @@ export function useTerrainMode() {
       setTokenState(_token);
       setRegionState(_region);
       setCustomBoundsState(_custom);
+      setBaseStyleState(_baseStyle);
     };
     listeners.add(cb);
     return () => { listeners.delete(cb); };
@@ -65,5 +71,9 @@ export function useTerrainMode() {
     notify();
   }, []);
 
-  return { mode, setMode, token, setToken, region, setRegion, customBounds, setCustomBounds };
+  const setBaseStyle = useCallback((s: BaseStyle) => {
+    _baseStyle = s; localStorage.setItem(STORAGE_BASE_STYLE, s); notify();
+  }, []);
+
+  return { mode, setMode, token, setToken, region, setRegion, customBounds, setCustomBounds, baseStyle, setBaseStyle };
 }
