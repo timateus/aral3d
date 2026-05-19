@@ -484,8 +484,8 @@ const Index = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const { mode: terrainMode, setMode: setTerrainMode, token: terrainToken, region: terrainRegion, setRegion: setTerrainRegion, customBounds: terrainCustomBounds, setCustomBounds: setTerrainCustomBounds } = useTerrainMode();
-  const satelliteEnabled = terrainMode === 'satellite' && !!terrainToken;
+  const { mode: terrainMode, setMode: setTerrainMode, token: terrainToken, region: terrainRegion, setRegion: setTerrainRegion, customBounds: terrainCustomBounds, setCustomBounds: setTerrainCustomBounds, baseStyle: terrainBaseStyle } = useTerrainMode();
+  const satelliteEnabled = terrainMode === 'satellite' && (terrainBaseStyle === 'osm' || !!terrainToken);
   const satelliteBounds = useMemo(
     () => {
       if (!satelliteEnabled) return null;

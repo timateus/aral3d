@@ -152,10 +152,34 @@ export async function loadMapboxTextures(bounds: LonLatBounds, token: string): P
 
 /** Lighter helper: only fetch + stitch satellite imagery for given bbox. */
 export async function loadMapboxSatellite(bounds: LonLatBounds, token: string): Promise<THREE.Texture> {
+  return loadBaseStyleTexture(bounds, 'satellite', token);
+}
+
+export type BaseStyle = 'satellite' | 'streets' | 'osm';
+
+/**
+ * Fetch + stitch a raster basemap (Mapbox satellite, Mapbox streets, or OSM)
+ * for the given bbox and return it as an sRGB texture suitable for draping
+ * over the terrain mesh.
+ */
+export async function loadBaseStyleTexture(
+  bounds: LonLatBounds,
+  style: BaseStyle,
+  token: string,
+): Promise<THREE.Texture> {
   const z = pickZoom(bounds, 4);
-  const satUrl = (x: number, y: number, z: number) =>
-    `https://api.mapbox.com/v4/mapbox.satellite/${z}/${x}/${y}@2x.jpg90?access_token=${token}`;
-  const sat = await stitchTiles(bounds, z, satUrl);
-  const cropped = cropCanvas(sat.canvas, sat.pixelBounds);
+  let urlFor: (x: number, y: number, z: number) => string;
+  if (style === 'osm') {
+    // OSM standard tiles — no token required. Respect usage policy: low volume.
+    urlFor = (x, y, z) => `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
+  } else if (style === 'streets') {
+    urlFor = (x, y, z) =>
+      `https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/512/${z}/${x}/${y}@2x?access_token=${token}`;
+  } else {
+    urlFor = (x, y, z) =>
+      `https://api.mapbox.com/v4/mapbox.satellite/${z}/${x}/${y}@2x.jpg90?access_token=${token}`;
+  }
+  const stitched = await stitchTiles(bounds, z, urlFor);
+  const cropped = cropCanvas(stitched.canvas, stitched.pixelBounds);
   return canvasToTexture(cropped, true);
 }

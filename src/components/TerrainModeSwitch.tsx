@@ -3,14 +3,14 @@ import { useTerrainMode } from '@/hooks/useTerrainMode';
 import { REGION_PRESETS, validateBounds, type RegionId } from '@/lib/terrain-regions';
 
 const TerrainModeSwitch = () => {
-  const { mode, setMode, token, setToken, region, setRegion, customBounds, setCustomBounds } = useTerrainMode();
+  const { mode, setMode, token, setToken, region, setRegion, customBounds, setCustomBounds, baseStyle, setBaseStyle } = useTerrainMode();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(token);
   const [bDraft, setBDraft] = useState(customBounds);
   const [bErr, setBErr] = useState<string | null>(null);
 
   const handleSatelliteClick = () => {
-    if (!token) { setEditing(true); return; }
+    if (!token && baseStyle !== 'osm') { setEditing(true); return; }
     setMode('satellite');
   };
 
@@ -43,11 +43,27 @@ const TerrainModeSwitch = () => {
           className={`flex-1 px-2 py-1 text-[10px] font-mono uppercase tracking-wider border transition-colors ${
             mode === 'satellite' ? 'bg-white/10 border-white/30 text-white' : 'bg-transparent border-white/10 text-muted-foreground hover:text-white'
           }`}
-        >Satellite</button>
+        >Map</button>
       </div>
 
       {mode === 'satellite' && (
         <>
+          <div className="space-y-1">
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-mono">Basemap</div>
+            <div className="flex gap-1">
+              {(['satellite', 'streets', 'osm'] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setBaseStyle(s)}
+                  className={`flex-1 px-2 py-1 text-[10px] font-mono uppercase tracking-wider border transition-colors ${
+                    baseStyle === s ? 'bg-white/10 border-white/30 text-white' : 'bg-transparent border-white/10 text-muted-foreground hover:text-white'
+                  }`}
+                  title={s === 'osm' ? 'OpenStreetMap (no token needed)' : s === 'streets' ? 'Mapbox Streets' : 'Mapbox Satellite'}
+                >{s === 'osm' ? 'OSM' : s}</button>
+              ))}
+            </div>
+          </div>
+
           <div className="space-y-1">
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-mono">Region</div>
             <select
