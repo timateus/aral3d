@@ -10,7 +10,7 @@ const TerrainModeSwitch = () => {
   const [bErr, setBErr] = useState<string | null>(null);
 
   const handleSatelliteClick = () => {
-    if (!token) { setEditing(true); return; }
+    if (!token && baseStyle !== 'osm') { setEditing(true); return; }
     setMode('satellite');
   };
 
