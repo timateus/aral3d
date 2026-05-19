@@ -48,6 +48,21 @@ import { DustHUD } from '@/components/DustHUD';
 import LifeHUD from '@/components/LifeHUD';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useUserLocation } from '@/hooks/useUserLocation';
+import { useGamepad } from '@/hooks/useGamepad';
+
+function GamepadIndicator({ btnBase }: { btnBase: string }) {
+  const { connected, padId } = useGamepad();
+  if (!connected) return null;
+  return (
+    <div
+      title={padId ? `Controller: ${padId}` : 'Controller connected'}
+      className={`${btnBase} text-primary border-primary/40 bg-primary/10 cursor-default`}
+    >
+      <Gamepad2 className="w-3 h-3" />
+      <span className="hidden sm:inline">Controller</span>
+    </div>
+  );
+}
 import MirageToggle from '@/components/MirageToggle';
 import DesignerPanel from '@/components/DesignerPanel';
 import { useVisualMode } from '@/lib/visual-mode';
