@@ -2,11 +2,13 @@ import { useRef, useEffect } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
+import { useGamepad } from '@/hooks/useGamepad';
 
-function WASDHandler({ enabled }: { enabled: boolean }) {
+function WASDHandler({ enabled, orbitRef }: { enabled: boolean; orbitRef: React.MutableRefObject<any> }) {
   const { camera } = useThree();
   const keys = useRef({ w: false, a: false, s: false, d: false, q: false, e: false });
   const speed = 0.12;
+  const { stateRef: gpRef } = useGamepad();
 
   useEffect(() => {
     const onDown = (e: KeyboardEvent) => {
@@ -41,9 +43,42 @@ function WASDHandler({ enabled }: { enabled: boolean }) {
     if (keys.current.q) delta.y -= speed;
     if (keys.current.e) delta.y += speed;
 
+    // Gamepad: left stick translates on XZ plane (camera-relative),
+    // LB/RB or LT/RT for vertical
+    const gp = gpRef.current;
+    if (gp.connected) {
+      const lx = gp.leftStick.x;
+      const ly = gp.leftStick.y;
+      if (lx || ly) {
+        delta.addScaledVector(dir, -ly * speed);
+        delta.addScaledVector(right, lx * speed);
+      }
+      if (gp.buttons.rb) delta.y += speed;
+      if (gp.buttons.lb) delta.y -= speed;
+      if (gp.buttons.rt > 0.1) delta.y += speed * gp.buttons.rt;
+      if (gp.buttons.lt > 0.1) delta.y -= speed * gp.buttons.lt;
+    }
+
     if (delta.lengthSq() > 0) {
       camera.position.add(delta);
       window.dispatchEvent(new CustomEvent('wasd-move', { detail: { x: delta.x, y: delta.y, z: delta.z } }));
+    }
+
+    // Gamepad: right stick orbits camera around target (azimuth + polar)
+    if (gp.connected && orbitRef.current) {
+      const rx = gp.rightStick.x;
+      const ry = gp.rightStick.y;
+      if (rx || ry) {
+        const target: THREE.Vector3 = orbitRef.current.target;
+        const offset = new THREE.Vector3().subVectors(camera.position, target);
+        const spherical = new THREE.Spherical().setFromVector3(offset);
+        const rotSpeed = 0.04;
+        spherical.theta -= rx * rotSpeed;
+        spherical.phi = THREE.MathUtils.clamp(spherical.phi + ry * rotSpeed, 0.1, Math.PI / 2.1);
+        offset.setFromSpherical(spherical);
+        camera.position.copy(target).add(offset);
+        camera.lookAt(target);
+      }
     }
   });
 
@@ -86,8 +121,8 @@ export default function MapControls({ enabled, orbitRef, gameModeActive, sandbox
           TWO: THREE.TOUCH.DOLLY_ROTATE,
         }}
       />
-      {/* Disable WASD handler in game mode — GameMode handles its own movement */}
-      <WASDHandler enabled={enabled && !gameModeActive} />
+      {/* Disable WASD/gamepad handler in game mode — GameMode handles its own movement */}
+      <WASDHandler enabled={enabled && !gameModeActive} orbitRef={orbitRef} />
     </>
   );
 }
