@@ -3,7 +3,7 @@ import { useTerrainMode } from '@/hooks/useTerrainMode';
 import { REGION_PRESETS, validateBounds, type RegionId } from '@/lib/terrain-regions';
 
 const TerrainModeSwitch = () => {
-  const { mode, setMode, token, setToken, region, setRegion, customBounds, setCustomBounds } = useTerrainMode();
+  const { mode, setMode, token, setToken, region, setRegion, customBounds, setCustomBounds, baseStyle, setBaseStyle } = useTerrainMode();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(token);
   const [bDraft, setBDraft] = useState(customBounds);
