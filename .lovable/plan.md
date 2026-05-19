@@ -1,43 +1,52 @@
-# Color in Mirage + Toolbar Order
+## Add Gamepad Controller Support
 
-## 1. Restore color to the mirage surface
+Wire the browser Gamepad API into the existing camera + Game Mode controls so an Xbox, PlayStation, or generic USB/Bluetooth controller works on Mac.
 
-**Classic DEM mode** (`src/lib/geotiff-loader.ts` → `getElevationColor`)
-The current mirage branch maps land to a warm-paper grayscale ramp and water to slate-blue, killing all elevation hue. Replace it with a desaturated-but-tinted version of the full elevation palette:
+### Scope
+- **Explore mode / Walk mode** (orbit camera): left stick pans, right stick rotates, triggers zoom in/out, Q/E equivalents on shoulder buttons.
+- **Game Mode** (avatar): left stick moves avatar, right stick orbits camera, A/Cross button pours water (same as Space), B/Circle skips reward.
+- Small "🎮 Controller connected" toast/indicator when a pad is detected.
 
-- Get the rich color from `getElevationColorAbsolute(elev)` as today.
-- Blend toward a warm paper base by ~55% (not 100%) so straw / ochre / sienna / sea-blue all stay visible, just softened.
-- Keep water (elev < 0) tinted toward muted teal-blue instead of slate-only.
+### Technical Plan
 
-This preserves the "paper map" feel but yields a colored map similar to a vintage atlas instead of a flat gray.
+1. **New hook `src/hooks/useGamepad.ts`**
+   - Polls `navigator.getGamepads()` each animation frame via `requestAnimationFrame`.
+   - Normalizes Xbox + PlayStation + standard mapping (both follow W3C "standard" layout on Mac).
+   - Applies deadzone (~0.15) on sticks.
+   - Exposes `{ connected, leftStick:{x,y}, rightStick:{x,y}, buttons:{a,b,x,y,lb,rb,lt,rt,...} }` via refs (no React re-render per frame).
+   - Fires `gamepadconnected` / `gamepaddisconnected` toast.
 
-**Satellite mode** (`src/components/MapboxTerrainMesh.tsx` fragment shader)
-The shader currently force-mixes sepia at 0.7 in mirage. Change to a mild desaturation (mix toward luminance at ~0.35) with a slight warm tint, so the satellite colors of land/water remain readable in mirage.
+2. **`src/components/MapControls.tsx` (WASDHandler)**
+   - Read gamepad each `useFrame`:
+     - Left stick X/Y → same XZ-plane translation as WASD (scaled by stick magnitude).
+     - Right stick X/Y → rotate orbit camera around target (azimuth/polar via `orbitRef.current` spherical math, similar to right-mouse drag).
+     - LT/RT → dolly in/out (zoom).
+     - LB/RB → Q/E vertical movement.
+   - Reuse the existing `wasd-move` custom event so orbit target stays in sync.
 
-## 2. Bring order to the top toolbar
+3. **`src/components/GameMode.tsx`**
+   - Inside the existing `useFrame` loop, read gamepad refs:
+     - Left stick → `moveDir` (replaces/augments WASD vector, camera-relative like keyboard path).
+     - Right stick → orbit camera around avatar (modify `orbitRef.target` is already on avatar; rotate camera position around it).
+     - `A` button held → same as `spaceHeld` (water pour + mission completion check).
 
-Current layout (`src/pages/Index.tsx` ~lines 1483–1625) is one wide `flex-wrap` row at `top-4` containing 9+ buttons plus a title. It wraps into a second line that collides with the `top-16` contour/vector subrow and with the DataPanel mounted at `top-16 left-4`.
+4. **Connection indicator**
+   - Tiny pill in the top toolbar (right cluster) showing `🎮` icon when connected. Tooltip lists detected pad id.
+   - Use `sonner` toast on connect/disconnect.
 
-Reorganize into three stable clusters on a single row:
+### Supported controllers on Mac
+- Xbox Wireless (Series / One) — Bluetooth on macOS 13+, or USB-C
+- PlayStation DualSense (PS5) and DualShock 4 (PS4) — Bluetooth or USB
+- Nintendo Switch Pro — Bluetooth (button mapping may differ slightly)
+- Generic USB HID gamepads (8BitDo, etc.)
 
-```text
-[ Menu | Mirage ]   [ Surface | Contours | Vectors ]   [ Life | Game ]            <title>            [ Copy | Record | ⋯ More ]
-   left group              center group (style)            actions group       (hidden < lg)                right group
-```
+### Out of scope
+- Haptic rumble feedback
+- Remapping UI
+- Menu/UI navigation with the pad (only camera + game movement)
 
-Concrete changes in `src/pages/Index.tsx`:
-
-- Split the single wrapping row into three sibling flex groups inside one bar: left (Menu, Mirage, Hide panel), center (terrain-style segmented + Life + Game Mode), right (Copy Link, Record, More).
-- Move low-frequency buttons (Hide/Show panel, Copy Link, Record, Game Mode when not active) behind a small `⋯ More` dropdown using the existing `popover` ui component so the bar fits on one line at typical viewports.
-- Drop the inline `<h1>` title + filename on screens narrower than `lg` (`hidden lg:flex`) — they're the main reason the bar wraps today.
-- Reserve a fixed header height (`h-12`) on the top bar wrapper and shift dependent overlays down accordingly:
-  - DataPanel wrapper: `top-16` → `top-[4.5rem]` and constrain `max-height` so it scrolls instead of pushing.
-  - Terrain-style subrow (`top-16`): only render when `terrainStyle !== 'none'`, and move it to `top-[3.25rem]` with its own `h-9` so it sits flush under the bar without colliding.
-- Add `z` ordering: main bar `z-30`, subrow `z-20`, DataPanel `z-10` so a momentary overflow never hides controls.
-
-No new components, no behavior changes — only layout grouping, a More dropdown using existing shadcn `DropdownMenu`, and coordinate adjustments.
-
-## Out of scope
-
-- No changes to game/walk/soap/dust HUDs (those are conditional and not part of the overlap report).
-- No changes to the right-side Legend/ControlPanel column.
+### Files touched
+- new: `src/hooks/useGamepad.ts`
+- edit: `src/components/MapControls.tsx`
+- edit: `src/components/GameMode.tsx`
+- edit: `src/pages/Index.tsx` (small connection indicator)
