@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import * as THREE from 'three';
 import { TerrainData } from '@/lib/geotiff-loader';
-import { loadMapboxSatellite } from '@/lib/mapbox-tiles';
+import { loadBaseStyleTexture } from '@/lib/mapbox-tiles';
 import { useVisualMode } from '@/lib/visual-mode';
+import { useTerrainMode } from '@/hooks/useTerrainMode';
 
 interface Props {
   terrain: TerrainData;
@@ -21,17 +22,21 @@ const MapboxTerrainMesh = ({ terrain, exaggeration, token, onError }: Props) => 
   const [satellite, setSatellite] = useState<THREE.Texture | null>(null);
   const [mode] = useVisualMode();
   const isMirage = mode === 'mirage' || mode === 'designer';
+  const { baseStyle } = useTerrainMode();
 
-  // Refetch satellite whenever bounds change (Khorezm toggle, custom DEM, etc.)
+  // Refetch basemap whenever bounds or basemap style change.
   useEffect(() => {
-    if (!token || !terrain.bounds) return;
+    if (!terrain.bounds) return;
+    // Mapbox styles need a token; OSM does not.
+    if (baseStyle !== 'osm' && !token) return;
     let cancelled = false;
     setSatellite(null);
-    loadMapboxSatellite(terrain.bounds, token)
+    loadBaseStyleTexture(terrain.bounds, baseStyle, token)
       .then((t) => { if (!cancelled) setSatellite(t); })
       .catch((e) => { if (!cancelled) onError?.(e.message); });
     return () => { cancelled = true; };
-  }, [token, terrain.bounds, onError]);
+  }, [token, terrain.bounds, onError, baseStyle]);
+
 
   // Build geometry from GeoTIFF — identical formula to TerrainMesh & geoToMeshPos
   const geometry = useMemo(() => {
