@@ -4,6 +4,7 @@ import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { TerrainData } from '@/lib/geotiff-loader';
 import { buildMissions, Mission } from '@/lib/game-missions';
+import { useGamepad } from '@/hooks/useGamepad';
 import type { CharacterDef } from '@/components/CharacterSelect';
 
 function geoToMeshPos(
