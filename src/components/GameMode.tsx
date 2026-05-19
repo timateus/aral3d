@@ -420,12 +420,29 @@ export default function GameMode({ terrain, exaggeration, active, character, onA
       camera.position.y += dy;
     }
 
+    // Gamepad right stick: orbit camera around avatar
+    if (gp.connected && orbitRef?.current) {
+      const rx = gp.rightStick.x;
+      const ry = gp.rightStick.y;
+      if (rx || ry) {
+        const target: THREE.Vector3 = orbitRef.current.target;
+        const offset = new THREE.Vector3().subVectors(camera.position, target);
+        const spherical = new THREE.Spherical().setFromVector3(offset);
+        const rotSpeed = 0.04;
+        spherical.theta -= rx * rotSpeed;
+        spherical.phi = THREE.MathUtils.clamp(spherical.phi + ry * rotSpeed, 0.1, Math.PI / 2.1);
+        offset.setFromSpherical(spherical);
+        camera.position.copy(target).add(offset);
+        camera.lookAt(target);
+      }
+    }
+
     // Note: terrain is preloaded for the entire Central Asia bbox in game mode,
     // so no on-demand recentering is needed. The avatar is naturally clamped to
     // the mesh edges (±5), which equals the Central Asia bounds.
 
-    // Water pouring (SPACE key)
-    const spaceHeld = keys.has(' ');
+    // Water pouring (SPACE key or gamepad A button)
+    const spaceHeld = keys.has(' ') || (gp.connected && gp.buttons.a);
     setWaterPouring(spaceHeld);
     if (spaceHeld && onAddWater) {
       waterCooldownRef.current -= delta;
