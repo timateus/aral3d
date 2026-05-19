@@ -1558,6 +1558,7 @@ const Index = () => {
                 Copy Link
                 <span id="copy-link-feedback" className="text-primary font-bold" />
               </button>
+              <GamepadIndicator btnBase={btnBase} />
               <button
                 onClick={toggleScreenRecording}
                 className={`${btnBase} ${screenRecording ? 'text-destructive border-destructive/50 bg-destructive/10 animate-pulse' : 'text-muted-foreground hover:text-primary'}`}
