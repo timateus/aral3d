@@ -43,7 +43,7 @@ const TerrainModeSwitch = () => {
           className={`flex-1 px-2 py-1 text-[10px] font-mono uppercase tracking-wider border transition-colors ${
             mode === 'satellite' ? 'bg-white/10 border-white/30 text-white' : 'bg-transparent border-white/10 text-muted-foreground hover:text-white'
           }`}
-        >Satellite</button>
+        >Map</button>
       </div>
 
       {mode === 'satellite' && (
