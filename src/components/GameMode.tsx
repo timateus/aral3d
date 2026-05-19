@@ -364,10 +364,23 @@ export default function GameMode({ terrain, exaggeration, active, character, onA
     if (keys.has('s') || keys.has('arrowdown')) moveDir.sub(camForward);
     if (keys.has('a') || keys.has('arrowleft')) moveDir.sub(camRight);
     if (keys.has('d') || keys.has('arrowright')) moveDir.add(camRight);
-    
+
+    // Gamepad left stick: camera-relative movement (analog magnitude)
+    const gp = gpRef.current;
+    if (gp.connected) {
+      const lx = gp.leftStick.x;
+      const ly = gp.leftStick.y;
+      if (lx || ly) {
+        moveDir.addScaledVector(camForward, -ly);
+        moveDir.addScaledVector(camRight, lx);
+      }
+    }
+
     const isMoving = moveDir.lengthSq() > 0;
     if (isMoving) {
-      moveDir.normalize().multiplyScalar(speed);
+      // clamp magnitude to 1 so analog input never exceeds keyboard speed
+      if (moveDir.length() > 1) moveDir.normalize();
+      moveDir.multiplyScalar(speed);
     }
 
     // Update facing direction based on movement
