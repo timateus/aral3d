@@ -214,6 +214,7 @@ export default function GameMode({ terrain, exaggeration, active, character, onA
   const waterCooldownRef = useRef(0);
   const initializedRef = useRef(false);
   const lastBoundsKeyRef = useRef<string | null>(null);
+  const { stateRef: gpRef } = useGamepad();
 
   const meshToGeo = useCallback((worldX: number, worldZ: number) => {
     const b = terrain.bounds;
