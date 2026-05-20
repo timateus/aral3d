@@ -29,24 +29,23 @@ const VoxelHUD = ({ locked, onOpenInventory }: Props) => {
     };
   }, [select, onOpenInventory]);
 
-  // Gamepad dpad → hotbar prev/next (poll via stateRef on connect change)
+  // Gamepad dpad → hotbar prev/next (edge-triggered via rAF)
+  const selectedRef = useRef(selected);
+  selectedRef.current = selected;
   useEffect(() => {
     if (!gp.connected) return;
     let lastLeft = false, lastRight = false;
     let raf = 0;
     const tick = () => {
       const b = gp.stateRef.current.buttons;
-      if (b.right && !lastRight) select(Math.min(HOTBAR_SIZE - 1, _peekSelected() + 1));
-      if (b.left && !lastLeft) select(Math.max(0, _peekSelected() - 1));
+      if (b.right && !lastRight) select(Math.min(HOTBAR_SIZE - 1, selectedRef.current + 1));
+      if (b.left && !lastLeft) select(Math.max(0, selectedRef.current - 1));
       lastLeft = b.left; lastRight = b.right;
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [gp.connected, gp.stateRef, select]);
-
-  // Helper to read the latest selected value without re-subscribing.
-  const _peekSelected = () => selected;
 
   return (
     <>
