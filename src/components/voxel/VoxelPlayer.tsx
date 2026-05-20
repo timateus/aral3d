@@ -26,7 +26,7 @@ const EYE_HEIGHT = 1.6;
 const PLAYER_RADIUS = 0.3;
 const REACH = 8;
 
-const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consumeSelected, onLockChange }: Props) => {
+const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consumeSelected, onLockChange, playerRef }: Props) => {
   const { camera, gl } = useThree();
   const velocity = useRef(new THREE.Vector3());
   const onGround = useRef(false);
