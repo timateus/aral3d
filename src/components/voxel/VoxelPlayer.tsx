@@ -176,7 +176,7 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
     velocity.current.z = (tmpRight.z * moveDir.x + tmpForward.z * -moveDir.z) * speed;
 
     // Jump
-    const jumpPressed = keys.current['Space'] || (gp.connected && gp.buttons.a);
+    const jumpPressed = keys.current['Space'] || gs.buttons.a;
     if (jumpPressed && onGround.current) {
       velocity.current.y = JUMP_V;
       onGround.current = false;
@@ -235,11 +235,13 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
     pos.set(nx, ny, nz);
 
     // Gamepad button-edge actions
-    if (gp.connected) {
-      if (gp.buttons.rt && !lastGpClick.current.break) doBreak();
-      if (gp.buttons.lt && !lastGpClick.current.place) doPlace();
-      lastGpClick.current.break = gp.buttons.rt;
-      lastGpClick.current.place = gp.buttons.lt;
+    if (gs.connected) {
+      const rtPressed = gs.buttons.rt > 0.5;
+      const ltPressed = gs.buttons.lt > 0.5;
+      if (rtPressed && !lastGpClick.current.break) doBreak();
+      if (ltPressed && !lastGpClick.current.place) doPlace();
+      lastGpClick.current.break = rtPressed;
+      lastGpClick.current.place = ltPressed;
     }
   });
 
