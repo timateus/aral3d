@@ -26,6 +26,7 @@ const VoxelPage = () => {
   selectedRef.current = inv.selected;
   const hotbarRef = useRef(inv.hotbar);
   hotbarRef.current = inv.hotbar;
+  const playerRef = useRef({ x: 0, z: 0, yaw: 0 });
 
   useEffect(() => {
     document.title = 'Survive — Aral3D Voxel Mode';
