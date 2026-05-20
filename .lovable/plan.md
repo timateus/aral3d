@@ -1,94 +1,84 @@
-## Voxel "Survive" Mode — Minecraft on the Aral Basin
 
-A new top-level mode that re-renders the real DEM as a stacked-block world at ~200×200 columns. Player walks around in first person, breaks and places blocks, collects region-specific resources, and performs themed activities (plant saxaul, milk camel, make soap, dig canal).
+# Survive Mode v2 — Plan
 
-### Player experience
+Four pillars, scoped to land together at moderate difficulty (3/5: stakes that pressure you but never punish hard).
 
-1. From the home/mode switch, choose **Survive** (new top-level button next to Explore, Walk, Game).
-2. Spawn drops you on the terrain at a sensible start (Nukus area by default). Pointer-lock activates → mouse looks, WASD walks, Space jumps, Shift sprints, E opens inventory, 1-9 selects hotbar.
-3. The terrain looks like a chunky pixel-art version of the real Aral basin: the dry seabed, river deltas, Khorezm oases, and elevation profile are all recognizable.
-4. Left-click breaks the block under crosshair → it goes into inventory. Right-click places the currently selected block.
-5. Resource blocks (salt flats, sand, clay, water, reed, saxaul) are scattered using a "strict terrain, freeform resources" rule — terrain shape is real, but block *contents* are tuned for fun.
-6. Activities unlock when you have the right inputs:
-   - **Plant saxaul** → place a saxaul sapling on sand; it grows over time and stabilizes nearby sand (cosmetic).
-   - **Milk camel** → walk up to a camel mob, right-click → milk added to inventory.
-   - **Make soap** → at a crafting bench, combine fat + ash + water → soap bar.
-   - **Dig canal** → break a connected line of blocks below water level; water flows in using a simplified version of the existing flow sim.
-7. Press Esc → unlock pointer, exit back to standard mode. State (inventory, placed blocks) persists in localStorage and URL params for the session.
+## 1. Canal digging + saxaul growth
 
-### Voxel terrain generation
+**Canal dig**
+- Any block mined below the regional water level + 1 becomes a candidate canal cell.
+- After ~1.5s of inactivity on the dug area, run a flood-fill from any neighbor that already has a `water` block at the same y. Filled cells become `water`, sourcing animation plays.
+- If the trench connects to an existing water body, water spreads up to N=400 cells per dig event (perf cap). Otherwise it stays dry until connected.
+- New tool: **Shovel** (craft: 2 stone + 1 saxaul) — 3× faster mining on sand/clay/mud/salt.
 
-- **Source**: existing merged DEM (`geotiff-loader.ts`, Khorezm region by default).
-- **Downsample** to a 200×200 column grid (block side ≈ DEM bounds / 200).
-- **Column height** = `round((elev - minElev) / blockHeightMeters)` with `blockHeightMeters ≈ 5` and a vertical exaggeration around 2-3× so cliffs read well without becoming spikes. Each column is a stack of N solid blocks.
-- **NaN / no-data pixels** are skipped (no column), matching the existing terrain-merger rule.
-- **Block type per voxel** assigned in a single pass:
-  - Below current water level → `water` blocks for the top, `mud` below.
-  - Salinity raster > threshold → top block becomes `salt`.
-  - Landcover class → grass / sand / bare / reed / forest (saxaul) mapping (reuse `LandcoverLayer` class table).
-  - Otherwise → dirt / stone by depth.
-- **Resource sprinkling** (freeform): scatter clay near rivers, extra salt patches on the dry seabed, occasional reed clusters near water edges.
+**Saxaul growth**
+- Place `saxaul_sapling` (from inventory) on `sand` or `salt`. It stores `plantedAt`.
+- Every ~45s of game time, sapling advances: stage 1 → 2 → 3 (full saxaul block + 1 leaf block above).
+- Mature saxaul "stabilizes" 3×3 sand around it: those columns become immune to the dust-storm erosion added in pillar 4. Visual tint shifts slightly greener.
+- Drops on harvest: 2 saxaul + 1 sapling (renewable).
 
-### Rendering approach
+## 2. Missions / story quests
 
-- One `InstancedMesh` per block type (water, sand, salt, dirt, stone, grass, reed, saxaul, clay, mud, snow). Capacity sized to total surface-exposed voxels only — interior blocks are culled at generation time (greedy face culling per column).
-- For v1, only render the **top exposed block** of each column plus side blocks where a neighbor is shorter — that keeps the instance count to ~40-80k cubes, well within R3F performance budget at 200×200.
-- Single shared `BoxGeometry(1,1,1)`. Materials per type use solid colors first (matches "minimalist sharp-edged" aesthetic from project memory); a low-res pixel-art atlas can come later.
-- Player avatar is a simple capsule with a first-person camera; no third-person model needed in v1.
+Quest log panel (Q key), 7 hand-authored missions tuned to the world:
 
-### Controls
+1. **Thirsty** — drink from a water block (right-click with empty hand at water).
+2. **Salt of the Earth** — mine 10 salt.
+3. **Camel Friend** — milk 3 camels.
+4. **First Soap** — craft 1 soap bar.
+5. **Green Thumb** — plant 5 saxaul saplings on the dry seabed.
+6. **Lifeline** — dig a canal that delivers water to a marked dry village marker (auto-placed near Nukus / Muynak depending on region).
+7. **Restoration** — have 10 mature saxaul + a working canal at the same time.
 
-- Pointer Lock API on canvas click.
-- WASD walking with gravity (~20 m/s²) and simple AABB collision against the voxel column heights — no need for full per-block collision since the world is heightfield-derived.
-- Space → jump if grounded. Shift → 1.6× speed. Left-click → break, Right-click → place, Mouse-wheel / 1-9 → hotbar slot, E → inventory toggle, Esc → release pointer.
-- Gamepad: reuse `useGamepad`. Left stick = move, right stick = look, A = jump, RT = break, LT = place, dpad = hotbar.
+Each mission shows a single objective line top-left, completion triggers a toast + small reward (extra hotbar items or unlock cosmetics). State persists in localStorage.
 
-### Inventory & crafting
+## 3. Visual polish + structures
 
-- Inventory state lives in a Zustand-style hook `useVoxelInventory` (mirrors `useTerrainMode` pattern). 9-slot hotbar + 27-slot main; serialized to localStorage.
-- Crafting table block opens a small grid UI (glass-panel HUD, monospace accents, sharp edges per project aesthetic).
-- v1 recipes:
-  - **Soap** = fat + ash + water → soap bar
-  - **Saxaul sapling** = saxaul wood → 4 saplings
-  - **Bucket** = 3 clay (smelted) → bucket; bucket + water block = water bucket
-  - **Canal marker** = stone + reed → placeable beacon
-- "Milk camel" is an interaction, not a recipe: requires a bucket in hand and proximity to a camel mob.
+**Polish**
+- Tiny pixel-art texture atlas (single 128×128 PNG, 16×16 per block) for the 8 most visible block types. Fallback to flat color if atlas fails to load.
+- Animated water shader: vertex sine ripple on top face only, slow UV scroll, blue→teal gradient by depth.
+- Sun directional shadow on top exposed blocks only (cheap shadow map, 1024px). Toggle in HUD.
+- Slight ambient occlusion baked into the top-block instance color (darker where neighbors are taller).
 
-### Mobs (v1, minimal)
+**Structures** (multi-block placeables, snap to ground)
+- **Yurt** — 5×5×3, costs 8 reed + 4 saxaul. Acts as spawn/respawn point.
+- **Well** — 1×1×2, costs 6 clay + 2 stone. Right-click → fills any bucket with water, even far from a lake.
+- **Brick kiln** — 2×2×2, costs 8 clay + 4 saxaul. Smelts clay → brick (new block, used for permanent buildings).
+- **Canal gate** — 1×1×1, costs 4 brick. Toggles water flow on/off in pillar 1.
 
-- ~10 camels wandering the Khorezm region using simple random-walk on the voxel surface.
-- No hostile mobs in v1. Friendly only, to keep scope contained.
+Structures open via a new **Build menu** (B key) showing recipe cards and a ghost preview before placement.
 
-### File plan
+## 4. Survival depth + more mobs
 
-- `src/lib/voxel/voxel-world.ts` — downsample DEM → column heights + per-voxel block types
-- `src/lib/voxel/block-types.ts` — block enum, colors, mineable/placeable flags, drops
-- `src/lib/voxel/voxel-mesher.ts` — exposed-face detection → instanced positions per block type
-- `src/lib/voxel/recipes.ts` — crafting recipe table
-- `src/hooks/useVoxelInventory.ts` — inventory + hotbar state, localStorage persisted
-- `src/components/VoxelWorld.tsx` — root R3F scene for this mode: instanced meshes + lighting + player + mobs
-- `src/components/VoxelPlayer.tsx` — pointer-lock controls, gravity, collision, raycast for break/place
-- `src/components/VoxelHUD.tsx` — crosshair, hotbar, health (later), gamepad hints
-- `src/components/VoxelInventoryPanel.tsx` — inventory + crafting grid UI
-- `src/components/CamelMob.tsx` — instanced camels + random walk
-- Edit `src/components/TerrainModeSwitch.tsx` — add **Survive** mode button
-- Edit `src/hooks/useTerrainMode.ts` — add `'voxel'` to mode union, persist
-- Edit `src/pages/Index.tsx` — route to `<VoxelWorld />` when mode === 'voxel'; hide unrelated UI per existing UI-visibility constraint
-- Add memory file `mem://features/voxel-survive-mode`
+**Stats** (difficulty 3 = forgiving timings)
+- **Thirst**: starts at 100, drains 1 per 20s (faster on salt/sand: 1 per 12s). Drink from water block, well, or milk → +30.
+- **Hunger**: drains 1 per 30s. Eat milk (+10), soap-adjacent food TBD, or new **flatbread** recipe (2 reed + 1 water bucket at brick kiln) → +40.
+- **Stamina**: sprint depletes, regen when standing.
+- Below 0 thirst or hunger: vignette darkens, walk speed -30%. No instant death.
 
-### Technical notes
+**Day/night cycle**
+- 8-minute full cycle. Sun rotates, sky color lerps between day/dusk/night palettes per region.
+- Night: lower ambient, brighter directional moonlight. Yurt provides "rest" — sleep skips to dawn if no hostiles nearby.
 
-- Keep the existing terrain mesh pipeline untouched. Voxel mode swaps the scene root entirely while preserving DEM loading, region selection, and basemap state.
-- Use a single `useFrame` tick for player physics + camel AI; cap mob count and use instancing.
-- Break/place mutates a `Uint8Array(width * height * maxStackHeight)`; only re-build the instanced meshes for the affected column(s), not the whole world.
-- Water blocks are static visual cubes in v1 — the existing flow sim can be opted-in later for canal-dig payoff. Canal dig in v1 just shows water blocks settling at the lowest dug level after a short delay.
-- Respect UI-visibility constraint: hide timeline, metrics, data panels in Survive mode. Only show the voxel HUD.
-- Performance target: 60 fps on a 200×200 world at ≤80k visible cubes on a mid-range Mac.
+**New mobs** (all use the existing instanced-mesh pattern)
+- **Sheep** — small grass/oasis areas, drops 1 fat on milking-style interaction (shear, F key).
+- **Fox** — neutral, scatters from player.
+- **Fish** — instanced in water cells, harvested with right-click while looking at water (+1 fish, +20 hunger when eaten).
+- **Dust devil** — only spawns on salt flats during daytime in Aral region. Slow-moving particle column; if it touches a sand/salt column without nearby mature saxaul, the column erodes by 1 block. Player taking damage: -10 thirst on contact. Killed by 3 hits.
 
-### Out of scope for v1 (good follow-ups)
+## Technical notes
 
-- Day/night cycle, hostile mobs, hunger, multiplayer
-- Texture atlas / pixel-art block faces
-- Saving worlds server-side
-- Multi-chunk streaming for full Aral basin at finer resolution
-- Real flowing water simulation tied to canal dig (reuse `water-flow-simulation.ts` later)
+- **Water flow**: lightweight BFS in `voxel-world.ts` (`floodFillWater(world, seed, capN)`), not the full pipe-model sim. Runs on dig completion and on gate toggle. Mutates `cells` + `heights`, fires `onWorldMutated` so the terrain mesh rebuilds the affected columns only (already supported via `version` bump — optimize later with per-column dirty set).
+- **Saxaul growth**: store `{i,j,stage,plantedAt}` array on the world; ticked from `useFrame` in `Voxel.tsx` every 1s. Updates cells, bumps version.
+- **Structures**: `src/lib/voxel/structures.ts` table of `{id, name, cost, footprint, blocks: [{dx,dy,dz,block}]}`. `placeStructure(world, anchor, struct)` stamps blocks if all cells valid + cost paid.
+- **Stats**: `useVoxelStats` hook, persisted in localStorage, ticked from `Voxel.tsx`. HUD bars added to `VoxelHUD.tsx`.
+- **Day/night**: a single `useRef<number>` for time-of-day in `Voxel.tsx`, drives `Sky`, `directionalLight`, fog color, `ambientLight` intensity each frame.
+- **Texture atlas**: optional `MeshLambertMaterial` with `map` + per-instance face UV via shader chunk. Behind a feature flag; falls back to current solid-color instancing if disabled.
+- **Audio**: extend `voxel-audio.ts` with `drink`, `eat`, `wind` (dust devil), `shovel`, `night` ambient swap.
+- **Files**
+  - new: `src/lib/voxel/water-fill.ts`, `src/lib/voxel/saxaul.ts`, `src/lib/voxel/structures.ts`, `src/lib/voxel/missions.ts`, `src/hooks/useVoxelStats.ts`, `src/hooks/useVoxelMissions.ts`, `src/components/voxel/Sheep.tsx`, `src/components/voxel/Fish.tsx`, `src/components/voxel/Fox.tsx`, `src/components/voxel/DustDevil.tsx`, `src/components/voxel/VoxelBuildMenu.tsx`, `src/components/voxel/VoxelQuestLog.tsx`, `src/components/voxel/VoxelStatsHUD.tsx`, `public/textures/voxel_atlas.png`
+  - edited: `src/lib/voxel/voxel-world.ts` (flood-fill + sapling/structure helpers), `src/lib/voxel/block-types.ts` (brick, sapling, fish, flatbread), `src/lib/voxel/recipes.ts` (shovel, flatbread), `src/components/voxel/VoxelTerrain.tsx` (atlas + water shader + AO), `src/components/voxel/VoxelPlayer.tsx` (interact key, build/quest hotkeys, day/night light), `src/components/voxel/VoxelHUD.tsx`, `src/pages/Voxel.tsx`
+- **Perf budget**: keep instance count under ~120k. Sheep/fox/fish cap at 20/10/200 respectively. Dust devils max 2 concurrent.
+
+## Out of scope (v3+)
+
+- Multiplayer, deeper crafting trees, larger worlds, real DEM streaming, persistent server saves, mobile touch controls for FPS, full pipe-model water in canals.

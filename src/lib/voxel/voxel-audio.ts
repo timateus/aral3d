@@ -36,7 +36,7 @@ export function setMuted(m: boolean) {
 }
 export function isMuted() { return muted; }
 
-export type SfxName = 'mine' | 'place' | 'jump' | 'milk' | 'craft' | 'pickup' | 'step';
+export type SfxName = 'mine' | 'place' | 'jump' | 'milk' | 'craft' | 'pickup' | 'step' | 'drink' | 'eat' | 'wind' | 'shovel' | 'build';
 
 function envTone(freq: number, dur: number, type: OscillatorType, vol = 0.4, detune = 0) {
   const c = ensureCtx(); if (!c || !sfxGain) return;
@@ -96,6 +96,25 @@ export function playSfx(name: SfxName) {
       break;
     case 'step':
       noiseBurst(0.06, 0.12, 500);
+      break;
+    case 'drink':
+      envTone(320, 0.18, 'sine', 0.18);
+      setTimeout(() => envTone(220, 0.18, 'sine', 0.14), 90);
+      break;
+    case 'eat':
+      noiseBurst(0.1, 0.18, 400);
+      setTimeout(() => noiseBurst(0.08, 0.14, 350), 110);
+      break;
+    case 'wind':
+      noiseBurst(0.8, 0.12, 700);
+      break;
+    case 'shovel':
+      noiseBurst(0.14, 0.32, 1100);
+      break;
+    case 'build':
+      envTone(260, 0.1, 'square', 0.2);
+      setTimeout(() => envTone(520, 0.1, 'square', 0.18), 80);
+      setTimeout(() => envTone(390, 0.14, 'triangle', 0.22), 170);
       break;
   }
 }

@@ -1,37 +1,102 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { Sky } from '@react-three/drei';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { Link } from 'react-router-dom';
+import * as THREE from 'three';
 import { loadGeoTiff, type TerrainData } from '@/lib/geotiff-loader';
 import { buildVoxelWorld, type VoxelWorld } from '@/lib/voxel/voxel-world';
 import { useVoxelInventory } from '@/hooks/useVoxelInventory';
+import { useVoxelStats, getStatsSnapshot, setStatsRaw } from '@/hooks/useVoxelStats';
+import { useVoxelMissions, dispatchMissionEvent } from '@/hooks/useVoxelMissions';
 import { toast } from 'sonner';
-import { ArrowLeft, Loader2, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, Loader2, Volume2, VolumeX, Sun, Moon } from 'lucide-react';
 import VoxelTerrain from '@/components/voxel/VoxelTerrain';
 import VoxelPlayer from '@/components/voxel/VoxelPlayer';
 import VoxelHUD from '@/components/voxel/VoxelHUD';
 import VoxelInventoryPanel from '@/components/voxel/VoxelInventoryPanel';
+import VoxelBuildMenu from '@/components/voxel/VoxelBuildMenu';
+import VoxelQuestLog from '@/components/voxel/VoxelQuestLog';
+import VoxelStatsHUD from '@/components/voxel/VoxelStatsHUD';
 import Camels from '@/components/voxel/Camels';
+import Sheep from '@/components/voxel/Sheep';
+import Fish from '@/components/voxel/Fish';
+import Fox from '@/components/voxel/Fox';
+import DustDevil from '@/components/voxel/DustDevil';
 import VoxelMinimap from '@/components/voxel/VoxelMinimap';
 import { initAudio, playSfx, startAmbient, stopAmbient, setMuted, isMuted } from '@/lib/voxel/voxel-audio';
+import { createSaplingTracker, type SaplingTracker } from '@/lib/voxel/saxaul';
+import { floodFillCanal } from '@/lib/voxel/water-fill';
+import { STRUCTURES, placeStructure } from '@/lib/voxel/structures';
+import type { BlockId } from '@/lib/voxel/block-types';
 
 type RegionKey = 'khorezm' | 'aral';
 
-const REGIONS: Record<RegionKey, { label: string; file: string; waterLevel: number; sky: string; fog: [string, number, number] }> = {
-  khorezm: {
-    label: 'Khorezm Oasis',
-    file: '/data/khorezm.tif',
-    waterLevel: 53,
-    sky: '#aac3d6',
-    fog: ['#aac3d6', 80, 260],
-  },
-  aral: {
-    label: 'Aral Sea',
-    file: '/data/aral_region.tif',
-    waterLevel: 32, // exposes the dry Aralkum seabed + salt flats
-    sky: '#d4c9a8',
-    fog: ['#d4c9a8', 70, 240],
-  },
+const REGIONS: Record<RegionKey, { label: string; file: string; waterLevel: number; fog: [string, number, number]; hasDust: boolean }> = {
+  khorezm: { label: 'Khorezm Oasis', file: '/data/khorezm.tif', waterLevel: 53, fog: ['#aac3d6', 80, 260], hasDust: false },
+  aral:    { label: 'Aral Sea',      file: '/data/aral_region.tif', waterLevel: 32, fog: ['#d4c9a8', 70, 240], hasDust: true },
+};
+
+const DAY_LENGTH_SEC = 480; // 8 minutes
+
+// Sun + sky controller — animates directional light + ambient + bg color over time-of-day.
+const Sun3D = ({ timeRef, regionFog }: { timeRef: React.MutableRefObject<number>; regionFog: [string, number, number] }) => {
+  const lightRef = useRef<THREE.DirectionalLight>(null);
+  const ambientRef = useRef<THREE.AmbientLight>(null);
+  const dayCol = useMemo(() => new THREE.Color(regionFog[0]), [regionFog]);
+  const duskCol = useMemo(() => new THREE.Color('#c97a4a'), []);
+  const nightCol = useMemo(() => new THREE.Color('#0a0e1c'), []);
+
+  useFrame((state) => {
+    timeRef.current = (state.clock.elapsedTime % DAY_LENGTH_SEC) / DAY_LENGTH_SEC; // 0..1
+    const t = timeRef.current;
+    const ang = t * Math.PI * 2 - Math.PI / 2;
+    const sunY = Math.sin(ang);
+    const sunX = Math.cos(ang);
+    if (lightRef.current) {
+      lightRef.current.position.set(sunX * 100, sunY * 80, 40);
+      lightRef.current.intensity = Math.max(0.05, sunY * 1.2);
+    }
+    if (ambientRef.current) {
+      ambientRef.current.intensity = 0.25 + Math.max(0, sunY) * 0.4;
+    }
+    // Sky/fog color tint
+    const isNight = sunY < 0;
+    const tint = isNight ? nightCol : (sunY < 0.2 ? duskCol : dayCol);
+    const lerpAmt = isNight ? 1 : (sunY < 0.2 ? 1 - sunY / 0.2 : 0);
+    const base = dayCol.clone().lerp(tint, Math.min(1, lerpAmt));
+    state.scene.background = base;
+    if (state.scene.fog && state.scene.fog instanceof THREE.Fog) {
+      state.scene.fog.color.copy(base);
+    }
+  });
+
+  return (
+    <>
+      <ambientLight ref={ambientRef} intensity={0.55} />
+      <directionalLight ref={lightRef} position={[60, 120, 40]} intensity={1.1} color={'#fff5e0'} />
+      <hemisphereLight args={['#c8dbef', '#5a3e22', 0.35]} />
+    </>
+  );
+};
+
+// Sapling growth + canal flood tick
+const WorldTicker = ({ world, saplingsRef, regionWaterBlocks, onWorldMutated }: {
+  world: VoxelWorld;
+  saplingsRef: React.MutableRefObject<SaplingTracker>;
+  regionWaterBlocks: number;
+  onWorldMutated: () => void;
+}) => {
+  const last = useRef(0);
+  useFrame((state) => {
+    const now = state.clock.elapsedTime * 1000;
+    if (now - last.current < 1000) return;
+    last.current = now;
+    let dirty = false;
+    if (saplingsRef.current.tick(world, performance.now())) dirty = true;
+    const mature = saplingsRef.current.countMature();
+    if (mature > 0) dispatchMissionEvent({ type: 'mature-saxaul', count: mature });
+    if (dirty) onWorldMutated();
+  });
+  return null;
 };
 
 const VoxelPage = () => {
@@ -41,18 +106,25 @@ const VoxelPage = () => {
   const [version, setVersion] = useState(0);
   const [locked, setLocked] = useState(false);
   const [invOpen, setInvOpen] = useState(false);
+  const [buildOpen, setBuildOpen] = useState(false);
+  const [questOpen, setQuestOpen] = useState(false);
   const [muted, setMutedState] = useState(false);
   const inv = useVoxelInventory();
+  const stats = useVoxelStats();
+  useVoxelMissions(); // mount the listener
   const selectedRef = useRef(inv.selected);
   selectedRef.current = inv.selected;
   const hotbarRef = useRef(inv.hotbar);
   hotbarRef.current = inv.hotbar;
   const playerRef = useRef({ x: 0, z: 0, yaw: 0 });
+  const timeRef = useRef(0.3);
+  const saplingsRef = useRef(createSaplingTracker());
 
   useEffect(() => {
     document.title = `Survive — ${REGIONS[region].label}`;
     setTerrain(null);
     setError(null);
+    saplingsRef.current = createSaplingTracker();
     loadGeoTiff(REGIONS[region].file)
       .then(setTerrain)
       .catch((e) => setError(String(e?.message ?? e)));
@@ -69,13 +141,52 @@ const VoxelPage = () => {
     });
   }, [terrain, region]);
 
+  // The water-level expressed in voxel block-y.
+  const waterLevelBlocks = useMemo(() => {
+    if (!world || !terrain) return 0;
+    // Reproduce mapping from voxel-world.ts: round(((elev - minElev) * vexag) / blockMeters) + 1
+    // For canal fill we approximate with sea-level mapped using minElevation observed in heights.
+    // Simpler: use the median height as proxy — but for sea region, water-level ≈ median of water columns.
+    const waterId = world.idIndex.get('water');
+    let sum = 0, count = 0;
+    for (let i = 0; i < world.heights.length; i++) {
+      const h = world.heights[i];
+      if (h === 0) continue;
+      const top = world.cells[i * world.maxStackHeight + h - 1];
+      if (top === waterId) { sum += h; count++; }
+    }
+    return count > 0 ? Math.round(sum / count) : 4;
+  }, [world]);
+
   const onMined = useCallback((block: string) => {
     inv.add(block as any, 1);
     playSfx('mine');
-    // Side drops so every material is obtainable in-world:
     if (block === 'saxaul' && Math.random() < 0.5) inv.add('ash' as any, 1);
     if (block === 'saxaul' && Math.random() < 0.25) inv.add('fat' as any, 1);
+    if (block === 'reed' && Math.random() < 0.3) inv.add('grass' as any, 1);
   }, [inv]);
+
+  // After mining, trigger canal flood if dug column is in canal zone.
+  const onWorldMutated = useCallback(() => {
+    setVersion(v => v + 1);
+  }, []);
+
+  const onMinedWithCanal = useCallback((block: string) => {
+    onMined(block);
+    if (!world) return;
+    // Use player position to seed canal fill
+    const halfW = world.width / 2, halfD = world.depth / 2;
+    const i = Math.floor(playerRef.current.x + halfW);
+    const j = Math.floor(playerRef.current.z + halfD);
+    setTimeout(() => {
+      const filled = floodFillCanal(world, i, j, waterLevelBlocks, 200);
+      if (filled > 0) {
+        dispatchMissionEvent({ type: 'canal-fill', cells: filled });
+        toast.success(`Canal filled +${filled} cells`);
+        setVersion(v => v + 1);
+      }
+    }, 300);
+  }, [onMined, world, waterLevelBlocks]);
 
   const getSelectedBlock = useCallback(() => {
     const slot = hotbarRef.current[selectedRef.current];
@@ -97,18 +208,66 @@ const VoxelPage = () => {
       toast.success('Camel milked → 1× Milk');
     }
     playSfx('milk');
+    dispatchMissionEvent({ type: 'milk' });
   }, [inv]);
 
-  // ESC to close inventory
+  const onShear = useCallback(() => {
+    inv.add('fat' as any, 1);
+    toast.success('Sheared → 1× Fat');
+    playSfx('milk');
+  }, [inv]);
+
+  // Track sapling plantings from VoxelPlayer
+  useEffect(() => {
+    const onPlanted = (e: Event) => {
+      const { i, j } = (e as CustomEvent<{ i: number; j: number }>).detail;
+      saplingsRef.current.plant(i, j);
+    };
+    window.addEventListener('voxel:sapling-planted', onPlanted);
+    return () => window.removeEventListener('voxel:sapling-planted', onPlanted);
+  }, []);
+
+  // Try-eat handler (consume flatbread/milk/fish on F when not near water)
+  useEffect(() => {
+    const onEat = () => {
+      const order: BlockId[] = ['flatbread', 'fish', 'milk'];
+      for (const food of order) {
+        const slot = hotbarRef.current.find(s => s.block === food);
+        if (slot && slot.count > 0) {
+          slot.count--; if (slot.count === 0) slot.block = null;
+          const gain = food === 'flatbread' ? 40 : food === 'fish' ? 25 : 10;
+          const s = getStatsSnapshot();
+          setStatsRaw({ hunger: s.hunger + gain });
+          if (food === 'milk') setStatsRaw({ thirst: s.thirst + 10 });
+          playSfx('eat');
+          toast.success(`Ate ${food} (+${gain} hunger)`);
+          try { localStorage.setItem('voxel_inventory_v1', JSON.stringify({ hotbar: hotbarRef.current, selected: selectedRef.current })); } catch {}
+          return;
+        }
+      }
+    };
+    window.addEventListener('voxel:try-eat', onEat);
+    return () => window.removeEventListener('voxel:try-eat', onEat);
+  }, []);
+
+  // HUD hotkeys
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.code === 'Escape' && invOpen) setInvOpen(false);
+      if (e.code === 'Escape') { setInvOpen(false); setBuildOpen(false); setQuestOpen(false); }
     };
+    const onToggleQ = () => setQuestOpen(o => !o);
+    const onToggleB = () => setBuildOpen(o => !o);
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [invOpen]);
+    window.addEventListener('voxel:toggle-quests', onToggleQ);
+    window.addEventListener('voxel:toggle-build', onToggleB);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('voxel:toggle-quests', onToggleQ);
+      window.removeEventListener('voxel:toggle-build', onToggleB);
+    };
+  }, []);
 
-  // Audio: init on first user gesture, start ambient when world is ready
+  // Audio
   useEffect(() => {
     const start = () => { initAudio(); startAmbient(); };
     window.addEventListener('pointerdown', start, { once: true });
@@ -120,11 +279,49 @@ const VoxelPage = () => {
     };
   }, []);
 
+  // Stat tick (thirst + hunger drain)
+  useEffect(() => {
+    const id = setInterval(() => {
+      const s = getStatsSnapshot();
+      // Faster thirst drain on Aral salt flats
+      const thirstDrain = region === 'aral' ? 0.6 : 0.4;
+      setStatsRaw({
+        thirst: s.thirst - thirstDrain,
+        hunger: s.hunger - 0.3,
+        stamina: Math.min(100, s.stamina + 0.5),
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [region]);
+
   const toggleMute = () => {
     const next = !muted;
     setMuted(next);
     setMutedState(next);
   };
+
+  // Build menu handler
+  const onBuild = useCallback((id: string) => {
+    if (!world) return;
+    const s = STRUCTURES.find(x => x.id === id);
+    if (!s) return;
+    if (!inv.craft(s.cost)) {
+      toast.error('Missing materials');
+      return;
+    }
+    const halfW = world.width / 2, halfD = world.depth / 2;
+    const i = Math.floor(playerRef.current.x + halfW);
+    const j = Math.floor(playerRef.current.z + halfD);
+    if (placeStructure(world, i, j, s)) {
+      playSfx('build');
+      toast.success(`Built ${s.name}`);
+      dispatchMissionEvent({ type: 'place-structure', id: s.id });
+      setVersion(v => v + 1);
+    }
+  }, [world, inv]);
+
+  const counts: Partial<Record<BlockId, number>> = {};
+  for (const sl of inv.hotbar) if (sl.block) counts[sl.block] = (counts[sl.block] ?? 0) + sl.count;
 
   const cfg = REGIONS[region];
 
@@ -137,7 +334,6 @@ const VoxelPage = () => {
         <ArrowLeft className="w-3 h-3" /> Exit Survive
       </Link>
 
-      {/* Region picker + mute */}
       <div className="fixed top-3 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1">
         <div className="flex bg-black/60 border border-white/20">
           {(Object.keys(REGIONS) as RegionKey[]).map((k) => (
@@ -152,13 +348,13 @@ const VoxelPage = () => {
             </button>
           ))}
         </div>
-        <button
-          onClick={toggleMute}
-          title={muted ? 'Unmute' : 'Mute'}
-          className="px-2 py-1.5 bg-black/60 border border-white/20 hover:bg-white/10 transition-colors"
-        >
+        <button onClick={toggleMute} className="px-2 py-1.5 bg-black/60 border border-white/20 hover:bg-white/10 transition-colors">
           {muted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
         </button>
+        <div className="px-2 py-1.5 bg-black/60 border border-white/20 flex items-center gap-1 text-[10px]">
+          {timeRef.current > 0.25 && timeRef.current < 0.75 ? <Sun className="w-3 h-3 text-amber-300" /> : <Moon className="w-3 h-3 text-sky-200" />}
+          <span className="text-white/70">Day {Math.round(timeRef.current * 24).toString().padStart(2, '0')}:00</span>
+        </div>
       </div>
 
       {!world && !error && (
@@ -181,22 +377,23 @@ const VoxelPage = () => {
           camera={{ fov: 75, near: 0.1, far: 600 }}
           gl={{ antialias: true, powerPreference: 'high-performance' }}
         >
-          <color attach="background" args={[cfg.sky]} />
+          <color attach="background" args={[cfg.fog[0]]} />
           <fog attach="fog" args={cfg.fog} />
 
-          <ambientLight intensity={0.55} />
-          <directionalLight position={[60, 120, 40]} intensity={1.1} color={'#fff5e0'} />
-          <hemisphereLight args={['#c8dbef', '#5a3e22', 0.4]} />
-
-          <Sky distance={450000} sunPosition={[60, 30, 40]} inclination={0.5} azimuth={0.25} />
+          <Sun3D timeRef={timeRef} regionFog={cfg.fog} />
+          <WorldTicker world={world} saplingsRef={saplingsRef} regionWaterBlocks={waterLevelBlocks} onWorldMutated={onWorldMutated} />
 
           <VoxelTerrain world={world} version={version} />
           <Camels world={world} count={12} onMilked={onMilked} />
+          <Sheep world={world} count={8} onShear={onShear} />
+          <Fox world={world} count={5} />
+          <Fish world={world} count={120} />
+          {cfg.hasDust && <DustDevil world={world} enabled />}
 
           <VoxelPlayer
             world={world}
-            onWorldMutated={() => setVersion(v => v + 1)}
-            onMined={onMined}
+            onWorldMutated={onWorldMutated}
+            onMined={onMinedWithCanal}
             getSelectedBlock={getSelectedBlock}
             consumeSelected={consumeSelected}
             onLockChange={setLocked}
@@ -208,7 +405,10 @@ const VoxelPage = () => {
       {world && <VoxelMinimap world={world} playerRef={playerRef} version={version} label={`Map · ${cfg.label}`} />}
 
       <VoxelHUD locked={locked} onOpenInventory={() => setInvOpen(o => !o)} />
+      {world && <VoxelStatsHUD />}
       <VoxelInventoryPanel open={invOpen} onClose={() => setInvOpen(false)} />
+      <VoxelBuildMenu open={buildOpen} onClose={() => setBuildOpen(false)} counts={counts} onBuild={onBuild} />
+      <VoxelQuestLog open={questOpen} onClose={() => setQuestOpen(false)} />
     </div>
   );
 };

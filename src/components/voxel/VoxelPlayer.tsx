@@ -8,6 +8,8 @@ import type { BlockId } from '@/lib/voxel/block-types';
 import { BLOCKS } from '@/lib/voxel/block-types';
 import { useGamepad } from '@/hooks/useGamepad';
 import { playSfx } from '@/lib/voxel/voxel-audio';
+import { dispatchMissionEvent } from '@/hooks/useVoxelMissions';
+import { setStatsRaw, getStatsSnapshot } from '@/hooks/useVoxelStats';
 
 interface Props {
   world: VoxelWorld;
@@ -61,6 +63,15 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
       if (e.code === 'KeyE') {
         window.dispatchEvent(new CustomEvent('voxel:toggle-inventory'));
       }
+      if (e.code === 'KeyQ') {
+        window.dispatchEvent(new CustomEvent('voxel:toggle-quests'));
+      }
+      if (e.code === 'KeyB') {
+        window.dispatchEvent(new CustomEvent('voxel:toggle-build'));
+      }
+      if (e.code === 'KeyF') {
+        window.dispatchEvent(new CustomEvent('voxel:interact'));
+      }
     };
     const up = (e: KeyboardEvent) => { keys.current[e.code] = false; };
     window.addEventListener('keydown', down);
@@ -99,6 +110,7 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
     const removed = breakTopBlock(world, hit.i, hit.j);
     if (removed && removed !== 'air') {
       onMined(removed);
+      dispatchMissionEvent({ type: 'mine', block: removed });
       onWorldMutated();
     }
   }, [pickColumn, world, onMined, onWorldMutated]);
@@ -108,12 +120,45 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
     if (!block) return;
     const hit = pickColumn();
     if (!hit) return;
+    // Detect surface block for sapling-on-sand mission
+    const surfaceBlock = world.palette[world.cells[(hit.j * world.width + hit.i) * world.maxStackHeight + (world.heights[hit.j * world.width + hit.i] - 1)]];
     const ok = placeTopBlock(world, hit.i, hit.j, block);
     if (ok) {
       consumeSelected();
+      dispatchMissionEvent({ type: 'place', block });
+      if (block === 'sapling' && (surfaceBlock === 'sand' || surfaceBlock === 'salt')) {
+        dispatchMissionEvent({ type: 'plant-sapling' });
+        window.dispatchEvent(new CustomEvent('voxel:sapling-planted', { detail: { i: hit.i, j: hit.j } }));
+      }
       onWorldMutated();
     }
   }, [pickColumn, world, getSelectedBlock, consumeSelected, onWorldMutated]);
+
+  // F = interact (drink/eat)
+  useEffect(() => {
+    const onInteract = () => {
+      // Drink from water column under crosshair
+      const hit = pickColumn();
+      if (hit) {
+        const idx = hit.j * world.width + hit.i;
+        const h = world.heights[idx];
+        if (h > 0) {
+          const top = world.palette[world.cells[idx * world.maxStackHeight + h - 1]];
+          if (top === 'water') {
+            const s = getStatsSnapshot();
+            setStatsRaw({ thirst: s.thirst + 30 });
+            dispatchMissionEvent({ type: 'drink' });
+            playSfx('drink');
+            return;
+          }
+        }
+      }
+      // Otherwise, try to eat flatbread/milk/fish from inventory
+      window.dispatchEvent(new CustomEvent('voxel:try-eat'));
+    };
+    window.addEventListener('voxel:interact', onInteract);
+    return () => window.removeEventListener('voxel:interact', onInteract);
+  }, [pickColumn, world]);
 
   // Click handlers (need pointer lock)
   useEffect(() => {
