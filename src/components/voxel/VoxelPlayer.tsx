@@ -105,6 +105,15 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
   }, [camera, world]);
 
   const doBreak = useCallback(() => {
+    // Let mobs (camels, sheep, etc.) handle left-click first if the crosshair is on them.
+    const dir = new THREE.Vector3();
+    camera.getWorldDirection(dir);
+    const handled = { value: false };
+    window.dispatchEvent(new CustomEvent('voxel:left-click', {
+      detail: { pos: camera.position.toArray(), dir: dir.toArray(), handled },
+    }));
+    if (handled.value) return;
+
     const hit = pickColumn();
     if (!hit) return;
     const removed = breakTopBlock(world, hit.i, hit.j);
@@ -113,7 +122,7 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
       dispatchMissionEvent({ type: 'mine', block: removed });
       onWorldMutated();
     }
-  }, [pickColumn, world, onMined, onWorldMutated]);
+  }, [camera, pickColumn, world, onMined, onWorldMutated]);
 
   const doPlace = useCallback(() => {
     const block = getSelectedBlock();

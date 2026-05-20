@@ -47,20 +47,26 @@ const Sheep = ({ world, count = 8, onShear }: Props) => {
   }, [world, count]);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.code !== 'KeyF') return;
+    const onClick = (e: Event) => {
+      const ce = e as CustomEvent<{ pos: number[]; dir: number[]; handled: { value: boolean } }>;
+      const { pos, dir, handled } = ce.detail;
+      if (handled.value) return;
       let best = -1, bd = Infinity;
       for (let i = 0; i < states.current.length; i++) {
         const s = states.current[i]; if (!s.alive) continue;
-        const dx = s.x - camera.position.x, dz = s.z - camera.position.z;
-        const d = dx*dx + dz*dz;
-        if (d < bd) { bd = d; best = i; }
+        const dx = s.x - pos[0], dz = s.z - pos[2];
+        const d2 = dx*dx + dz*dz;
+        if (d2 > 16) continue;
+        const len = Math.sqrt(d2) || 1;
+        const dot = (dx / len) * dir[0] + (dz / len) * dir[2];
+        if (dot < 0.5) continue;
+        if (d2 < bd) { bd = d2; best = i; }
       }
-      if (best >= 0 && bd < 9) onShear?.();
+      if (best >= 0) { handled.value = true; onShear?.(); }
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [camera, onShear]);
+    window.addEventListener('voxel:left-click', onClick);
+    return () => window.removeEventListener('voxel:left-click', onClick);
+  }, [onShear]);
 
   const tmpMat = useMemo(() => new THREE.Matrix4(), []);
   const tmpQuat = useMemo(() => new THREE.Quaternion(), []);
