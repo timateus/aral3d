@@ -13,6 +13,7 @@ import VoxelPlayer from '@/components/voxel/VoxelPlayer';
 import VoxelHUD from '@/components/voxel/VoxelHUD';
 import VoxelInventoryPanel from '@/components/voxel/VoxelInventoryPanel';
 import Camels from '@/components/voxel/Camels';
+import VoxelMinimap from '@/components/voxel/VoxelMinimap';
 
 const VoxelPage = () => {
   const [terrain, setTerrain] = useState<TerrainData | null>(null);
