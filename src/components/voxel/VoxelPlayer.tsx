@@ -7,6 +7,7 @@ import { getColumnHeight, breakTopBlock, placeTopBlock } from '@/lib/voxel/voxel
 import type { BlockId } from '@/lib/voxel/block-types';
 import { BLOCKS } from '@/lib/voxel/block-types';
 import { useGamepad } from '@/hooks/useGamepad';
+import { playSfx } from '@/lib/voxel/voxel-audio';
 
 interface Props {
   world: VoxelWorld;
@@ -181,6 +182,7 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
     if (jumpPressed && onGround.current) {
       velocity.current.y = JUMP_V;
       onGround.current = false;
+      playSfx('jump');
     }
 
     // Gravity
