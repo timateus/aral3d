@@ -13,6 +13,7 @@ import VoxelPlayer from '@/components/voxel/VoxelPlayer';
 import VoxelHUD from '@/components/voxel/VoxelHUD';
 import VoxelInventoryPanel from '@/components/voxel/VoxelInventoryPanel';
 import Camels from '@/components/voxel/Camels';
+import VoxelMinimap from '@/components/voxel/VoxelMinimap';
 
 const VoxelPage = () => {
   const [terrain, setTerrain] = useState<TerrainData | null>(null);
@@ -25,6 +26,7 @@ const VoxelPage = () => {
   selectedRef.current = inv.selected;
   const hotbarRef = useRef(inv.hotbar);
   hotbarRef.current = inv.hotbar;
+  const playerRef = useRef({ x: 0, z: 0, yaw: 0 });
 
   useEffect(() => {
     document.title = 'Survive — Aral3D Voxel Mode';
@@ -125,9 +127,12 @@ const VoxelPage = () => {
             getSelectedBlock={getSelectedBlock}
             consumeSelected={consumeSelected}
             onLockChange={setLocked}
+            playerRef={playerRef}
           />
         </Canvas>
       )}
+
+      {world && <VoxelMinimap world={world} playerRef={playerRef} version={version} />}
 
       <VoxelHUD locked={locked} onOpenInventory={() => setInvOpen(o => !o)} />
       <VoxelInventoryPanel open={invOpen} onClose={() => setInvOpen(false)} />

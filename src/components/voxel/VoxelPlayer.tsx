@@ -15,6 +15,7 @@ interface Props {
   getSelectedBlock: () => BlockId | null;
   consumeSelected: () => BlockId | null;
   onLockChange?: (locked: boolean) => void;
+  playerRef?: React.MutableRefObject<{ x: number; z: number; yaw: number }>;
 }
 
 const GRAVITY = 22;
@@ -25,7 +26,7 @@ const EYE_HEIGHT = 1.6;
 const PLAYER_RADIUS = 0.3;
 const REACH = 8;
 
-const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consumeSelected, onLockChange }: Props) => {
+const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consumeSelected, onLockChange, playerRef }: Props) => {
   const { camera, gl } = useThree();
   const velocity = useRef(new THREE.Vector3());
   const onGround = useRef(false);
@@ -185,13 +186,8 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
     // Gravity
     velocity.current.y -= GRAVITY * dt;
 
-    // Tentative new position
+    // Tentative new position with per-axis collision + step-up
     const pos = camera.position;
-    let nx = pos.x + velocity.current.x * dt;
-    let ny = pos.y + velocity.current.y * dt;
-    let nz = pos.z + velocity.current.z * dt;
-
-    // Heightfield collision: keep player above terrain surface.
     const halfW = world.width / 2;
     const halfD = world.depth / 2;
     const ground = (x: number, z: number) => {
@@ -199,31 +195,33 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
       const j = Math.floor(z + halfD);
       return getColumnHeight(world, i, j);
     };
+    const sampleGround = (x: number, z: number) =>
+      Math.max(
+        ground(x + PLAYER_RADIUS, z + PLAYER_RADIUS),
+        ground(x - PLAYER_RADIUS, z + PLAYER_RADIUS),
+        ground(x + PLAYER_RADIUS, z - PLAYER_RADIUS),
+        ground(x - PLAYER_RADIUS, z - PLAYER_RADIUS),
+      );
 
-    // Sample ground at 4 corners around player radius
-    const checkPoints = [
-      [nx + PLAYER_RADIUS, nz + PLAYER_RADIUS],
-      [nx - PLAYER_RADIUS, nz + PLAYER_RADIUS],
-      [nx + PLAYER_RADIUS, nz - PLAYER_RADIUS],
-      [nx - PLAYER_RADIUS, nz - PLAYER_RADIUS],
-    ];
-    let maxGround = 0;
-    for (const [x, z] of checkPoints) maxGround = Math.max(maxGround, ground(x, z));
+    const STEP_UP = 1.05; // climb a single block automatically
+    const curGround = sampleGround(pos.x, pos.z);
+    const standing = pos.y - EYE_HEIGHT <= curGround + 0.05;
 
-    const feet = ny - EYE_HEIGHT;
-    if (feet < maxGround) {
-      // Block horizontal movement if it caused a wall (compare to current ground).
-      const curGround = ground(pos.x, pos.z);
-      if (maxGround - curGround > 1.1) {
-        // Wall: reject horizontal movement, keep current x/z
-        nx = pos.x; nz = pos.z;
-        // Recompute ground at current position
-        maxGround = curGround;
-      }
-      ny = maxGround + EYE_HEIGHT;
+    // Axis-separated movement so we slide along walls instead of getting stuck
+    let nx = pos.x + velocity.current.x * dt;
+    let nz = pos.z;
+    if (standing && sampleGround(nx, nz) - curGround > STEP_UP) nx = pos.x;
+
+    nz = pos.z + velocity.current.z * dt;
+    if (standing && sampleGround(nx, nz) - sampleGround(nx, pos.z) > STEP_UP) nz = pos.z;
+
+    let ny = pos.y + velocity.current.y * dt;
+    const finalGround = sampleGround(nx, nz);
+    if (ny - EYE_HEIGHT < finalGround) {
+      ny = finalGround + EYE_HEIGHT;
       if (velocity.current.y < 0) velocity.current.y = 0;
       onGround.current = true;
-    } else if (feet > maxGround + 0.01) {
+    } else if (ny - EYE_HEIGHT > finalGround + 0.02) {
       onGround.current = false;
     }
 
@@ -242,6 +240,14 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
       if (ltPressed && !lastGpClick.current.place) doPlace();
       lastGpClick.current.break = rtPressed;
       lastGpClick.current.place = ltPressed;
+    }
+
+    // Publish position for minimap / external HUDs
+    if (playerRef) {
+      const e = new THREE.Euler().setFromQuaternion(camera.quaternion, 'YXZ');
+      playerRef.current.x = pos.x;
+      playerRef.current.z = pos.z;
+      playerRef.current.yaw = -e.y; // canvas Y rotates opposite to world yaw
     }
   });
 
