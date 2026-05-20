@@ -119,10 +119,11 @@ export function buildVoxelWorld(terrain: TerrainData, opts: VoxelWorldOptions = 
       let topBlock: BlockId;
       if (isUnderwater) {
         topBlock = 'water';
-      } else if (elev < waterLevel + 2) {
-        topBlock = r < 0.6 ? 'mud' : 'clay';
-      } else if (elev < waterLevel + 12) {
-        topBlock = r < 0.15 ? 'reed' : r < 0.7 ? 'grass' : 'dirt';
+      } else if (elev < waterLevel + 5) {
+        // Wider clay/mud band along shorelines so clay is easy to find.
+        topBlock = r < 0.45 ? 'clay' : r < 0.85 ? 'mud' : 'sand';
+      } else if (elev < waterLevel + 14) {
+        topBlock = r < 0.18 ? 'reed' : r < 0.6 ? 'grass' : r < 0.85 ? 'dirt' : 'clay';
       } else if (elev > maxElev - 6) {
         topBlock = r < 0.3 ? 'snow' : 'stone';
       } else if (elev > maxElev - 20) {
@@ -132,8 +133,8 @@ export function buildVoxelWorld(terrain: TerrainData, opts: VoxelWorldOptions = 
         topBlock = r < 0.25 ? 'salt' : r < 0.85 ? 'sand' : 'dirt';
       }
 
-      // Sprinkle saxaul on sand
-      if (topBlock === 'sand' && rand() < 0.04) topBlock = 'saxaul';
+      // Sprinkle saxaul on sand & dirt (more common so ash is gatherable).
+      if ((topBlock === 'sand' || topBlock === 'dirt') && rand() < 0.08) topBlock = 'saxaul';
       // Extra salt patches on the deepest dry plains
       if (topBlock === 'sand' && elev < waterLevel + 8 && rand() < 0.3) topBlock = 'salt';
 

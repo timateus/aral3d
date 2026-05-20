@@ -161,9 +161,13 @@ const VoxelPage = () => {
   const onMined = useCallback((block: string) => {
     inv.add(block as any, 1);
     playSfx('mine');
-    if (block === 'saxaul' && Math.random() < 0.5) inv.add('ash' as any, 1);
-    if (block === 'saxaul' && Math.random() < 0.25) inv.add('fat' as any, 1);
-    if (block === 'reed' && Math.random() < 0.3) inv.add('grass' as any, 1);
+    const extras: string[] = [];
+    if (block === 'saxaul' && Math.random() < 0.6) { inv.add('ash' as any, 1); extras.push('+1 ash'); }
+    if (block === 'saxaul' && Math.random() < 0.3) { inv.add('fat' as any, 1); extras.push('+1 fat'); }
+    if (block === 'reed' && Math.random() < 0.3) { inv.add('grass' as any, 1); extras.push('+1 grass'); }
+    if (block === 'reed' && Math.random() < 0.2) { inv.add('flatbread' as any, 1); extras.push('+1 flatbread'); }
+    const label = block.charAt(0).toUpperCase() + block.slice(1);
+    toast.success(`+1 ${label}${extras.length ? ' · ' + extras.join(' · ') : ''}`, { duration: 1400 });
   }, [inv]);
 
   // After mining, trigger canal flood if dug column is in canal zone.

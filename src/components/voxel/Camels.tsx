@@ -54,32 +54,32 @@ const Camels = ({ world, count = 10, onMilked }: Props) => {
     states.current = arr;
   }, [world, count]);
 
-  // Right-click to milk
+  // Left-click camel within range + forward cone -> milk
   useEffect(() => {
-    const onContext = (e: MouseEvent) => {
-      // Pointer-lock right-click ignored here — VoxelPlayer handles place; we just expose proximity-based milking via keydown.
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.code !== 'KeyM') return;
-      // Find nearest alive camel within 3 units
+    const onClick = (e: Event) => {
+      const ce = e as CustomEvent<{ pos: number[]; dir: number[]; handled: { value: boolean } }>;
+      const { pos, dir, handled } = ce.detail;
+      if (handled.value) return;
       let nearest = -1; let bestD = Infinity;
       for (let i = 0; i < states.current.length; i++) {
         const s = states.current[i]; if (!s.alive) continue;
-        const dx = s.x - camera.position.x, dz = s.z - camera.position.z;
-        const d = dx*dx + dz*dz;
-        if (d < bestD) { bestD = d; nearest = i; }
+        const dx = s.x - pos[0], dz = s.z - pos[2];
+        const d2 = dx*dx + dz*dz;
+        if (d2 > 16) continue; // 4 block reach
+        // Forward cone: dot product of normalized offset with dir.xz > 0.5
+        const len = Math.sqrt(d2) || 1;
+        const dot = (dx / len) * dir[0] + (dz / len) * dir[2];
+        if (dot < 0.5) continue;
+        if (d2 < bestD) { bestD = d2; nearest = i; }
       }
-      if (nearest >= 0 && bestD < 9) {
+      if (nearest >= 0) {
+        handled.value = true;
         onMilked?.();
       }
     };
-    window.addEventListener('contextmenu', onContext);
-    window.addEventListener('keydown', onKey);
-    return () => {
-      window.removeEventListener('contextmenu', onContext);
-      window.removeEventListener('keydown', onKey);
-    };
-  }, [camera, onMilked]);
+    window.addEventListener('voxel:left-click', onClick);
+    return () => window.removeEventListener('voxel:left-click', onClick);
+  }, [onMilked]);
 
   const tmpMat = useMemo(() => new THREE.Matrix4(), []);
   const tmpQuat = useMemo(() => new THREE.Quaternion(), []);

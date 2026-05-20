@@ -18,7 +18,7 @@ function ensureCtx(): AudioContext | null {
     masterGain.gain.value = muted ? 0 : 0.9;
     masterGain.connect(ctx.destination);
     musicGain = ctx.createGain();
-    musicGain.gain.value = 0.25;
+    musicGain.gain.value = 0.11;
     musicGain.connect(masterGain);
     sfxGain = ctx.createGain();
     sfxGain.gain.value = 0.7;
@@ -126,37 +126,37 @@ export function startAmbient() {
 
   const now = c.currentTime;
   const pad = c.createGain(); pad.gain.value = 0.0; pad.connect(musicGain);
-  pad.gain.linearRampToValueAtTime(0.55, now + 4);
+  pad.gain.linearRampToValueAtTime(0.35, now + 6);
 
-  // Two detuned sawtooth oscillators through a soft lowpass.
-  const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 700; lp.Q.value = 0.7;
+  // Soft sine pad through a gentle lowpass — calmer than detuned saws.
+  const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 500; lp.Q.value = 0.5;
   lp.connect(pad);
 
-  const o1 = c.createOscillator(); o1.type = 'sawtooth'; o1.frequency.value = 110; // A2
-  const o2 = c.createOscillator(); o2.type = 'sawtooth'; o2.frequency.value = 110.7;
-  const o3 = c.createOscillator(); o3.type = 'sine';    o3.frequency.value = 220;
+  const o1 = c.createOscillator(); o1.type = 'sine'; o1.frequency.value = 110; // A2
+  const o2 = c.createOscillator(); o2.type = 'sine'; o2.frequency.value = 164.81; // E3 (perfect fifth)
+  const o3 = c.createOscillator(); o3.type = 'sine'; o3.frequency.value = 220;
   o1.connect(lp); o2.connect(lp); o3.connect(lp);
   o1.start(); o2.start(); o3.start();
 
-  // Slow filter LFO
-  const lfo = c.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 0.05;
-  const lfoGain = c.createGain(); lfoGain.gain.value = 250;
+  // Very slow filter LFO — barely-there movement.
+  const lfo = c.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 0.03;
+  const lfoGain = c.createGain(); lfoGain.gain.value = 120;
   lfo.connect(lfoGain).connect(lp.frequency);
   lfo.start();
 
-  // Occasional bell pings
+  // Sparse, quiet bell pings
   let pingTimer: number | null = window.setInterval(() => {
     if (!ctx || !musicGain) return;
     const t = ctx.currentTime;
-    const notes = [440, 523.25, 659.25, 783.99, 880];
+    const notes = [440, 523.25, 659.25];
     const f = notes[Math.floor(Math.random() * notes.length)];
     const osc = ctx.createOscillator(); osc.type = 'sine'; osc.frequency.value = f;
     const g = ctx.createGain(); g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(0.12, t + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 2.2);
+    g.gain.linearRampToValueAtTime(0.05, t + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 3.0);
     osc.connect(g).connect(musicGain);
-    osc.start(t); osc.stop(t + 2.3);
-  }, 7000);
+    osc.start(t); osc.stop(t + 3.1);
+  }, 16000);
 
   ambientNodes = {
     stop: () => {

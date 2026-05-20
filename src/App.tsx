@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import VoxelPage from "./pages/Voxel";
-import CountdownTimer from "./components/CountdownTimer";
+
 
 const queryClient = new QueryClient();
 
@@ -15,7 +15,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <CountdownTimer />
+      
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />

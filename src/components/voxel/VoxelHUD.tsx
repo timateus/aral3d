@@ -64,9 +64,9 @@ const VoxelHUD = ({ locked, onOpenInventory }: Props) => {
             <div className="text-sm">Click the world to lock pointer and play</div>
             <div className="text-[10px] text-white/50 mt-2 leading-relaxed">
               WASD move · Space jump · Shift sprint<br/>
-              Left-click mine · Right-click place · F drink/eat<br/>
-              1–9 hotbar · E inventory · Q quests · B build<br/>
-              M milk camel · F shear sheep · Esc unlock
+              Left-click: mine block OR milk camel / shear sheep (aim at it)<br/>
+              Right-click place · F drink water / eat food<br/>
+              1–9 hotbar · E inventory · Q quests · B build · Esc unlock
             </div>
           </div>
         </div>
