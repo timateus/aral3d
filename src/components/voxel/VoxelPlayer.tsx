@@ -15,6 +15,7 @@ interface Props {
   getSelectedBlock: () => BlockId | null;
   consumeSelected: () => BlockId | null;
   onLockChange?: (locked: boolean) => void;
+  playerRef?: React.MutableRefObject<{ x: number; z: number; yaw: number }>;
 }
 
 const GRAVITY = 22;
