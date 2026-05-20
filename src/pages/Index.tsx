@@ -1574,6 +1574,14 @@ const Index = () => {
                 <span id="copy-link-feedback" className="text-primary font-bold" />
               </button>
               <GamepadIndicator btnBase={btnBase} />
+              <a
+                href="/voxel"
+                className={`${btnBase} text-emerald-300 border-emerald-400/40 bg-emerald-400/10 hover:bg-emerald-400/20`}
+                title="Enter Minecraft-like Survive mode"
+              >
+                <span className="font-bold">▣</span>
+                Survive
+              </a>
               <button
                 onClick={toggleScreenRecording}
                 className={`${btnBase} ${screenRecording ? 'text-destructive border-destructive/50 bg-destructive/10 animate-pulse' : 'text-muted-foreground hover:text-primary'}`}
