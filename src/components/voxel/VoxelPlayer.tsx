@@ -241,6 +241,14 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
       lastGpClick.current.break = rtPressed;
       lastGpClick.current.place = ltPressed;
     }
+
+    // Publish position for minimap / external HUDs
+    if (playerRef) {
+      const e = new THREE.Euler().setFromQuaternion(camera.quaternion, 'YXZ');
+      playerRef.current.x = pos.x;
+      playerRef.current.z = pos.z;
+      playerRef.current.yaw = -e.y; // canvas Y rotates opposite to world yaw
+    }
   });
 
   return (
