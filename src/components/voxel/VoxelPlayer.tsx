@@ -182,6 +182,7 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
     if (jumpPressed && onGround.current) {
       velocity.current.y = JUMP_V;
       onGround.current = false;
+      playSfx('jump');
     }
 
     // Gravity
