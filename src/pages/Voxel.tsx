@@ -127,9 +127,12 @@ const VoxelPage = () => {
             getSelectedBlock={getSelectedBlock}
             consumeSelected={consumeSelected}
             onLockChange={setLocked}
+            playerRef={playerRef}
           />
         </Canvas>
       )}
+
+      {world && <VoxelMinimap world={world} playerRef={playerRef} version={version} />}
 
       <VoxelHUD locked={locked} onOpenInventory={() => setInvOpen(o => !o)} />
       <VoxelInventoryPanel open={invOpen} onClose={() => setInvOpen(false)} />
