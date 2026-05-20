@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { BLOCKS, type BlockId } from '@/lib/voxel/block-types';
 import { useVoxelInventory, HOTBAR_SIZE } from '@/hooks/useVoxelInventory';
 import { Gamepad2 } from 'lucide-react';
