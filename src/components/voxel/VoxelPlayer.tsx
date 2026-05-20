@@ -140,7 +140,8 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
   const moveDir = new THREE.Vector3();
 
   useFrame((_, delta) => {
-    if (!lockedRef.current && !gp.connected) return;
+    const gs = gp.stateRef.current;
+    if (!lockedRef.current && !gs.connected) return;
     const dt = Math.min(0.05, delta);
 
     // Movement input
@@ -151,20 +152,19 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
     if (keys.current['KeyD']) moveDir.x += 1;
 
     // Gamepad left stick
-    if (gp.connected) {
-      moveDir.x += gp.leftStick.x;
-      moveDir.z += gp.leftStick.y;
+    if (gs.connected) {
+      moveDir.x += gs.leftStick.x;
+      moveDir.z += gs.leftStick.y;
       // Right stick yaw / pitch
       const lookSens = 1.8 * dt;
-      camera.rotateY(-gp.rightStick.x * lookSens);
-      // Pitch: rotate around right axis
+      camera.rotateY(-gs.rightStick.x * lookSens);
       const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
-      camera.rotateOnWorldAxis(right, -gp.rightStick.y * lookSens);
+      camera.rotateOnWorldAxis(right, -gs.rightStick.y * lookSens);
     }
 
     if (moveDir.lengthSq() > 0) moveDir.normalize();
 
-    const sprint = keys.current['ShiftLeft'] || keys.current['ShiftRight'] || (gp.connected && gp.buttons.lb);
+    const sprint = keys.current['ShiftLeft'] || keys.current['ShiftRight'] || gs.buttons.lb;
     const speed = WALK_SPEED * (sprint ? SPRINT_MULT : 1);
 
     // Camera-relative basis (XZ plane only)
