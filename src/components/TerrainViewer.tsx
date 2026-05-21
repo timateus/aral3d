@@ -262,14 +262,23 @@ function CameraAnimator({ started, skip, orbitRef }: { started: boolean; skip?: 
     }
     if (started && shouldSkipIntro && !hasStarted.current) {
       hasStarted.current = true;
+      const position = savedExploreView.position ?? end;
+      const target = savedExploreView.target ?? endTarget;
+      const applyView = () => {
+        camera.position.copy(position);
+        camera.lookAt(target);
+        if (orbitRef.current) {
+          orbitRef.current.target.copy(target);
+          orbitRef.current.update?.();
+        }
+      };
       if (savedExploreView.position && savedExploreView.target) {
-        camera.position.copy(savedExploreView.position);
-        camera.lookAt(savedExploreView.target);
-        if (orbitRef.current) orbitRef.current.target.copy(savedExploreView.target);
+        applyView();
       } else {
-        camera.position.copy(end);
-        camera.lookAt(endTarget);
-        if (orbitRef.current) orbitRef.current.target.copy(endTarget);
+        savedExploreView.position = end.clone();
+        savedExploreView.target = endTarget.clone();
+        applyView();
+        requestAnimationFrame(applyView);
       }
     }
   }, [started, skip, camera, orbitRef]);
