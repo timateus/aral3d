@@ -1036,12 +1036,7 @@ const Index = () => {
     }
   }, []);
 
-  // Write URL params on state change (debounced)
-  const urlTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    if (!urlInitRef.current) return;
-    if (urlTimerRef.current) clearTimeout(urlTimerRef.current);
-    urlTimerRef.current = setTimeout(() => {
+  const buildShareUrl = useCallback(() => {
       const p = new URLSearchParams();
       if (started) p.set('started', '1');
       if (gameModeActive) p.set('mode', 'game');
@@ -1073,20 +1068,19 @@ const Index = () => {
       if (!showPlaces) layers.push('noplaces');
       if (layers.length) p.set('layers', layers.join(','));
       const qs = p.toString();
-      window.history.replaceState({}, '', qs ? `?${qs}` : window.location.pathname);
-    }, 500);
-  }, [started, gameModeActive, sandboxMode, waterExtentYear, exaggeration, waterLevel,
+      return `${window.location.origin}${window.location.pathname}${qs ? `?${qs}` : ''}`;
+  }, [started, gameModeActive, sandboxMode, lifeMode, waterExtentYear, exaggeration, waterLevel,
       showBorders, showRivers, showKhorezm, showWaterways, showSchools, showVocabulary, showDwellings,
       showGroundwater, showPrecipitation, showLandcover, showPopDensity, showMigration,
       showChoropleth, showSalinity, showWaterExtent, show13thBasin, show19thBasin,
       show21stBasin, showPlaces, waterwayTypeFilter]);
 
   const handleCopyLink = useCallback(() => {
-    navigator.clipboard.writeText(window.location.href).then(() => {
+    navigator.clipboard.writeText(buildShareUrl()).then(() => {
       const el = document.getElementById('copy-link-feedback');
       if (el) { el.textContent = 'Copied!'; setTimeout(() => { el.textContent = ''; }, 1500); }
     });
-  }, []);
+  }, [buildShareUrl]);
 
   // Screen recording (canvas-based)
   const [screenRecording, setScreenRecording] = useState(false);
