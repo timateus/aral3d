@@ -22,6 +22,7 @@ import Fish from '@/components/voxel/Fish';
 import Fox from '@/components/voxel/Fox';
 import DustDevil from '@/components/voxel/DustDevil';
 import VoxelMinimap from '@/components/voxel/VoxelMinimap';
+import VoxelPlaceTags from '@/components/voxel/VoxelPlaceTags';
 import { initAudio, playSfx, startAmbient, stopAmbient, setMuted, isMuted } from '@/lib/voxel/voxel-audio';
 import { createSaplingTracker, type SaplingTracker } from '@/lib/voxel/saxaul';
 import { floodFillCanal } from '@/lib/voxel/water-fill';
@@ -407,6 +408,7 @@ const VoxelPage = () => {
       )}
 
       {world && <VoxelMinimap world={world} playerRef={playerRef} version={version} label={`Map · ${cfg.label}`} />}
+      {world && <VoxelPlaceTags world={world} playerRef={playerRef} region={region} />}
 
       <VoxelHUD locked={locked} onOpenInventory={() => setInvOpen(o => !o)} />
       {world && <VoxelStatsHUD />}
