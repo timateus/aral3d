@@ -1,10 +1,21 @@
 import { TerrainData, GeoBounds } from './geotiff-loader';
 
+const mergeCache = new WeakMap<TerrainData, WeakMap<TerrainData, TerrainData>>();
+const expandMergeCache = new WeakMap<TerrainData, WeakMap<TerrainData, Map<boolean, TerrainData>>>();
+
 /**
  * Merge two terrain datasets. The overlay replaces the base where it has valid data
  * within the overlapping geographic region.
  */
 export function mergeTerrains(base: TerrainData, overlay: TerrainData): TerrainData {
+  let overlayCache = mergeCache.get(base);
+  if (!overlayCache) {
+    overlayCache = new WeakMap<TerrainData, TerrainData>();
+    mergeCache.set(base, overlayCache);
+  }
+  const cached = overlayCache.get(overlay);
+  if (cached) return cached;
+
   if (!base.bounds || !overlay.bounds) {
     console.warn('Cannot merge terrains without geographic bounds, returning base');
     return base;
@@ -53,7 +64,7 @@ export function mergeTerrains(base: TerrainData, overlay: TerrainData): TerrainD
     }
   }
 
-  return {
+  const result = {
     width,
     height,
     elevations: merged,
@@ -62,6 +73,8 @@ export function mergeTerrains(base: TerrainData, overlay: TerrainData): TerrainD
     noDataValue: base.noDataValue,
     bounds: base.bounds,
   };
+  overlayCache.set(overlay, result);
+  return result;
 }
 
 /**
@@ -71,6 +84,19 @@ export function mergeTerrains(base: TerrainData, overlay: TerrainData): TerrainD
  * Areas outside both are filled with the base min elevation.
  */
 export function mergeExpandTerrains(base: TerrainData, overlay: TerrainData, fillNoData = true): TerrainData {
+  let overlayCache = expandMergeCache.get(base);
+  if (!overlayCache) {
+    overlayCache = new WeakMap<TerrainData, Map<boolean, TerrainData>>();
+    expandMergeCache.set(base, overlayCache);
+  }
+  let fillCache = overlayCache.get(overlay);
+  if (!fillCache) {
+    fillCache = new Map<boolean, TerrainData>();
+    overlayCache.set(overlay, fillCache);
+  }
+  const cached = fillCache.get(fillNoData);
+  if (cached) return cached;
+
   if (!base.bounds || !overlay.bounds) {
     console.warn('Cannot merge terrains without geographic bounds, returning base');
     return base;
@@ -169,7 +195,7 @@ export function mergeExpandTerrains(base: TerrainData, overlay: TerrainData, fil
 
   console.log('Expanded merge:', { finalWidth, finalHeight, unionBounds, minElev, maxElev });
 
-  return {
+  const result = {
     width: finalWidth,
     height: finalHeight,
     elevations: merged,
@@ -178,4 +204,6 @@ export function mergeExpandTerrains(base: TerrainData, overlay: TerrainData, fil
     noDataValue: base.noDataValue,
     bounds: unionBounds,
   };
+  fillCache.set(fillNoData, result);
+  return result;
 }

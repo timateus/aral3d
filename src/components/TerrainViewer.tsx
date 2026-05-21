@@ -42,6 +42,16 @@ import type { WaterFlowState } from '@/lib/water-flow-simulation';
 import * as THREE from 'three';
 import { useVisualMode, useDesignerScheme } from '@/lib/visual-mode';
 
+const DEFAULT_CAMERA_POSITION = new THREE.Vector3(0, 18, 8);
+const EXPLORE_CAMERA_POSITION = new THREE.Vector3(0, 10, 12);
+const DEFAULT_CAMERA_TARGET = new THREE.Vector3(0, 0, 0);
+const EXPLORE_CAMERA_TARGET = new THREE.Vector3(0, 0, -1);
+const savedExploreView = {
+  position: null as THREE.Vector3 | null,
+  target: null as THREE.Vector3 | null,
+};
+let introFlightPlayed = false;
+
 /* ── Scene background + fog reactive to mirage/dark/designer mode ── */
 function SceneBackground() {
   const [mode] = useVisualMode();
@@ -208,7 +218,7 @@ function CanvasRecorder({ onReady }: { onReady: (controls: { start: () => void; 
   return null;
 }
 
-function CameraAnimator({ started, skip }: { started: boolean; skip?: boolean }) {
+function CameraAnimator({ started, skip, orbitRef }: { started: boolean; skip?: boolean; orbitRef: React.MutableRefObject<any> }) {
   const { camera } = useThree();
   const progress = useRef(0);
   const animating = useRef(false);
@@ -216,10 +226,10 @@ function CameraAnimator({ started, skip }: { started: boolean; skip?: boolean })
   const autoRotateAngle = useRef(0);
   const [autoRotate, setAutoRotate] = useState(false);
 
-  const start = new THREE.Vector3(0, 18, 8);
-  const end = new THREE.Vector3(0, 10, 12);
-  const startTarget = new THREE.Vector3(0, 0, 0);
-  const endTarget = new THREE.Vector3(0, 0, -1);
+  const start = DEFAULT_CAMERA_POSITION;
+  const end = EXPLORE_CAMERA_POSITION;
+  const startTarget = DEFAULT_CAMERA_TARGET;
+  const endTarget = EXPLORE_CAMERA_TARGET;
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -230,23 +240,48 @@ function CameraAnimator({ started, skip }: { started: boolean; skip?: boolean })
   }, []);
 
   useEffect(() => {
-    camera.position.copy(start);
-    camera.lookAt(startTarget);
+    if (started && savedExploreView.position && savedExploreView.target) {
+      camera.position.copy(savedExploreView.position);
+      camera.lookAt(savedExploreView.target);
+      if (orbitRef.current) orbitRef.current.target.copy(savedExploreView.target);
+      return;
+    }
+    if (!started) {
+      camera.position.copy(start);
+      camera.lookAt(startTarget);
+    }
   }, []);
 
   useEffect(() => {
-    if (started && !hasStarted.current && !skip) {
+    const shouldSkipIntro = skip || introFlightPlayed || window.location.search.includes('started=1');
+    if (started && !hasStarted.current && !shouldSkipIntro) {
       hasStarted.current = true;
+      introFlightPlayed = true;
       animating.current = true;
       progress.current = 0;
     }
-    if (started && skip && !hasStarted.current) {
+    if (started && shouldSkipIntro && !hasStarted.current) {
       hasStarted.current = true;
-      // Jump directly to end position
-      camera.position.set(0, 10, 12);
-      camera.lookAt(0, 0, -1);
+      const position = savedExploreView.position ?? end;
+      const target = savedExploreView.target ?? endTarget;
+      const applyView = () => {
+        camera.position.copy(position);
+        camera.lookAt(target);
+        if (orbitRef.current) {
+          orbitRef.current.target.copy(target);
+          orbitRef.current.update?.();
+        }
+      };
+      if (savedExploreView.position && savedExploreView.target) {
+        applyView();
+      } else {
+        savedExploreView.position = end.clone();
+        savedExploreView.target = endTarget.clone();
+        applyView();
+        requestAnimationFrame(applyView);
+      }
     }
-  }, [started, skip]);
+  }, [started, skip, camera, orbitRef]);
 
   useFrame((_, delta) => {
     if (autoRotate && !started) {
@@ -266,7 +301,32 @@ function CameraAnimator({ started, skip }: { started: boolean; skip?: boolean })
     camera.position.lerpVectors(start, end, t);
     const target = new THREE.Vector3().lerpVectors(startTarget, endTarget, t);
     camera.lookAt(target);
-    if (progress.current >= 1) animating.current = false;
+    if (orbitRef.current) orbitRef.current.target.copy(target);
+    if (progress.current >= 1) {
+      animating.current = false;
+      savedExploreView.position = camera.position.clone();
+      savedExploreView.target = target.clone();
+    }
+  });
+
+  return null;
+}
+
+function ExploreViewMemory({ started, orbitRef, disabled }: { started: boolean; orbitRef: React.MutableRefObject<any>; disabled?: boolean }) {
+  const { camera } = useThree();
+  const restored = useRef(false);
+
+  useFrame(() => {
+    if (!started || disabled) return;
+    if (!restored.current && savedExploreView.position && savedExploreView.target && orbitRef.current) {
+      camera.position.copy(savedExploreView.position);
+      orbitRef.current.target.copy(savedExploreView.target);
+      camera.lookAt(savedExploreView.target);
+      orbitRef.current.update?.();
+      restored.current = true;
+    }
+    savedExploreView.position = camera.position.clone();
+    savedExploreView.target = orbitRef.current?.target?.clone?.() ?? savedExploreView.target ?? EXPLORE_CAMERA_TARGET.clone();
   });
 
   return null;
@@ -556,7 +616,8 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
         </Suspense>
       )}
 
-      {!narrativeActive && !flyoverAnimating && !gameModeActive && !aryqWorldActive && <CameraAnimator started={started} skip={sandboxActive} />}
+      {!narrativeActive && !flyoverAnimating && !gameModeActive && !aryqWorldActive && <CameraAnimator started={started} skip={sandboxActive} orbitRef={orbitRef} />}
+      <ExploreViewMemory started={started} orbitRef={orbitRef} disabled={narrativeActive || flyoverAnimating || gameModeActive || aryqWorldActive || !!riverFlyover || !!recording} />
       {narrativeActive && narrativeCameraPosition && narrativeCameraTarget && (
         <NarrativeCameraController
           active={narrativeActive}
