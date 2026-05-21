@@ -18,7 +18,23 @@ export interface TerrainData {
 }
 
 
+// Module-level cache so repeated calls (e.g., after a component remount or
+// after toggling layers that rebuild the terrain pipeline) reuse the same
+// parsed result instead of re-fetching + re-decoding the GeoTIFF.
+const _terrainCache = new Map<string, Promise<TerrainData>>();
+
 export async function loadGeoTiff(url: string): Promise<TerrainData> {
+  const cached = _terrainCache.get(url);
+  if (cached) return cached;
+  const promise = _loadGeoTiffUncached(url).catch((err) => {
+    _terrainCache.delete(url); // allow retry on failure
+    throw err;
+  });
+  _terrainCache.set(url, promise);
+  return promise;
+}
+
+async function _loadGeoTiffUncached(url: string): Promise<TerrainData> {
   const response = await fetch(url);
   const arrayBuffer = await response.arrayBuffer();
   const tiff = await fromArrayBuffer(arrayBuffer);
