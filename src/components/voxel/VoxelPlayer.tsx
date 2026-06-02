@@ -198,7 +198,8 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
 
   useFrame((_, delta) => {
     const gs = gp.stateRef.current;
-    if (!lockedRef.current && !gs.connected) return;
+    const touch = touchInput.active;
+    if (!lockedRef.current && !gs.connected && !touch) return;
     const dt = Math.min(0.05, delta);
 
     // Movement input
@@ -217,6 +218,26 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
       camera.rotateY(-gs.rightStick.x * lookSens);
       const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
       camera.rotateOnWorldAxis(right, -gs.rightStick.y * lookSens);
+    }
+
+    // Touch input
+    if (touch) {
+      moveDir.x += touchInput.move.x;
+      moveDir.z += touchInput.move.y;
+      // Drag-look: consume accumulated pixel deltas
+      const lookSens = 0.0035;
+      if (touchInput.look.x || touchInput.look.y) {
+        camera.rotateY(-touchInput.look.x * lookSens);
+        const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+        camera.rotateOnWorldAxis(right, -touchInput.look.y * lookSens);
+        // Clamp pitch
+        const e = new THREE.Euler().setFromQuaternion(camera.quaternion, 'YXZ');
+        e.x = Math.max(-Math.PI / 2 + 0.05, Math.min(Math.PI / 2 - 0.05, e.x));
+        camera.quaternion.setFromEuler(e);
+        touchInput.look.x = 0; touchInput.look.y = 0;
+      }
+      if (touchInput.breakQueued) { touchInput.breakQueued = false; doBreak(); }
+      if (touchInput.placeQueued) { touchInput.placeQueued = false; doPlace(); }
     }
 
     if (moveDir.lengthSq() > 0) moveDir.normalize();
