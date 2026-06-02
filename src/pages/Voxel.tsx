@@ -112,6 +112,7 @@ const VoxelPage = () => {
   const [buildOpen, setBuildOpen] = useState(false);
   const [questOpen, setQuestOpen] = useState(false);
   const [muted, setMutedState] = useState(false);
+  const [demoMode, setDemoMode] = useState(false);
   const inv = useVoxelInventory();
   const stats = useVoxelStats();
   useVoxelMissions(); // mount the listener
