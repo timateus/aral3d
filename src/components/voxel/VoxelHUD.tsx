@@ -57,8 +57,8 @@ const VoxelHUD = ({ locked, onOpenInventory }: Props) => {
         </div>
       )}
 
-      {/* Click-to-play overlay */}
-      {!locked && (
+      {/* Click-to-play overlay (skipped on touch devices) */}
+      {!locked && !isTouchDevice() && (
         <div className="fixed inset-0 pointer-events-none flex items-center justify-center z-30">
           <div className="bg-black/70 border border-white/20 px-6 py-4 text-center font-mono text-white">
             <div className="text-xs uppercase tracking-widest text-white/60 mb-1">Survive Mode</div>
