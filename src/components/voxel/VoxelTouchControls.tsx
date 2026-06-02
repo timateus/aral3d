@@ -18,6 +18,7 @@ const VoxelTouchControls = () => {
   const rightZoneRef = useRef<HTMLDivElement>(null);
   const [stickPos, setStickPos] = useState<{ x: number; y: number } | null>(null);
   const [stickOrigin, setStickOrigin] = useState<{ x: number; y: number } | null>(null);
+  const [sprintOn, setSprintOn] = useState(false);
   const leftTouchId = useRef<number | null>(null);
   const rightTouchId = useRef<number | null>(null);
   const lastLook = useRef<{ x: number; y: number } | null>(null);
