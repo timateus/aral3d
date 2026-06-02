@@ -213,13 +213,13 @@ const VoxelTouchControls = () => {
       {/* Sprint toggle — left side, above joystick area */}
       <button
         className={`${btnBase} fixed bottom-3 left-3 z-50 w-14 h-14 border ${
-          touchInput.sprint ? 'bg-yellow-500/70 border-yellow-200' : 'bg-black/60 border-white/30'
+          sprintOn ? 'bg-yellow-500/70 border-yellow-200' : 'bg-black/60 border-white/30'
         }`}
         onTouchStart={(e) => {
           e.preventDefault();
-          touchInput.sprint = !touchInput.sprint;
-          // Force re-render
-          (e.currentTarget as HTMLButtonElement).classList.toggle('bg-yellow-500/70');
+          const next = !sprintOn;
+          setSprintOn(next);
+          touchInput.sprint = next;
         }}
       >
         <Zap className="w-4 h-4" /><span className="mt-0.5">Run</span>
