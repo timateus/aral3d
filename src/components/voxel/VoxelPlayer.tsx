@@ -330,6 +330,16 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
     }
   });
 
+  // On touch devices, skip pointer lock entirely — touch controls drive input.
+  useEffect(() => {
+    if (isTouchDevice()) {
+      lockedRef.current = true;
+      onLockChange?.(true);
+    }
+  }, [onLockChange]);
+
+  if (isTouchDevice()) return null;
+
   return (
     <PointerLockControls
       onLock={() => { lockedRef.current = true; onLockChange?.(true); }}
