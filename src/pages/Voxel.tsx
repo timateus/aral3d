@@ -8,7 +8,7 @@ import { useVoxelInventory } from '@/hooks/useVoxelInventory';
 import { useVoxelStats, getStatsSnapshot, setStatsRaw } from '@/hooks/useVoxelStats';
 import { useVoxelMissions, dispatchMissionEvent } from '@/hooks/useVoxelMissions';
 import { toast } from 'sonner';
-import { ArrowLeft, Loader2, Volume2, VolumeX, Sun, Moon } from 'lucide-react';
+import { ArrowLeft, Loader2, Volume2, VolumeX, Sun, Moon, Play, Square } from 'lucide-react';
 import VoxelTerrain from '@/components/voxel/VoxelTerrain';
 import VoxelPlayer from '@/components/voxel/VoxelPlayer';
 import VoxelHUD from '@/components/voxel/VoxelHUD';
@@ -24,6 +24,7 @@ import DustDevil from '@/components/voxel/DustDevil';
 import VoxelMinimap from '@/components/voxel/VoxelMinimap';
 import VoxelPlaceTags from '@/components/voxel/VoxelPlaceTags';
 import VoxelTouchControls from '@/components/voxel/VoxelTouchControls';
+import VoxelAutopilot from '@/components/voxel/VoxelAutopilot';
 import { initAudio, playSfx, startAmbient, stopAmbient, setMuted, isMuted } from '@/lib/voxel/voxel-audio';
 import { createSaplingTracker, type SaplingTracker } from '@/lib/voxel/saxaul';
 import { floodFillCanal } from '@/lib/voxel/water-fill';
@@ -111,6 +112,7 @@ const VoxelPage = () => {
   const [buildOpen, setBuildOpen] = useState(false);
   const [questOpen, setQuestOpen] = useState(false);
   const [muted, setMutedState] = useState(false);
+  const [demoMode, setDemoMode] = useState(false);
   const inv = useVoxelInventory();
   const stats = useVoxelStats();
   useVoxelMissions(); // mount the listener
@@ -326,6 +328,24 @@ const VoxelPage = () => {
     }
   }, [world, inv]);
 
+  // Demo autopilot picks a random structure and grants the materials so it can always build.
+  const onDemoBuild = useCallback(() => {
+    if (!world) return;
+    const s = STRUCTURES[Math.floor(Math.random() * STRUCTURES.length)];
+    for (const c of s.cost) inv.add(c.block as any, c.count);
+    if (!inv.craft(s.cost)) return;
+    const halfW = world.width / 2, halfD = world.depth / 2;
+    const i = Math.floor(playerRef.current.x + halfW);
+    const j = Math.floor(playerRef.current.z + halfD);
+    if (placeStructure(world, i, j, s)) {
+      playSfx('build');
+      toast.success(`Demo built ${s.name}`);
+      dispatchMissionEvent({ type: 'place-structure', id: s.id });
+      setVersion(v => v + 1);
+    }
+  }, [world, inv]);
+
+
   const counts: Partial<Record<BlockId, number>> = {};
   for (const sl of inv.hotbar) if (sl.block) counts[sl.block] = (counts[sl.block] ?? 0) + sl.count;
 
@@ -356,6 +376,18 @@ const VoxelPage = () => {
         </div>
         <button onClick={toggleMute} className="px-2 py-1.5 bg-black/60 border border-white/20 hover:bg-white/10 transition-colors">
           {muted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+        </button>
+        <button
+          onClick={() => setDemoMode(d => !d)}
+          className={`px-3 py-1.5 border text-[10px] uppercase tracking-widest flex items-center gap-1.5 transition-colors ${
+            demoMode
+              ? 'bg-emerald-500/30 border-emerald-300 text-emerald-100'
+              : 'bg-black/60 border-white/20 text-white/80 hover:bg-white/10'
+          }`}
+          title="Auto-play demo"
+        >
+          {demoMode ? <Square className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+          {demoMode ? 'Stop Demo' : 'Demo'}
         </button>
         <div className="px-2 py-1.5 bg-black/60 border border-white/20 flex items-center gap-1 text-[10px]">
           {timeRef.current > 0.25 && timeRef.current < 0.75 ? <Sun className="w-3 h-3 text-amber-300" /> : <Moon className="w-3 h-3 text-sky-200" />}
@@ -405,6 +437,7 @@ const VoxelPage = () => {
             onLockChange={setLocked}
             playerRef={playerRef}
           />
+          <VoxelAutopilot world={world} active={demoMode} onBuild={onDemoBuild} />
         </Canvas>
       )}
 
