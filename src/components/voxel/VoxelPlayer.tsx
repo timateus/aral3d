@@ -10,6 +10,7 @@ import { useGamepad } from '@/hooks/useGamepad';
 import { playSfx } from '@/lib/voxel/voxel-audio';
 import { dispatchMissionEvent } from '@/hooks/useVoxelMissions';
 import { setStatsRaw, getStatsSnapshot } from '@/hooks/useVoxelStats';
+import { touchInput, isTouchDevice } from '@/lib/voxel/touch-input';
 
 interface Props {
   world: VoxelWorld;
@@ -197,7 +198,8 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
 
   useFrame((_, delta) => {
     const gs = gp.stateRef.current;
-    if (!lockedRef.current && !gs.connected) return;
+    const touch = touchInput.active;
+    if (!lockedRef.current && !gs.connected && !touch) return;
     const dt = Math.min(0.05, delta);
 
     // Movement input
@@ -218,9 +220,29 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
       camera.rotateOnWorldAxis(right, -gs.rightStick.y * lookSens);
     }
 
+    // Touch input
+    if (touch) {
+      moveDir.x += touchInput.move.x;
+      moveDir.z += touchInput.move.y;
+      // Drag-look: consume accumulated pixel deltas
+      const lookSens = 0.0035;
+      if (touchInput.look.x || touchInput.look.y) {
+        camera.rotateY(-touchInput.look.x * lookSens);
+        const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+        camera.rotateOnWorldAxis(right, -touchInput.look.y * lookSens);
+        // Clamp pitch
+        const e = new THREE.Euler().setFromQuaternion(camera.quaternion, 'YXZ');
+        e.x = Math.max(-Math.PI / 2 + 0.05, Math.min(Math.PI / 2 - 0.05, e.x));
+        camera.quaternion.setFromEuler(e);
+        touchInput.look.x = 0; touchInput.look.y = 0;
+      }
+      if (touchInput.breakQueued) { touchInput.breakQueued = false; doBreak(); }
+      if (touchInput.placeQueued) { touchInput.placeQueued = false; doPlace(); }
+    }
+
     if (moveDir.lengthSq() > 0) moveDir.normalize();
 
-    const sprint = keys.current['ShiftLeft'] || keys.current['ShiftRight'] || gs.buttons.lb;
+    const sprint = keys.current['ShiftLeft'] || keys.current['ShiftRight'] || gs.buttons.lb || touchInput.sprint;
     const speed = WALK_SPEED * (sprint ? SPRINT_MULT : 1);
 
     // Camera-relative basis (XZ plane only)
@@ -232,7 +254,8 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
     velocity.current.z = (tmpRight.z * moveDir.x + tmpForward.z * -moveDir.z) * speed;
 
     // Jump
-    const jumpPressed = keys.current['Space'] || gs.buttons.a;
+    const jumpPressed = keys.current['Space'] || gs.buttons.a || touchInput.jumpQueued;
+    if (touchInput.jumpQueued) touchInput.jumpQueued = false;
     if (jumpPressed && onGround.current) {
       velocity.current.y = JUMP_V;
       onGround.current = false;
@@ -306,6 +329,16 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
       playerRef.current.yaw = -e.y; // canvas Y rotates opposite to world yaw
     }
   });
+
+  // On touch devices, skip pointer lock entirely — touch controls drive input.
+  useEffect(() => {
+    if (isTouchDevice()) {
+      lockedRef.current = true;
+      onLockChange?.(true);
+    }
+  }, [onLockChange]);
+
+  if (isTouchDevice()) return null;
 
   return (
     <PointerLockControls
