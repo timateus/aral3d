@@ -328,6 +328,24 @@ const VoxelPage = () => {
     }
   }, [world, inv]);
 
+  // Demo autopilot picks a random structure and grants the materials so it can always build.
+  const onDemoBuild = useCallback(() => {
+    if (!world) return;
+    const s = STRUCTURES[Math.floor(Math.random() * STRUCTURES.length)];
+    for (const c of s.cost) inv.add(c.block as any, c.count);
+    if (!inv.craft(s.cost)) return;
+    const halfW = world.width / 2, halfD = world.depth / 2;
+    const i = Math.floor(playerRef.current.x + halfW);
+    const j = Math.floor(playerRef.current.z + halfD);
+    if (placeStructure(world, i, j, s)) {
+      playSfx('build');
+      toast.success(`Demo built ${s.name}`);
+      dispatchMissionEvent({ type: 'place-structure', id: s.id });
+      setVersion(v => v + 1);
+    }
+  }, [world, inv]);
+
+
   const counts: Partial<Record<BlockId, number>> = {};
   for (const sl of inv.hotbar) if (sl.block) counts[sl.block] = (counts[sl.block] ?? 0) + sl.count;
 
