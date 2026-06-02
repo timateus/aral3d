@@ -3,6 +3,7 @@ import { BLOCKS, type BlockId } from '@/lib/voxel/block-types';
 import { useVoxelInventory, HOTBAR_SIZE } from '@/hooks/useVoxelInventory';
 import { Gamepad2 } from 'lucide-react';
 import { useGamepad } from '@/hooks/useGamepad';
+import { isTouchDevice } from '@/lib/voxel/touch-input';
 
 interface Props {
   locked: boolean;
