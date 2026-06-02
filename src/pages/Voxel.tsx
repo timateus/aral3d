@@ -377,6 +377,18 @@ const VoxelPage = () => {
         <button onClick={toggleMute} className="px-2 py-1.5 bg-black/60 border border-white/20 hover:bg-white/10 transition-colors">
           {muted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
         </button>
+        <button
+          onClick={() => setDemoMode(d => !d)}
+          className={`px-3 py-1.5 border text-[10px] uppercase tracking-widest flex items-center gap-1.5 transition-colors ${
+            demoMode
+              ? 'bg-emerald-500/30 border-emerald-300 text-emerald-100'
+              : 'bg-black/60 border-white/20 text-white/80 hover:bg-white/10'
+          }`}
+          title="Auto-play demo"
+        >
+          {demoMode ? <Square className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+          {demoMode ? 'Stop Demo' : 'Demo'}
+        </button>
         <div className="px-2 py-1.5 bg-black/60 border border-white/20 flex items-center gap-1 text-[10px]">
           {timeRef.current > 0.25 && timeRef.current < 0.75 ? <Sun className="w-3 h-3 text-amber-300" /> : <Moon className="w-3 h-3 text-sky-200" />}
           <span className="text-white/70">Day {Math.round(timeRef.current * 24).toString().padStart(2, '0')}:00</span>
@@ -425,6 +437,7 @@ const VoxelPage = () => {
             onLockChange={setLocked}
             playerRef={playerRef}
           />
+          <VoxelAutopilot world={world} active={demoMode} onBuild={onDemoBuild} />
         </Canvas>
       )}
 
