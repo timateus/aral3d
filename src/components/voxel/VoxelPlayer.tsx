@@ -10,6 +10,7 @@ import { useGamepad } from '@/hooks/useGamepad';
 import { playSfx } from '@/lib/voxel/voxel-audio';
 import { dispatchMissionEvent } from '@/hooks/useVoxelMissions';
 import { setStatsRaw, getStatsSnapshot } from '@/hooks/useVoxelStats';
+import { touchInput, isTouchDevice } from '@/lib/voxel/touch-input';
 
 interface Props {
   world: VoxelWorld;
