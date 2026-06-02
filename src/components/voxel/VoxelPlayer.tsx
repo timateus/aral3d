@@ -242,7 +242,7 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
 
     if (moveDir.lengthSq() > 0) moveDir.normalize();
 
-    const sprint = keys.current['ShiftLeft'] || keys.current['ShiftRight'] || gs.buttons.lb;
+    const sprint = keys.current['ShiftLeft'] || keys.current['ShiftRight'] || gs.buttons.lb || touchInput.sprint;
     const speed = WALK_SPEED * (sprint ? SPRINT_MULT : 1);
 
     // Camera-relative basis (XZ plane only)
@@ -254,7 +254,8 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
     velocity.current.z = (tmpRight.z * moveDir.x + tmpForward.z * -moveDir.z) * speed;
 
     // Jump
-    const jumpPressed = keys.current['Space'] || gs.buttons.a;
+    const jumpPressed = keys.current['Space'] || gs.buttons.a || touchInput.jumpQueued;
+    if (touchInput.jumpQueued) touchInput.jumpQueued = false;
     if (jumpPressed && onGround.current) {
       velocity.current.y = JUMP_V;
       onGround.current = false;
