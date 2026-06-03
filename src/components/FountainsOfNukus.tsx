@@ -344,20 +344,6 @@ const FountainsOfNukus = ({ onClose }: Props) => {
         </div>
       )}
 
-      {/* Legend */}
-      <div className="absolute top-20 left-4 z-10 bg-black/70 border border-white/15 px-3 py-2 font-mono text-[10px] backdrop-blur-sm">
-        <div className="text-white/50 uppercase tracking-widest mb-1.5 text-[9px]">Legend</div>
-        {Object.entries(KIND_COLOR).map(([k, c]) => (
-          <div key={k} className="flex items-center gap-2 text-white/80">
-            <span className="inline-block w-2 h-2" style={{ background: c }} />
-            <span className="capitalize">{k}</span>
-          </div>
-        ))}
-        <div className="mt-1.5 pt-1.5 border-t border-white/15 flex items-center gap-2 text-cyan-300">
-          <Droplets className="w-3 h-3" /> Fountain site (F1–F10)
-        </div>
-        <div className="mt-1 text-[9px] text-white/40">Hover landmark for details</div>
-      </div>
 
       {/* Fountain list — sidebar */}
       <div className="absolute top-20 right-4 z-10 bg-black/70 border border-white/15 px-3 py-2 font-mono text-[10px] backdrop-blur-sm w-[200px]">
