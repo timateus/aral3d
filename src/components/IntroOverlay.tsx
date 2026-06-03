@@ -454,8 +454,8 @@ const IntroOverlay = ({ onStart, onGuidedTour, onReading, onCanalTour, onAgmarTo
             </button>
           </div>
 
-          {/* Third row — Sandbox + Trace + Dust + Read */}
-          <div className="grid grid-cols-5 gap-4">
+          {/* Third row — Sandbox + Trace + Dust + Life + Fountains + Read */}
+          <div className="grid grid-cols-6 gap-4">
             <button
               onClick={() => onSandbox?.()}
               className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-5 hover:bg-card/70 hover:border-orange-500/40 transition-all duration-500 text-left overflow-hidden"
