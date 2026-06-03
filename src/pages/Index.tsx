@@ -1205,9 +1205,7 @@ const Index = () => {
             onAryqWorldComplete={() => {
               setAryqWorldActive(false);
             }}
-            onNukusClick={() => {
-              setAryqWorldActive(true);
-            }}
+            // Nukus click no longer triggers aryq world — replaced by Fountains mode in the main menu
             showLandcover={showLandcover}
             landcoverVisibleClasses={landcoverVisibleClasses}
             onLandcoverAvailableClasses={setLandcoverAvailableClasses}
