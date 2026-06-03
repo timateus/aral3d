@@ -102,7 +102,7 @@ async function buildOsmTexture(setStatus: (s: string) => void): Promise<THREE.Ca
 
   // CARTO Voyager (no-label, light) — has CORS and is great for an underlay; falls back to OSM.
   const providers = [
-    (z: number, x: number, y: number) => `https://basemaps.cartocdn.com/light_all/${z}/${x}/${y}.png`,
+    (z: number, x: number, y: number) => `https://basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}.png`,
     (z: number, x: number, y: number) => `https://tile.openstreetmap.org/${z}/${x}/${y}.png`,
   ];
 
@@ -139,19 +139,10 @@ async function buildOsmTexture(setStatus: (s: string) => void): Promise<THREE.Ca
   const octx = out.getContext('2d')!;
   octx.drawImage(sheet, cropX, cropY, cropW, cropH, 0, 0, out.width, out.height);
 
-  // Subtle dark tint so labels pop
-  octx.fillStyle = 'rgba(8, 14, 26, 0.18)';
-  octx.fillRect(0, 0, out.width, out.height);
-
-  // North arrow + scale
-  octx.fillStyle = '#0c1116'; octx.strokeStyle = '#0c1116';
-  octx.font = '600 18px ui-monospace, monospace';
-  octx.fillText('NUKUS · 42.45°N 59.61°E', 14, 26);
-  octx.fillRect(14, out.height - 22, 90, 3);
-  octx.font = '11px ui-monospace, monospace';
-  octx.fillText('~ 2 km', 14, out.height - 6);
-  octx.lineWidth = 3;
-  octx.strokeRect(1.5, 1.5, out.width - 3, out.height - 3);
+  // Light frame only — keep map colors untinted
+  octx.strokeStyle = '#0c1116';
+  octx.lineWidth = 2;
+  octx.strokeRect(1, 1, out.width - 2, out.height - 2);
 
   const tex = new THREE.CanvasTexture(out);
   tex.anisotropy = 8;
@@ -170,23 +161,31 @@ const KIND_COLOR: Record<POI['kind'], string> = {
 function PoiMarker({ poi }: { poi: POI }) {
   const [x, z] = project(poi);
   const [hovered, setHovered] = useState(false);
+  const c = KIND_COLOR[poi.kind];
   return (
-    <group position={[x, 0.02, z]}>
+    <group position={[x, 0, z]}>
+      {/* Thin stem */}
+      <mesh position={[0, 0.18, 0]}>
+        <cylinderGeometry args={[0.006, 0.006, 0.36, 6]} />
+        <meshBasicMaterial color={c} />
+      </mesh>
+      {/* Tiny dot on top */}
       <mesh
+        position={[0, 0.38, 0]}
         onPointerOver={(e) => { e.stopPropagation(); setHovered(true); document.body.style.cursor = 'pointer'; }}
         onPointerOut={() => { setHovered(false); document.body.style.cursor = 'default'; }}
       >
-        <cylinderGeometry args={[0.09, 0.09, 0.05, 20]} />
-        <meshStandardMaterial color={KIND_COLOR[poi.kind]} emissive={KIND_COLOR[poi.kind]} emissiveIntensity={0.5} />
+        <sphereGeometry args={[0.05, 16, 16]} />
+        <meshBasicMaterial color={c} />
       </mesh>
       {hovered && (
-        <Html distanceFactor={9} position={[0, 0.5, 0]} center style={{ pointerEvents: 'none' }} zIndexRange={[100, 0]}>
+        <Html distanceFactor={9} position={[0, 0.6, 0]} center style={{ pointerEvents: 'none' }} zIndexRange={[100, 0]}>
           <div style={{
             background: 'rgba(15,17,21,0.95)', color: 'white', padding: '6px 10px',
             fontFamily: 'ui-monospace, monospace', fontSize: 11, lineHeight: 1.4,
-            border: `1px solid ${KIND_COLOR[poi.kind]}`, maxWidth: 220, whiteSpace: 'normal',
+            border: `1px solid ${c}`, maxWidth: 220, whiteSpace: 'normal',
           }}>
-            <div style={{ color: KIND_COLOR[poi.kind], textTransform: 'uppercase', fontSize: 9, letterSpacing: '0.15em', marginBottom: 4 }}>{poi.kind}</div>
+            <div style={{ color: c, textTransform: 'uppercase', fontSize: 9, letterSpacing: '0.15em', marginBottom: 4 }}>{poi.kind}</div>
             <div style={{ fontWeight: 600, marginBottom: 2 }}>{poi.name}</div>
             <div style={{ opacity: 0.8, fontSize: 10 }}>{poi.blurb}</div>
           </div>
@@ -207,48 +206,45 @@ function FountainMarker({
   const [x, z] = project(site);
   const ringRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
+  const cyan = selected ? '#22d3ee' : '#06b6d4';
   useFrame((state) => {
     if (ringRef.current) {
-      const s = 1 + Math.sin(state.clock.elapsedTime * 2 + index) * 0.18;
+      const s = 1 + Math.sin(state.clock.elapsedTime * 2 + index) * 0.2;
       ringRef.current.scale.set(s, s, s);
     }
   });
   return (
     <group position={[x, 0, z]}>
+      {/* Pulsing ground ring */}
+      <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]}>
+        <ringGeometry args={[0.14, 0.18, 32]} />
+        <meshBasicMaterial color={cyan} transparent opacity={0.75} side={THREE.DoubleSide} />
+      </mesh>
+      {/* Thin stem */}
+      <mesh position={[0, 0.22, 0]}>
+        <cylinderGeometry args={[0.006, 0.006, 0.44, 6]} />
+        <meshBasicMaterial color={cyan} />
+      </mesh>
+      {/* Small dot on top */}
       <mesh
-        position={[0, 0.5, 0]}
+        position={[0, 0.46, 0]}
         onClick={(e) => { e.stopPropagation(); onSelect(); }}
         onPointerOver={(e) => { e.stopPropagation(); setHovered(true); document.body.style.cursor = 'pointer'; }}
         onPointerOut={() => { setHovered(false); document.body.style.cursor = 'default'; }}
       >
-        <sphereGeometry args={[0.18, 24, 24]} />
-        <meshStandardMaterial
-          color={selected ? '#22d3ee' : '#38bdf8'}
-          emissive={selected ? '#22d3ee' : '#0ea5e9'}
-          emissiveIntensity={selected ? 1.4 : 0.8}
-          metalness={0.4} roughness={0.2}
-        />
+        <sphereGeometry args={[selected ? 0.08 : 0.06, 20, 20]} />
+        <meshBasicMaterial color={cyan} />
       </mesh>
-      <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
-        <ringGeometry args={[0.22, 0.28, 32]} />
-        <meshBasicMaterial color={selected ? '#22d3ee' : '#38bdf8'} transparent opacity={0.7} side={THREE.DoubleSide} />
-      </mesh>
-      <mesh position={[0, 0.25, 0]}>
-        <cylinderGeometry args={[0.015, 0.015, 0.5, 8]} />
-        <meshBasicMaterial color="#0ea5e9" transparent opacity={0.6} />
-      </mesh>
-      {/* Compact number badge always visible — full name only on hover/selected */}
-      <Html distanceFactor={9} position={[0, 0.85, 0]} center style={{ pointerEvents: 'none' }} zIndexRange={[50, 0]}>
+      <Html distanceFactor={9} position={[0, 0.68, 0]} center style={{ pointerEvents: 'none' }} zIndexRange={[50, 0]}>
         <div style={{
-          background: selected || hovered ? '#22d3ee' : 'rgba(8,47,73,0.92)',
-          color: selected || hovered ? '#0c1116' : '#bae6fd',
-          padding: '1px 5px',
+          background: selected || hovered ? cyan : 'transparent',
+          color: selected || hovered ? '#0c1116' : cyan,
+          padding: selected || hovered ? '1px 5px' : '0',
           fontFamily: 'ui-monospace, monospace',
           fontSize: 10, fontWeight: 700,
-          border: '1px solid #22d3ee',
           whiteSpace: 'nowrap',
           letterSpacing: '0.05em',
-          transform: 'translateY(-50%)',
+          textShadow: selected || hovered ? 'none' : '0 0 3px rgba(0,0,0,0.6)',
         }}>
           {selected || hovered ? `F${index + 1} · ${site.name}` : `F${index + 1}`}
         </div>
@@ -348,20 +344,6 @@ const FountainsOfNukus = ({ onClose }: Props) => {
         </div>
       )}
 
-      {/* Legend */}
-      <div className="absolute top-20 left-4 z-10 bg-black/70 border border-white/15 px-3 py-2 font-mono text-[10px] backdrop-blur-sm">
-        <div className="text-white/50 uppercase tracking-widest mb-1.5 text-[9px]">Legend</div>
-        {Object.entries(KIND_COLOR).map(([k, c]) => (
-          <div key={k} className="flex items-center gap-2 text-white/80">
-            <span className="inline-block w-2 h-2" style={{ background: c }} />
-            <span className="capitalize">{k}</span>
-          </div>
-        ))}
-        <div className="mt-1.5 pt-1.5 border-t border-white/15 flex items-center gap-2 text-cyan-300">
-          <Droplets className="w-3 h-3" /> Fountain site (F1–F10)
-        </div>
-        <div className="mt-1 text-[9px] text-white/40">Hover landmark for details</div>
-      </div>
 
       {/* Fountain list — sidebar */}
       <div className="absolute top-20 right-4 z-10 bg-black/70 border border-white/15 px-3 py-2 font-mono text-[10px] backdrop-blur-sm w-[200px]">
