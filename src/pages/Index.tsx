@@ -11,6 +11,7 @@ import ControlPanel from '@/components/ControlPanel';
 import Legend from '@/components/Legend';
 import TimelineSlider from '@/components/TimelineSlider';
 import IntroOverlay from '@/components/IntroOverlay';
+import FountainsOfNukus from '@/components/FountainsOfNukus';
 import CharacterSelect from '@/components/CharacterSelect';
 import ScenarioChat from '@/components/ScenarioChat';
 import WaterVolumeDisplay from '@/components/WaterVolumeDisplay';
