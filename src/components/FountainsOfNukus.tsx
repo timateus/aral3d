@@ -161,23 +161,31 @@ const KIND_COLOR: Record<POI['kind'], string> = {
 function PoiMarker({ poi }: { poi: POI }) {
   const [x, z] = project(poi);
   const [hovered, setHovered] = useState(false);
+  const c = KIND_COLOR[poi.kind];
   return (
-    <group position={[x, 0.02, z]}>
+    <group position={[x, 0, z]}>
+      {/* Thin stem */}
+      <mesh position={[0, 0.18, 0]}>
+        <cylinderGeometry args={[0.006, 0.006, 0.36, 6]} />
+        <meshBasicMaterial color={c} />
+      </mesh>
+      {/* Tiny dot on top */}
       <mesh
+        position={[0, 0.38, 0]}
         onPointerOver={(e) => { e.stopPropagation(); setHovered(true); document.body.style.cursor = 'pointer'; }}
         onPointerOut={() => { setHovered(false); document.body.style.cursor = 'default'; }}
       >
-        <cylinderGeometry args={[0.09, 0.09, 0.05, 20]} />
-        <meshStandardMaterial color={KIND_COLOR[poi.kind]} emissive={KIND_COLOR[poi.kind]} emissiveIntensity={0.5} />
+        <sphereGeometry args={[0.05, 16, 16]} />
+        <meshBasicMaterial color={c} />
       </mesh>
       {hovered && (
-        <Html distanceFactor={9} position={[0, 0.5, 0]} center style={{ pointerEvents: 'none' }} zIndexRange={[100, 0]}>
+        <Html distanceFactor={9} position={[0, 0.6, 0]} center style={{ pointerEvents: 'none' }} zIndexRange={[100, 0]}>
           <div style={{
             background: 'rgba(15,17,21,0.95)', color: 'white', padding: '6px 10px',
             fontFamily: 'ui-monospace, monospace', fontSize: 11, lineHeight: 1.4,
-            border: `1px solid ${KIND_COLOR[poi.kind]}`, maxWidth: 220, whiteSpace: 'normal',
+            border: `1px solid ${c}`, maxWidth: 220, whiteSpace: 'normal',
           }}>
-            <div style={{ color: KIND_COLOR[poi.kind], textTransform: 'uppercase', fontSize: 9, letterSpacing: '0.15em', marginBottom: 4 }}>{poi.kind}</div>
+            <div style={{ color: c, textTransform: 'uppercase', fontSize: 9, letterSpacing: '0.15em', marginBottom: 4 }}>{poi.kind}</div>
             <div style={{ fontWeight: 600, marginBottom: 2 }}>{poi.name}</div>
             <div style={{ opacity: 0.8, fontSize: 10 }}>{poi.blurb}</div>
           </div>
@@ -198,48 +206,45 @@ function FountainMarker({
   const [x, z] = project(site);
   const ringRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
+  const cyan = selected ? '#22d3ee' : '#06b6d4';
   useFrame((state) => {
     if (ringRef.current) {
-      const s = 1 + Math.sin(state.clock.elapsedTime * 2 + index) * 0.18;
+      const s = 1 + Math.sin(state.clock.elapsedTime * 2 + index) * 0.2;
       ringRef.current.scale.set(s, s, s);
     }
   });
   return (
     <group position={[x, 0, z]}>
+      {/* Pulsing ground ring */}
+      <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]}>
+        <ringGeometry args={[0.14, 0.18, 32]} />
+        <meshBasicMaterial color={cyan} transparent opacity={0.75} side={THREE.DoubleSide} />
+      </mesh>
+      {/* Thin stem */}
+      <mesh position={[0, 0.22, 0]}>
+        <cylinderGeometry args={[0.006, 0.006, 0.44, 6]} />
+        <meshBasicMaterial color={cyan} />
+      </mesh>
+      {/* Small dot on top */}
       <mesh
-        position={[0, 0.5, 0]}
+        position={[0, 0.46, 0]}
         onClick={(e) => { e.stopPropagation(); onSelect(); }}
         onPointerOver={(e) => { e.stopPropagation(); setHovered(true); document.body.style.cursor = 'pointer'; }}
         onPointerOut={() => { setHovered(false); document.body.style.cursor = 'default'; }}
       >
-        <sphereGeometry args={[0.18, 24, 24]} />
-        <meshStandardMaterial
-          color={selected ? '#22d3ee' : '#38bdf8'}
-          emissive={selected ? '#22d3ee' : '#0ea5e9'}
-          emissiveIntensity={selected ? 1.4 : 0.8}
-          metalness={0.4} roughness={0.2}
-        />
+        <sphereGeometry args={[selected ? 0.08 : 0.06, 20, 20]} />
+        <meshBasicMaterial color={cyan} />
       </mesh>
-      <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
-        <ringGeometry args={[0.22, 0.28, 32]} />
-        <meshBasicMaterial color={selected ? '#22d3ee' : '#38bdf8'} transparent opacity={0.7} side={THREE.DoubleSide} />
-      </mesh>
-      <mesh position={[0, 0.25, 0]}>
-        <cylinderGeometry args={[0.015, 0.015, 0.5, 8]} />
-        <meshBasicMaterial color="#0ea5e9" transparent opacity={0.6} />
-      </mesh>
-      {/* Compact number badge always visible — full name only on hover/selected */}
-      <Html distanceFactor={9} position={[0, 0.85, 0]} center style={{ pointerEvents: 'none' }} zIndexRange={[50, 0]}>
+      <Html distanceFactor={9} position={[0, 0.68, 0]} center style={{ pointerEvents: 'none' }} zIndexRange={[50, 0]}>
         <div style={{
-          background: selected || hovered ? '#22d3ee' : 'rgba(8,47,73,0.92)',
-          color: selected || hovered ? '#0c1116' : '#bae6fd',
-          padding: '1px 5px',
+          background: selected || hovered ? cyan : 'transparent',
+          color: selected || hovered ? '#0c1116' : cyan,
+          padding: selected || hovered ? '1px 5px' : '0',
           fontFamily: 'ui-monospace, monospace',
           fontSize: 10, fontWeight: 700,
-          border: '1px solid #22d3ee',
           whiteSpace: 'nowrap',
           letterSpacing: '0.05em',
-          transform: 'translateY(-50%)',
+          textShadow: selected || hovered ? 'none' : '0 0 3px rgba(0,0,0,0.6)',
         }}>
           {selected || hovered ? `F${index + 1} · ${site.name}` : `F${index + 1}`}
         </div>
