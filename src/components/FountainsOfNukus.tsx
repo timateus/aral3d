@@ -139,19 +139,10 @@ async function buildOsmTexture(setStatus: (s: string) => void): Promise<THREE.Ca
   const octx = out.getContext('2d')!;
   octx.drawImage(sheet, cropX, cropY, cropW, cropH, 0, 0, out.width, out.height);
 
-  // Subtle dark tint so labels pop
-  octx.fillStyle = 'rgba(8, 14, 26, 0.18)';
-  octx.fillRect(0, 0, out.width, out.height);
-
-  // North arrow + scale
-  octx.fillStyle = '#0c1116'; octx.strokeStyle = '#0c1116';
-  octx.font = '600 18px ui-monospace, monospace';
-  octx.fillText('NUKUS · 42.45°N 59.61°E', 14, 26);
-  octx.fillRect(14, out.height - 22, 90, 3);
-  octx.font = '11px ui-monospace, monospace';
-  octx.fillText('~ 2 km', 14, out.height - 6);
-  octx.lineWidth = 3;
-  octx.strokeRect(1.5, 1.5, out.width - 3, out.height - 3);
+  // Light frame only — keep map colors untinted
+  octx.strokeStyle = '#0c1116';
+  octx.lineWidth = 2;
+  octx.strokeRect(1, 1, out.width - 2, out.height - 2);
 
   const tex = new THREE.CanvasTexture(out);
   tex.anisotropy = 8;
