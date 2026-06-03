@@ -102,7 +102,7 @@ async function buildOsmTexture(setStatus: (s: string) => void): Promise<THREE.Ca
 
   // CARTO Voyager (no-label, light) — has CORS and is great for an underlay; falls back to OSM.
   const providers = [
-    (z: number, x: number, y: number) => `https://basemaps.cartocdn.com/light_all/${z}/${x}/${y}.png`,
+    (z: number, x: number, y: number) => `https://basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}.png`,
     (z: number, x: number, y: number) => `https://tile.openstreetmap.org/${z}/${x}/${y}.png`,
   ];
 
