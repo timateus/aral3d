@@ -1309,6 +1309,7 @@ const Index = () => {
             setLifeMode(true);
             setShowWaterExtent(false);
           }}
+          onFountains={() => setFountainsMode(true)}
         />
       )}
 
