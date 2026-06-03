@@ -11,6 +11,7 @@ import ControlPanel from '@/components/ControlPanel';
 import Legend from '@/components/Legend';
 import TimelineSlider from '@/components/TimelineSlider';
 import IntroOverlay from '@/components/IntroOverlay';
+import FountainsOfNukus from '@/components/FountainsOfNukus';
 import CharacterSelect from '@/components/CharacterSelect';
 import ScenarioChat from '@/components/ScenarioChat';
 import WaterVolumeDisplay from '@/components/WaterVolumeDisplay';
@@ -200,6 +201,7 @@ const Index = () => {
   const [gameModeState, setGameModeState] = useState<GameModeState | null>(null);
   const [bowlWorldActive, setBowlWorldActive] = useState(false);
   const [aryqWorldActive, setAryqWorldActive] = useState(false);
+  const [fountainsMode, setFountainsMode] = useState(false);
   const [quadrantViewActive, setQuadrantViewActive] = useState(false);
   const [bodiesOfWaterMode, setBodiesOfWaterMode] = useState(false);
   const [bodiesActiveLayer, setBodiesActiveLayer] = useState<'none' | 'mortality' | 'landcover' | 'sewage'>('none');
@@ -1205,9 +1207,7 @@ const Index = () => {
             onAryqWorldComplete={() => {
               setAryqWorldActive(false);
             }}
-            onNukusClick={() => {
-              setAryqWorldActive(true);
-            }}
+            // Nukus click no longer triggers aryq world — replaced by Fountains mode in the main menu
             showLandcover={showLandcover}
             landcoverVisibleClasses={landcoverVisibleClasses}
             onLandcoverAvailableClasses={setLandcoverAvailableClasses}
@@ -1311,8 +1311,12 @@ const Index = () => {
             setLifeMode(true);
             setShowWaterExtent(false);
           }}
+          onFountains={() => setFountainsMode(true)}
         />
       )}
+
+      {fountainsMode && <FountainsOfNukus onClose={() => setFountainsMode(false)} />}
+
 
       {/* Quadrant View */}
       {quadrantViewActive && !started && (

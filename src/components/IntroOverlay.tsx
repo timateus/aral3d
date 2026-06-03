@@ -217,11 +217,12 @@ interface IntroOverlayProps {
   onTraceCanals?: () => void;
   onDustStorm?: () => void;
   onLife?: () => void;
+  onFountains?: () => void;
 }
 
 type LandingView = 'main' | 'artifacts';
 
-const IntroOverlay = ({ onStart, onGuidedTour, onReading, onCanalTour, onAgmarTour, onObjectSelect, onStartGame, onQuadrants, onSandbox, onTraceCanals, onDustStorm, onLife }: IntroOverlayProps) => {
+const IntroOverlay = ({ onStart, onGuidedTour, onReading, onCanalTour, onAgmarTour, onObjectSelect, onStartGame, onQuadrants, onSandbox, onTraceCanals, onDustStorm, onLife, onFountains }: IntroOverlayProps) => {
   const [view, setView] = useState<LandingView>('main');
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
@@ -453,8 +454,8 @@ const IntroOverlay = ({ onStart, onGuidedTour, onReading, onCanalTour, onAgmarTo
             </button>
           </div>
 
-          {/* Third row — Sandbox + Trace + Dust + Read */}
-          <div className="grid grid-cols-5 gap-4">
+          {/* Third row — Sandbox + Trace + Dust + Life + Fountains + Read */}
+          <div className="grid grid-cols-6 gap-4">
             <button
               onClick={() => onSandbox?.()}
               className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-5 hover:bg-card/70 hover:border-orange-500/40 transition-all duration-500 text-left overflow-hidden"
@@ -509,6 +510,20 @@ const IntroOverlay = ({ onStart, onGuidedTour, onReading, onCanalTour, onAgmarTo
                 </p>
               </div>
               <ArrowRight className="absolute bottom-3 right-3 w-4 h-4 text-foreground/20 group-hover:text-fuchsia-500/60 transition-all duration-300 group-hover:translate-x-1" />
+            </button>
+
+            <button
+              onClick={() => onFountains?.()}
+              className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-5 hover:bg-card/70 hover:border-sky-400/50 transition-all duration-500 text-left overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-sky-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="relative z-10">
+                <p className="text-base font-semibold text-foreground tracking-wide mb-1">Fountains</p>
+                <p className="text-[11px] text-foreground/50 leading-relaxed">
+                  10 potential water fountain sites in Nukus
+                </p>
+              </div>
+              <ArrowRight className="absolute bottom-3 right-3 w-4 h-4 text-foreground/20 group-hover:text-sky-400/80 transition-all duration-300 group-hover:translate-x-1" />
             </button>
 
             <button
