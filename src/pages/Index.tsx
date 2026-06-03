@@ -1315,6 +1315,9 @@ const Index = () => {
         />
       )}
 
+      {fountainsMode && <FountainsOfNukus onClose={() => setFountainsMode(false)} />}
+
+
       {/* Quadrant View */}
       {quadrantViewActive && !started && (
         <QuadrantView
