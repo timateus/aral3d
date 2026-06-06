@@ -1,105 +1,177 @@
 import { ArrowLeft, Sparkles, Printer } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { useDesignerScheme } from '@/lib/visual-mode';
 
 interface Props {
   onExit: () => void;
   onRandomize: () => void;
+  randomSeed?: number;
 }
 
-const SpectralEarthHUD = ({ onExit, onRandomize }: Props) => {
+const FONT_FAMILIES = [
+  '"Times New Roman", serif',
+  '"Georgia", serif',
+  '"Courier New", monospace',
+  '"Impact", sans-serif',
+  '"Helvetica Neue", Arial, sans-serif',
+  '"Brush Script MT", cursive',
+  '"Trebuchet MS", sans-serif',
+  '"Palatino", serif',
+  '"Verdana", sans-serif',
+  '"Lucida Console", monospace',
+];
+const WEIGHTS = ['300', '400', '700', '900'];
+const STYLES = ['normal', 'italic'];
+const CASES = ['uppercase', 'lowercase', 'none'] as const;
+
+function pick<T>(arr: readonly T[], seed: number): T {
+  return arr[Math.floor(Math.abs(Math.sin(seed * 9301 + 49297)) * arr.length) % arr.length];
+}
+
+const SpectralEarthHUD = ({ onExit, onRandomize, randomSeed = 0 }: Props) => {
+  const [scheme] = useDesignerScheme();
+  const stops = scheme.terrainStops && scheme.terrainStops.length > 1
+    ? scheme.terrainStops
+    : [scheme.water, scheme.land, scheme.vegetation, scheme.alert];
+
+  // Re-randomize fonts/sizes only when randomSeed changes
+  const style = useMemo(() => {
+    const s = randomSeed || Date.now();
+    return {
+      font1: pick(FONT_FAMILIES, s + 1),
+      font2: pick(FONT_FAMILIES, s + 2),
+      weight1: pick(WEIGHTS, s + 3),
+      weight2: pick(WEIGHTS, s + 4),
+      style1: pick(STYLES, s + 5),
+      style2: pick(STYLES, s + 6),
+      case1: pick(CASES, s + 7),
+      case2: pick(CASES, s + 8),
+      size1: 36 + (Math.abs(Math.sin(s * 1.7)) * 56), // 36-92px
+      size2: 18 + (Math.abs(Math.sin(s * 2.3)) * 26), // 18-44px
+      tracking1: -0.02 + Math.abs(Math.sin(s * 3.1)) * 0.12,
+      tracking2: -0.01 + Math.abs(Math.sin(s * 4.7)) * 0.1,
+    };
+  }, [randomSeed]);
+
+  const line1 = 'maps are not neutral, fixed, or purely scientific';
+  const line2 = 'make it strange, unstable, playful, open to interpretation';
+
+  // Color each word from terrain stops
+  const colorize = (text: string, offset: number) =>
+    text.split(/(\s+)/).map((tok, i) => {
+      if (/^\s+$/.test(tok)) return <span key={i}>{tok}</span>;
+      const c = stops[(i + offset) % stops.length];
+      return <span key={i} style={{ color: c }}>{tok}</span>;
+    });
+
   const handlePrint = () => {
     const canvas = document.querySelector('canvas') as HTMLCanvasElement | null;
     if (!canvas) return;
     const url = canvas.toDataURL('image/png');
     const w = window.open('', '_blank');
     if (!w) return;
+    const swatches = stops
+      .map((c) => `<span style="display:inline-block;width:14px;height:14px;background:${c};margin:0 2px;vertical-align:middle;"></span>`)
+      .join('');
+    const wordsHtml = (text: string, offset: number) =>
+      text
+        .split(/(\s+)/)
+        .map((tok, i) => {
+          if (/^\s+$/.test(tok)) return tok;
+          const c = stops[(i + offset) % stops.length];
+          return `<span style="color:${c}">${tok}</span>`;
+        })
+        .join('');
     w.document.write(`
-      <!doctype html><html><head><title>Spectral Earth</title>
+      <!doctype html><html><head><title>Spectral Earth — Aral School 2026</title>
       <style>
         @page { size: auto; margin: 12mm; }
-        html,body { margin:0; padding:0; background:#fff; }
-        img { display:block; width:100%; height:auto; }
+        html,body { margin:0; padding:0; background:#fff; color:#111; font-family: ${style.font1}; }
+        .wrap { padding: 8mm; }
+        img { display:block; width:100%; height:auto; margin: 6mm 0; }
+        .l1 {
+          font-family: ${style.font1};
+          font-weight: ${style.weight1};
+          font-style: ${style.style1};
+          text-transform: ${style.case1};
+          font-size: ${Math.round(style.size1 * 0.55)}pt;
+          letter-spacing: ${style.tracking1}em;
+          line-height: 1;
+          margin: 0 0 6mm 0;
+        }
+        .l2 {
+          font-family: ${style.font2};
+          font-weight: ${style.weight2};
+          font-style: ${style.style2};
+          text-transform: ${style.case2};
+          font-size: ${Math.round(style.size2 * 0.55)}pt;
+          letter-spacing: ${style.tracking2}em;
+          line-height: 1.2;
+          margin: 0 0 4mm 0;
+        }
+        .foot {
+          margin-top: 8mm;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-family: "Courier New", monospace;
+          font-size: 9pt;
+          letter-spacing: 0.25em;
+          text-transform: uppercase;
+          border-top: 1px solid #111;
+          padding-top: 3mm;
+        }
       </style></head>
-      <body><img src="${url}" onload="setTimeout(()=>window.print(),200)" /></body></html>
+      <body>
+        <div class="wrap">
+          <div class="l1">${wordsHtml(line1, 0)}</div>
+          <div class="l2">${wordsHtml(line2, 3)}</div>
+          <img src="${url}" onload="setTimeout(()=>window.print(),300)" />
+          <div class="foot">
+            <span>Aral School 2026</span>
+            <span>${swatches}</span>
+            <span>Spectral Earth</span>
+          </div>
+        </div>
+      </body></html>
     `);
     w.document.close();
   };
 
-  const line1 = 'maps are not neutral, fixed, or purely scientific';
-  const line2 = 'make it strange, unstable, playful, open to interpretation';
-
   return (
     <>
-      <style>{`
-        @keyframes spectral-glitch-anim-1 {
-          0%,100% { clip-path: inset(0 0 85% 0); transform: translate(0,0); }
-          20% { clip-path: inset(20% 0 60% 0); transform: translate(-4px,2px); }
-          40% { clip-path: inset(50% 0 30% 0); transform: translate(3px,-2px); }
-          60% { clip-path: inset(70% 0 10% 0); transform: translate(-2px,3px); }
-          80% { clip-path: inset(10% 0 75% 0); transform: translate(5px,-3px); }
-        }
-        @keyframes spectral-glitch-anim-2 {
-          0%,100% { clip-path: inset(70% 0 10% 0); transform: translate(0,0); }
-          25% { clip-path: inset(10% 0 70% 0); transform: translate(4px,-2px); }
-          50% { clip-path: inset(40% 0 40% 0); transform: translate(-5px,2px); }
-          75% { clip-path: inset(80% 0 5% 0); transform: translate(3px,3px); }
-        }
-        @keyframes spectral-shake {
-          0%,100% { transform: translate(-50%, 0) skewX(0deg); }
-          25% { transform: translate(-50%, 0) skewX(-2deg); }
-          50% { transform: translate(-50%, 0) skewX(1.5deg); }
-          75% { transform: translate(-50%, 0) skewX(-1deg); }
-        }
-        @keyframes spectral-flicker {
-          0%,100% { opacity: 1; }
-          43% { opacity: 0.85; }
-          45% { opacity: 0.3; }
-          47% { opacity: 1; }
-          83% { opacity: 0.6; }
-          85% { opacity: 1; }
-        }
-        .spectral-glitch {
-          position: relative;
-          display: inline-block;
-          color: hsl(var(--foreground));
-          animation: spectral-flicker 4s infinite;
-          text-shadow: 2px 0 0 rgba(255,0,120,0.7), -2px 0 0 rgba(0,200,255,0.7);
-        }
-        .spectral-glitch::before,
-        .spectral-glitch::after {
-          content: attr(data-text);
-          position: absolute;
-          inset: 0;
-          background: transparent;
-          pointer-events: none;
-        }
-        .spectral-glitch::before {
-          color: #ff007a;
-          animation: spectral-glitch-anim-1 2.5s infinite linear alternate-reverse;
-          mix-blend-mode: screen;
-        }
-        .spectral-glitch::after {
-          color: #00e5ff;
-          animation: spectral-glitch-anim-2 3s infinite linear alternate-reverse;
-          mix-blend-mode: screen;
-        }
-      `}</style>
-
-      {/* Giant glitchy manifesto */}
-      <div
-        className="fixed top-1/2 left-1/2 z-30 pointer-events-none w-[92vw] text-center -translate-x-1/2 -translate-y-1/2"
-        style={{ animation: 'spectral-shake 6s infinite' }}
-      >
-        <div
-          className="font-black uppercase leading-[0.95] tracking-tight"
-          style={{ fontSize: 'clamp(28px, 5.2vw, 86px)' }}
-        >
-          <span className="spectral-glitch" data-text={line1}>{line1}</span>
-        </div>
-        <div
-          className="mt-6 font-light italic lowercase leading-tight"
-          style={{ fontSize: 'clamp(16px, 2.4vw, 36px)' }}
-        >
-          <span className="spectral-glitch" data-text={line2}>{line2}</span>
+      {/* Centered manifesto, terrain-colored, no animation */}
+      <div className="fixed inset-0 z-30 pointer-events-none flex items-center justify-center">
+        <div className="w-[92vw] text-center px-6">
+          <div
+            style={{
+              fontFamily: style.font1,
+              fontWeight: style.weight1 as any,
+              fontStyle: style.style1,
+              textTransform: style.case1 as any,
+              fontSize: `clamp(28px, ${style.size1 / 14}vw, ${Math.round(style.size1 * 1.1)}px)`,
+              letterSpacing: `${style.tracking1}em`,
+              lineHeight: 0.95,
+              textShadow: '0 1px 2px rgba(0,0,0,0.15)',
+            }}
+          >
+            {colorize(line1, 0)}
+          </div>
+          <div
+            className="mt-6"
+            style={{
+              fontFamily: style.font2,
+              fontWeight: style.weight2 as any,
+              fontStyle: style.style2,
+              textTransform: style.case2 as any,
+              fontSize: `clamp(16px, ${style.size2 / 14}vw, ${Math.round(style.size2 * 1.1)}px)`,
+              letterSpacing: `${style.tracking2}em`,
+              lineHeight: 1.2,
+              textShadow: '0 1px 2px rgba(0,0,0,0.15)',
+            }}
+          >
+            {colorize(line2, 3)}
+          </div>
         </div>
       </div>
 
