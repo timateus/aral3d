@@ -1387,6 +1387,8 @@ const Index = () => {
             setExaggeration(spectralPrevExaggerationRef.current);
           }}
           onRandomize={randomizeSpectral}
+          randomSeed={spectralSeed}
+
         />
       )}
 
