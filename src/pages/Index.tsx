@@ -1376,6 +1376,33 @@ const Index = () => {
             setVisualMode('designer');
             randomizeSpectral();
           }}
+          onMinistry={() => {
+            ministryPrevVisualRef.current = visualMode;
+            setStarted(true);
+            setMinistryMode(true);
+            setShowWaterExtent(false);
+            setShowBorders(true);
+            setShowRivers(true);
+            setShow13thBasin(false);
+            setShow19thBasin(false);
+            setShow21stBasin(false);
+            setShowKhorezm(false);
+            setShowLakes(false);
+            setShow21cLakes(false);
+            setShowLandcover(false);
+            setShowPopDensity(false);
+            setShowMigration(false);
+            setShowChoropleth(false);
+            setShowSchools(false);
+            setShowVocabulary(false);
+            setShowDwellings(false);
+            setShowPlaces(false);
+            setShowGroundwater(false);
+            setShowPrecipitation(false);
+            setShowSalinity(false);
+            setShowWaterways(false);
+            setWaterLevelManual(true);
+            setWaterLevel(40);
         />
       )}
 
