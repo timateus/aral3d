@@ -118,13 +118,27 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
   }, []);
 
   const waterColor = scheme.water;
-  const bgColor = scheme.background;
+  const bgColor = scheme.sceneBackground ?? scheme.background;
+  const stops = (scheme.terrainStops && scheme.terrainStops.length > 1)
+    ? scheme.terrainStops
+    : [scheme.water, scheme.land, scheme.vegetation, scheme.alert];
   // pick contrast: if bg is dark use white-ish, else black-ish
   const bgLum = (() => {
     const [, , l] = hexToHsl(bgColor.startsWith('#') ? bgColor : '#000000');
     return l;
   })();
   const contrastColor = bgLum < 0.5 ? '#f5f5f5' : '#111111';
+  // pick the brightest-contrast terrain stop for the arrows
+  const arrowColor = useMemo(() => {
+    let best = stops[0];
+    let bestD = -1;
+    for (const c of stops) {
+      const [, , l] = hexToHsl(c);
+      const d = Math.abs(l - bgLum);
+      if (d > bestD) { bestD = d; best = c; }
+    }
+    return best;
+  }, [stops, bgLum]);
 
   // Big-number overlay while dragging
   const [dragging, setDragging] = useState(false);
