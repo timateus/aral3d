@@ -34,6 +34,11 @@ export interface DesignerScheme {
   // Optional multi-stop terrain ramp (5+ colors low->high). When provided
   // it OVERRIDES the 4-color water/land/veg/alert ramp on the 3D surface.
   terrainStops?: string[];
+  // Optional override for the R3F scene background — when present, the 3D
+  // scene uses this colour even when the UI `background` is something else.
+  // Used by Spectral Earth so the panels stay calm (mirage cream) while the
+  // scene takes the wild preset hue.
+  sceneBackground?: string;
   // Thicknesses
   borderWidth: number;     // px, 0.25 - 2
   gridOpacity: number;     // 0 - 0.2
