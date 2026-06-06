@@ -1380,6 +1380,9 @@ const Index = () => {
             ministryPrevVisualRef.current = visualMode;
             setStarted(true);
             setMinistryMode(true);
+            // Keep Spectral Earth colors on the terrain.
+            setVisualMode('designer');
+            applyRandomSpectralPalette();
             setShowWaterExtent(false);
             setShowBorders(true);
             setShowRivers(true);
@@ -1402,7 +1405,7 @@ const Index = () => {
             setShowSalinity(false);
             setShowWaterways(false);
             setWaterLevelManual(true);
-            setWaterLevel(40);
+            setWaterLevel(53);
           }}
         />
       )}
