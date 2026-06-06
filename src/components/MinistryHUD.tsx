@@ -180,6 +180,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
     irrigatedArea: false,
     tempAnomaly: false,
   });
+  const [panelOpen, setPanelOpen] = useState(true);
 
   const chartData = useMemo(
     () => annualData.filter((r) => r.year != null),
