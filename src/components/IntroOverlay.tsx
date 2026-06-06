@@ -457,7 +457,7 @@ const IntroOverlay = ({ onStart, onGuidedTour, onReading, onCanalTour, onAgmarTo
           </div>
 
           {/* Third row — Sandbox + Trace + Dust + Life + Fountains + Read */}
-          <div className="grid grid-cols-7 gap-4">
+          <div className="grid grid-cols-8 gap-4">
             <button
               onClick={() => onSpectral?.()}
               className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-5 hover:bg-card/70 hover:border-violet-400/50 transition-all duration-500 text-left overflow-hidden"
@@ -471,6 +471,21 @@ const IntroOverlay = ({ onStart, onGuidedTour, onReading, onCanalTour, onAgmarTo
               </div>
               <ArrowRight className="absolute bottom-3 right-3 w-4 h-4 text-foreground/20 group-hover:text-violet-400/80 transition-all duration-300 group-hover:translate-x-1" />
             </button>
+
+            <button
+              onClick={() => onMinistry?.()}
+              className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-5 hover:bg-card/70 hover:border-sky-300/50 transition-all duration-500 text-left overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-sky-300/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="relative z-10">
+                <p className="text-base font-semibold text-foreground tracking-wide mb-1">Ministry</p>
+                <p className="text-[11px] text-foreground/50 leading-relaxed">
+                  Of Sea Adjustment — one slider, all power
+                </p>
+              </div>
+              <ArrowRight className="absolute bottom-3 right-3 w-4 h-4 text-foreground/20 group-hover:text-sky-300/80 transition-all duration-300 group-hover:translate-x-1" />
+            </button>
+
 
             <button
               onClick={() => onSandbox?.()}
