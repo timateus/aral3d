@@ -29,7 +29,7 @@ function pick<T>(arr: readonly T[], seed: number): T {
   return arr[Math.floor(Math.abs(Math.sin(seed * 9301 + 49297)) * arr.length) % arr.length];
 }
 
-const SpectralEarthHUD = ({ onExit, onRandomize, randomSeed = 0 }: Props) => {
+const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props) => {
   const [scheme] = useDesignerScheme();
   const stops = scheme.terrainStops && scheme.terrainStops.length > 1
     ? scheme.terrainStops
