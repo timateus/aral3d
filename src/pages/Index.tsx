@@ -1422,7 +1422,14 @@ const Index = () => {
           }}
           onRandomize={randomizeSpectral}
           randomSeed={spectralSeed}
-
+          onNext={() => {
+            // Hand off to Level 2 — keep the current spectral palette + scene.
+            ministryPrevVisualRef.current = spectralPrevModeRef.current;
+            setSpectralMode(false);
+            setMinistryMode(true);
+            setWaterLevelManual(true);
+            setWaterLevel(53);
+          }}
         />
       )}
 
@@ -1436,8 +1443,14 @@ const Index = () => {
             setStarted(false);
             setVisualMode(ministryPrevVisualRef.current);
           }}
+          onPrev={() => {
+            // Back to Level 1 — preserve the spectral session.
+            setMinistryMode(false);
+            setSpectralMode(true);
+          }}
         />
       )}
+
 
 
       {/* Quadrant View */}
