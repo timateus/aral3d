@@ -1342,6 +1342,7 @@ const Index = () => {
           onFountains={() => setFountainsMode(true)}
           onSpectral={() => {
             spectralPrevModeRef.current = visualMode;
+            spectralPrevExaggerationRef.current = exaggeration;
             setStarted(true);
             setSpectralMode(true);
             setShowWaterExtent(false);
@@ -1366,7 +1367,7 @@ const Index = () => {
             setShowSalinity(false);
             setShowWaterways(false);
             setVisualMode('designer');
-            applyRandomPreset();
+            randomizeSpectral();
           }}
         />
       )}
@@ -1374,11 +1375,15 @@ const Index = () => {
       {fountainsMode && <FountainsOfNukus onClose={() => setFountainsMode(false)} />}
 
       {spectralMode && (
-        <SpectralEarthHUD onExit={() => {
-          setSpectralMode(false);
-          setStarted(false);
-          setVisualMode(spectralPrevModeRef.current);
-        }} />
+        <SpectralEarthHUD
+          onExit={() => {
+            setSpectralMode(false);
+            setStarted(false);
+            setVisualMode(spectralPrevModeRef.current);
+            setExaggeration(spectralPrevExaggerationRef.current);
+          }}
+          onRandomize={randomizeSpectral}
+        />
       )}
 
 
