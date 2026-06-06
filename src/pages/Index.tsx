@@ -1178,7 +1178,7 @@ const Index = () => {
             onRecordingDone={() => setRecording(false)}
             scenarioActions={scenarioActions}
             currentMetrics={currentMetrics}
-            narrativeActive={narrativeActive || readingActive || canalTourActive || agmarTourActive || spectralMode}
+            narrativeActive={narrativeActive || readingActive || canalTourActive || agmarTourActive || spectralMode || ministryMode}
             narrativeCameraPosition={
               spectralMode ? spectralCamPos :
               readingActive ? NARRATIVE_STEPS[READING_PASSAGES[readingStep]?.stepIndex ?? 0]?.camera.position :
@@ -1195,7 +1195,7 @@ const Index = () => {
               agmarTourActive ? AGMAR_TOUR_STEPS[agmarTourStep]?.camera.target :
               undefined
             }
-            spectralActive={spectralMode}
+            spectralActive={spectralMode || ministryMode}
             riverFlyover={riverFlyover}
             onRiverFlyoverDone={() => setRiverFlyover(false)}
             riverInflow={currentRiverInflow}
