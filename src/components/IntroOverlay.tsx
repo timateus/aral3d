@@ -219,11 +219,12 @@ interface IntroOverlayProps {
   onLife?: () => void;
   onFountains?: () => void;
   onSpectral?: () => void;
+  onMinistry?: () => void;
 }
 
 type LandingView = 'main' | 'artifacts';
 
-const IntroOverlay = ({ onStart, onGuidedTour, onReading, onCanalTour, onAgmarTour, onObjectSelect, onStartGame, onQuadrants, onSandbox, onTraceCanals, onDustStorm, onLife, onFountains, onSpectral }: IntroOverlayProps) => {
+const IntroOverlay = ({ onStart, onGuidedTour, onReading, onCanalTour, onAgmarTour, onObjectSelect, onStartGame, onQuadrants, onSandbox, onTraceCanals, onDustStorm, onLife, onFountains, onSpectral, onMinistry }: IntroOverlayProps) => {
   const [view, setView] = useState<LandingView>('main');
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
