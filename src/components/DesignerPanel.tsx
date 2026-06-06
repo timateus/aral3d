@@ -99,7 +99,8 @@ const DesignerPanel = ({ onClose }: DesignerPanelProps) => {
           </div>
         </section>
 
-
+        {(['ui', 'map'] as const).map(group => (
+          <section key={group} className="space-y-1.5">
             <div className="text-[9px] uppercase tracking-[0.18em] opacity-50">
               {group === 'ui' ? 'Interface' : 'Map / terrain'}
             </div>
