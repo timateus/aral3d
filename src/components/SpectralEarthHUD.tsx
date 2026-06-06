@@ -257,21 +257,18 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
           <Printer className="w-4 h-4" style={{ color: stops[0] }} />
           Make your own
         </button>
-        {onNext && (
-          <button
-            onClick={onNext}
-            className="group flex items-center gap-3 px-6 py-4 text-sm font-semibold font-mono uppercase tracking-[0.2em] text-white backdrop-blur-md transition-all hover:brightness-110 hover:scale-105"
-            style={{
-              border: `3px solid ${stops[3 % stops.length]}`,
-              background: 'rgba(0,0,0,0.7)',
-              boxShadow: `0 0 24px ${stops[3 % stops.length]}55`,
-            }}
-          >
-            Level 2
-            <ArrowRight className="w-4 h-4" style={{ color: stops[3 % stops.length] }} />
-          </button>
-        )}
       </div>
+
+      {/* Edge right nav — same position/style as Level 2 */}
+      {onNext && (
+        <button
+          onClick={onNext}
+          aria-label="next level"
+          className="fixed right-0 top-1/2 -translate-y-1/2 z-[70] h-32 w-14 flex items-center justify-center bg-black text-white border-2 border-white shadow-[0_0_0_2px_#000,0_4px_24px_rgba(0,0,0,0.7)] hover:bg-white hover:text-black transition-colors"
+        >
+          <ChevronRight className="w-8 h-8" strokeWidth={2.5} />
+        </button>
+      )}
     </>
   );
 };
