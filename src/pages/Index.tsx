@@ -1178,7 +1178,7 @@ const Index = () => {
             onRecordingDone={() => setRecording(false)}
             scenarioActions={scenarioActions}
             currentMetrics={currentMetrics}
-            narrativeActive={narrativeActive || readingActive || canalTourActive || agmarTourActive || spectralMode || ministryMode}
+            narrativeActive={narrativeActive || readingActive || canalTourActive || agmarTourActive || spectralMode}
             narrativeCameraPosition={
               spectralMode ? spectralCamPos :
               readingActive ? NARRATIVE_STEPS[READING_PASSAGES[readingStep]?.stepIndex ?? 0]?.camera.position :
