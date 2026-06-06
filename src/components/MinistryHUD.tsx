@@ -197,23 +197,25 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         </h1>
       </div>
 
-      {/* Large edge nav buttons — visible on any bg (black/white double outline) */}
+      {/* Large naked arrows — color contrasts with map bg, no box */}
       {onPrev && (
         <button
           onClick={onPrev}
           aria-label="previous level"
-          className="fixed left-0 top-1/2 -translate-y-1/2 z-[70] h-32 w-14 flex items-center justify-center bg-black text-white border-2 border-white shadow-[0_0_0_2px_#000,0_4px_24px_rgba(0,0,0,0.7)] hover:bg-white hover:text-black transition-colors"
+          className="fixed left-2 top-1/2 -translate-y-1/2 z-[70] flex items-center justify-center bg-transparent hover:opacity-70 transition-opacity"
+          style={{ color: contrastColor, filter: `drop-shadow(0 0 8px ${scheme.background})` }}
         >
-          <ChevronLeft className="w-8 h-8" strokeWidth={2.5} />
+          <ChevronLeft style={{ width: 96, height: 96 }} strokeWidth={1.5} />
         </button>
       )}
       <button
         onClick={onNext}
         disabled={!onNext}
         aria-label="next level"
-        className="fixed right-0 top-1/2 -translate-y-1/2 z-[70] h-32 w-14 flex items-center justify-center bg-black text-white border-2 border-white shadow-[0_0_0_2px_#000,0_4px_24px_rgba(0,0,0,0.7)] hover:bg-white hover:text-black transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+        className="fixed right-2 top-1/2 -translate-y-1/2 z-[70] flex items-center justify-center bg-transparent hover:opacity-70 transition-opacity disabled:opacity-20 disabled:cursor-not-allowed"
+        style={{ color: contrastColor, filter: `drop-shadow(0 0 8px ${scheme.background})` }}
       >
-        <ChevronRight className="w-8 h-8" strokeWidth={2.5} />
+        <ChevronRight style={{ width: 96, height: 96 }} strokeWidth={1.5} />
       </button>
 
       {/* Big year number overlay while dragging */}
