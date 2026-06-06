@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, Sparkles, Printer } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Sparkles, Printer, ChevronRight } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useDesignerScheme } from '@/lib/visual-mode';
 
