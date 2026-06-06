@@ -416,3 +416,35 @@ export function useDesignerScheme(): [DesignerScheme, (s: DesignerScheme) => voi
   useEffect(() => subscribeDesignerScheme(setScheme), []);
   return [scheme, applyDesignerScheme];
 }
+
+// Mirage-ish UI tokens. Used by Spectral Earth so panels stay readable
+// while the 3D scene runs wild presets.
+const MIRAGE_UI = {
+  background: '#FAF8F4',
+  foreground: '#1A1A1A',
+  muted: '#6B6B6B',
+  panel: '#FFFFFF',
+  border: '#1A1A1A',
+  accent: '#1A1A1A',
+};
+
+/** Apply a random preset (or a freshly generated ramp) while locking the
+ *  UI to the mirage cream/ink palette. The scene background takes the wild
+ *  hue via `sceneBackground`. */
+export function applyRandomSpectralPalette() {
+  const cur = getDesignerScheme();
+  // 50/50: curated preset vs freshly generated ramp.
+  if (Math.random() < 0.5) {
+    applyRandomPreset();
+  } else {
+    generateRandomRamp();
+  }
+  const wild = getDesignerScheme();
+  applyDesignerScheme({
+    ...wild,
+    ...MIRAGE_UI,
+    sceneBackground: wild.background,
+  });
+}
+
+}
