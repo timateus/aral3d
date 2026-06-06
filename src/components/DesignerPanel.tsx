@@ -1,5 +1,5 @@
-import { useDesignerScheme, DEFAULT_SCHEME, DesignerScheme } from '@/lib/visual-mode';
-import { Download, RotateCcw, X } from 'lucide-react';
+import { useDesignerScheme, DEFAULT_SCHEME, DesignerScheme, PALETTE_PRESETS, applyPreset, applyRandomPreset, generateRandomRamp } from '@/lib/visual-mode';
+import { Download, RotateCcw, X, Shuffle, Wand2 } from 'lucide-react';
 
 interface DesignerPanelProps {
   onClose: () => void;
