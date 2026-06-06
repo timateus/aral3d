@@ -251,7 +251,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
           className="fixed left-2 top-1/2 -translate-y-1/2 z-[70] flex items-center justify-center bg-transparent hover:opacity-70 transition-opacity"
           style={{ color: arrowColor, filter: `drop-shadow(0 0 10px ${bgColor})` }}
         >
-          <ChevronLeft style={{ width: 112, height: 112 }} strokeWidth={2} />
+          <ChevronLeft style={{ width: 140, height: 140 }} strokeWidth={4} />
         </button>
       )}
       <button
@@ -261,7 +261,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         className="fixed right-2 top-1/2 -translate-y-1/2 z-[70] flex items-center justify-center bg-transparent hover:opacity-70 transition-opacity disabled:opacity-20 disabled:cursor-not-allowed"
         style={{ color: arrowColor, filter: `drop-shadow(0 0 10px ${bgColor})` }}
       >
-        <ChevronRight style={{ width: 112, height: 112 }} strokeWidth={2} />
+        <ChevronRight style={{ width: 140, height: 140 }} strokeWidth={4} />
       </button>
 
       {/* Big year number overlay while dragging */}
@@ -288,8 +288,8 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
 
 
       {/* Vertical slider with labels */}
-      <div className="fixed right-24 top-1/2 -translate-y-1/2 z-40 select-none flex items-stretch gap-4">
-        <div className="relative h-[72vh] w-32 text-right">
+      <div className="fixed right-[180px] top-1/2 -translate-y-1/2 z-40 select-none flex items-stretch gap-4">
+        <div className="relative h-[72vh] w-32 text-right pointer-events-none">
           {TICKS.map((t) => {
             const pct = 1 - (t.v - MIN) / (MAX - MIN);
             return (
@@ -304,8 +304,8 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
             );
           })}
         </div>
-        <div className="relative h-[72vh] w-10 flex items-center justify-center">
-          <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-white/15" />
+        <div className="relative h-[72vh] w-16 flex items-center justify-center">
+          <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-white/15 pointer-events-none" />
           <input
             type="range"
             min={MIN}
@@ -324,11 +324,13 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
               writingMode: 'vertical-lr' as any,
               WebkitAppearance: 'slider-vertical' as any,
               height: '72vh',
-              width: 24,
+              width: 56,
               direction: 'rtl',
               cursor: 'ns-resize',
               accentColor: waterColor,
               background: 'transparent',
+              position: 'relative',
+              zIndex: 1,
             }}
           />
         </div>
