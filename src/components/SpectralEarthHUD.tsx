@@ -183,40 +183,27 @@ const SpectralEarthHUD = ({ onExit, onRandomize, randomSeed = 0 }: Props) => {
         <div className="mt-2 h-px w-16 mx-auto bg-foreground/30" />
       </div>
 
-      {/* Back button */}
+      {/* Back button — constant font, readable on black */}
       <button
         onClick={onExit}
-        className="absolute top-5 left-5 z-40 flex items-center gap-2 px-3 py-2 backdrop-blur-md transition-colors hover:brightness-110"
+        className="absolute top-5 left-5 z-40 flex items-center gap-2 px-3 py-2 text-xs font-mono uppercase tracking-[0.2em] text-white backdrop-blur-md transition-colors hover:brightness-110"
         style={{
-          fontFamily: style.font2,
-          fontWeight: style.weight2 as any,
-          fontStyle: style.style2,
-          textTransform: style.case2 as any,
-          fontSize: `clamp(10px, ${style.size2 / 18}vw, 14px)`,
-          letterSpacing: `${style.tracking2}em`,
-          color: stops[0],
           border: `2px solid ${stops[1 % stops.length]}`,
-          background: `linear-gradient(135deg, ${stops[2 % stops.length]}22, ${stops[3 % stops.length]}22)`,
+          background: 'rgba(0,0,0,0.65)',
         }}
       >
         <ArrowLeft className="w-3.5 h-3.5" style={{ color: stops[1 % stops.length] }} /> Menu
       </button>
 
-      {/* Bottom action buttons */}
+      {/* Bottom action buttons — constant font/size, readable on black */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4">
         <button
           onClick={onRandomize}
-          className="group flex items-center gap-3 px-8 py-4 backdrop-blur-md transition-all hover:brightness-110 hover:scale-105"
+          className="group flex items-center gap-3 px-8 py-4 text-base font-semibold font-mono uppercase tracking-[0.2em] text-white backdrop-blur-md transition-all hover:brightness-110 hover:scale-105"
           style={{
-            fontFamily: style.font1,
-            fontWeight: style.weight1 as any,
-            fontStyle: style.style1,
-            textTransform: style.case1 as any,
-            fontSize: `clamp(12px, ${style.size1 / 16}vw, 20px)`,
-            letterSpacing: `${style.tracking1}em`,
-            color: stops[0],
             border: `3px solid ${stops[2 % stops.length]}`,
-            background: `linear-gradient(135deg, ${stops[1 % stops.length]}33, ${stops[3 % stops.length]}33)`,
+            background: 'rgba(0,0,0,0.7)',
+            boxShadow: `0 0 24px ${stops[1 % stops.length]}55`,
           }}
         >
           <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" style={{ color: stops[2 % stops.length] }} />
@@ -224,17 +211,11 @@ const SpectralEarthHUD = ({ onExit, onRandomize, randomSeed = 0 }: Props) => {
         </button>
         <button
           onClick={handlePrint}
-          className="group flex items-center gap-3 px-6 py-4 backdrop-blur-md transition-all hover:brightness-110 hover:scale-105"
+          className="group flex items-center gap-3 px-6 py-4 text-sm font-semibold font-mono uppercase tracking-[0.2em] text-white backdrop-blur-md transition-all hover:brightness-110 hover:scale-105"
           style={{
-            fontFamily: style.font2,
-            fontWeight: style.weight2 as any,
-            fontStyle: style.style2,
-            textTransform: style.case2 as any,
-            fontSize: `clamp(12px, ${style.size2 / 14}vw, 18px)`,
-            letterSpacing: `${style.tracking2}em`,
-            color: stops[3 % stops.length],
             border: `3px solid ${stops[0]}`,
-            background: `linear-gradient(135deg, ${stops[2 % stops.length]}33, ${stops[1 % stops.length]}33)`,
+            background: 'rgba(0,0,0,0.7)',
+            boxShadow: `0 0 24px ${stops[0]}55`,
           }}
         >
           <Printer className="w-4 h-4" style={{ color: stops[0] }} />
