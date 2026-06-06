@@ -197,12 +197,12 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         </h1>
       </div>
 
-      {/* Large edge nav buttons — high contrast, arrows only, above everything */}
+      {/* Large edge nav buttons — visible on any bg (black/white double outline) */}
       {onPrev && (
         <button
           onClick={onPrev}
           aria-label="previous level"
-          className="fixed left-0 top-1/2 -translate-y-1/2 z-[60] h-32 w-14 flex items-center justify-center bg-white text-black border border-black shadow-[0_0_0_2px_rgba(255,255,255,0.6)] hover:bg-black hover:text-white hover:shadow-[0_0_0_2px_rgba(0,0,0,0.6)] transition-colors"
+          className="fixed left-0 top-1/2 -translate-y-1/2 z-[70] h-32 w-14 flex items-center justify-center bg-black text-white border-2 border-white shadow-[0_0_0_2px_#000,0_4px_24px_rgba(0,0,0,0.7)] hover:bg-white hover:text-black transition-colors"
         >
           <ChevronLeft className="w-8 h-8" strokeWidth={2.5} />
         </button>
@@ -211,7 +211,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         onClick={onNext}
         disabled={!onNext}
         aria-label="next level"
-        className="fixed right-0 top-1/2 -translate-y-1/2 z-[60] h-32 w-14 flex items-center justify-center bg-white text-black border border-black shadow-[0_0_0_2px_rgba(255,255,255,0.6)] hover:bg-black hover:text-white hover:shadow-[0_0_0_2px_rgba(0,0,0,0.6)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+        className="fixed right-0 top-1/2 -translate-y-1/2 z-[70] h-32 w-14 flex items-center justify-center bg-black text-white border-2 border-white shadow-[0_0_0_2px_#000,0_4px_24px_rgba(0,0,0,0.7)] hover:bg-white hover:text-black transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
       >
         <ChevronRight className="w-8 h-8" strokeWidth={2.5} />
       </button>
