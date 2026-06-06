@@ -135,7 +135,15 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
         let color: [number, number, number];
         if (isWater) {
           const waterDepth = Math.max(0, Math.min(1, (waterLevel - elev) / (waterLevel - minElevation || 1)));
-          if (visualMode === 'mirage' || visualMode === 'designer') {
+          if (visualMode === 'designer') {
+            // Use the designer-scheme water color, darkening with depth.
+            const w = designerScheme.water.replace('#', '');
+            const wr = parseInt(w.slice(0, 2), 16) / 255;
+            const wg = parseInt(w.slice(2, 4), 16) / 255;
+            const wb2 = parseInt(w.slice(4, 6), 16) / 255;
+            const k = 0.55 + (1 - waterDepth) * 0.45;
+            color = [wr * k, wg * k, wb2 * k];
+          } else if (visualMode === 'mirage') {
             // Pale slate-blue mirage water
             color = [
               0.55 + (1 - waterDepth) * 0.10,
