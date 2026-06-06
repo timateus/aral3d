@@ -9,6 +9,7 @@
 // edits override mirage in real time.
 
 import { useEffect, useState } from 'react';
+import { setDesignerPaletteOverride } from '@/lib/geotiff-loader';
 
 export type VisualMode = 'dark' | 'mirage' | 'designer';
 
