@@ -1178,7 +1178,7 @@ const Index = () => {
             onRecordingDone={() => setRecording(false)}
             scenarioActions={scenarioActions}
             currentMetrics={currentMetrics}
-            narrativeActive={narrativeActive || readingActive || canalTourActive || agmarTourActive || spectralMode || ministryMode}
+            narrativeActive={narrativeActive || readingActive || canalTourActive || agmarTourActive || spectralMode}
             narrativeCameraPosition={
               spectralMode ? spectralCamPos :
               readingActive ? NARRATIVE_STEPS[READING_PASSAGES[readingStep]?.stepIndex ?? 0]?.camera.position :
@@ -1380,6 +1380,9 @@ const Index = () => {
             ministryPrevVisualRef.current = visualMode;
             setStarted(true);
             setMinistryMode(true);
+            // Keep Spectral Earth colors on the terrain.
+            setVisualMode('designer');
+            applyRandomSpectralPalette();
             setShowWaterExtent(false);
             setShowBorders(true);
             setShowRivers(true);
@@ -1402,7 +1405,7 @@ const Index = () => {
             setShowSalinity(false);
             setShowWaterways(false);
             setWaterLevelManual(true);
-            setWaterLevel(40);
+            setWaterLevel(53);
           }}
         />
       )}
@@ -1427,6 +1430,7 @@ const Index = () => {
         <MinistryHUD
           waterLevel={waterLevel}
           onWaterLevelChange={(v) => { setWaterLevelManual(true); setWaterLevel(v); }}
+          annualData={annualData}
           onExit={() => {
             setMinistryMode(false);
             setStarted(false);

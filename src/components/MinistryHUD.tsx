@@ -1,182 +1,208 @@
 import { ArrowLeft } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  ReferenceLine,
+} from 'recharts';
+
+export interface MinistryAnnual {
+  year: number;
+  seaLevel?: number;
+  surfaceArea?: number;
+  volume?: number;
+  salinity?: number;
+}
 
 interface Props {
   waterLevel: number;
   onWaterLevelChange: (v: number) => void;
   onExit: () => void;
+  annualData?: MinistryAnnual[];
 }
 
-// Slider range tuned to the project's water level (-10..100m).
+// Slider bounds (meters absolute sea level)
 const MIN = -10;
 const MAX = 100;
 
-// Intermediate labels positioned at fractional values (0 = bottom/MAX-land, 1 = top/MIN-water).
-// Note: visually slider is vertical with sea at top, land at bottom.
-const LABELS: { t: number; text: string }[] = [
-  { t: 0.0, text: 'LET THERE BE SEA' },
-  { t: 0.15, text: 'planet soup' },
-  { t: 0.3, text: 'actual sea' },
-  { t: 0.45, text: 'sea cosplay' },
-  { t: 0.6, text: 'former sea' },
-  { t: 0.78, text: 'puddle' },
-  { t: 0.9, text: 'dust' },
-  { t: 1.0, text: 'MAKE IT LAND' },
-];
+// How fast the slider drifts down after the user sets it (m/sec).
+const DRIFT_PER_SEC = 0.8;
 
-const MESSAGES = [
-  'Congratulations. You have solved water politics with a slider.',
-  'Adding 4 billion cubic meters of confidence…',
-  'Please wait while the desert reconsiders.',
-  'Hydrology has left the chat.',
-  'Local fish are confused but optimistic.',
-  'Removing sea. This has happened before.',
-  'Careful. The map is getting thirsty.',
-  'Congratulations, you invented a port without water.',
-  'A committee has been formed to study the slider.',
-  'Evaporation has been outsourced to a subcontractor.',
-  'The cartographers are filing a complaint.',
-  'Minor flooding reported in the legend.',
-  'Sea levels adjusted. Reality, pending.',
-  'Memo: please stop moving the sea during meetings.',
-];
+const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, annualData = [] }: Props) => {
+  // Activate drift only after first user interaction.
+  const interactedRef = useRef(false);
+  const waterRef = useRef(waterLevel);
+  useEffect(() => { waterRef.current = waterLevel; }, [waterLevel]);
 
-const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit }: Props) => {
-  // Slider is vertical, top = high water (MAX) -> bottom = low water (MIN).
-  // We bind a horizontal range input and rotate via CSS for browser compatibility.
-  const [msg, setMsg] = useState<string | null>(null);
-  const [msgKey, setMsgKey] = useState(0);
-  const lastChangeRef = useRef<number>(0);
-
-  // Show a random absurd message when slider value changes (debounced).
   useEffect(() => {
-    const now = Date.now();
-    lastChangeRef.current = now;
-    const handle = window.setTimeout(() => {
-      if (lastChangeRef.current !== now) return;
-      const m = MESSAGES[Math.floor(Math.random() * MESSAGES.length)];
-      setMsg(m);
-      setMsgKey((k) => k + 1);
-    }, 220);
-    return () => window.clearTimeout(handle);
-  }, [waterLevel]);
+    let raf = 0;
+    let last = performance.now();
+    const tick = (now: number) => {
+      const dt = (now - last) / 1000;
+      last = now;
+      if (interactedRef.current) {
+        const next = waterRef.current - DRIFT_PER_SEC * dt;
+        if (next > MIN) {
+          onWaterLevelChange(Number(next.toFixed(2)));
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [onWaterLevelChange]);
 
-  // Auto-clear the message after a few seconds.
-  useEffect(() => {
-    if (!msg) return;
-    const t = window.setTimeout(() => setMsg(null), 3200);
-    return () => window.clearTimeout(t);
-  }, [msgKey, msg]);
+  // Find the annual data row whose seaLevel is closest to the current waterLevel.
+  // Poetic reduction: a whole territory collapsed to one number.
+  const nearest = useMemo(() => {
+    if (!annualData.length) return null;
+    let best = annualData[0];
+    let bestDist = Infinity;
+    for (const r of annualData) {
+      if (r.seaLevel == null) continue;
+      const d = Math.abs(r.seaLevel - waterLevel);
+      if (d < bestDist) { bestDist = d; best = r; }
+    }
+    return best;
+  }, [annualData, waterLevel]);
+
+  const chartData = useMemo(
+    () => annualData.filter((r) => r.year != null),
+    [annualData],
+  );
 
   return (
     <>
-      {/* Title */}
-      <div className="absolute top-6 left-1/2 -translate-x-1/2 z-40 text-center pointer-events-none">
-        <h1 className="text-2xl font-extralight tracking-[0.35em] uppercase text-white drop-shadow">
-          Ministry of Sea Adjustment
-        </h1>
-        <div className="mt-2 h-px w-20 mx-auto bg-white/30" />
-        <p className="mt-2 text-[10px] font-mono tracking-[0.25em] uppercase text-white/60">
-          Department of Hydrological Vibes
-        </p>
-      </div>
-
-      {/* Back button */}
+      {/* Back button — minimal, no warmth */}
       <button
         onClick={onExit}
-        className="absolute top-5 left-5 z-40 flex items-center gap-2 px-3 py-2 text-xs font-mono uppercase tracking-[0.2em] text-white backdrop-blur-md bg-black/65 border-2 border-white/40 hover:bg-black/80 transition-colors"
+        className="absolute top-5 left-5 z-40 flex items-center gap-2 px-3 py-2 text-[10px] font-mono uppercase tracking-[0.3em] text-white/80 bg-black/70 border border-white/20 hover:bg-black/90 transition-colors"
       >
-        <ArrowLeft className="w-3.5 h-3.5" /> Menu
+        <ArrowLeft className="w-3 h-3" /> exit
       </button>
 
-      {/* Vertical slider — fixed right side */}
-      <div className="fixed right-8 top-1/2 -translate-y-1/2 z-40 flex items-stretch gap-4 select-none">
-        {/* Label column */}
-        <div className="relative w-44 h-[70vh] pointer-events-none">
-          {LABELS.map((l) => {
-            const isMajor = l.text === 'LET THERE BE SEA' || l.text === 'MAKE IT LAND';
-            return (
-              <div
-                key={l.text}
-                className="absolute right-0 -translate-y-1/2 text-right whitespace-nowrap"
-                style={{ top: `${l.t * 100}%` }}
-              >
-                {isMajor ? (
-                  <span className="text-white text-sm font-mono font-bold tracking-[0.25em] uppercase drop-shadow">
-                    {l.text}
-                  </span>
-                ) : (
-                  <span className="text-white/70 text-[11px] font-mono tracking-[0.2em] lowercase">
-                    {l.text}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Slider column */}
-        <div className="relative h-[70vh] w-12 flex items-center justify-center">
-          {/* Tick marks */}
-          <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-white/20" />
-          {LABELS.map((l) => (
-            <div
-              key={`tick-${l.text}`}
-              className="absolute left-1/2 -translate-x-1/2 h-px bg-white/50"
-              style={{ top: `${l.t * 100}%`, width: l.t === 0 || l.t === 1 ? 28 : 16 }}
-            />
-          ))}
-
-          {/* Rotated range input — visually vertical, top = sea (MAX), bottom = land (MIN). */}
+      {/* Vertical slider — silent, right edge */}
+      <div className="fixed right-10 top-1/2 -translate-y-1/2 z-40 select-none">
+        <div className="relative h-[72vh] w-10 flex items-center justify-center">
+          <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-white/15" />
           <input
             type="range"
             min={MIN}
             max={MAX}
-            step={1}
+            step={0.01}
             value={waterLevel}
-            onChange={(e) => onWaterLevelChange(Number(e.target.value))}
-            aria-label="Sea level"
+            onPointerDown={() => { interactedRef.current = true; }}
+            onChange={(e) => {
+              interactedRef.current = true;
+              onWaterLevelChange(Number(e.target.value));
+            }}
+            aria-label="value"
             className="ministry-slider"
             style={{
-              // Rotate so input length becomes the vertical extent.
               writingMode: 'vertical-lr' as any,
               WebkitAppearance: 'slider-vertical' as any,
-              height: '70vh',
-              width: 28,
+              height: '72vh',
+              width: 24,
               direction: 'rtl',
               cursor: 'ns-resize',
-              accentColor: '#7dd3fc',
+              accentColor: '#ffffff',
+              background: 'transparent',
             }}
           />
         </div>
-
-        {/* Current value readout */}
-        <div className="self-start mt-1 text-white/80 font-mono text-[11px] tracking-[0.2em] uppercase">
-          <div className="text-white/40">level</div>
-          <div className="text-base text-white">{waterLevel} m</div>
-        </div>
       </div>
 
-      {/* Absurd system message */}
-      {msg && (
-        <div
-          key={msgKey}
-          className="fixed bottom-10 left-1/2 -translate-x-1/2 z-40 max-w-[80vw] px-6 py-3 bg-black/80 border border-white/30 backdrop-blur-md text-white font-mono text-sm tracking-wide text-center shadow-2xl"
-          style={{ animation: 'ministryFade 3.2s ease-out forwards' }}
-        >
-          <span className="text-white/40 mr-2">SYSTEM:</span>
-          {msg}
+      {/* Numeric readouts + small graph — bottom-left, clinical */}
+      <div className="fixed bottom-6 left-6 z-40 w-[420px] bg-black/75 border border-white/15 backdrop-blur-md p-4 text-white font-mono">
+        <div className="grid grid-cols-4 gap-3 text-[10px] uppercase tracking-[0.2em] text-white/50 mb-2">
+          <div>Year</div>
+          <div>Volume</div>
+          <div>Area</div>
+          <div>Salinity</div>
         </div>
-      )}
-
-      <style>{`
-        @keyframes ministryFade {
-          0% { opacity: 0; transform: translate(-50%, 8px); }
-          10% { opacity: 1; transform: translate(-50%, 0); }
-          85% { opacity: 1; }
-          100% { opacity: 0; transform: translate(-50%, -4px); }
-        }
-      `}</style>
+        <div className="grid grid-cols-4 gap-3 text-base mb-3">
+          <div>{nearest?.year ?? '—'}</div>
+          <div>{nearest?.volume != null ? `${nearest.volume} km³` : '—'}</div>
+          <div>{nearest?.surfaceArea != null ? `${nearest.surfaceArea} km²` : '—'}</div>
+          <div>{nearest?.salinity != null ? `${nearest.salinity} g/L` : '—'}</div>
+        </div>
+        <div className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1">
+          value: {waterLevel.toFixed(2)} m
+        </div>
+        <div className="h-32">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+              <XAxis
+                dataKey="year"
+                tick={{ fill: '#ffffff80', fontSize: 9 }}
+                axisLine={{ stroke: '#ffffff30' }}
+                tickLine={false}
+              />
+              <YAxis
+                yAxisId="vol"
+                tick={{ fill: '#ffffff80', fontSize: 9 }}
+                axisLine={{ stroke: '#ffffff30' }}
+                tickLine={false}
+                width={28}
+              />
+              <YAxis
+                yAxisId="sal"
+                orientation="right"
+                tick={{ fill: '#ffffff80', fontSize: 9 }}
+                axisLine={{ stroke: '#ffffff30' }}
+                tickLine={false}
+                width={24}
+              />
+              <Tooltip
+                contentStyle={{
+                  background: '#000',
+                  border: '1px solid #ffffff30',
+                  fontSize: 10,
+                  color: '#fff',
+                }}
+                labelStyle={{ color: '#fff' }}
+              />
+              <Line
+                yAxisId="vol"
+                type="monotone"
+                dataKey="volume"
+                stroke="#ffffff"
+                strokeWidth={1}
+                dot={false}
+                isAnimationActive={false}
+                name="Volume"
+              />
+              <Line
+                yAxisId="vol"
+                type="monotone"
+                dataKey="surfaceArea"
+                stroke="#9ca3af"
+                strokeWidth={1}
+                dot={false}
+                isAnimationActive={false}
+                name="Area"
+              />
+              <Line
+                yAxisId="sal"
+                type="monotone"
+                dataKey="salinity"
+                stroke="#f59e0b"
+                strokeWidth={1}
+                dot={false}
+                isAnimationActive={false}
+                name="Salinity"
+              />
+              {nearest?.year != null && (
+                <ReferenceLine yAxisId="vol" x={nearest.year} stroke="#ffffff" strokeDasharray="2 2" />
+              )}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
     </>
   );
 };
