@@ -205,6 +205,7 @@ const Index = () => {
   const [aryqWorldActive, setAryqWorldActive] = useState(false);
   const [fountainsMode, setFountainsMode] = useState(false);
   const [spectralMode, setSpectralMode] = useState(false);
+  const spectralPrevModeRef = useRef<import('@/lib/visual-mode').VisualMode>('dark');
   const [quadrantViewActive, setQuadrantViewActive] = useState(false);
   const [bodiesOfWaterMode, setBodiesOfWaterMode] = useState(false);
   const [bodiesActiveLayer, setBodiesActiveLayer] = useState<'none' | 'mortality' | 'landcover' | 'sewage'>('none');
