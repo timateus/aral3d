@@ -1374,6 +1374,7 @@ const Index = () => {
             setShowSalinity(false);
             setShowWaterways(false);
             setVisualMode('designer');
+            setTerrainMode('classic');
             randomizeSpectral();
           }}
           onMinistry={() => {
