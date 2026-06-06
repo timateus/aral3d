@@ -1395,6 +1395,18 @@ const Index = () => {
         />
       )}
 
+      {ministryMode && (
+        <MinistryHUD
+          waterLevel={waterLevel}
+          onWaterLevelChange={(v) => { setWaterLevelManual(true); setWaterLevel(v); }}
+          onExit={() => {
+            setMinistryMode(false);
+            setStarted(false);
+            setVisualMode(ministryPrevVisualRef.current);
+          }}
+        />
+      )}
+
 
       {/* Quadrant View */}
       {quadrantViewActive && !started && (
