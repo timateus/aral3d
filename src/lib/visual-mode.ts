@@ -447,4 +447,3 @@ export function applyRandomSpectralPalette() {
   });
 }
 
-}
