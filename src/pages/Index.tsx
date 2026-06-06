@@ -1317,9 +1317,9 @@ const Index = () => {
           }}
           onFountains={() => setFountainsMode(true)}
           onSpectral={() => {
+            spectralPrevModeRef.current = visualMode;
             setStarted(true);
             setSpectralMode(true);
-            // Hide every overlay/layer for a clean canvas
             setShowWaterExtent(false);
             setShowBorders(true);
             setShowRivers(true);
@@ -1341,7 +1341,6 @@ const Index = () => {
             setShowPrecipitation(false);
             setShowSalinity(false);
             setShowWaterways(false);
-            // Turn on designer mode and pick a random preset right away
             setVisualMode('designer');
             applyRandomPreset();
           }}
@@ -1351,7 +1350,11 @@ const Index = () => {
       {fountainsMode && <FountainsOfNukus onClose={() => setFountainsMode(false)} />}
 
       {spectralMode && (
-        <SpectralEarthHUD onExit={() => { setSpectralMode(false); setStarted(false); }} />
+        <SpectralEarthHUD onExit={() => {
+          setSpectralMode(false);
+          setStarted(false);
+          setVisualMode(spectralPrevModeRef.current);
+        }} />
       )}
 
 
