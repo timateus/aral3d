@@ -211,6 +211,30 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         </button>
       </div>
 
+      {/* Level 2 manifesto headline — terrain-colored, top */}
+      <div className="absolute top-20 left-1/2 -translate-x-1/2 z-30 w-[92vw] text-center pointer-events-none px-6">
+        <div
+          style={{
+            fontFamily: '"Georgia", "Times New Roman", serif',
+            fontStyle: 'italic',
+            fontWeight: 400,
+            fontSize: 'clamp(22px, 3.2vw, 44px)',
+            lineHeight: 1.15,
+            letterSpacing: '0.01em',
+            textShadow: '0 1px 2px rgba(0,0,0,0.35)',
+          }}
+        >
+          {(() => {
+            const text = 'How should ecological data be communicated… or experienced?';
+            return text.split(/(\s+)/).map((tok, i) => {
+              if (/^\s+$/.test(tok)) return <span key={i}>{tok}</span>;
+              const c = stops[i % stops.length];
+              return <span key={i} style={{ color: c }}>{tok}</span>;
+            });
+          })()}
+        </div>
+      </div>
+
       {/* Level title */}
       <div className="absolute top-6 left-1/2 -translate-x-1/2 z-40 text-center pointer-events-none">
         <div className="text-[10px] font-mono uppercase tracking-[0.4em] text-white/40">level 2</div>
@@ -219,15 +243,15 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         </h1>
       </div>
 
-      {/* Large naked arrows — color contrasts with map bg, no box */}
+      {/* Large naked arrows — bright terrain stop color */}
       {onPrev && (
         <button
           onClick={onPrev}
           aria-label="previous level"
           className="fixed left-2 top-1/2 -translate-y-1/2 z-[70] flex items-center justify-center bg-transparent hover:opacity-70 transition-opacity"
-          style={{ color: contrastColor, filter: `drop-shadow(0 0 8px ${scheme.background})` }}
+          style={{ color: arrowColor, filter: `drop-shadow(0 0 10px ${bgColor})` }}
         >
-          <ChevronLeft style={{ width: 96, height: 96 }} strokeWidth={1.5} />
+          <ChevronLeft style={{ width: 112, height: 112 }} strokeWidth={2} />
         </button>
       )}
       <button
@@ -235,9 +259,9 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         disabled={!onNext}
         aria-label="next level"
         className="fixed right-2 top-1/2 -translate-y-1/2 z-[70] flex items-center justify-center bg-transparent hover:opacity-70 transition-opacity disabled:opacity-20 disabled:cursor-not-allowed"
-        style={{ color: contrastColor, filter: `drop-shadow(0 0 8px ${scheme.background})` }}
+        style={{ color: arrowColor, filter: `drop-shadow(0 0 10px ${bgColor})` }}
       >
-        <ChevronRight style={{ width: 96, height: 96 }} strokeWidth={1.5} />
+        <ChevronRight style={{ width: 112, height: 112 }} strokeWidth={2} />
       </button>
 
       {/* Big year number overlay while dragging */}
