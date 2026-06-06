@@ -1383,6 +1383,7 @@ const Index = () => {
             setMinistryMode(true);
             // Keep Spectral Earth colors on the terrain.
             setVisualMode('designer');
+            setTerrainMode('classic');
             applyRandomSpectralPalette();
             setShowWaterExtent(false);
             setShowBorders(true);
