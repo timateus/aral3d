@@ -1403,6 +1403,8 @@ const Index = () => {
             setShowWaterways(false);
             setWaterLevelManual(true);
             setWaterLevel(40);
+          }}
+        />
         />
       )}
 
