@@ -212,6 +212,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
 
       {/* Title */}
       <div className="absolute top-6 left-1/2 -translate-x-1/2 z-40 text-center pointer-events-none">
+        <div className="text-[10px] font-mono uppercase tracking-[0.4em] text-foreground/50">level 1</div>
         <h1 className="text-2xl font-extralight tracking-[0.4em] uppercase text-foreground/90 drop-shadow">
           Spectral Earth
         </h1>
@@ -254,8 +255,22 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
           }}
         >
           <Printer className="w-4 h-4" style={{ color: stops[0] }} />
-          Own it
+          Make your own
         </button>
+        {onNext && (
+          <button
+            onClick={onNext}
+            className="group flex items-center gap-3 px-6 py-4 text-sm font-semibold font-mono uppercase tracking-[0.2em] text-white backdrop-blur-md transition-all hover:brightness-110 hover:scale-105"
+            style={{
+              border: `3px solid ${stops[3 % stops.length]}`,
+              background: 'rgba(0,0,0,0.7)',
+              boxShadow: `0 0 24px ${stops[3 % stops.length]}55`,
+            }}
+          >
+            Level 2
+            <ArrowRight className="w-4 h-4" style={{ color: stops[3 % stops.length] }} />
+          </button>
+        )}
       </div>
     </>
   );
