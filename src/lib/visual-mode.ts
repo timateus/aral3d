@@ -299,39 +299,42 @@ function hexToHsl(hex: string): [number, number, number] {
   return [h, s, l];
 }
 
-// Generates a fresh, coherent color scale from a single random seed hue.
-// Keeps the current UI mode (light/dark background lightness preserved).
+// Generates a fresh wild, multi-colored terrain ramp from a random seed hue.
+// Only touches map colors + bg + terrainStops — leaves UI tokens alone.
 export function generateRandomRamp() {
   const cur = getDesignerScheme();
   const [, , bgL] = hexToHsl(cur.background);
   const darkMode = bgL < 0.5;
 
   const baseHue = Math.random() * 360;
-  const sat = 0.45 + Math.random() * 0.35; // 0.45..0.80
+  const sat = 0.7 + Math.random() * 0.3; // 0.7..1.0 — vivid
 
-  // 5 analogous/triadic hues across the ramp
-  const hueWater     = baseHue;
-  const hueLand      = baseHue + 40 + Math.random() * 30;
-  const hueVeg       = baseHue + 90 + Math.random() * 40;
-  const hueAlert     = baseHue + 180 + (Math.random() - 0.5) * 40;
-  const hueAccent    = baseHue + 30 + (Math.random() - 0.5) * 40;
+  // 8 hues spread around the wheel for "crazy color" terrain
+  const stopCount = 7 + Math.floor(Math.random() * 3); // 7..9
+  const hueSpread = 200 + Math.random() * 160; // 200..360°
+  const stops: string[] = [];
+  for (let i = 0; i < stopCount; i++) {
+    const t = i / (stopCount - 1);
+    const h = baseHue + t * hueSpread + (Math.random() - 0.5) * 30;
+    // Alternating lightness for high contrast banding
+    const l = darkMode
+      ? 0.25 + (i % 2 === 0 ? 0.15 : 0.40) + t * 0.1
+      : 0.40 + (i % 2 === 0 ? 0.10 : 0.30) - t * 0.05;
+    stops.push(hslToHex(h, sat, l));
+  }
 
   const background = darkMode
-    ? hslToHex(baseHue, 0.20, 0.06 + Math.random() * 0.05)
+    ? hslToHex(baseHue, 0.30, 0.04 + Math.random() * 0.04)
     : hslToHex(baseHue, 0.10, 0.94 + Math.random() * 0.04);
-  const foreground = darkMode ? '#F2EEE6' : '#1A1A1A';
-  const muted      = darkMode ? hslToHex(baseHue, 0.15, 0.65) : hslToHex(baseHue, 0.15, 0.42);
-  const panel      = darkMode ? hslToHex(baseHue, 0.18, 0.10) : '#FFFFFF';
-  const border     = darkMode ? hslToHex(baseHue, 0.30, 0.55) : hslToHex(baseHue, 0.30, 0.20);
 
   const next: DesignerScheme = {
     ...cur,
-    background, foreground, muted, panel, border,
-    accent:     hslToHex(hueAccent, sat,        darkMode ? 0.60 : 0.45),
-    water:      hslToHex(hueWater,  sat * 0.9,  darkMode ? 0.30 : 0.45),
-    land:       hslToHex(hueLand,   sat * 0.6,  darkMode ? 0.55 : 0.70),
-    vegetation: hslToHex(hueVeg,    sat * 0.7,  darkMode ? 0.45 : 0.55),
-    alert:      hslToHex(hueAlert,  sat,        darkMode ? 0.60 : 0.50),
+    background,
+    water:      stops[0],
+    land:       stops[Math.floor(stopCount / 3)],
+    vegetation: stops[Math.floor((2 * stopCount) / 3)],
+    alert:      stops[stopCount - 1],
+    terrainStops: stops,
   };
   applyDesignerScheme(next);
 }
