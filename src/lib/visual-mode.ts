@@ -31,6 +31,9 @@ export interface DesignerScheme {
   land: string;
   vegetation: string;
   alert: string;
+  // Optional multi-stop terrain ramp (5+ colors low->high). When provided
+  // it OVERRIDES the 4-color water/land/veg/alert ramp on the 3D surface.
+  terrainStops?: string[];
   // Thicknesses
   borderWidth: number;     // px, 0.25 - 2
   gridOpacity: number;     // 0 - 0.2
