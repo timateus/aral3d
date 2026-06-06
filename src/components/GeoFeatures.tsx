@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { Html, Line } from '@react-three/drei';
 import { TerrainData, GeoBounds } from '@/lib/geotiff-loader';
 import * as THREE from 'three';
+import { useVisualMode, useDesignerScheme } from '@/lib/visual-mode';
 
 interface CanalHighlight {
   canal: string;
