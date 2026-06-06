@@ -118,6 +118,13 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
   }, []);
 
   const waterColor = scheme.water;
+  const bgColor = scheme.background;
+  // pick contrast: if bg is dark use white-ish, else black-ish
+  const bgLum = (() => {
+    const [, , l] = hexToHsl(bgColor.startsWith('#') ? bgColor : '#000000');
+    return l;
+  })();
+  const contrastColor = bgLum < 0.5 ? '#f5f5f5' : '#111111';
 
   // Big-number overlay while dragging
   const [dragging, setDragging] = useState(false);
@@ -197,23 +204,25 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         </h1>
       </div>
 
-      {/* Large edge nav buttons — visible on any bg (black/white double outline) */}
+      {/* Large naked arrows — color contrasts with map bg, no box */}
       {onPrev && (
         <button
           onClick={onPrev}
           aria-label="previous level"
-          className="fixed left-0 top-1/2 -translate-y-1/2 z-[70] h-32 w-14 flex items-center justify-center bg-black text-white border-2 border-white shadow-[0_0_0_2px_#000,0_4px_24px_rgba(0,0,0,0.7)] hover:bg-white hover:text-black transition-colors"
+          className="fixed left-2 top-1/2 -translate-y-1/2 z-[70] flex items-center justify-center bg-transparent hover:opacity-70 transition-opacity"
+          style={{ color: contrastColor, filter: `drop-shadow(0 0 8px ${scheme.background})` }}
         >
-          <ChevronLeft className="w-8 h-8" strokeWidth={2.5} />
+          <ChevronLeft style={{ width: 96, height: 96 }} strokeWidth={1.5} />
         </button>
       )}
       <button
         onClick={onNext}
         disabled={!onNext}
         aria-label="next level"
-        className="fixed right-0 top-1/2 -translate-y-1/2 z-[70] h-32 w-14 flex items-center justify-center bg-black text-white border-2 border-white shadow-[0_0_0_2px_#000,0_4px_24px_rgba(0,0,0,0.7)] hover:bg-white hover:text-black transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+        className="fixed right-2 top-1/2 -translate-y-1/2 z-[70] flex items-center justify-center bg-transparent hover:opacity-70 transition-opacity disabled:opacity-20 disabled:cursor-not-allowed"
+        style={{ color: contrastColor, filter: `drop-shadow(0 0 8px ${scheme.background})` }}
       >
-        <ChevronRight className="w-8 h-8" strokeWidth={2.5} />
+        <ChevronRight style={{ width: 96, height: 96 }} strokeWidth={1.5} />
       </button>
 
       {/* Big year number overlay while dragging */}
@@ -247,10 +256,10 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
             return (
               <div
                 key={t.v}
-                className="absolute right-0 -translate-y-1/2 text-[10px] font-mono uppercase tracking-[0.15em] text-white/55 whitespace-nowrap"
-                style={{ top: `${pct * 100}%` }}
+                className="absolute right-0 -translate-y-1/2 text-[10px] font-mono uppercase tracking-[0.15em] whitespace-nowrap"
+                style={{ top: `${pct * 100}%`, color: waterColor }}
               >
-                <span className="inline-block w-3 border-t border-white/30 align-middle mr-2" />
+                <span className="inline-block w-3 border-t align-middle mr-2" style={{ borderColor: waterColor, opacity: 0.5 }} />
                 {t.label}
               </div>
             );
@@ -286,17 +295,19 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         </div>
       </div>
 
-      {/* Graph panel (bottom-left) — matches map bg + stylish serif typography */}
+      {/* Graph panel (bottom-left) — matches map bg; text is its opposite */}
       <div
-        className="fixed bottom-6 left-6 z-40 w-[460px] border border-white/15 backdrop-blur-md text-white"
+        className="fixed bottom-6 left-6 z-40 w-[460px] backdrop-blur-md"
         style={{
-          background: 'hsl(var(--background) / 0.92)',
+          background: bgColor,
+          color: contrastColor,
+          border: `1px solid ${contrastColor}26`,
           fontFamily: '"Georgia", "Times New Roman", serif',
         }}
       >
-        <div className="flex items-baseline justify-between px-5 py-3 border-b border-white/10">
-          <div className="text-base italic tracking-wide text-white/90">Historical Data</div>
-          <div className="text-[11px] tracking-wide text-white/50" style={{ fontFamily: '"Courier New", monospace' }}>
+        <div className="flex items-baseline justify-between px-5 py-3" style={{ borderBottom: `1px solid ${contrastColor}1f` }}>
+          <div className="text-base italic tracking-wide" style={{ color: contrastColor }}>Historical Data</div>
+          <div className="text-[11px] tracking-wide" style={{ fontFamily: '"Courier New", monospace', color: contrastColor, opacity: 0.6 }}>
             {nearestYear ?? '—'} · {waterLevel.toFixed(1)} m
           </div>
         </div>
@@ -310,13 +321,13 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
                 onClick={() => setVisible((v) => ({ ...v, [s.key]: !v[s.key] }))}
                 className="flex items-center gap-1.5 py-0.5 text-[12px] italic transition-opacity"
                 style={{
-                  color: on ? s.color : 'rgba(255,255,255,0.35)',
+                  color: on ? s.color : `${contrastColor}66`,
                   fontFamily: '"Georgia", serif',
                 }}
               >
                 <span
                   className="inline-block w-2 h-2 rounded-full"
-                  style={{ background: on ? s.color : 'transparent', border: `1px solid ${on ? s.color : 'rgba(255,255,255,0.3)'}` }}
+                  style={{ background: on ? s.color : 'transparent', border: `1px solid ${on ? s.color : `${contrastColor}55`}` }}
                 />
                 {s.label}
               </button>
@@ -326,10 +337,10 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         <div className="h-44 px-2 pb-3 pt-2">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-              <XAxis dataKey="year" tick={{ fill: '#ffffff70', fontSize: 9 }} axisLine={{ stroke: '#ffffff20' }} tickLine={false} />
-              <YAxis yAxisId="left" tick={{ fill: '#ffffff70', fontSize: 9 }} axisLine={{ stroke: '#ffffff20' }} tickLine={false} width={28} />
-              <YAxis yAxisId="right" orientation="right" tick={{ fill: '#ffffff70', fontSize: 9 }} axisLine={{ stroke: '#ffffff20' }} tickLine={false} width={28} />
-              <Tooltip contentStyle={{ background: '#000', border: '1px solid #ffffff30', fontSize: 10, color: '#fff' }} labelStyle={{ color: '#fff' }} />
+              <XAxis dataKey="year" tick={{ fill: contrastColor, fontSize: 9, opacity: 0.7 }} axisLine={{ stroke: contrastColor, opacity: 0.2 }} tickLine={false} />
+              <YAxis yAxisId="left" tick={{ fill: contrastColor, fontSize: 9, opacity: 0.7 }} axisLine={{ stroke: contrastColor, opacity: 0.2 }} tickLine={false} width={28} />
+              <YAxis yAxisId="right" orientation="right" tick={{ fill: contrastColor, fontSize: 9, opacity: 0.7 }} axisLine={{ stroke: contrastColor, opacity: 0.2 }} tickLine={false} width={28} />
+              <Tooltip contentStyle={{ background: bgColor, border: `1px solid ${contrastColor}30`, fontSize: 10, color: contrastColor }} labelStyle={{ color: contrastColor }} />
               {SERIES.filter((s) => visible[s.key]).map((s) => (
                 <Line
                   key={s.key}
@@ -344,7 +355,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
                 />
               ))}
               {nearestYear != null && (
-                <ReferenceLine yAxisId="left" x={nearestYear} stroke="#ffffff" strokeDasharray="2 2" />
+                <ReferenceLine yAxisId="left" x={nearestYear} stroke={contrastColor} strokeDasharray="2 2" />
               )}
             </LineChart>
           </ResponsiveContainer>

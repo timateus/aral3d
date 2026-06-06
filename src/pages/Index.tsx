@@ -214,27 +214,7 @@ const Index = () => {
   const spectralPrevModeRef = useRef<import('@/lib/visual-mode').VisualMode>('dark');
   const spectralPrevExaggerationRef = useRef<number>(10);
 
-  // Slow auto-orbit while Ministry (Level 2) is active. Smoothly interpolated by NarrativeCameraController.
-  useEffect(() => {
-    if (!ministryMode) return;
-    let raf = 0;
-    // Seed angle/radius/height from the current camera position so the orbit starts smoothly.
-    const [x0, y0, z0] = spectralCamPos;
-    let angle = Math.atan2(x0, z0);
-    const radius = Math.max(10, Math.hypot(x0, z0));
-    const height = Math.max(6, y0);
-    const start = performance.now();
-    const tick = (t: number) => {
-      const dt = (t - start) / 1000;
-      angle = Math.atan2(x0, z0) + dt * 0.05; // ~slow orbit (~2 min/rev)
-      setSpectralCamPos([Math.sin(angle) * radius, height, Math.cos(angle) * radius]);
-      setSpectralCamTarget([0, 0, 0]);
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ministryMode]);
+  // Ministry (Level 2): user-controlled camera via OrbitControls — no auto-orbit.
 
   // One-shot randomizer for Spectral Earth — palette, exaggeration, camera, zoom, typography.
   const randomizeSpectral = useCallback(() => {
@@ -1200,9 +1180,9 @@ const Index = () => {
             onRecordingDone={() => setRecording(false)}
             scenarioActions={scenarioActions}
             currentMetrics={currentMetrics}
-            narrativeActive={narrativeActive || readingActive || canalTourActive || agmarTourActive || spectralMode || ministryMode}
+            narrativeActive={narrativeActive || readingActive || canalTourActive || agmarTourActive || spectralMode}
             narrativeCameraPosition={
-              (spectralMode || ministryMode) ? spectralCamPos :
+              spectralMode ? spectralCamPos :
               readingActive ? NARRATIVE_STEPS[READING_PASSAGES[readingStep]?.stepIndex ?? 0]?.camera.position :
               narrativeActive ? NARRATIVE_STEPS[narrativeStep]?.camera.position :
               canalTourActive ? CANAL_TOUR_STEPS[canalTourStep]?.camera.position :
@@ -1210,7 +1190,7 @@ const Index = () => {
               undefined
             }
             narrativeCameraTarget={
-              (spectralMode || ministryMode) ? spectralCamTarget :
+              spectralMode ? spectralCamTarget :
               readingActive ? NARRATIVE_STEPS[READING_PASSAGES[readingStep]?.stepIndex ?? 0]?.camera.target :
               narrativeActive ? NARRATIVE_STEPS[narrativeStep]?.camera.target :
               canalTourActive ? CANAL_TOUR_STEPS[canalTourStep]?.camera.target :
