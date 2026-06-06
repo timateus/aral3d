@@ -129,6 +129,7 @@ export function applyDesignerScheme(s: DesignerScheme) {
     vegetation: s.vegetation,
     alert: s.alert,
     background: s.background,
+    stops: s.terrainStops,
   });
 
   try { localStorage.setItem(SCHEME_KEY, JSON.stringify(s)); } catch {}
