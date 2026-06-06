@@ -136,7 +136,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
 
   const bigLabel = useMemo(() => {
     if (waterLevel > 53.0) return '—';                       // above the pre-1960 baseline
-    if (latest && latest.seaLevel != null && waterLevel < latest.seaLevel - 0.05) return 'future';
+    if (latest && latest.seaLevel != null && waterLevel < latest.seaLevel - 0.05) return 'future?';
     if (!annualData.length) return '—';
     let best = annualData[0];
     let bestDist = Infinity;
