@@ -259,16 +259,22 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
         </button>
       </div>
 
-      {/* Edge right nav — same position/style as Level 2 */}
-      {onNext && (
-        <button
-          onClick={onNext}
-          aria-label="next level"
-          className="fixed right-0 top-1/2 -translate-y-1/2 z-[70] h-32 w-14 flex items-center justify-center bg-black text-white border-2 border-white shadow-[0_0_0_2px_#000,0_4px_24px_rgba(0,0,0,0.7)] hover:bg-white hover:text-black transition-colors"
-        >
-          <ChevronRight className="w-8 h-8" strokeWidth={2.5} />
-        </button>
-      )}
+      {/* Edge right nav — same bare style as Level 2 */}
+      {onNext && (() => {
+        // pick brightest-contrast stop vs page bg (level 1 page is light/cream by default,
+        // but we approximate by simply taking the most saturated/dark stop)
+        const arrowColor = stops[2 % stops.length] || stops[0];
+        return (
+          <button
+            onClick={onNext}
+            aria-label="next level"
+            className="fixed right-2 top-1/2 -translate-y-1/2 z-[70] flex items-center justify-center bg-transparent hover:opacity-70 transition-opacity"
+            style={{ color: arrowColor, filter: 'drop-shadow(0 0 10px rgba(0,0,0,0.45))' }}
+          >
+            <ChevronRight style={{ width: 112, height: 112 }} strokeWidth={2} />
+          </button>
+        );
+      })()}
     </>
   );
 };
