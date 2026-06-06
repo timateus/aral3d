@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import * as THREE from 'three';
 import { TerrainData } from '@/lib/geotiff-loader';
+import { useVisualMode, useDesignerScheme } from '@/lib/visual-mode';
 
 export type TerrainStyle = 'none' | 'contours' | 'vectors';
 
