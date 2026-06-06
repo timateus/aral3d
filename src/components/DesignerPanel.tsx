@@ -87,11 +87,10 @@ const DesignerPanel = ({ onClose }: DesignerPanelProps) => {
                 className="flex items-center gap-1.5 border border-border/30 px-1.5 py-1 text-[10px] hover:bg-foreground/5 transition-colors"
                 title={p.label}
               >
-                <span className="flex h-3 w-7 overflow-hidden border border-border/20">
-                  <span className="flex-1" style={{ background: p.scheme.water }} />
-                  <span className="flex-1" style={{ background: p.scheme.land }} />
-                  <span className="flex-1" style={{ background: p.scheme.vegetation }} />
-                  <span className="flex-1" style={{ background: p.scheme.alert }} />
+                <span className="flex h-3 w-10 overflow-hidden border border-border/20">
+                  {(p.scheme.terrainStops ?? [p.scheme.water, p.scheme.land, p.scheme.vegetation, p.scheme.alert]).map((c, i) => (
+                    <span key={i} className="flex-1" style={{ background: c }} />
+                  ))}
                 </span>
                 <span className="truncate">{p.label}</span>
               </button>
