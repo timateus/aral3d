@@ -119,6 +119,15 @@ export function applyDesignerScheme(s: DesignerScheme) {
   set('--map-alert', s.alert);
   set('--map-background', s.background);
 
+  // Push to terrain color ramp so the 3D surface itself recolors.
+  setDesignerPaletteOverride({
+    water: s.water,
+    land: s.land,
+    vegetation: s.vegetation,
+    alert: s.alert,
+    background: s.background,
+  });
+
   try { localStorage.setItem(SCHEME_KEY, JSON.stringify(s)); } catch {}
   schemeListeners.forEach(l => l(s));
 }
