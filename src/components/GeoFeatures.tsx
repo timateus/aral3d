@@ -280,11 +280,11 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
       }
     };
 
-    processRiverData(geoJsonData, '#4fc3f7');
-    processRiverData(syrDaryaData, '#7ecaf7');
+    processRiverData(geoJsonData, riverColor);
+    processRiverData(syrDaryaData, riverColorAlt);
 
     return segments;
-  }, [terrain, exaggeration, bounds, meshWidth, meshHeight, geoJsonData, syrDaryaData, riverInflow]);
+  }, [terrain, exaggeration, bounds, meshWidth, meshHeight, geoJsonData, syrDaryaData, riverInflow, riverColor, riverColorAlt]);
 
   const BORDER_COUNTRIES = ['Uzbekistan'];
 
