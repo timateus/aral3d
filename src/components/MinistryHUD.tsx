@@ -287,41 +287,42 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
       </div>
 
       {/* Graph panel (bottom-left) */}
-      <div className="fixed bottom-6 left-6 z-40 w-[480px] bg-black/75 border border-white/15 backdrop-blur-md p-4 text-white font-mono">
-        <div className="flex items-center justify-between mb-2">
-          <div className="text-[10px] uppercase tracking-[0.3em] text-white/50">historical data</div>
-          <div className="text-[10px] uppercase tracking-[0.2em] text-white/40">value: {waterLevel.toFixed(2)} m</div>
+      <div className="fixed bottom-6 left-6 z-40 w-[460px] bg-black/80 border border-white/10 backdrop-blur-md text-white font-mono">
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10">
+          <div className="text-[10px] uppercase tracking-[0.3em] text-white/60">historical data</div>
+          <div className="text-[10px] uppercase tracking-[0.2em] text-white/40">
+            {nearestYear ?? '—'} · {waterLevel.toFixed(1)} m
+          </div>
         </div>
         {/* Toggle chips */}
-        <div className="flex flex-wrap gap-1.5 mb-3">
+        <div className="flex flex-wrap gap-1 px-3 pt-3">
           {SERIES.map((s) => {
             const on = visible[s.key];
             return (
               <button
                 key={s.key}
                 onClick={() => setVisible((v) => ({ ...v, [s.key]: !v[s.key] }))}
-                className="px-2 py-1 text-[9px] uppercase tracking-[0.15em] border transition-colors"
+                className="flex items-center gap-1.5 px-1.5 py-0.5 text-[9px] uppercase tracking-[0.1em] transition-opacity"
                 style={{
-                  borderColor: on ? s.color : 'rgba(255,255,255,0.2)',
-                  color: on ? s.color : 'rgba(255,255,255,0.4)',
-                  background: on ? 'rgba(255,255,255,0.05)' : 'transparent',
+                  color: on ? s.color : 'rgba(255,255,255,0.35)',
+                  opacity: on ? 1 : 0.7,
                 }}
               >
                 <span
-                  className="inline-block w-2 h-2 mr-1.5 align-middle"
-                  style={{ background: on ? s.color : 'transparent', border: `1px solid ${s.color}` }}
+                  className="inline-block w-2 h-2"
+                  style={{ background: on ? s.color : 'transparent', border: `1px solid ${on ? s.color : 'rgba(255,255,255,0.3)'}` }}
                 />
                 {s.label}
               </button>
             );
           })}
         </div>
-        <div className="h-40">
+        <div className="h-40 px-2 pb-2 pt-1">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-              <XAxis dataKey="year" tick={{ fill: '#ffffff80', fontSize: 9 }} axisLine={{ stroke: '#ffffff30' }} tickLine={false} />
-              <YAxis yAxisId="left" tick={{ fill: '#ffffff80', fontSize: 9 }} axisLine={{ stroke: '#ffffff30' }} tickLine={false} width={28} />
-              <YAxis yAxisId="right" orientation="right" tick={{ fill: '#ffffff80', fontSize: 9 }} axisLine={{ stroke: '#ffffff30' }} tickLine={false} width={28} />
+              <XAxis dataKey="year" tick={{ fill: '#ffffff70', fontSize: 9 }} axisLine={{ stroke: '#ffffff20' }} tickLine={false} />
+              <YAxis yAxisId="left" tick={{ fill: '#ffffff70', fontSize: 9 }} axisLine={{ stroke: '#ffffff20' }} tickLine={false} width={28} />
+              <YAxis yAxisId="right" orientation="right" tick={{ fill: '#ffffff70', fontSize: 9 }} axisLine={{ stroke: '#ffffff20' }} tickLine={false} width={28} />
               <Tooltip contentStyle={{ background: '#000', border: '1px solid #ffffff30', fontSize: 10, color: '#fff' }} labelStyle={{ color: '#fff' }} />
               {SERIES.filter((s) => visible[s.key]).map((s) => (
                 <Line
@@ -343,6 +344,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
           </ResponsiveContainer>
         </div>
       </div>
+
     </>
   );
 };
