@@ -344,61 +344,75 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
           fontFamily: '"Georgia", "Times New Roman", serif',
         }}
       >
-        <div className="flex items-baseline justify-between px-5 py-3" style={{ borderBottom: `1px solid ${contrastColor}1f` }}>
+        <div className="flex items-baseline justify-between px-5 py-3" style={{ borderBottom: panelOpen ? `1px solid ${contrastColor}1f` : 'none' }}>
           <div className="text-base italic tracking-wide" style={{ color: contrastColor }}>Historical Data</div>
-          <div className="text-[11px] tracking-wide" style={{ fontFamily: '"Courier New", monospace', color: contrastColor, opacity: 0.6 }}>
-            {nearestYear ?? '—'} · {waterLevel.toFixed(1)} m
+          <div className="flex items-center gap-3">
+            <div className="text-[11px] tracking-wide" style={{ fontFamily: '"Courier New", monospace', color: contrastColor, opacity: 0.6 }}>
+              {nearestYear ?? '—'} · {waterLevel.toFixed(1)} m
+            </div>
+            <button
+              onClick={() => setPanelOpen((o) => !o)}
+              aria-label={panelOpen ? 'minimize' : 'expand'}
+              className="p-1 hover:opacity-70 transition-opacity"
+              style={{ color: contrastColor }}
+            >
+              {panelOpen ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+            </button>
           </div>
         </div>
-        {/* Toggle chips */}
-        <div className="flex flex-wrap gap-x-3 gap-y-1 px-5 pt-3">
-          {SERIES.map((s) => {
-            const on = visible[s.key];
-            return (
-              <button
-                key={s.key}
-                onClick={() => setVisible((v) => ({ ...v, [s.key]: !v[s.key] }))}
-                className="flex items-center gap-1.5 py-0.5 text-[12px] italic transition-opacity"
-                style={{
-                  color: on ? s.color : `${contrastColor}66`,
-                  fontFamily: '"Georgia", serif',
-                }}
-              >
-                <span
-                  className="inline-block w-2 h-2 rounded-full"
-                  style={{ background: on ? s.color : 'transparent', border: `1px solid ${on ? s.color : `${contrastColor}55`}` }}
-                />
-                {s.label}
-              </button>
-            );
-          })}
-        </div>
-        <div className="h-44 px-2 pb-3 pt-2">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-              <XAxis dataKey="year" tick={{ fill: contrastColor, fontSize: 9, opacity: 0.7 }} axisLine={{ stroke: contrastColor, opacity: 0.2 }} tickLine={false} />
-              <YAxis yAxisId="left" tick={{ fill: contrastColor, fontSize: 9, opacity: 0.7 }} axisLine={{ stroke: contrastColor, opacity: 0.2 }} tickLine={false} width={28} />
-              <YAxis yAxisId="right" orientation="right" tick={{ fill: contrastColor, fontSize: 9, opacity: 0.7 }} axisLine={{ stroke: contrastColor, opacity: 0.2 }} tickLine={false} width={28} />
-              <Tooltip contentStyle={{ background: bgColor, border: `1px solid ${contrastColor}30`, fontSize: 10, color: contrastColor }} labelStyle={{ color: contrastColor }} />
-              {SERIES.filter((s) => visible[s.key]).map((s) => (
-                <Line
-                  key={s.key}
-                  yAxisId={s.axis}
-                  type="monotone"
-                  dataKey={s.key}
-                  stroke={s.color}
-                  strokeWidth={1.2}
-                  dot={false}
-                  isAnimationActive={false}
-                  name={s.label}
-                />
-              ))}
-              {nearestYear != null && (
-                <ReferenceLine yAxisId="left" x={nearestYear} stroke={contrastColor} strokeDasharray="2 2" />
-              )}
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        {panelOpen && (
+          <>
+            {/* Toggle chips */}
+            <div className="flex flex-wrap gap-x-3 gap-y-1 px-5 pt-3">
+              {SERIES.map((s) => {
+                const on = visible[s.key];
+                return (
+                  <button
+                    key={s.key}
+                    onClick={() => setVisible((v) => ({ ...v, [s.key]: !v[s.key] }))}
+                    className="flex items-center gap-1.5 py-0.5 text-[12px] italic transition-opacity"
+                    style={{
+                      color: on ? s.color : `${contrastColor}66`,
+                      fontFamily: '"Georgia", serif',
+                    }}
+                  >
+                    <span
+                      className="inline-block w-2 h-2 rounded-full"
+                      style={{ background: on ? s.color : 'transparent', border: `1px solid ${on ? s.color : `${contrastColor}55`}` }}
+                    />
+                    {s.label}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="h-44 px-2 pb-3 pt-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                  <XAxis dataKey="year" tick={{ fill: contrastColor, fontSize: 9, opacity: 0.7 }} axisLine={{ stroke: contrastColor, opacity: 0.2 }} tickLine={false} />
+                  <YAxis yAxisId="left" tick={{ fill: contrastColor, fontSize: 9, opacity: 0.7 }} axisLine={{ stroke: contrastColor, opacity: 0.2 }} tickLine={false} width={28} />
+                  <YAxis yAxisId="right" orientation="right" tick={{ fill: contrastColor, fontSize: 9, opacity: 0.7 }} axisLine={{ stroke: contrastColor, opacity: 0.2 }} tickLine={false} width={28} />
+                  <Tooltip contentStyle={{ background: bgColor, border: `1px solid ${contrastColor}30`, fontSize: 10, color: contrastColor }} labelStyle={{ color: contrastColor }} />
+                  {SERIES.filter((s) => visible[s.key]).map((s) => (
+                    <Line
+                      key={s.key}
+                      yAxisId={s.axis}
+                      type="monotone"
+                      dataKey={s.key}
+                      stroke={s.color}
+                      strokeWidth={1.2}
+                      dot={false}
+                      isAnimationActive={false}
+                      name={s.label}
+                    />
+                  ))}
+                  {nearestYear != null && (
+                    <ReferenceLine yAxisId="left" x={nearestYear} stroke={contrastColor} strokeDasharray="2 2" />
+                  )}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </>
+        )}
       </div>
 
     </>
