@@ -205,7 +205,31 @@ const Index = () => {
   const [aryqWorldActive, setAryqWorldActive] = useState(false);
   const [fountainsMode, setFountainsMode] = useState(false);
   const [spectralMode, setSpectralMode] = useState(false);
+  const [spectralCamPos, setSpectralCamPos] = useState<[number, number, number]>([0, 14, 14]);
+  const [spectralCamTarget, setSpectralCamTarget] = useState<[number, number, number]>([0, 0, 0]);
   const spectralPrevModeRef = useRef<import('@/lib/visual-mode').VisualMode>('dark');
+  const spectralPrevExaggerationRef = useRef<number>(10);
+
+  // One-shot randomizer for Spectral Earth — palette, exaggeration, camera, zoom.
+  const randomizeSpectral = useCallback(() => {
+    applyRandomSpectralPalette();
+    setExaggeration(Math.round(5 + Math.random() * 25));
+    // Random orbit position: angle around Y, varied radius (zoom) and tilt.
+    const angle = Math.random() * Math.PI * 2;
+    const radius = 8 + Math.random() * 22;   // zoom
+    const tilt = 4 + Math.random() * 18;      // height
+    setSpectralCamPos([
+      Math.sin(angle) * radius,
+      tilt,
+      Math.cos(angle) * radius,
+    ]);
+    // Offset target slightly so the framing isn't always centered.
+    setSpectralCamTarget([
+      (Math.random() - 0.5) * 3,
+      0,
+      (Math.random() - 0.5) * 3,
+    ]);
+  }, []);
   const [quadrantViewActive, setQuadrantViewActive] = useState(false);
   const [bodiesOfWaterMode, setBodiesOfWaterMode] = useState(false);
   const [bodiesActiveLayer, setBodiesActiveLayer] = useState<'none' | 'mortality' | 'landcover' | 'sewage'>('none');
