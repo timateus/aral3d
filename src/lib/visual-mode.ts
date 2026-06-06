@@ -34,6 +34,11 @@ export interface DesignerScheme {
   // Optional multi-stop terrain ramp (5+ colors low->high). When provided
   // it OVERRIDES the 4-color water/land/veg/alert ramp on the 3D surface.
   terrainStops?: string[];
+  // Optional override for the R3F scene background — when present, the 3D
+  // scene uses this colour even when the UI `background` is something else.
+  // Used by Spectral Earth so the panels stay calm (mirage cream) while the
+  // scene takes the wild preset hue.
+  sceneBackground?: string;
   // Thicknesses
   borderWidth: number;     // px, 0.25 - 2
   gridOpacity: number;     // 0 - 0.2
@@ -411,3 +416,34 @@ export function useDesignerScheme(): [DesignerScheme, (s: DesignerScheme) => voi
   useEffect(() => subscribeDesignerScheme(setScheme), []);
   return [scheme, applyDesignerScheme];
 }
+
+// Mirage-ish UI tokens. Used by Spectral Earth so panels stay readable
+// while the 3D scene runs wild presets.
+const MIRAGE_UI = {
+  background: '#FAF8F4',
+  foreground: '#1A1A1A',
+  muted: '#6B6B6B',
+  panel: '#FFFFFF',
+  border: '#1A1A1A',
+  accent: '#1A1A1A',
+};
+
+/** Apply a random preset (or a freshly generated ramp) while locking the
+ *  UI to the mirage cream/ink palette. The scene background takes the wild
+ *  hue via `sceneBackground`. */
+export function applyRandomSpectralPalette() {
+  const cur = getDesignerScheme();
+  // 50/50: curated preset vs freshly generated ramp.
+  if (Math.random() < 0.5) {
+    applyRandomPreset();
+  } else {
+    generateRandomRamp();
+  }
+  const wild = getDesignerScheme();
+  applyDesignerScheme({
+    ...wild,
+    ...MIRAGE_UI,
+    sceneBackground: wild.background,
+  });
+}
+

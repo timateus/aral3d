@@ -13,7 +13,7 @@ import TimelineSlider from '@/components/TimelineSlider';
 import IntroOverlay from '@/components/IntroOverlay';
 import FountainsOfNukus from '@/components/FountainsOfNukus';
 import SpectralEarthHUD from '@/components/SpectralEarthHUD';
-import { applyRandomPreset } from '@/lib/visual-mode';
+import { applyRandomSpectralPalette } from '@/lib/visual-mode';
 import CharacterSelect from '@/components/CharacterSelect';
 import ScenarioChat from '@/components/ScenarioChat';
 import WaterVolumeDisplay from '@/components/WaterVolumeDisplay';
@@ -205,7 +205,31 @@ const Index = () => {
   const [aryqWorldActive, setAryqWorldActive] = useState(false);
   const [fountainsMode, setFountainsMode] = useState(false);
   const [spectralMode, setSpectralMode] = useState(false);
+  const [spectralCamPos, setSpectralCamPos] = useState<[number, number, number]>([0, 14, 14]);
+  const [spectralCamTarget, setSpectralCamTarget] = useState<[number, number, number]>([0, 0, 0]);
   const spectralPrevModeRef = useRef<import('@/lib/visual-mode').VisualMode>('dark');
+  const spectralPrevExaggerationRef = useRef<number>(10);
+
+  // One-shot randomizer for Spectral Earth — palette, exaggeration, camera, zoom.
+  const randomizeSpectral = useCallback(() => {
+    applyRandomSpectralPalette();
+    setExaggeration(Math.round(5 + Math.random() * 25));
+    // Random orbit position: angle around Y, varied radius (zoom) and tilt.
+    const angle = Math.random() * Math.PI * 2;
+    const radius = 8 + Math.random() * 22;   // zoom
+    const tilt = 4 + Math.random() * 18;      // height
+    setSpectralCamPos([
+      Math.sin(angle) * radius,
+      tilt,
+      Math.cos(angle) * radius,
+    ]);
+    // Offset target slightly so the framing isn't always centered.
+    setSpectralCamTarget([
+      (Math.random() - 0.5) * 3,
+      0,
+      (Math.random() - 0.5) * 3,
+    ]);
+  }, []);
   const [quadrantViewActive, setQuadrantViewActive] = useState(false);
   const [bodiesOfWaterMode, setBodiesOfWaterMode] = useState(false);
   const [bodiesActiveLayer, setBodiesActiveLayer] = useState<'none' | 'mortality' | 'landcover' | 'sewage'>('none');
@@ -1150,8 +1174,9 @@ const Index = () => {
             onRecordingDone={() => setRecording(false)}
             scenarioActions={scenarioActions}
             currentMetrics={currentMetrics}
-            narrativeActive={narrativeActive || readingActive || canalTourActive || agmarTourActive}
+            narrativeActive={narrativeActive || readingActive || canalTourActive || agmarTourActive || spectralMode}
             narrativeCameraPosition={
+              spectralMode ? spectralCamPos :
               readingActive ? NARRATIVE_STEPS[READING_PASSAGES[readingStep]?.stepIndex ?? 0]?.camera.position :
               narrativeActive ? NARRATIVE_STEPS[narrativeStep]?.camera.position :
               canalTourActive ? CANAL_TOUR_STEPS[canalTourStep]?.camera.position :
@@ -1159,12 +1184,14 @@ const Index = () => {
               undefined
             }
             narrativeCameraTarget={
+              spectralMode ? spectralCamTarget :
               readingActive ? NARRATIVE_STEPS[READING_PASSAGES[readingStep]?.stepIndex ?? 0]?.camera.target :
               narrativeActive ? NARRATIVE_STEPS[narrativeStep]?.camera.target :
               canalTourActive ? CANAL_TOUR_STEPS[canalTourStep]?.camera.target :
               agmarTourActive ? AGMAR_TOUR_STEPS[agmarTourStep]?.camera.target :
               undefined
             }
+            spectralActive={spectralMode}
             riverFlyover={riverFlyover}
             onRiverFlyoverDone={() => setRiverFlyover(false)}
             riverInflow={currentRiverInflow}
@@ -1318,6 +1345,7 @@ const Index = () => {
           onFountains={() => setFountainsMode(true)}
           onSpectral={() => {
             spectralPrevModeRef.current = visualMode;
+            spectralPrevExaggerationRef.current = exaggeration;
             setStarted(true);
             setSpectralMode(true);
             setShowWaterExtent(false);
@@ -1342,7 +1370,7 @@ const Index = () => {
             setShowSalinity(false);
             setShowWaterways(false);
             setVisualMode('designer');
-            applyRandomPreset();
+            randomizeSpectral();
           }}
         />
       )}
@@ -1350,11 +1378,15 @@ const Index = () => {
       {fountainsMode && <FountainsOfNukus onClose={() => setFountainsMode(false)} />}
 
       {spectralMode && (
-        <SpectralEarthHUD onExit={() => {
-          setSpectralMode(false);
-          setStarted(false);
-          setVisualMode(spectralPrevModeRef.current);
-        }} />
+        <SpectralEarthHUD
+          onExit={() => {
+            setSpectralMode(false);
+            setStarted(false);
+            setVisualMode(spectralPrevModeRef.current);
+            setExaggeration(spectralPrevExaggerationRef.current);
+          }}
+          onRandomize={randomizeSpectral}
+        />
       )}
 
 
