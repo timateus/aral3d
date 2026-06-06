@@ -295,17 +295,19 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         </div>
       </div>
 
-      {/* Graph panel (bottom-left) — matches map bg + stylish serif typography */}
+      {/* Graph panel (bottom-left) — matches map bg; text is its opposite */}
       <div
-        className="fixed bottom-6 left-6 z-40 w-[460px] border border-white/15 backdrop-blur-md text-white"
+        className="fixed bottom-6 left-6 z-40 w-[460px] backdrop-blur-md"
         style={{
-          background: 'hsl(var(--background) / 0.92)',
+          background: bgColor,
+          color: contrastColor,
+          border: `1px solid ${contrastColor}26`,
           fontFamily: '"Georgia", "Times New Roman", serif',
         }}
       >
-        <div className="flex items-baseline justify-between px-5 py-3 border-b border-white/10">
-          <div className="text-base italic tracking-wide text-white/90">Historical Data</div>
-          <div className="text-[11px] tracking-wide text-white/50" style={{ fontFamily: '"Courier New", monospace' }}>
+        <div className="flex items-baseline justify-between px-5 py-3" style={{ borderBottom: `1px solid ${contrastColor}1f` }}>
+          <div className="text-base italic tracking-wide" style={{ color: contrastColor }}>Historical Data</div>
+          <div className="text-[11px] tracking-wide" style={{ fontFamily: '"Courier New", monospace', color: contrastColor, opacity: 0.6 }}>
             {nearestYear ?? '—'} · {waterLevel.toFixed(1)} m
           </div>
         </div>
@@ -319,13 +321,13 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
                 onClick={() => setVisible((v) => ({ ...v, [s.key]: !v[s.key] }))}
                 className="flex items-center gap-1.5 py-0.5 text-[12px] italic transition-opacity"
                 style={{
-                  color: on ? s.color : 'rgba(255,255,255,0.35)',
+                  color: on ? s.color : `${contrastColor}66`,
                   fontFamily: '"Georgia", serif',
                 }}
               >
                 <span
                   className="inline-block w-2 h-2 rounded-full"
-                  style={{ background: on ? s.color : 'transparent', border: `1px solid ${on ? s.color : 'rgba(255,255,255,0.3)'}` }}
+                  style={{ background: on ? s.color : 'transparent', border: `1px solid ${on ? s.color : `${contrastColor}55`}` }}
                 />
                 {s.label}
               </button>
@@ -335,10 +337,10 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         <div className="h-44 px-2 pb-3 pt-2">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-              <XAxis dataKey="year" tick={{ fill: '#ffffff70', fontSize: 9 }} axisLine={{ stroke: '#ffffff20' }} tickLine={false} />
-              <YAxis yAxisId="left" tick={{ fill: '#ffffff70', fontSize: 9 }} axisLine={{ stroke: '#ffffff20' }} tickLine={false} width={28} />
-              <YAxis yAxisId="right" orientation="right" tick={{ fill: '#ffffff70', fontSize: 9 }} axisLine={{ stroke: '#ffffff20' }} tickLine={false} width={28} />
-              <Tooltip contentStyle={{ background: '#000', border: '1px solid #ffffff30', fontSize: 10, color: '#fff' }} labelStyle={{ color: '#fff' }} />
+              <XAxis dataKey="year" tick={{ fill: contrastColor, fontSize: 9, opacity: 0.7 }} axisLine={{ stroke: contrastColor, opacity: 0.2 }} tickLine={false} />
+              <YAxis yAxisId="left" tick={{ fill: contrastColor, fontSize: 9, opacity: 0.7 }} axisLine={{ stroke: contrastColor, opacity: 0.2 }} tickLine={false} width={28} />
+              <YAxis yAxisId="right" orientation="right" tick={{ fill: contrastColor, fontSize: 9, opacity: 0.7 }} axisLine={{ stroke: contrastColor, opacity: 0.2 }} tickLine={false} width={28} />
+              <Tooltip contentStyle={{ background: bgColor, border: `1px solid ${contrastColor}30`, fontSize: 10, color: contrastColor }} labelStyle={{ color: contrastColor }} />
               {SERIES.filter((s) => visible[s.key]).map((s) => (
                 <Line
                   key={s.key}
@@ -353,7 +355,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
                 />
               ))}
               {nearestYear != null && (
-                <ReferenceLine yAxisId="left" x={nearestYear} stroke="#ffffff" strokeDasharray="2 2" />
+                <ReferenceLine yAxisId="left" x={nearestYear} stroke={contrastColor} strokeDasharray="2 2" />
               )}
             </LineChart>
           </ResponsiveContainer>
