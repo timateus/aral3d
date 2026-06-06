@@ -1,22 +1,11 @@
 import { ArrowLeft, Sparkles, Printer } from 'lucide-react';
-import { applyRandomPreset, generateRandomRamp, setVisualMode } from '@/lib/visual-mode';
 
 interface Props {
   onExit: () => void;
+  onRandomize: () => void;
 }
 
-const SpectralEarthHUD = ({ onExit }: Props) => {
-  const handleDesign = () => {
-    // Ensure designer mode is on so palette propagates to rivers/borders/terrain.
-    setVisualMode('designer');
-    // 50/50 between curated preset and a freshly generated random ramp.
-    if (Math.random() < 0.5) {
-      applyRandomPreset();
-    } else {
-      generateRandomRamp();
-    }
-  };
-
+const SpectralEarthHUD = ({ onExit, onRandomize }: Props) => {
   const handlePrint = () => {
     const canvas = document.querySelector('canvas') as HTMLCanvasElement | null;
     if (!canvas) return;
@@ -48,7 +37,7 @@ const SpectralEarthHUD = ({ onExit }: Props) => {
       {/* Back button */}
       <button
         onClick={onExit}
-        className="absolute top-5 left-5 z-40 flex items-center gap-2 px-3 py-2 text-[11px] tracking-[0.15em] uppercase bg-card/60 backdrop-blur-md border border-border/40 text-foreground hover:bg-card/90 transition-colors"
+        className="absolute top-5 left-5 z-40 flex items-center gap-2 px-3 py-2 text-[11px] tracking-[0.15em] uppercase bg-card/80 backdrop-blur-md border border-border/50 text-foreground hover:bg-card transition-colors"
       >
         <ArrowLeft className="w-3.5 h-3.5" /> Menu
       </button>
@@ -56,18 +45,18 @@ const SpectralEarthHUD = ({ onExit }: Props) => {
       {/* Bottom action buttons */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4">
         <button
-          onClick={handleDesign}
-          className="group flex items-center gap-3 px-8 py-4 bg-card/70 backdrop-blur-md border border-border/50 hover:border-primary/60 text-foreground text-sm tracking-[0.2em] uppercase font-medium transition-all hover:bg-card/90"
+          onClick={onRandomize}
+          className="group flex items-center gap-3 px-8 py-4 bg-card/80 backdrop-blur-md border border-border/60 hover:border-foreground/60 text-foreground text-sm tracking-[0.2em] uppercase font-medium transition-all hover:bg-card"
         >
           <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-          Design your Earth
+          Make it misbehave
         </button>
         <button
           onClick={handlePrint}
-          className="group flex items-center gap-3 px-6 py-4 bg-card/70 backdrop-blur-md border border-border/50 hover:border-primary/60 text-foreground text-sm tracking-[0.2em] uppercase font-medium transition-all hover:bg-card/90"
+          className="group flex items-center gap-3 px-6 py-4 bg-card/80 backdrop-blur-md border border-border/60 hover:border-foreground/60 text-foreground text-sm tracking-[0.2em] uppercase font-medium transition-all hover:bg-card"
         >
           <Printer className="w-4 h-4" />
-          Print your Earth
+          Own it
         </button>
       </div>
     </>
