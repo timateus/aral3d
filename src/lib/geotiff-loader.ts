@@ -147,24 +147,72 @@ async function _loadGeoTiffUncached(url: string): Promise<TerrainData> {
   return { width, height, elevations, minElevation, maxElevation, noDataValue, bounds };
 }
 
+function hexToRgb01(hex: string): [number, number, number] {
+  const h = hex.replace('#', '').trim();
+  const s = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  const r = parseInt(s.slice(0, 2), 16) / 255;
+  const g = parseInt(s.slice(2, 4), 16) / 255;
+  const b = parseInt(s.slice(4, 6), 16) / 255;
+  return [isNaN(r) ? 0 : r, isNaN(g) ? 0 : g, isNaN(b) ? 0 : b];
+}
+
+// Designer-mode palette override pushed by visual-mode.ts. When present,
+// terrain colors are derived from this scheme instead of the vintage atlas.
+let _designerPalette: {
+  water: [number, number, number];
+  land: [number, number, number];
+  vegetation: [number, number, number];
+  alert: [number, number, number];
+  background: [number, number, number];
+} | null = null;
+
+export function setDesignerPaletteOverride(p: {
+  water: string; land: string; vegetation: string; alert: string; background: string;
+} | null) {
+  _designerPalette = p ? {
+    water: hexToRgb01(p.water),
+    land: hexToRgb01(p.land),
+    vegetation: hexToRgb01(p.vegetation),
+    alert: hexToRgb01(p.alert),
+    background: hexToRgb01(p.background),
+  } : null;
+}
+
+function getDesignerElevationColor(elev: number): [number, number, number] {
+  const p = _designerPalette!;
+  // Below sea: deep water -> shore mix
+  if (elev < 0) {
+    const t = Math.max(0, Math.min(1, (elev + 12) / 12));
+    const deep: [number, number, number] = [p.water[0] * 0.6, p.water[1] * 0.6, p.water[2] * 0.6];
+    return lerpColor(deep, p.water, t);
+  }
+  // Shore -> land
+  if (elev < 30) {
+    const t = elev / 30;
+    return lerpColor(p.background, p.land, t);
+  }
+  // Land -> vegetation
+  if (elev < 180) {
+    const t = (elev - 30) / 150;
+    return lerpColor(p.land, p.vegetation, t);
+  }
+  // Vegetation -> alert (peaks)
+  const t = Math.min(1, (elev - 180) / 400);
+  return lerpColor(p.vegetation, p.alert, t * 0.7);
+}
+
 export function getElevationColor(normalized: number, rawElevation?: number): [number, number, number] {
+  const isDesigner = typeof document !== 'undefined' && document.documentElement.classList.contains('designer');
   const isMirage = typeof document !== 'undefined' && document.documentElement.classList.contains('mirage');
   const elev = rawElevation !== undefined ? rawElevation : normalized * 300;
+  if (isDesigner && _designerPalette) return getDesignerElevationColor(elev);
   const c = getElevationColorAbsolute(elev);
   if (!isMirage) return c;
   // Mirage: vintage atlas — keep elevation hue, soften toward warm paper.
-  // Water gets a muted teal-blue tint instead of slate-only.
   if (elev < 0) {
     const t = Math.max(0, Math.min(1, (elev + 12) / 12));
-    // Deep -> shallow: muted teal -> pale aqua
-    return [
-      0.42 + t * 0.20,
-      0.62 + t * 0.12,
-      0.66 + t * 0.08,
-    ];
+    return [0.42 + t * 0.20, 0.62 + t * 0.12, 0.66 + t * 0.08];
   }
-  // Land: blend rich elevation color toward warm paper (~25% paper, 75% color)
-  // and boost chroma slightly so vintage-atlas hues read clearly.
   const paper: [number, number, number] = [0.95, 0.92, 0.84];
   const k = 0.25;
   const mix: [number, number, number] = [
