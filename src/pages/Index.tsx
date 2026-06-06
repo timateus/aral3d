@@ -1313,10 +1313,43 @@ const Index = () => {
             setShowWaterExtent(false);
           }}
           onFountains={() => setFountainsMode(true)}
+          onSpectral={() => {
+            setStarted(true);
+            setSpectralMode(true);
+            // Hide every overlay/layer for a clean canvas
+            setShowWaterExtent(false);
+            setShowBorders(true);
+            setShowRivers(true);
+            setShow13thBasin(false);
+            setShow19thBasin(false);
+            setShow21stBasin(false);
+            setShowKhorezm(false);
+            setShowLakes(false);
+            setShow21cLakes(false);
+            setShowLandcover(false);
+            setShowPopDensity(false);
+            setShowMigration(false);
+            setShowChoropleth(false);
+            setShowSchools(false);
+            setShowVocabulary(false);
+            setShowDwellings(false);
+            setShowPlaces(false);
+            setShowGroundwater(false);
+            setShowPrecipitation(false);
+            setShowSalinity(false);
+            setShowWaterways(false);
+            // Turn on designer mode and pick a random preset right away
+            setVisualMode('designer');
+            applyRandomPreset();
+          }}
         />
       )}
 
       {fountainsMode && <FountainsOfNukus onClose={() => setFountainsMode(false)} />}
+
+      {spectralMode && (
+        <SpectralEarthHUD onExit={() => { setSpectralMode(false); setStarted(false); }} />
+      )}
 
 
       {/* Quadrant View */}
