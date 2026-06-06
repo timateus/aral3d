@@ -618,7 +618,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
         </Suspense>
       )}
 
-      {!narrativeActive && !flyoverAnimating && !gameModeActive && !aryqWorldActive && <CameraAnimator started={started} skip={sandboxActive} orbitRef={orbitRef} />}
+      {!narrativeActive && !flyoverAnimating && !gameModeActive && !aryqWorldActive && <CameraAnimator started={started} skip={sandboxActive || spectralActive} orbitRef={orbitRef} />}
       <ExploreViewMemory started={started} orbitRef={orbitRef} disabled={narrativeActive || flyoverAnimating || gameModeActive || aryqWorldActive || !!riverFlyover || !!recording} />
       {narrativeActive && narrativeCameraPosition && narrativeCameraTarget && (
         <NarrativeCameraController
