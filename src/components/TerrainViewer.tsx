@@ -57,7 +57,8 @@ function SceneBackground() {
   const [mode] = useVisualMode();
   const [scheme] = useDesignerScheme();
   const isMirage = mode === 'mirage' || mode === 'designer';
-  const bg = mode === 'designer' ? scheme.background : (isMirage ? '#faf8f4' : '#0d1117');
+  const designerBg = scheme.sceneBackground ?? scheme.background;
+  const bg = mode === 'designer' ? designerBg : (isMirage ? '#faf8f4' : '#0d1117');
   const near = isMirage ? 28 : 20;
   const far = isMirage ? 80 : 50;
   return (
