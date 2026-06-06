@@ -1405,7 +1405,6 @@ const Index = () => {
             setWaterLevel(40);
           }}
         />
-        />
       )}
 
       {fountainsMode && <FountainsOfNukus onClose={() => setFountainsMode(false)} />}
