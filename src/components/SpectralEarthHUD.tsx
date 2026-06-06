@@ -1,10 +1,11 @@
-import { ArrowLeft, Sparkles, Printer } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Sparkles, Printer } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useDesignerScheme } from '@/lib/visual-mode';
 
 interface Props {
   onExit: () => void;
   onRandomize: () => void;
+  onNext?: () => void;
   randomSeed?: number;
 }
 
