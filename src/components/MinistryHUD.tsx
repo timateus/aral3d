@@ -197,25 +197,23 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         </h1>
       </div>
 
-      {/* Large edge nav buttons */}
+      {/* Large edge nav buttons — high contrast, arrows only, above everything */}
       {onPrev && (
         <button
           onClick={onPrev}
           aria-label="previous level"
-          className="fixed left-0 top-1/2 -translate-y-1/2 z-40 h-40 w-16 flex flex-col items-center justify-center gap-2 bg-black/60 hover:bg-black/85 border-y border-r border-white/20 text-white/80 transition-colors"
+          className="fixed left-0 top-1/2 -translate-y-1/2 z-[60] h-32 w-14 flex items-center justify-center bg-white text-black border border-black shadow-[0_0_0_2px_rgba(255,255,255,0.6)] hover:bg-black hover:text-white hover:shadow-[0_0_0_2px_rgba(0,0,0,0.6)] transition-colors"
         >
-          <ChevronLeft className="w-10 h-10" />
-          <span className="text-[9px] font-mono uppercase tracking-[0.3em]">prev</span>
+          <ChevronLeft className="w-8 h-8" strokeWidth={2.5} />
         </button>
       )}
       <button
         onClick={onNext}
         disabled={!onNext}
         aria-label="next level"
-        className="fixed right-0 top-1/2 -translate-y-1/2 z-40 h-40 w-16 flex flex-col items-center justify-center gap-2 bg-black/60 hover:bg-black/85 border-y border-l border-white/20 text-white/80 transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-black/60"
+        className="fixed right-0 top-1/2 -translate-y-1/2 z-[60] h-32 w-14 flex items-center justify-center bg-white text-black border border-black shadow-[0_0_0_2px_rgba(255,255,255,0.6)] hover:bg-black hover:text-white hover:shadow-[0_0_0_2px_rgba(0,0,0,0.6)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
       >
-        <ChevronRight className="w-10 h-10" />
-        <span className="text-[9px] font-mono uppercase tracking-[0.3em]">next</span>
+        <ChevronRight className="w-8 h-8" strokeWidth={2.5} />
       </button>
 
       {/* Big year number overlay while dragging */}
@@ -226,7 +224,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
             <div
               className="font-mono font-extralight leading-none"
               style={{
-                fontSize: 'clamp(160px, 28vw, 420px)',
+                fontSize: 'clamp(96px, 16vw, 220px)',
                 color: waterColor,
                 textShadow: '0 0 60px rgba(0,0,0,0.7)',
               }}
@@ -239,6 +237,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
           </div>
         </div>
       )}
+
 
       {/* Vertical slider with labels */}
       <div className="fixed right-24 top-1/2 -translate-y-1/2 z-40 select-none flex items-stretch gap-4">
