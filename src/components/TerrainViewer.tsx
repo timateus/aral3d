@@ -177,6 +177,7 @@ interface TerrainViewerProps {
   vectorInterval?: number;
   hideTerrainSurface?: boolean;
   lifeActive?: boolean;
+  spectralActive?: boolean;
 }
 
 /* ── Canvas Recorder (captures WebGL canvas stream, no camera animation) ── */
