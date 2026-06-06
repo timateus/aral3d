@@ -1430,6 +1430,7 @@ const Index = () => {
         <MinistryHUD
           waterLevel={waterLevel}
           onWaterLevelChange={(v) => { setWaterLevelManual(true); setWaterLevel(v); }}
+          annualData={annualData}
           onExit={() => {
             setMinistryMode(false);
             setStarted(false);
