@@ -12,6 +12,8 @@ import Legend from '@/components/Legend';
 import TimelineSlider from '@/components/TimelineSlider';
 import IntroOverlay from '@/components/IntroOverlay';
 import FountainsOfNukus from '@/components/FountainsOfNukus';
+import SpectralEarthHUD from '@/components/SpectralEarthHUD';
+import { applyRandomPreset } from '@/lib/visual-mode';
 import CharacterSelect from '@/components/CharacterSelect';
 import ScenarioChat from '@/components/ScenarioChat';
 import WaterVolumeDisplay from '@/components/WaterVolumeDisplay';
@@ -202,6 +204,8 @@ const Index = () => {
   const [bowlWorldActive, setBowlWorldActive] = useState(false);
   const [aryqWorldActive, setAryqWorldActive] = useState(false);
   const [fountainsMode, setFountainsMode] = useState(false);
+  const [spectralMode, setSpectralMode] = useState(false);
+  const spectralPrevModeRef = useRef<import('@/lib/visual-mode').VisualMode>('dark');
   const [quadrantViewActive, setQuadrantViewActive] = useState(false);
   const [bodiesOfWaterMode, setBodiesOfWaterMode] = useState(false);
   const [bodiesActiveLayer, setBodiesActiveLayer] = useState<'none' | 'mortality' | 'landcover' | 'sewage'>('none');
@@ -1110,7 +1114,7 @@ const Index = () => {
     return () => window.removeEventListener('keydown', handler);
   }, [toggleScreenRecording]);
 
-  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode && !dustMode && !traceMode && !lifeMode;
+  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode && !dustMode && !traceMode && !lifeMode && !spectralMode;
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
@@ -1312,10 +1316,46 @@ const Index = () => {
             setShowWaterExtent(false);
           }}
           onFountains={() => setFountainsMode(true)}
+          onSpectral={() => {
+            spectralPrevModeRef.current = visualMode;
+            setStarted(true);
+            setSpectralMode(true);
+            setShowWaterExtent(false);
+            setShowBorders(true);
+            setShowRivers(true);
+            setShow13thBasin(false);
+            setShow19thBasin(false);
+            setShow21stBasin(false);
+            setShowKhorezm(false);
+            setShowLakes(false);
+            setShow21cLakes(false);
+            setShowLandcover(false);
+            setShowPopDensity(false);
+            setShowMigration(false);
+            setShowChoropleth(false);
+            setShowSchools(false);
+            setShowVocabulary(false);
+            setShowDwellings(false);
+            setShowPlaces(false);
+            setShowGroundwater(false);
+            setShowPrecipitation(false);
+            setShowSalinity(false);
+            setShowWaterways(false);
+            setVisualMode('designer');
+            applyRandomPreset();
+          }}
         />
       )}
 
       {fountainsMode && <FountainsOfNukus onClose={() => setFountainsMode(false)} />}
+
+      {spectralMode && (
+        <SpectralEarthHUD onExit={() => {
+          setSpectralMode(false);
+          setStarted(false);
+          setVisualMode(spectralPrevModeRef.current);
+        }} />
+      )}
 
 
       {/* Quadrant View */}

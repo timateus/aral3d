@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { Html, Line } from '@react-three/drei';
 import { TerrainData, GeoBounds } from '@/lib/geotiff-loader';
 import * as THREE from 'three';
+import { useVisualMode, useDesignerScheme } from '@/lib/visual-mode';
 
 interface CanalHighlight {
   canal: string;
@@ -165,6 +166,15 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
   const h = terrain.height;
   const meshWidth = 10;
   const meshHeight = 10 * (h / w);
+  const [visualMode] = useVisualMode();
+  const [scheme] = useDesignerScheme();
+  const designerActive = visualMode === 'designer';
+  const stops = scheme.terrainStops;
+  const riverColor = designerActive ? scheme.water : '#4fc3f7';
+  const riverColorAlt = designerActive ? (stops?.[Math.min(2, (stops.length || 1) - 1)] ?? scheme.vegetation) : '#7ecaf7';
+  const borderColor = designerActive ? scheme.alert : '#ffffff';
+
+
 
   const [geoJsonData, setGeoJsonData] = useState<GeoJSONCollection | null>(null);
   const [syrDaryaData, setSyrDaryaData] = useState<GeoJSONCollection | null>(null);
@@ -270,11 +280,11 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
       }
     };
 
-    processRiverData(geoJsonData, '#4fc3f7');
-    processRiverData(syrDaryaData, '#7ecaf7');
+    processRiverData(geoJsonData, riverColor);
+    processRiverData(syrDaryaData, riverColorAlt);
 
     return segments;
-  }, [terrain, exaggeration, bounds, meshWidth, meshHeight, geoJsonData, syrDaryaData, riverInflow]);
+  }, [terrain, exaggeration, bounds, meshWidth, meshHeight, geoJsonData, syrDaryaData, riverInflow, riverColor, riverColorAlt]);
 
   const BORDER_COUNTRIES = ['Uzbekistan'];
 
@@ -399,10 +409,10 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
         <Line
           key={`border-${i}`}
           points={points}
-          color="#ffffff"
+          color={borderColor}
           lineWidth={3}
           transparent
-          opacity={0.4}
+          opacity={0.5}
         />
       ))}
 

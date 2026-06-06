@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import * as THREE from 'three';
 import { TerrainData } from '@/lib/geotiff-loader';
+import { useVisualMode, useDesignerScheme } from '@/lib/visual-mode';
 
 export type TerrainStyle = 'none' | 'contours' | 'vectors';
 
@@ -166,10 +167,17 @@ const TerrainStyleOverlay = ({
     return geo;
   }, [terrain, exaggeration, style, vectorInterval]);
 
+  const [visualMode] = useVisualMode();
+  const [scheme] = useDesignerScheme();
+  const designerActive = visualMode === 'designer';
+  const stops = scheme.terrainStops;
+  const contourColor = designerActive ? (stops?.[stops.length - 1] ?? scheme.alert) : '#1a1a1a';
+  const vectorColor  = designerActive ? scheme.alert : '#ff2d92';
+
   if (style === 'contours' && contourGeometry) {
     return (
       <lineSegments geometry={contourGeometry} renderOrder={5}>
-        <lineBasicMaterial color="#1a1a1a" transparent opacity={0.7} depthTest={false} />
+        <lineBasicMaterial color={contourColor} transparent opacity={0.7} depthTest={false} />
       </lineSegments>
     );
   }
@@ -177,7 +185,7 @@ const TerrainStyleOverlay = ({
   if (style === 'vectors' && vectorGeometry) {
     return (
       <lineSegments geometry={vectorGeometry} renderOrder={999} frustumCulled={false}>
-        <lineBasicMaterial color="#ff2d92" transparent={false} depthTest={false} depthWrite={false} toneMapped={false} />
+        <lineBasicMaterial color={vectorColor} transparent={false} depthTest={false} depthWrite={false} toneMapped={false} />
       </lineSegments>
     );
   }
