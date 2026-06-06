@@ -152,65 +152,107 @@ export function clearDesignerScheme() {
 }
 
 // ---------- Palette presets ----------
-export type PresetId = 'cutesy' | 'scientific' | 'bw' | 'hotpink' | 'forest' | 'sunset' | 'cyberpunk' | 'desert' | 'oceanic' | 'candy';
+export type PresetId =
+  | 'cyberpunk' | 'hotpink'
+  | 'rainbow' | 'oilslick' | 'lava' | 'aurora' | 'tropical' | 'acid'
+  | 'plasma' | 'candy_rave' | 'toxic' | 'sunset_wild' | 'galaxy' | 'forest_wild';
 
-export const PALETTE_PRESETS: { id: PresetId; label: string; scheme: Partial<DesignerScheme> }[] = [
-  { id: 'cutesy', label: 'Cutesy', scheme: {
-    background: '#FFF5F8', foreground: '#3A2A38', muted: '#9B7B92', panel: '#FFFFFF',
-    border: '#E8B8CC', accent: '#FF8FB1',
-    water: '#A6E1FA', land: '#FFE7C7', vegetation: '#B8E8B0', alert: '#FF6BA0',
-  }},
-  { id: 'scientific', label: 'Scientific', scheme: {
-    background: '#F4F5F7', foreground: '#0E1726', muted: '#5A6478', panel: '#FFFFFF',
-    border: '#0E1726', accent: '#0D5FAA',
-    water: '#1F4E79', land: '#C9B89A', vegetation: '#5E8A55', alert: '#B5322C',
-  }},
-  { id: 'bw', label: 'B&W', scheme: {
-    background: '#FFFFFF', foreground: '#000000', muted: '#6B6B6B', panel: '#FFFFFF',
-    border: '#000000', accent: '#000000',
-    water: '#1A1A1A', land: '#C8C8C8', vegetation: '#7A7A7A', alert: '#000000',
+// Each preset ONLY overrides map colors + terrain stops + scene background.
+// UI tokens (foreground/muted/panel/border/accent) are intentionally left
+// untouched so panels & text stay readable across every preset.
+type PresetScheme = Pick<DesignerScheme, 'water' | 'land' | 'vegetation' | 'alert'> & {
+  background?: string;
+  terrainStops?: string[];
+};
+
+export const PALETTE_PRESETS: { id: PresetId; label: string; scheme: PresetScheme }[] = [
+  { id: 'cyberpunk', label: 'Cyberpunk', scheme: {
+    background: '#04020E',
+    water: '#1B0E4A', land: '#3A1F66', vegetation: '#00F0FF', alert: '#FF00C8',
+    terrainStops: ['#0A001F', '#3A0E66', '#7A1FA8', '#FF00C8', '#FF66E0', '#00F0FF', '#FFFFFF'],
   }},
   { id: 'hotpink', label: 'Hot Pink', scheme: {
-    background: '#1A0512', foreground: '#FFE6F2', muted: '#FF8FB1', panel: '#2A0820',
-    border: '#FF1E7A', accent: '#FF1E7A',
+    background: '#1A0512',
     water: '#4A0E2E', land: '#FF6BA0', vegetation: '#FF1E7A', alert: '#FFE600',
+    terrainStops: ['#2A0418', '#7A1040', '#C81A66', '#FF1E7A', '#FF6BA0', '#FFB8D6', '#FFE600'],
   }},
-  { id: 'forest', label: 'Forest', scheme: {
-    background: '#F2EEDF', foreground: '#1F2A1A', muted: '#5A6850', panel: '#FAF7EB',
-    border: '#1F2A1A', accent: '#3E6B3A',
-    water: '#3F6F76', land: '#C9B98A', vegetation: '#3E6B3A', alert: '#A6443A',
+  { id: 'rainbow', label: 'Rainbow', scheme: {
+    background: '#0A0A14',
+    water: '#5A2EFF', land: '#FFD23F', vegetation: '#3FFF6B', alert: '#FF3F6B',
+    terrainStops: ['#7A1FFF', '#3F6BFF', '#3FE0FF', '#3FFF6B', '#FFD23F', '#FF8A3F', '#FF3F6B', '#FF3FE0'],
   }},
-  { id: 'sunset', label: 'Sunset', scheme: {
-    background: '#2A0E1F', foreground: '#FFE6CC', muted: '#D89A7A', panel: '#3A1428',
-    border: '#FF7755', accent: '#FFB347',
-    water: '#5A2E5A', land: '#FF8855', vegetation: '#D44A6A', alert: '#FFE066',
+  { id: 'oilslick', label: 'Oil Slick', scheme: {
+    background: '#06060A',
+    water: '#1A1438', land: '#5A3F8A', vegetation: '#3FE0C8', alert: '#FF6BC8',
+    terrainStops: ['#0A0A1A', '#2E1A5A', '#5A2E8A', '#3F8AC8', '#3FE0C8', '#C8E03F', '#FF6BC8', '#FFC8E0'],
   }},
-  { id: 'cyberpunk', label: 'Cyberpunk', scheme: {
-    background: '#04020E', foreground: '#E6F6FF', muted: '#6A8AB0', panel: '#0A0820',
-    border: '#00F0FF', accent: '#FF00C8',
-    water: '#1B0E4A', land: '#3A1F66', vegetation: '#00F0FF', alert: '#FF00C8',
+  { id: 'lava', label: 'Lava', scheme: {
+    background: '#0A0204',
+    water: '#1A0204', land: '#7A1808', vegetation: '#FF8A1A', alert: '#FFE63F',
+    terrainStops: ['#000000', '#3A0A04', '#7A1808', '#C82E08', '#FF5A1A', '#FF8A1A', '#FFD23F', '#FFFFE0'],
   }},
-  { id: 'desert', label: 'Desert', scheme: {
-    background: '#F7EBD3', foreground: '#3A2614', muted: '#8C6B4A', panel: '#FFF7E6',
-    border: '#3A2614', accent: '#C97B3E',
-    water: '#5A8A9C', land: '#E2C28A', vegetation: '#9CA66B', alert: '#B5322C',
+  { id: 'aurora', label: 'Aurora', scheme: {
+    background: '#020A14',
+    water: '#0A1A3A', land: '#1A5A8A', vegetation: '#3FFFB8', alert: '#C83FFF',
+    terrainStops: ['#02061A', '#0A1A4A', '#1A5AAA', '#3FE0FF', '#3FFFB8', '#A8FF3F', '#FF8A3F', '#C83FFF'],
   }},
-  { id: 'oceanic', label: 'Oceanic', scheme: {
-    background: '#0A1A24', foreground: '#E6F4F8', muted: '#7AA0B0', panel: '#102634',
-    border: '#3FB8C4', accent: '#3FB8C4',
-    water: '#0F3A52', land: '#5A8FA0', vegetation: '#7FD3C8', alert: '#FFB347',
+  { id: 'tropical', label: 'Tropical', scheme: {
+    background: '#0A1A2A',
+    water: '#0E5AC8', land: '#FFE08A', vegetation: '#3FC83F', alert: '#FF5A3F',
+    terrainStops: ['#0A2E7A', '#0E5AC8', '#3FAAE0', '#FFE08A', '#A8E03F', '#3FC83F', '#1A8A1A', '#FF5A3F'],
   }},
-  { id: 'candy', label: 'Candy', scheme: {
-    background: '#FFF8FB', foreground: '#3A1F4A', muted: '#9A7AB0', panel: '#FFFFFF',
-    border: '#C896E0', accent: '#A050E0',
-    water: '#9AC8FF', land: '#FFD6E6', vegetation: '#B8F0C8', alert: '#FF5A88',
+  { id: 'acid', label: 'Acid', scheme: {
+    background: '#0A0A04',
+    water: '#1A2E0A', land: '#A8E01A', vegetation: '#3FFF1A', alert: '#FF3FE0',
+    terrainStops: ['#0A0A02', '#2E3A08', '#7AC81A', '#A8E01A', '#3FFF1A', '#E0FF3F', '#FF8A1A', '#FF3FE0'],
+  }},
+  { id: 'plasma', label: 'Plasma', scheme: {
+    background: '#0A0214',
+    water: '#1A0838', land: '#7A1A8A', vegetation: '#FF3F8A', alert: '#FFE63F',
+    terrainStops: ['#0A0220', '#3A0A6A', '#7A1A8A', '#C82EAA', '#FF3F8A', '#FF8A3F', '#FFD23F', '#FFFFE0'],
+  }},
+  { id: 'candy_rave', label: 'Candy Rave', scheme: {
+    background: '#1A0A1F',
+    water: '#3FE0FF', land: '#FF8AE0', vegetation: '#A8FF3F', alert: '#FFE63F',
+    terrainStops: ['#3FE0FF', '#A8C8FF', '#FF8AE0', '#FFB8E0', '#A8FF3F', '#E0FF8A', '#FFE63F', '#FF8A3F'],
+  }},
+  { id: 'toxic', label: 'Toxic', scheme: {
+    background: '#020A02',
+    water: '#0A2E0A', land: '#3F7A1A', vegetation: '#A8FF1A', alert: '#FF3F1A',
+    terrainStops: ['#020A02', '#0A2E0A', '#1A5A1A', '#3F7A1A', '#7AC81A', '#A8FF1A', '#E0FF3F', '#FF3F1A'],
+  }},
+  { id: 'sunset_wild', label: 'Sunset Wild', scheme: {
+    background: '#1A0214',
+    water: '#3A0A4A', land: '#FF6B3F', vegetation: '#FFD23F', alert: '#FFE6A8',
+    terrainStops: ['#1A0220', '#3A0A4A', '#7A1A5A', '#C83F4A', '#FF6B3F', '#FF8A3F', '#FFD23F', '#FFE6A8'],
+  }},
+  { id: 'galaxy', label: 'Galaxy', scheme: {
+    background: '#020208',
+    water: '#0A0A2E', land: '#2E1A5A', vegetation: '#8A3FC8', alert: '#FFE63F',
+    terrainStops: ['#000000', '#0A0A2E', '#1A0A4A', '#3A1A7A', '#7A3FAA', '#C86BE0', '#FFB8E0', '#FFFFE0'],
+  }},
+  { id: 'forest_wild', label: 'Forest Wild', scheme: {
+    background: '#0A1A0A',
+    water: '#0A2E2A', land: '#7A5A1A', vegetation: '#3F8A2E', alert: '#FFD23F',
+    terrainStops: ['#0A1A0A', '#0A2E2A', '#1A5A3F', '#3F8A2E', '#7AC83F', '#A8E08A', '#7A5A1A', '#FFD23F'],
   }},
 ];
 
 export function applyPreset(id: PresetId) {
   const p = PALETTE_PRESETS.find(x => x.id === id);
   if (!p) return;
-  applyDesignerScheme({ ...getDesignerScheme(), ...p.scheme });
+  const cur = getDesignerScheme();
+  // Only merge map + bg + stops. Leave UI tokens untouched.
+  const next: DesignerScheme = {
+    ...cur,
+    water: p.scheme.water,
+    land: p.scheme.land,
+    vegetation: p.scheme.vegetation,
+    alert: p.scheme.alert,
+    background: p.scheme.background ?? cur.background,
+    terrainStops: p.scheme.terrainStops,
+  };
+  applyDesignerScheme(next);
 }
 
 export function applyRandomPreset(): PresetId {
