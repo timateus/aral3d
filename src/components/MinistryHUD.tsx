@@ -256,10 +256,10 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
             return (
               <div
                 key={t.v}
-                className="absolute right-0 -translate-y-1/2 text-[10px] font-mono uppercase tracking-[0.15em] text-white/55 whitespace-nowrap"
-                style={{ top: `${pct * 100}%` }}
+                className="absolute right-0 -translate-y-1/2 text-[10px] font-mono uppercase tracking-[0.15em] whitespace-nowrap"
+                style={{ top: `${pct * 100}%`, color: waterColor }}
               >
-                <span className="inline-block w-3 border-t border-white/30 align-middle mr-2" />
+                <span className="inline-block w-3 border-t align-middle mr-2" style={{ borderColor: waterColor, opacity: 0.5 }} />
                 {t.label}
               </div>
             );
