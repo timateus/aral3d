@@ -409,10 +409,10 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
         <Line
           key={`border-${i}`}
           points={points}
-          color="#ffffff"
+          color={borderColor}
           lineWidth={3}
           transparent
-          opacity={0.4}
+          opacity={0.5}
         />
       ))}
 
