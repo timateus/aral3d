@@ -164,10 +164,12 @@ let _designerPalette: {
   vegetation: [number, number, number];
   alert: [number, number, number];
   background: [number, number, number];
+  stops: [number, number, number][] | null;
 } | null = null;
 
 export function setDesignerPaletteOverride(p: {
   water: string; land: string; vegetation: string; alert: string; background: string;
+  stops?: string[];
 } | null) {
   _designerPalette = p ? {
     water: hexToRgb01(p.water),
@@ -175,11 +177,28 @@ export function setDesignerPaletteOverride(p: {
     vegetation: hexToRgb01(p.vegetation),
     alert: hexToRgb01(p.alert),
     background: hexToRgb01(p.background),
+    stops: p.stops && p.stops.length >= 2 ? p.stops.map(hexToRgb01) : null,
   } : null;
+}
+
+function rampFromStops(stops: [number, number, number][], t: number): [number, number, number] {
+  const n = stops.length;
+  if (n === 1) return stops[0];
+  const clamped = Math.max(0, Math.min(1, t));
+  const scaled = clamped * (n - 1);
+  const i = Math.min(n - 2, Math.floor(scaled));
+  const f = scaled - i;
+  return lerpColor(stops[i], stops[i + 1], f);
 }
 
 function getDesignerElevationColor(elev: number): [number, number, number] {
   const p = _designerPalette!;
+  // Multi-stop ramp wins when provided — wild/crazy palettes use this path.
+  if (p.stops) {
+    // Map elevation -12..300m -> 0..1 across all stops
+    const t = (elev + 12) / 312;
+    return rampFromStops(p.stops, t);
+  }
   // Below sea: deep water -> shore mix
   if (elev < 0) {
     const t = Math.max(0, Math.min(1, (elev + 12) / 12));
