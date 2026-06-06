@@ -13,6 +13,7 @@ import TimelineSlider from '@/components/TimelineSlider';
 import IntroOverlay from '@/components/IntroOverlay';
 import FountainsOfNukus from '@/components/FountainsOfNukus';
 import SpectralEarthHUD from '@/components/SpectralEarthHUD';
+import MinistryHUD from '@/components/MinistryHUD';
 import { applyRandomSpectralPalette } from '@/lib/visual-mode';
 import CharacterSelect from '@/components/CharacterSelect';
 import ScenarioChat from '@/components/ScenarioChat';
@@ -205,6 +206,8 @@ const Index = () => {
   const [aryqWorldActive, setAryqWorldActive] = useState(false);
   const [fountainsMode, setFountainsMode] = useState(false);
   const [spectralMode, setSpectralMode] = useState(false);
+  const [ministryMode, setMinistryMode] = useState(false);
+  const ministryPrevVisualRef = useRef<import('@/lib/visual-mode').VisualMode>('dark');
   const [spectralCamPos, setSpectralCamPos] = useState<[number, number, number]>([0, 14, 14]);
   const [spectralCamTarget, setSpectralCamTarget] = useState<[number, number, number]>([0, 0, 0]);
   const [spectralSeed, setSpectralSeed] = useState<number>(() => Date.now());
@@ -1139,7 +1142,7 @@ const Index = () => {
     return () => window.removeEventListener('keydown', handler);
   }, [toggleScreenRecording]);
 
-  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode && !dustMode && !traceMode && !lifeMode && !spectralMode;
+  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode && !dustMode && !traceMode && !lifeMode && !spectralMode && !ministryMode;
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
@@ -1175,7 +1178,7 @@ const Index = () => {
             onRecordingDone={() => setRecording(false)}
             scenarioActions={scenarioActions}
             currentMetrics={currentMetrics}
-            narrativeActive={narrativeActive || readingActive || canalTourActive || agmarTourActive || spectralMode}
+            narrativeActive={narrativeActive || readingActive || canalTourActive || agmarTourActive || spectralMode || ministryMode}
             narrativeCameraPosition={
               spectralMode ? spectralCamPos :
               readingActive ? NARRATIVE_STEPS[READING_PASSAGES[readingStep]?.stepIndex ?? 0]?.camera.position :
@@ -1192,7 +1195,7 @@ const Index = () => {
               agmarTourActive ? AGMAR_TOUR_STEPS[agmarTourStep]?.camera.target :
               undefined
             }
-            spectralActive={spectralMode}
+            spectralActive={spectralMode || ministryMode}
             riverFlyover={riverFlyover}
             onRiverFlyoverDone={() => setRiverFlyover(false)}
             riverInflow={currentRiverInflow}
@@ -1373,6 +1376,34 @@ const Index = () => {
             setVisualMode('designer');
             randomizeSpectral();
           }}
+          onMinistry={() => {
+            ministryPrevVisualRef.current = visualMode;
+            setStarted(true);
+            setMinistryMode(true);
+            setShowWaterExtent(false);
+            setShowBorders(true);
+            setShowRivers(true);
+            setShow13thBasin(false);
+            setShow19thBasin(false);
+            setShow21stBasin(false);
+            setShowKhorezm(false);
+            setShowLakes(false);
+            setShow21cLakes(false);
+            setShowLandcover(false);
+            setShowPopDensity(false);
+            setShowMigration(false);
+            setShowChoropleth(false);
+            setShowSchools(false);
+            setShowVocabulary(false);
+            setShowDwellings(false);
+            setShowPlaces(false);
+            setShowGroundwater(false);
+            setShowPrecipitation(false);
+            setShowSalinity(false);
+            setShowWaterways(false);
+            setWaterLevelManual(true);
+            setWaterLevel(40);
+          }}
         />
       )}
 
@@ -1389,6 +1420,18 @@ const Index = () => {
           onRandomize={randomizeSpectral}
           randomSeed={spectralSeed}
 
+        />
+      )}
+
+      {ministryMode && (
+        <MinistryHUD
+          waterLevel={waterLevel}
+          onWaterLevelChange={(v) => { setWaterLevelManual(true); setWaterLevel(v); }}
+          onExit={() => {
+            setMinistryMode(false);
+            setStarted(false);
+            setVisualMode(ministryPrevVisualRef.current);
+          }}
         />
       )}
 
