@@ -5,7 +5,7 @@ import { ThreeEvent } from '@react-three/fiber';
 import { TerrainData, GeoBounds, getElevationColor } from '@/lib/geotiff-loader';
 import { PopData, samplePopulation } from './PopulationDensityLayer';
 import { LandcoverRasterData, sampleLandcover } from './LandcoverLayer';
-import { useVisualMode } from '@/lib/visual-mode';
+import { useVisualMode, useDesignerScheme } from '@/lib/visual-mode';
 
 interface TerrainMeshProps {
   terrain: TerrainData;
@@ -38,6 +38,7 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
   const [hoverInfo, setHoverInfo] = useState<{ position: THREE.Vector3; elevation: number; lat: number; lon: number; population: number | null; landcover: { classId: number; className: string; color: string } | null } | null>(null);
   const meshRef = useRef<THREE.Mesh>(null);
   const [visualMode] = useVisualMode();
+  const [designerScheme] = useDesignerScheme();
 
   // Geometry only depends on terrain shape + exaggeration (NOT waterLevel)
   const { geometry, vertexMeta } = useMemo(() => {
@@ -134,7 +135,15 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
         let color: [number, number, number];
         if (isWater) {
           const waterDepth = Math.max(0, Math.min(1, (waterLevel - elev) / (waterLevel - minElevation || 1)));
-          if (visualMode === 'mirage' || visualMode === 'designer') {
+          if (visualMode === 'designer') {
+            // Use the designer-scheme water color, darkening with depth.
+            const w = designerScheme.water.replace('#', '');
+            const wr = parseInt(w.slice(0, 2), 16) / 255;
+            const wg = parseInt(w.slice(2, 4), 16) / 255;
+            const wb2 = parseInt(w.slice(4, 6), 16) / 255;
+            const k = 0.55 + (1 - waterDepth) * 0.45;
+            color = [wr * k, wg * k, wb2 * k];
+          } else if (visualMode === 'mirage') {
             // Pale slate-blue mirage water
             color = [
               0.55 + (1 - waterDepth) * 0.10,
@@ -175,7 +184,7 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
 
     geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
     geometry.attributes.color.needsUpdate = true;
-  }, [geometry, vertexMeta, waterLevel, waterBounds, terrain, terrainVersion, raisedPixels, dugPixels, visualMode]);
+  }, [geometry, vertexMeta, waterLevel, waterBounds, terrain, terrainVersion, raisedPixels, dugPixels, visualMode, designerScheme]);
 
   const material = useMemo(() => {
     return new THREE.MeshStandardMaterial({

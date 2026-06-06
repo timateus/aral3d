@@ -1,5 +1,5 @@
-import { useDesignerScheme, DEFAULT_SCHEME, DesignerScheme } from '@/lib/visual-mode';
-import { Download, RotateCcw, X } from 'lucide-react';
+import { useDesignerScheme, DEFAULT_SCHEME, DesignerScheme, PALETTE_PRESETS, applyPreset, applyRandomPreset, generateRandomRamp } from '@/lib/visual-mode';
+import { Download, RotateCcw, X, Shuffle, Wand2 } from 'lucide-react';
 
 interface DesignerPanelProps {
   onClose: () => void;
@@ -61,6 +61,44 @@ const DesignerPanel = ({ onClose }: DesignerPanelProps) => {
       </div>
 
       <div className="px-3 py-3 space-y-4">
+        <section className="space-y-1.5">
+          <div className="text-[9px] uppercase tracking-[0.18em] opacity-50">Palette</div>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={generateRandomRamp}
+              className="flex-1 flex items-center justify-center gap-1 border border-border/40 px-2 py-1.5 text-[10px] hover:bg-foreground/5 transition-colors"
+              title="Generate a fresh color ramp from a random seed hue"
+            >
+              <Wand2 className="w-3 h-3" /> Generate ramp
+            </button>
+            <button
+              onClick={() => applyRandomPreset()}
+              className="flex-1 flex items-center justify-center gap-1 border border-border/40 px-2 py-1.5 text-[10px] hover:bg-foreground/5 transition-colors"
+              title="Pick a random preset palette"
+            >
+              <Shuffle className="w-3 h-3" /> Random preset
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-1 pt-1">
+            {PALETTE_PRESETS.map(p => (
+              <button
+                key={p.id}
+                onClick={() => applyPreset(p.id)}
+                className="flex items-center gap-1.5 border border-border/30 px-1.5 py-1 text-[10px] hover:bg-foreground/5 transition-colors"
+                title={p.label}
+              >
+                <span className="flex h-3 w-7 overflow-hidden border border-border/20">
+                  <span className="flex-1" style={{ background: p.scheme.water }} />
+                  <span className="flex-1" style={{ background: p.scheme.land }} />
+                  <span className="flex-1" style={{ background: p.scheme.vegetation }} />
+                  <span className="flex-1" style={{ background: p.scheme.alert }} />
+                </span>
+                <span className="truncate">{p.label}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
         {(['ui', 'map'] as const).map(group => (
           <section key={group} className="space-y-1.5">
             <div className="text-[9px] uppercase tracking-[0.18em] opacity-50">
