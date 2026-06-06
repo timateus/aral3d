@@ -197,12 +197,12 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         </h1>
       </div>
 
-      {/* Large edge nav buttons — high contrast, arrows only, above everything */}
+      {/* Large edge nav buttons — visible on any bg (black/white double outline) */}
       {onPrev && (
         <button
           onClick={onPrev}
           aria-label="previous level"
-          className="fixed left-0 top-1/2 -translate-y-1/2 z-[60] h-32 w-14 flex items-center justify-center bg-white text-black border border-black shadow-[0_0_0_2px_rgba(255,255,255,0.6)] hover:bg-black hover:text-white hover:shadow-[0_0_0_2px_rgba(0,0,0,0.6)] transition-colors"
+          className="fixed left-0 top-1/2 -translate-y-1/2 z-[70] h-32 w-14 flex items-center justify-center bg-black text-white border-2 border-white shadow-[0_0_0_2px_#000,0_4px_24px_rgba(0,0,0,0.7)] hover:bg-white hover:text-black transition-colors"
         >
           <ChevronLeft className="w-8 h-8" strokeWidth={2.5} />
         </button>
@@ -211,7 +211,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         onClick={onNext}
         disabled={!onNext}
         aria-label="next level"
-        className="fixed right-0 top-1/2 -translate-y-1/2 z-[60] h-32 w-14 flex items-center justify-center bg-white text-black border border-black shadow-[0_0_0_2px_rgba(255,255,255,0.6)] hover:bg-black hover:text-white hover:shadow-[0_0_0_2px_rgba(0,0,0,0.6)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+        className="fixed right-0 top-1/2 -translate-y-1/2 z-[70] h-32 w-14 flex items-center justify-center bg-black text-white border-2 border-white shadow-[0_0_0_2px_#000,0_4px_24px_rgba(0,0,0,0.7)] hover:bg-white hover:text-black transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
       >
         <ChevronRight className="w-8 h-8" strokeWidth={2.5} />
       </button>
@@ -286,30 +286,36 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         </div>
       </div>
 
-      {/* Graph panel (bottom-left) */}
-      <div className="fixed bottom-6 left-6 z-40 w-[460px] bg-black/80 border border-white/10 backdrop-blur-md text-white font-mono">
-        <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10">
-          <div className="text-[10px] uppercase tracking-[0.3em] text-white/60">historical data</div>
-          <div className="text-[10px] uppercase tracking-[0.2em] text-white/40">
+      {/* Graph panel (bottom-left) — matches map bg + stylish serif typography */}
+      <div
+        className="fixed bottom-6 left-6 z-40 w-[460px] border border-white/15 backdrop-blur-md text-white"
+        style={{
+          background: 'hsl(var(--background) / 0.92)',
+          fontFamily: '"Georgia", "Times New Roman", serif',
+        }}
+      >
+        <div className="flex items-baseline justify-between px-5 py-3 border-b border-white/10">
+          <div className="text-base italic tracking-wide text-white/90">Historical Data</div>
+          <div className="text-[11px] tracking-wide text-white/50" style={{ fontFamily: '"Courier New", monospace' }}>
             {nearestYear ?? '—'} · {waterLevel.toFixed(1)} m
           </div>
         </div>
         {/* Toggle chips */}
-        <div className="flex flex-wrap gap-1 px-3 pt-3">
+        <div className="flex flex-wrap gap-x-3 gap-y-1 px-5 pt-3">
           {SERIES.map((s) => {
             const on = visible[s.key];
             return (
               <button
                 key={s.key}
                 onClick={() => setVisible((v) => ({ ...v, [s.key]: !v[s.key] }))}
-                className="flex items-center gap-1.5 px-1.5 py-0.5 text-[9px] uppercase tracking-[0.1em] transition-opacity"
+                className="flex items-center gap-1.5 py-0.5 text-[12px] italic transition-opacity"
                 style={{
                   color: on ? s.color : 'rgba(255,255,255,0.35)',
-                  opacity: on ? 1 : 0.7,
+                  fontFamily: '"Georgia", serif',
                 }}
               >
                 <span
-                  className="inline-block w-2 h-2"
+                  className="inline-block w-2 h-2 rounded-full"
                   style={{ background: on ? s.color : 'transparent', border: `1px solid ${on ? s.color : 'rgba(255,255,255,0.3)'}` }}
                 />
                 {s.label}
@@ -317,7 +323,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
             );
           })}
         </div>
-        <div className="h-40 px-2 pb-2 pt-1">
+        <div className="h-44 px-2 pb-3 pt-2">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
               <XAxis dataKey="year" tick={{ fill: '#ffffff70', fontSize: 9 }} axisLine={{ stroke: '#ffffff20' }} tickLine={false} />
