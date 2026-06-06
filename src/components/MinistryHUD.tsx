@@ -118,6 +118,13 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
   }, []);
 
   const waterColor = scheme.water;
+  const bgColor = scheme.background;
+  // pick contrast: if bg is dark use white-ish, else black-ish
+  const bgLum = (() => {
+    const [, , l] = hexToHsl(bgColor.startsWith('#') ? bgColor : '#000000');
+    return l;
+  })();
+  const contrastColor = bgLum < 0.5 ? '#f5f5f5' : '#111111';
 
   // Big-number overlay while dragging
   const [dragging, setDragging] = useState(false);
