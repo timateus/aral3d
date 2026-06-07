@@ -1201,7 +1201,7 @@ const Index = () => {
               undefined
             }
             spectralActive={spectralMode || ministryMode || simMode}
-            rightStickCameraEnabled={!ministryMode}
+            rightStickCameraEnabled={true}
             riverFlyover={riverFlyover}
             onRiverFlyoverDone={() => setRiverFlyover(false)}
             riverInflow={currentRiverInflow}

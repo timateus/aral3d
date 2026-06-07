@@ -213,10 +213,8 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
   });
   const [panelOpen, setPanelOpen] = useState(true);
 
-  // Gamepad controls — right stick X adjusts water level; LB/RB navigate levels.
-  // We read navigator.getGamepads() directly here for max reliability (some
-  // controllers report axes on indices other than [3] and we want any movement
-  // on the right-vertical axis to drive the slider).
+  // Gamepad controls — X (button 2) lowers water, O/B (button 1) raises it,
+  // held continuously. LB/RB navigate levels. Right stick stays free for camera.
   const waterLevelRef = useRef(waterLevel);
   useEffect(() => { waterLevelRef.current = waterLevel; }, [waterLevel]);
   const onWaterLevelChangeRef = useRef(onWaterLevelChange);
@@ -225,11 +223,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
     let raf = 0;
     let prevLB = false, prevRB = false;
     let lastT = performance.now();
-    // Track axis "rest" values so we can ignore controller axes that sit at
-    // an idle position other than 0 (eg trigger-as-axis sitting at -1).
-    const restValues = new Map<number, number>();
-    let calibrated = false;
-    const calibStart = performance.now();
+    let sfxAccum = 0;
     const tick = (now: number) => {
       const dt = Math.min(0.05, (now - lastT) / 1000);
       lastT = now;
@@ -237,29 +231,19 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
       let pad: Gamepad | null = null;
       for (const p of pads) { if (p) { pad = p; break; } }
       if (pad) {
-        // Calibrate rest values for ~0.5s after first seeing the pad.
-        if (!calibrated) {
-          for (let i = 0; i < pad.axes.length; i++) {
-            restValues.set(i, pad.axes[i] ?? 0);
-          }
-          if (now - calibStart > 400) calibrated = true;
-        }
-        // User mapping: right-stick horizontal = slider. On this controller it
-        // arrives on axis 3; positive/right raises the level, neutral stops.
-        const rawX = pad.axes[3] ?? 0;
-        const restX = restValues.get(3) ?? 0;
-        let axis = rawX - restX;
-        if (Math.abs(axis) < 0.18) axis = 0;
+        const xBtn = !!pad.buttons[2]?.pressed; // X -> lower
+        const bBtn = !!pad.buttons[1]?.pressed; // O/B -> raise
+        const axis = (bBtn ? 1 : 0) - (xBtn ? 1 : 0);
         if (axis !== 0) {
           const next = Math.max(MIN, Math.min(MAX, waterLevelRef.current + axis * 30 * dt));
           if (Math.abs(next - waterLevelRef.current) > 0.001) {
             waterLevelRef.current = next;
             onWaterLevelChangeRef.current(next);
             flashBig();
-            sfx.slider();
+            sfxAccum += dt;
+            if (sfxAccum > 0.08) { sfx.slider(); sfxAccum = 0; }
           }
         }
-        // Level nav — edge triggered
         const lb = !!pad.buttons[4]?.pressed;
         const rb = !!pad.buttons[5]?.pressed;
         if (rb && !prevRB && onNext) { sfx.navNext(); onNext(); }
@@ -400,8 +384,9 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
           })}
         </div>
         <div className="relative h-[72vh] w-16 flex items-center justify-center">
-          <div className="absolute -top-6 left-1/2 -translate-x-1/2 pointer-events-none">
-            <PadHint label="R-stick X" color={waterColor} bg={bgColor} />
+          <div className="absolute -top-6 left-1/2 -translate-x-1/2 pointer-events-none flex gap-1">
+            <PadHint label="X−" color={waterColor} bg={bgColor} />
+            <PadHint label="O+" color={waterColor} bg={bgColor} />
           </div>
           <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-white/15 pointer-events-none" />
           <input
