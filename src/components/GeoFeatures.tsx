@@ -614,23 +614,23 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
         }
         const Pin = ({ pos, color, label }: { pos: [number, number, number]; color: string; label: string }) => (
           <group position={pos}>
-            <mesh position={[0, 0.2, 0]}>
-              <cylinderGeometry args={[0.015, 0.015, 0.4, 8]} />
+            <mesh position={[0, 0.1, 0]}>
+              <cylinderGeometry args={[0.007, 0.007, 0.2, 8]} />
               <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.6} />
             </mesh>
-            <mesh position={[0, 0.45, 0]}>
-              <sphereGeometry args={[0.08, 16, 16]} />
+            <mesh position={[0, 0.225, 0]}>
+              <sphereGeometry args={[0.04, 16, 16]} />
               <meshStandardMaterial color={color} emissive={color} emissiveIntensity={1} />
             </mesh>
-            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
-              <ringGeometry args={[0.08, 0.14, 32]} />
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]}>
+              <ringGeometry args={[0.04, 0.07, 32]} />
               <meshStandardMaterial color={color} transparent opacity={0.55} />
             </mesh>
-            <Html position={[0, 0.65, 0]} center distanceFactor={10} style={{ pointerEvents: 'none' }}>
+            <Html position={[0, 0.32, 0]} center distanceFactor={10} style={{ pointerEvents: 'none' }}>
               <div style={{
-                color: '#fff', padding: '2px 8px', fontSize: '11px',
+                color: '#fff', padding: '1px 5px', fontSize: '9px',
                 fontFamily: "'Inter', system-ui, sans-serif", fontWeight: 700,
-                whiteSpace: 'nowrap', background: color, borderRadius: '4px',
+                whiteSpace: 'nowrap', background: color, borderRadius: '3px',
                 textShadow: '0 1px 4px rgba(0,0,0,0.7)',
               }}>{label}</div>
             </Html>
