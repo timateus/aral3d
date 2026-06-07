@@ -1237,6 +1237,7 @@ const Index = () => {
           <TerrainViewer
             ref={viewerRef}
             geoGuessrMarkers={geoMode ? geoMarkers : null}
+            placedItems={placeMode ? placedItems : null}
             terrain={terrain}
             exaggeration={exaggeration}
             waterLevel={waterLevel}
