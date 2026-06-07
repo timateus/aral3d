@@ -1582,10 +1582,7 @@ const Index = () => {
           }}
           onPrev={() => {
             // Back to Level 2
-            setSimMode(false);
-            setWaterFlowActive(false);
-            setFlowAnimating(false);
-            setMinistryMode(true);
+            enterGameLevel(2);
           }}
           onAddWaterCenter={() => {
             // Splash a large volume of water exactly where the center aim mark hits.
@@ -1615,11 +1612,7 @@ const Index = () => {
           }}
           onNext={() => {
             // Hand off to Level 4 (satellite geoguessr).
-            setSimMode(false);
-            setWaterFlowActive(false);
-            setFlowAnimating(false);
-            setGeoMode(true);
-            setShowKhorezm(true);
+            enterGameLevel(4);
           }}
         />
       )}
@@ -1633,18 +1626,11 @@ const Index = () => {
             setVisualMode(ministryPrevVisualRef.current);
           }}
           onPrev={() => {
-            setGeoMode(false);
-            setGeoMarkers(null);
-            setSimMode(true);
-            setWaterFlowActive(true);
-            setFlowAnimating(true);
+            enterGameLevel(3);
           }}
           onMarkersChange={setGeoMarkers}
           onNext={() => {
-            setGeoMode(false);
-            setGeoMarkers(null);
-            setPlaceMode(true);
-            setShowKhorezm(true);
+            enterGameLevel(5);
           }}
           getAimLatLon={() => {
             const aim = viewerRef.current?.getAimPixel();
@@ -1674,8 +1660,7 @@ const Index = () => {
             setVisualMode(ministryPrevVisualRef.current);
           }}
           onPrev={() => {
-            setPlaceMode(false);
-            setGeoMode(true);
+            enterGameLevel(4);
           }}
           onItemsChange={setPlacedItems}
           getAimLatLon={() => {
