@@ -355,23 +355,21 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, onMarkersChange }: Props) 
         <div
           className="fixed top-20 right-6 bottom-6 z-50 font-mono w-[360px] flex flex-col"
           style={{
-            background: 'rgba(0,0,0,0.78)',
-            color: '#fff',
-            border: `2px solid ${accent}`,
-            boxShadow: `0 0 32px ${accent}66`,
-            backdropFilter: 'blur(8px)',
+            background: bgColor,
+            color: inkColor,
+            border: `1px solid ${inkColor}33`,
           }}
         >
-          <div className="px-5 pt-4 pb-3 border-b border-white/10">
+          <div className="px-5 pt-4 pb-3" style={{ borderBottom: `1px solid ${inkColor}22` }}>
             <div className="text-[10px] uppercase tracking-[0.4em] opacity-70 text-center">final score</div>
             <div
               className="text-5xl font-bold my-1 text-center tabular-nums"
-              style={{ color: accent, textShadow: `0 0 16px ${accent}` }}
+              style={{ color: inkColor }}
             >
               {totalScore.toLocaleString()}
             </div>
             <div className="text-[10px] opacity-60 text-center">
-              / {GEO_LOCATIONS.length * 5000} · true locations on the map
+              / {GEO_LOCATIONS.length * 5000} · pins on the map
             </div>
           </div>
 
