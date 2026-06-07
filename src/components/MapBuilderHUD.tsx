@@ -50,11 +50,11 @@ const MapBuilderHUD = ({ onExit, onPrev, getLatLonAtScreen, getAimLatLon, onItem
       if (t && /input|textarea|select/i.test(t.tagName)) return;
       if (e.key >= '1' && e.key <= '9') {
         const idx = parseInt(e.key, 10) - 1;
-        if (MAP_BUILDER_ITEMS[idx]) { setSelected(MAP_BUILDER_ITEMS[idx].id); sfx.tick?.(); }
+        if (MAP_BUILDER_ITEMS[idx]) { setSelected(MAP_BUILDER_ITEMS[idx].id); sfx.click(); }
         return;
       }
       if (e.key === '0' && MAP_BUILDER_ITEMS[9]) {
-        setSelected(MAP_BUILDER_ITEMS[9].id); sfx.tick?.(); return;
+        setSelected(MAP_BUILDER_ITEMS[9].id); sfx.click(); return;
       }
       if (e.key === 'x' || e.key === 'X' || e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
@@ -117,7 +117,7 @@ const MapBuilderHUD = ({ onExit, onPrev, getLatLonAtScreen, getAimLatLon, onItem
           return (
             <button
               key={it.id}
-              onClick={() => { setSelected(it.id); sfx.tick?.(); }}
+              onClick={() => { setSelected(it.id); sfx.click(); }}
               className={`flex flex-col items-center justify-center w-14 h-16 rounded-md border-2 transition-all ${
                 isSel
                   ? 'border-white bg-white/15 scale-105'
