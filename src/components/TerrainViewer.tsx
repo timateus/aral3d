@@ -652,6 +652,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
         />
       )}
       <ScreenshotHelper onReady={(fn) => { screenshotFn.current = fn; }} />
+      <AimPixelHelper terrain={terrain} onReady={(fn) => { aimPixelFn.current = fn; }} />
       {recording && onWaterLevelChange && onRecordingDone && (
         <VideoAnimator
           recording={recording}
@@ -675,6 +676,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
         orbitRef={orbitRef}
         gameModeActive={gameModeActive || aryqWorldActive}
         sandboxActive={sandboxActive}
+        rightStickCameraEnabled={rightStickCameraEnabled}
       />
 
       {!aryqWorldActive && !sandboxActive && (

@@ -1201,6 +1201,7 @@ const Index = () => {
               undefined
             }
             spectralActive={spectralMode || ministryMode || simMode}
+            rightStickCameraEnabled={!ministryMode}
             riverFlyover={riverFlyover}
             onRiverFlyoverDone={() => setRiverFlyover(false)}
             riverInflow={currentRiverInflow}
@@ -1472,7 +1473,7 @@ const Index = () => {
       {simMode && terrain && (
         <WaterSimHUD
           wetPixels={flowWetCount}
-          canalEdits={canalEditCount}
+          damEdits={raiseEditCount}
           onExit={() => {
             setSimMode(false);
             setStarted(false);
@@ -1488,10 +1489,10 @@ const Index = () => {
             setMinistryMode(true);
           }}
           onAddWaterCenter={() => {
-            // Splash a large volume of water near the centre of the terrain
-            // and ensure the flow simulation is running.
-            const row = Math.floor(terrain.height / 2);
-            const col = Math.floor(terrain.width / 2);
+            // Splash a large volume of water exactly where the center aim mark hits.
+            const aim = viewerRef.current?.getAimPixel();
+            const row = aim?.row ?? Math.floor(terrain.height / 2);
+            const col = aim?.col ?? Math.floor(terrain.width / 2);
             let state = flowStateRef.current;
             if (!state) {
               state = createFlowState(terrain);
@@ -1507,10 +1508,11 @@ const Index = () => {
             }
             setFlowWetCount(count);
           }}
-          onDigCenter={() => {
-            const row = Math.floor(terrain.height / 2);
-            const col = Math.floor(terrain.width / 2);
-            handleDigCanalClick(row, col);
+          onBuildDamCenter={() => {
+            const aim = viewerRef.current?.getAimPixel();
+            const row = aim?.row ?? Math.floor(terrain.height / 2);
+            const col = aim?.col ?? Math.floor(terrain.width / 2);
+            handleRaiseTerrainClick(row, col);
           }}
         />
       )}
