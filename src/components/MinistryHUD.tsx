@@ -365,6 +365,9 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
           })}
         </div>
         <div className="relative h-[72vh] w-16 flex items-center justify-center">
+          <div className="absolute -top-6 left-1/2 -translate-x-1/2 pointer-events-none">
+            <PadHint label="R-stick Y" color={waterColor} />
+          </div>
           <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-white/15 pointer-events-none" />
           <input
             type="range"
