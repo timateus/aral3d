@@ -87,7 +87,12 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, onMarkersChange }: Props) 
   useEffect(() => {
     if (!onMarkersChange) return;
     if (done) {
-      onMarkersChange({ all: history.map((g) => ({ lat: g.loc.lat, lon: g.loc.lon, name: g.loc.name })) });
+      onMarkersChange({
+        all: history.map((g) => ({
+          truth: { lat: g.loc.lat, lon: g.loc.lon, name: g.loc.name },
+          guess: { lat: g.lat, lon: g.lon },
+        })),
+      });
     } else if (guess) {
       onMarkersChange({
         guess: { lat: guess.lat, lon: guess.lon },
