@@ -46,7 +46,7 @@ export const GEO_LOCATIONS: GeoLocation[] = [
     name: 'Janpiq Qala',
     lat: 42.02734,
     lon: 60.32507,
-    zoom: 16,
+    zoom: 14,
     hint: 'Ancient fortress on the right bank of the Amu Darya.',
   },
   {
