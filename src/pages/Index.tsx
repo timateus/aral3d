@@ -214,6 +214,9 @@ const Index = () => {
   const [simMode, setSimMode] = useState(false);
   const [geoMode, setGeoMode] = useState(false);
   const [geoMarkers, setGeoMarkers] = useState<import('@/components/GeoFeatures').GeoGuessrMarkerSet | null>(null);
+  const [placeMode, setPlaceMode] = useState(false);
+  const [placedItems, setPlacedItems] = useState<import('@/lib/map-builder-items').PlacedItem[]>([]);
+  const prevPlaceRef = useRef(false);
   const [levelIntro, setLevelIntro] = useState<{ n: number; name: string; instructions: string[] } | null>(null);
   const ministryPrevVisualRef = useRef<import('@/lib/visual-mode').VisualMode>('dark');
   const [spectralCamPos, setSpectralCamPos] = useState<[number, number, number]>([0, 14, 14]);
