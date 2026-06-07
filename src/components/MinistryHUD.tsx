@@ -13,6 +13,22 @@ import { useDesignerScheme, applyDesignerScheme, getDesignerScheme } from '@/lib
 import { sfx } from '@/lib/ui-sfx';
 import { useGamepad } from '@/hooks/useGamepad';
 
+function PadHint({ label, color = '#ffffff' }: { label: string; color?: string }) {
+  return (
+    <span
+      className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-mono font-bold leading-none rounded"
+      style={{
+        border: `1.5px solid ${color}`,
+        color,
+        background: 'rgba(0,0,0,0.55)',
+        minWidth: 18,
+      }}
+    >
+      {label}
+    </span>
+  );
+}
+
 
 export interface MinistryAnnual {
   year: number;
@@ -185,25 +201,23 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
   });
   const [panelOpen, setPanelOpen] = useState(true);
 
-  // Gamepad controls — left stick Y / dpad up-down adjusts water level,
-  // LB/RB navigate levels, A toggles panel, B exits.
+  // Gamepad controls — right stick Y adjusts water level; LB/RB navigate levels.
+  // No exit binding, no panel-toggle binding, no d-pad / vertical camera.
   const { stateRef } = useGamepad();
   const waterLevelRef = useRef(waterLevel);
   useEffect(() => { waterLevelRef.current = waterLevel; }, [waterLevel]);
   useEffect(() => {
     let raf = 0;
-    let prev = { lb: false, rb: false, a: false, b: false, up: false, down: false };
+    let prev = { lb: false, rb: false };
     let lastT = performance.now();
     const tick = (now: number) => {
       const dt = Math.min(0.05, (now - lastT) / 1000);
       lastT = now;
       const s = stateRef.current;
       if (s.connected) {
-        // analog + dpad
-        const stick = -s.leftStick.y; // up = positive
-        const dpad = (s.buttons.up ? 1 : 0) + (s.buttons.down ? -1 : 0);
-        const axis = Math.abs(stick) > 0.05 ? stick : dpad;
-        if (axis !== 0) {
+        // right stick Y = slider (up = higher water)
+        const axis = -s.rightStick.y;
+        if (Math.abs(axis) > 0.05) {
           const next = Math.max(MIN, Math.min(MAX, waterLevelRef.current + axis * 25 * dt));
           if (Math.abs(next - waterLevelRef.current) > 0.001) {
             waterLevelRef.current = next;
@@ -212,23 +226,17 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
             sfx.slider();
           }
         }
-        // edge-triggered buttons
+        // edge-triggered level nav
         if (s.buttons.rb && !prev.rb && onNext) { sfx.navNext(); onNext(); }
         if (s.buttons.lb && !prev.lb && onPrev) { sfx.navPrev(); onPrev(); }
-        if (s.buttons.a && !prev.a) { sfx.toggle(); setPanelOpen((o) => !o); }
-        if (s.buttons.b && !prev.b) { sfx.exit(); onExit(); }
-        prev = {
-          lb: s.buttons.lb, rb: s.buttons.rb,
-          a: s.buttons.a, b: s.buttons.b,
-          up: s.buttons.up, down: s.buttons.down,
-        };
+        prev = { lb: s.buttons.lb, rb: s.buttons.rb };
       }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onNext, onPrev, onExit]);
+  }, [onNext, onPrev]);
 
 
   const chartData = useMemo(
@@ -297,20 +305,22 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         <button
           onClick={() => { sfx.navPrev(); onPrev(); }}
           aria-label="previous level"
-          className="fixed left-2 top-1/2 -translate-y-1/2 z-[70] flex items-center justify-center bg-transparent hover:opacity-70 transition-opacity"
+          className="fixed left-2 top-1/2 -translate-y-1/2 z-[70] flex flex-col items-center justify-center bg-transparent hover:opacity-70 transition-opacity"
           style={{ color: arrowColor, filter: `drop-shadow(0 0 10px ${bgColor})` }}
         >
           <ChevronLeft style={{ width: 140, height: 140 }} strokeWidth={4} />
+          <PadHint label="LB" color={arrowColor} />
         </button>
       )}
       <button
         onClick={() => { if (onNext) { sfx.navNext(); onNext(); } }}
         disabled={!onNext}
         aria-label="next level"
-        className="fixed right-2 top-1/2 -translate-y-1/2 z-[70] flex items-center justify-center bg-transparent hover:opacity-70 transition-opacity disabled:opacity-20 disabled:cursor-not-allowed"
+        className="fixed right-2 top-1/2 -translate-y-1/2 z-[70] flex flex-col items-center justify-center bg-transparent hover:opacity-70 transition-opacity disabled:opacity-20 disabled:cursor-not-allowed"
         style={{ color: arrowColor, filter: `drop-shadow(0 0 10px ${bgColor})` }}
       >
         <ChevronRight style={{ width: 140, height: 140 }} strokeWidth={4} />
+        <PadHint label="RB" color={arrowColor} />
       </button>
 
 
@@ -355,6 +365,9 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
           })}
         </div>
         <div className="relative h-[72vh] w-16 flex items-center justify-center">
+          <div className="absolute -top-6 left-1/2 -translate-x-1/2 pointer-events-none">
+            <PadHint label="R-stick Y" color={waterColor} />
+          </div>
           <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-white/15 pointer-events-none" />
           <input
             type="range"

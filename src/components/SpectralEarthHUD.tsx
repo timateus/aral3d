@@ -4,6 +4,22 @@ import { useDesignerScheme } from '@/lib/visual-mode';
 import { sfx } from '@/lib/ui-sfx';
 import { useGamepad } from '@/hooks/useGamepad';
 
+function PadHint({ label, color = '#ffffff' }: { label: string; color?: string }) {
+  return (
+    <span
+      className="ml-2 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-mono font-bold leading-none rounded"
+      style={{
+        border: `1.5px solid ${color}`,
+        color,
+        background: 'rgba(0,0,0,0.55)',
+        minWidth: 18,
+      }}
+    >
+      {label}
+    </span>
+  );
+}
+
 
 interface Props {
   onExit: () => void;
@@ -179,25 +195,25 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
     w.document.close();
   };
 
-  // Gamepad: A = make it misbehave, Y = make your own (print), RB = next, B = exit
+  // Gamepad: X = make it misbehave, LB = prev level, RB = next level.
+  // No exit / print / vertical-camera bindings (per controller spec).
   useEffect(() => {
     let raf = 0;
-    let prev = { a: false, b: false, y: false, rb: false };
+    let prev = { x: false, lb: false, rb: false };
     const tick = () => {
       const s = stateRef.current;
       if (s.connected) {
-        if (s.buttons.a && !prev.a) { sfx.make(); onRandomize(); }
-        if (s.buttons.y && !prev.y) { sfx.make(); handlePrint(); }
+        if (s.buttons.x && !prev.x) { sfx.make(); onRandomize(); }
         if (s.buttons.rb && !prev.rb && onNext) { sfx.navNext(); onNext(); }
-        if (s.buttons.b && !prev.b) { sfx.exit(); onExit(); }
-        prev = { a: s.buttons.a, b: s.buttons.b, y: s.buttons.y, rb: s.buttons.rb };
+        // LB intentionally has no prev target on level 1 (it's the first level)
+        prev = { x: s.buttons.x, lb: s.buttons.lb, rb: s.buttons.rb };
       }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onRandomize, onExit, onNext]);
+  }, [onRandomize, onNext]);
 
   return (
 
@@ -271,6 +287,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
         >
           <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" style={{ color: stops[2 % stops.length] }} />
           Make it misbehave
+          <PadHint label="X" color={stops[2 % stops.length]} />
         </button>
         <button
           onClick={() => { sfx.make(); handlePrint(); }}
@@ -295,10 +312,11 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
           <button
             onClick={() => { sfx.navNext(); onNext(); }}
             aria-label="next level"
-            className="fixed right-2 top-1/2 -translate-y-1/2 z-[70] flex items-center justify-center bg-transparent hover:opacity-70 transition-opacity"
+            className="fixed right-2 top-1/2 -translate-y-1/2 z-[70] flex flex-col items-center justify-center bg-transparent hover:opacity-70 transition-opacity"
             style={{ color: arrowColor, filter: 'drop-shadow(0 0 10px rgba(0,0,0,0.45))' }}
           >
             <ChevronRight style={{ width: 112, height: 112 }} strokeWidth={2} />
+            <PadHint label="RB" color={arrowColor} />
           </button>
         );
       })()}
