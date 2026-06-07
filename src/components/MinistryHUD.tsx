@@ -252,7 +252,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         }
         const lb = !!pad.buttons[4]?.pressed;
         const rb = !!pad.buttons[5]?.pressed;
-        if (rb && !prevRB && onNext) { sfx.navNext(); onNext(); }
+        if (rb && !prevRB && onNext && (waterLevelRef.current >= 50 || waterLevelRef.current <= 5)) { sfx.navNext(); onNext(); }
         if (lb && !prevLB && onPrev) { sfx.navPrev(); onPrev(); }
         prevLB = lb; prevRB = rb;
       }
