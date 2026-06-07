@@ -263,39 +263,39 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
         <div className="mt-2 h-px w-16 mx-auto bg-foreground/30" />
       </div>
 
-      {/* Back button — constant font, readable on black */}
+      {/* Back button — uses map bg color */}
       <button
         onClick={() => { sfx.exit(); onExit(); }}
         className="absolute top-5 left-5 z-40 flex items-center gap-2 px-3 py-2 text-xs font-mono uppercase tracking-[0.2em] text-white backdrop-blur-md transition-colors hover:brightness-110"
         style={{
           border: `2px solid ${stops[1 % stops.length]}`,
-          background: 'rgba(0,0,0,0.65)',
+          background: bgColor,
         }}
       >
         <ArrowLeft className="w-3.5 h-3.5" style={{ color: stops[1 % stops.length] }} /> Menu
       </button>
 
-      {/* Bottom action buttons — constant font/size, readable on black */}
+      {/* Bottom action buttons — bg = map background */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4">
         <button
           onClick={() => { sfx.make(); onRandomize(); }}
           className="group flex items-center gap-3 px-8 py-4 text-base font-semibold font-mono uppercase tracking-[0.2em] text-white backdrop-blur-md transition-all hover:brightness-110 hover:scale-105"
           style={{
             border: `3px solid ${stops[2 % stops.length]}`,
-            background: 'rgba(0,0,0,0.7)',
+            background: bgColor,
             boxShadow: `0 0 24px ${stops[1 % stops.length]}55`,
           }}
         >
           <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" style={{ color: stops[2 % stops.length] }} />
           Make it misbehave
-          <PadHint label="X" color={stops[2 % stops.length]} />
+          <PadHint label="X" color={stops[2 % stops.length]} bg={bgColor} />
         </button>
         <button
           onClick={() => { sfx.make(); handlePrint(); }}
           className="group flex items-center gap-3 px-6 py-4 text-sm font-semibold font-mono uppercase tracking-[0.2em] text-white backdrop-blur-md transition-all hover:brightness-110 hover:scale-105"
           style={{
             border: `3px solid ${stops[0]}`,
-            background: 'rgba(0,0,0,0.7)',
+            background: bgColor,
             boxShadow: `0 0 24px ${stops[0]}55`,
           }}
         >
