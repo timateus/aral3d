@@ -36,13 +36,14 @@ function PadHint({ label, bg }: { label: string; bg: string }) {
 interface Props {
   onExit: () => void;
   onPrev?: () => void;
+  onNext?: () => void;
   onAddWaterCenter: () => void;
   onBuildDamCenter: () => void;
   wetPixels?: number;
   damEdits?: number;
 }
 
-const WaterSimHUD = ({ onExit, onPrev, onAddWaterCenter, onBuildDamCenter, wetPixels = 0, damEdits = 0 }: Props) => {
+const WaterSimHUD = ({ onExit, onPrev, onNext, onAddWaterCenter, onBuildDamCenter, wetPixels = 0, damEdits = 0 }: Props) => {
   const [scheme] = useDesignerScheme();
   const stops = (scheme.terrainStops && scheme.terrainStops.length > 1)
     ? scheme.terrainStops
