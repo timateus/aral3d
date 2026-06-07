@@ -234,9 +234,9 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
           <div
             style={{
               fontFamily: style.font1,
-              fontWeight: style.weight1 as any,
+              fontWeight: style.weight1,
               fontStyle: style.style1,
-              textTransform: style.case1 as any,
+              textTransform: style.case1,
               fontSize: `clamp(28px, ${style.size1 / 14}vw, ${Math.round(style.size1 * 1.1)}px)`,
               letterSpacing: `${style.tracking1}em`,
               lineHeight: 0.95,
@@ -249,9 +249,9 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
             className="mt-6"
             style={{
               fontFamily: style.font2,
-              fontWeight: style.weight2 as any,
+              fontWeight: style.weight2,
               fontStyle: style.style2,
-              textTransform: style.case2 as any,
+              textTransform: style.case2,
               fontSize: `clamp(16px, ${style.size2 / 14}vw, ${Math.round(style.size2 * 1.1)}px)`,
               letterSpacing: `${style.tracking2}em`,
               lineHeight: 1.2,

@@ -427,7 +427,9 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
               setLevelFromPointer(e.clientY);
             }}
             onPointerUp={(e) => {
-              try { e.currentTarget.releasePointerCapture(e.pointerId); } catch {}
+              if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+                e.currentTarget.releasePointerCapture(e.pointerId);
+              }
               setLevelFromPointer(e.clientY);
               sfx.slider();
             }}
