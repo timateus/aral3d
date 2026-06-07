@@ -150,6 +150,19 @@ const WaterSimHUD = ({ onExit, onPrev, onNext, onAddWaterCenter, onBuildDamCente
         </button>
       )}
 
+      {/* Next arrow (to level 4) */}
+      {onNext && (
+        <button
+          onClick={() => { sfx.navNext(); onNext(); }}
+          aria-label="next level"
+          className="fixed right-2 top-1/2 -translate-y-1/2 z-[70] flex flex-col items-center justify-center bg-transparent hover:opacity-70 transition-opacity"
+          style={{ color: arrowColor, filter: `drop-shadow(0 0 10px ${bgColor})` }}
+        >
+          <ChevronRight style={{ width: 140, height: 140 }} strokeWidth={4} />
+          <PadHint label="RB" bg={bgColor} />
+        </button>
+      )}
+
       {/* Center crosshair so users know where X / B will apply */}
       <div
         className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-30 pointer-events-none"
