@@ -235,8 +235,7 @@ const Index = () => {
         n: 1,
         name: 'Spectral Earth',
         instructions: [
-          'A randomized chromatic portrait of the Aral region.',
-          'Re-roll palettes, exaggerate the terrain, and wander.',
+          'All maps are wrong, but some are useful',
         ],
       });
     }
@@ -249,7 +248,7 @@ const Index = () => {
         name: 'Great Water Level',
         instructions: [
           'Travel to the future with the slider.',
-          'Fill the sea or drain it dry to unlock the next level.',
+          'Drain the sea below -4m to unlock the next level.',
         ],
       });
     }
@@ -286,10 +285,10 @@ const Index = () => {
   // One-shot randomizer for Spectral Earth — palette, exaggeration, camera, zoom, typography.
   const randomizeSpectral = useCallback(() => {
     applyRandomSpectralPalette();
-    setExaggeration(Math.round(5 + Math.random() * 25));
+    setExaggeration(Math.round(5 + Math.random() * 8));
     const angle = Math.random() * Math.PI * 2;
-    const radius = 8 + Math.random() * 22;
-    const tilt = 4 + Math.random() * 18;
+    const radius = 11 + Math.random() * 10;
+    const tilt = 7 + Math.random() * 8;
     setSpectralCamPos([
       Math.sin(angle) * radius,
       tilt,
