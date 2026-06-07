@@ -4,13 +4,23 @@ import { useDesignerScheme } from '@/lib/visual-mode';
 import { sfx } from '@/lib/ui-sfx';
 import { useGamepad } from '@/hooks/useGamepad';
 
+function bgIsLight(hex: string): boolean {
+  const h = (hex || '').replace('#', '');
+  if (h.length < 6) return false;
+  const r = parseInt(h.slice(0, 2), 16) / 255;
+  const g = parseInt(h.slice(2, 4), 16) / 255;
+  const b = parseInt(h.slice(4, 6), 16) / 255;
+  return (0.299 * r + 0.587 * g + 0.114 * b) > 0.55;
+}
+
 function PadHint({ label, color, bg }: { label: string; color: string; bg: string }) {
+  const ink = bgIsLight(bg) ? '#0a0a0a' : color;
   return (
     <span
       className="ml-2 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-mono font-bold leading-none rounded"
       style={{
-        border: `1.5px solid ${color}`,
-        color,
+        border: `1.5px solid ${ink}`,
+        color: ink,
         background: bg,
         minWidth: 18,
       }}
