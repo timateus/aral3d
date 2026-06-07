@@ -83,19 +83,54 @@ export function useGamepad() {
         }
         const lx = applyDeadzone(active.axes[0] ?? 0);
         const ly = applyDeadzone(active.axes[1] ?? 0);
-        // Right stick: standard mapping uses axes 2/3, but many controllers
-        // report RX/RY on axes 2, 3, 4, or 5 depending on browser/OS. Pick
-        // the largest-magnitude candidate so the right stick always works.
-        const pick = (...idxs: number[]) => {
-          let best = 0;
-          for (const i of idxs) {
-            const v = applyDeadzone(active!.axes[i] ?? 0);
-            if (Math.abs(v) > Math.abs(best)) best = v;
-          }
-          return best;
-        };
-        const rx = pick(2, 5);
-        const ry = pick(3, 4);
+
+        // --- Right-stick auto-calibration ---
+        // Some pads report triggers / unused axes with a non-zero idle value
+        // (e.g. -1 or +1 at rest). That breaks naive "pick largest magnitude".
+        // We capture per-axis idle values on first frame, then measure DELTA
+        // from idle and assign the right stick to two DIFFERENT axes — one
+        // for X (left/right), one for Y (up/down) — based on which axis has
+        // been observed to move while the other was still.
+        const meta2 = globalThis as any;
+        if (!meta2.__padIdle) {
+          // capture idle baseline (assumes user isn't moving sticks at load)
+          meta2.__padIdle = active.axes.map((v) => v ?? 0);
+          meta2.__padMaxDelta = active.axes.map(() => 0);
+          meta2.__padRX = -1;
+          meta2.__padRY = -1;
+          console.log('[pad] idle baseline captured', meta2.__padIdle);
+        }
+        const idle: number[] = meta2.__padIdle;
+        const maxDelta: number[] = meta2.__padMaxDelta;
+        const deltas = active.axes.map((v, i) => (v ?? 0) - (idle[i] ?? 0));
+        for (let i = 0; i < deltas.length; i++) {
+          const a = Math.abs(deltas[i]);
+          if (a > maxDelta[i]) maxDelta[i] = a;
+        }
+
+        // Candidate axes for right stick (skip 0,1 which are left stick)
+        const candidates = [2, 3, 4, 5].filter((i) => i < active.axes.length);
+        // Pick the two axes with the highest observed movement so far.
+        // Tie-break by current instantaneous magnitude.
+        const ranked = [...candidates].sort((a, b) => {
+          const da = maxDelta[a] - maxDelta[b];
+          if (Math.abs(da) > 0.05) return -da;
+          return Math.abs(deltas[b]) - Math.abs(deltas[a]);
+        });
+        // Assign first to RX, second to RY (heuristic: most users move X first
+        // when testing). Persist so it doesn't flip every frame.
+        if (meta2.__padRX === -1 && ranked[0] !== undefined && maxDelta[ranked[0]] > 0.2) {
+          meta2.__padRX = ranked[0];
+          console.log(`[pad] RX axis locked → ${ranked[0]}`);
+        }
+        if (meta2.__padRY === -1 && ranked[1] !== undefined && maxDelta[ranked[1]] > 0.2 && ranked[1] !== meta2.__padRX) {
+          meta2.__padRY = ranked[1];
+          console.log(`[pad] RY axis locked → ${ranked[1]}`);
+        }
+        const rxAxis = meta2.__padRX === -1 ? 2 : meta2.__padRX;
+        const ryAxis = meta2.__padRY === -1 ? 3 : meta2.__padRY;
+        const rx = applyDeadzone(deltas[rxAxis] ?? 0);
+        const ry = applyDeadzone(deltas[ryAxis] ?? 0);
         const b = active.buttons;
         const next: GamepadState = {
           connected: true,
