@@ -399,6 +399,7 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, getLatLonAtScreen, onMarke
       {/* Result panel — shows distance + lets the user explore the true location */}
       {!done && guess && (
         <div
+          data-hud
           className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 px-6 py-4 backdrop-blur-md font-mono text-[12px]"
           style={{
             background: bgColor, color: inkColor,
@@ -413,6 +414,30 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, getLatLonAtScreen, onMarke
             {guess.distanceKm.toFixed(1)} km away
           </div>
           <div className="mt-1">+{guess.score.toLocaleString()} pts</div>
+          {guess.loc.hint && (
+            <div className="opacity-70 mt-2 text-[11px] italic">{guess.loc.hint}</div>
+          )}
+          <div className="flex items-center justify-center gap-2 mt-3">
+            <a
+              href={`https://earth.google.com/web/@${guess.loc.lat},${guess.loc.lon},0a,2000d,35y,0h,0t,0r`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 px-3 py-2 text-[10px] uppercase tracking-[0.3em] hover:brightness-110"
+              style={{ border: `1px solid ${inkColor}55`, color: inkColor, background: 'transparent' }}
+            >
+              <ExternalLink className="w-3 h-3" /> open in Google Earth
+            </a>
+            <button
+              onClick={guardedNext}
+              className="px-5 py-2 text-[11px] uppercase tracking-[0.3em] hover:brightness-110"
+              style={{ border: `2px solid ${accent}`, color: inkColor, background: 'transparent' }}
+            >
+              {idx + 1 < GEO_LOCATIONS.length ? 'Next location' : 'See results'}
+              <PadHint label="X" bg={bgColor} />
+            </button>
+          </div>
+        </div>
+      )}
           {guess.loc.hint && (
             <div className="opacity-70 mt-2 text-[11px] italic">{guess.loc.hint}</div>
           )}
