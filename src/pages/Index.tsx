@@ -15,6 +15,7 @@ import FountainsOfNukus from '@/components/FountainsOfNukus';
 import SpectralEarthHUD from '@/components/SpectralEarthHUD';
 import MinistryHUD from '@/components/MinistryHUD';
 import WaterSimHUD from '@/components/WaterSimHUD';
+import GeoGuessrHUD from '@/components/GeoGuessrHUD';
 import BackgroundMusic from '@/components/BackgroundMusic';
 import { applyRandomSpectralPalette } from '@/lib/visual-mode';
 import CharacterSelect from '@/components/CharacterSelect';
@@ -210,6 +211,7 @@ const Index = () => {
   const [spectralMode, setSpectralMode] = useState(false);
   const [ministryMode, setMinistryMode] = useState(false);
   const [simMode, setSimMode] = useState(false);
+  const [geoMode, setGeoMode] = useState(false);
   const ministryPrevVisualRef = useRef<import('@/lib/visual-mode').VisualMode>('dark');
   const [spectralCamPos, setSpectralCamPos] = useState<[number, number, number]>([0, 14, 14]);
   const [spectralCamTarget, setSpectralCamTarget] = useState<[number, number, number]>([0, 0, 0]);
@@ -1147,7 +1149,7 @@ const Index = () => {
     return () => window.removeEventListener('keydown', handler);
   }, [toggleScreenRecording]);
 
-  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode && !dustMode && !traceMode && !lifeMode && !spectralMode && !ministryMode && !simMode;
+  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode && !dustMode && !traceMode && !lifeMode && !spectralMode && !ministryMode && !simMode && !geoMode;
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
@@ -1514,11 +1516,43 @@ const Index = () => {
             const col = aim?.col ?? Math.floor(terrain.width / 2);
             handleRaiseTerrainClick(row, col);
           }}
+          onNext={() => {
+            // Hand off to Level 4 (satellite geoguessr).
+            setSimMode(false);
+            setWaterFlowActive(false);
+            setFlowAnimating(false);
+            setGeoMode(true);
+            setShowKhorezm(true);
+          }}
+        />
+      )}
+
+      {geoMode && terrain && (
+        <GeoGuessrHUD
+          onExit={() => {
+            setGeoMode(false);
+            setStarted(false);
+            setVisualMode(ministryPrevVisualRef.current);
+          }}
+          onPrev={() => {
+            setGeoMode(false);
+            setSimMode(true);
+            setWaterFlowActive(true);
+            setFlowAnimating(true);
+          }}
+          getAimLatLon={() => {
+            const aim = viewerRef.current?.getAimPixel();
+            if (!aim || !terrain.bounds) return null;
+            const b = terrain.bounds;
+            const lon = b.minLon + (aim.col / (terrain.width - 1)) * (b.maxLon - b.minLon);
+            const lat = b.minLat + (1 - aim.row / (terrain.height - 1)) * (b.maxLat - b.minLat);
+            return { lat, lon };
+          }}
         />
       )}
 
       {/* Background music — plays during levels with a mute toggle */}
-      <BackgroundMusic active={spectralMode || ministryMode || simMode} />
+      <BackgroundMusic active={spectralMode || ministryMode || simMode || geoMode} />
 
 
 

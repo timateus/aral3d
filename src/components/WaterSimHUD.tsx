@@ -1,4 +1,4 @@
-import { ChevronLeft, ArrowLeft, Droplets, Mountain } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowLeft, Droplets, Mountain } from 'lucide-react';
 import { useEffect, useMemo, useRef } from 'react';
 import { useDesignerScheme } from '@/lib/visual-mode';
 import { sfx } from '@/lib/ui-sfx';
@@ -36,13 +36,14 @@ function PadHint({ label, bg }: { label: string; bg: string }) {
 interface Props {
   onExit: () => void;
   onPrev?: () => void;
+  onNext?: () => void;
   onAddWaterCenter: () => void;
   onBuildDamCenter: () => void;
   wetPixels?: number;
   damEdits?: number;
 }
 
-const WaterSimHUD = ({ onExit, onPrev, onAddWaterCenter, onBuildDamCenter, wetPixels = 0, damEdits = 0 }: Props) => {
+const WaterSimHUD = ({ onExit, onPrev, onNext, onAddWaterCenter, onBuildDamCenter, wetPixels = 0, damEdits = 0 }: Props) => {
   const [scheme] = useDesignerScheme();
   const stops = (scheme.terrainStops && scheme.terrainStops.length > 1)
     ? scheme.terrainStops
@@ -61,17 +62,19 @@ const WaterSimHUD = ({ onExit, onPrev, onAddWaterCenter, onBuildDamCenter, wetPi
     return best;
   }, [stops, bgColor]);
 
-  // Gamepad: X = place water, B/O = build dam, LB = prev level.
+  // Gamepad: X = place water, B/O = build dam, LB = prev level, RB = next level.
   const addRef = useRef(onAddWaterCenter);
   const damRef = useRef(onBuildDamCenter);
   const prevRef = useRef(onPrev);
+  const nextRef = useRef(onNext);
   useEffect(() => { addRef.current = onAddWaterCenter; }, [onAddWaterCenter]);
   useEffect(() => { damRef.current = onBuildDamCenter; }, [onBuildDamCenter]);
   useEffect(() => { prevRef.current = onPrev; }, [onPrev]);
+  useEffect(() => { nextRef.current = onNext; }, [onNext]);
 
   useEffect(() => {
     let raf = 0;
-    let prev = { x: false, b: false, lb: false };
+    let prev = { x: false, b: false, lb: false, rb: false };
     const tick = () => {
       const pads = navigator.getGamepads?.() ?? [];
       let pad: Gamepad | null = null;
@@ -80,10 +83,12 @@ const WaterSimHUD = ({ onExit, onPrev, onAddWaterCenter, onBuildDamCenter, wetPi
         const x = !!pad.buttons[2]?.pressed;
         const b = !!pad.buttons[1]?.pressed;
         const lb = !!pad.buttons[4]?.pressed;
+        const rb = !!pad.buttons[5]?.pressed;
         if (x && !prev.x) { sfx.make(); addRef.current(); }
         if (b && !prev.b) { sfx.make(); damRef.current(); }
         if (lb && !prev.lb && prevRef.current) { sfx.navPrev(); prevRef.current(); }
-        prev = { x, b, lb };
+        if (rb && !prev.rb && nextRef.current) { sfx.navNext(); nextRef.current(); }
+        prev = { x, b, lb, rb };
       }
       raf = requestAnimationFrame(tick);
     };
@@ -146,6 +151,19 @@ const WaterSimHUD = ({ onExit, onPrev, onAddWaterCenter, onBuildDamCenter, wetPi
         >
           <ChevronLeft style={{ width: 140, height: 140 }} strokeWidth={4} />
           <PadHint label="LB" bg={bgColor} />
+        </button>
+      )}
+
+      {/* Next arrow (to level 4) */}
+      {onNext && (
+        <button
+          onClick={() => { sfx.navNext(); onNext(); }}
+          aria-label="next level"
+          className="fixed right-2 top-1/2 -translate-y-1/2 z-[70] flex flex-col items-center justify-center bg-transparent hover:opacity-70 transition-opacity"
+          style={{ color: arrowColor, filter: `drop-shadow(0 0 10px ${bgColor})` }}
+        >
+          <ChevronRight style={{ width: 140, height: 140 }} strokeWidth={4} />
+          <PadHint label="RB" bg={bgColor} />
         </button>
       )}
 
