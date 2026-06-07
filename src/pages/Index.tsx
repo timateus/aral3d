@@ -1538,7 +1538,7 @@ const Index = () => {
         <WaterSimHUD
           wetPixels={flowWetCount}
           damEdits={raiseEditCount}
-          lifeThreshold={Math.max(2500, Math.round(terrain.width * terrain.height * 0.012))}
+          lifeThreshold={Math.max(7000, Math.round(terrain.width * terrain.height * 0.03))}
           onExit={() => {
             setSimMode(false);
             setStarted(false);
