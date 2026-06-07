@@ -369,7 +369,7 @@ const IntroOverlay = ({ onStart, onGuidedTour, onReading, onCanalTour, onAgmarTo
         <div className="space-y-4">
           {/* Big Play card */}
           <button
-            onClick={() => onStartGame?.()}
+            onClick={() => (onSpectral ?? onStartGame)?.()}
             className="group relative w-full bg-card/40 backdrop-blur-md border border-border/30 p-8 hover:bg-card/70 hover:border-primary/40 transition-all duration-500 text-left overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
