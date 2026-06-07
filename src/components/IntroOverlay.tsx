@@ -415,32 +415,39 @@ const IntroOverlay = ({ onStart, onGuidedTour, onReading, onCanalTour, onAgmarTo
             </button>
           </div>
 
-          {/* Compact grid — everything else */}
-          <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
-            {[
-              { label: 'Learn', desc: 'Ag-MAR water tech', onClick: () => onAgmarTour?.(), color: 'emerald-500' },
-              { label: 'Walk', desc: 'History & canals', onClick: onGuidedTour, color: 'secondary-foreground' },
-              { label: 'Compare', desc: 'Four views', onClick: () => onQuadrants?.(), color: 'amber-500' },
-              { label: 'Spectral', desc: 'Color-wild Earth', onClick: () => onSpectral?.(), color: 'violet-400' },
-              { label: 'Sandbox', desc: 'Drop elements', onClick: () => onSandbox?.(), color: 'orange-500' },
-              { label: 'Trace', desc: 'Follow canals', onClick: () => onTraceCanals?.(), color: 'cyan-500' },
-              { label: 'Dust', desc: 'Particle wind', onClick: () => onDustStorm?.(), color: 'amber-500' },
-              { label: 'Life', desc: "Conway's cells", onClick: () => onLife?.(), color: 'fuchsia-500' },
-              { label: 'Fountains', desc: 'Nukus sites', onClick: () => onFountains?.(), color: 'sky-400' },
-              { label: 'Read', desc: 'Field notebook', onClick: () => onReading?.(), color: 'stone-300' },
-            ].map((item) => (
-              <button
-                key={item.label}
-                onClick={item.onClick}
-                className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-2.5 hover:bg-card/70 transition-all duration-300 text-left overflow-hidden"
-              >
-                <div className="relative z-10">
-                  <p className="text-xs font-medium text-foreground tracking-wide">{item.label}</p>
-                  <p className="text-[9px] text-foreground/40 leading-tight mt-0.5">{item.desc}</p>
-                </div>
-              </button>
-            ))}
-          </div>
+          {/* Compact grid — hidden behind "More" */}
+          <details className="group">
+            <summary className="list-none cursor-pointer text-[10px] font-mono uppercase tracking-[0.25em] text-foreground/40 hover:text-foreground/70 transition-colors py-2 text-center select-none">
+              More modes ▾
+            </summary>
+            <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 mt-3">
+              {[
+                { label: 'Touch', desc: '3D objects', onClick: () => setView('artifacts') },
+                { label: 'Learn', desc: 'Ag-MAR water tech', onClick: () => onAgmarTour?.() },
+                { label: 'Walk', desc: 'History & canals', onClick: onGuidedTour },
+                { label: 'Compare', desc: 'Four views', onClick: () => onQuadrants?.() },
+                { label: 'Spectral', desc: 'Color-wild Earth', onClick: () => onSpectral?.() },
+                { label: 'Sandbox', desc: 'Drop elements', onClick: () => onSandbox?.() },
+                { label: 'Trace', desc: 'Follow canals', onClick: () => onTraceCanals?.() },
+                { label: 'Dust', desc: 'Particle wind', onClick: () => onDustStorm?.() },
+                { label: 'Life', desc: "Conway's cells", onClick: () => onLife?.() },
+                { label: 'Fountains', desc: 'Nukus sites', onClick: () => onFountains?.() },
+                { label: 'Read', desc: 'Field notebook', onClick: () => onReading?.() },
+              ].map((item) => (
+                <button
+                  key={item.label}
+                  onClick={item.onClick}
+                  className="group relative bg-card/30 backdrop-blur-md border border-border/20 p-2.5 hover:bg-card/60 transition-all duration-300 text-left overflow-hidden"
+                >
+                  <div className="relative z-10">
+                    <p className="text-xs font-medium text-foreground tracking-wide">{item.label}</p>
+                    <p className="text-[9px] text-foreground/40 leading-tight mt-0.5">{item.desc}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </details>
+
         </div>
       </div>
     </div>
