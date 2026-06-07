@@ -1515,12 +1515,43 @@ const Index = () => {
             const row = aim?.row ?? Math.floor(terrain.height / 2);
             const col = aim?.col ?? Math.floor(terrain.width / 2);
             handleRaiseTerrainClick(row, col);
+          onNext={() => {
+            // Hand off to Level 4 (satellite geoguessr).
+            setSimMode(false);
+            setWaterFlowActive(false);
+            setFlowAnimating(false);
+            setGeoMode(true);
+            setShowKhorezm(true);
+          }}
+        />
+      )}
+
+      {geoMode && terrain && (
+        <GeoGuessrHUD
+          onExit={() => {
+            setGeoMode(false);
+            setStarted(false);
+            setVisualMode(ministryPrevVisualRef.current);
+          }}
+          onPrev={() => {
+            setGeoMode(false);
+            setSimMode(true);
+            setWaterFlowActive(true);
+            setFlowAnimating(true);
+          }}
+          getAimLatLon={() => {
+            const aim = viewerRef.current?.getAimPixel();
+            if (!aim || !terrain.bounds) return null;
+            const b = terrain.bounds;
+            const lon = b.minLon + (aim.col / (terrain.width - 1)) * (b.maxLon - b.minLon);
+            const lat = b.minLat + (1 - aim.row / (terrain.height - 1)) * (b.maxLat - b.minLat);
+            return { lat, lon };
           }}
         />
       )}
 
       {/* Background music — plays during levels with a mute toggle */}
-      <BackgroundMusic active={spectralMode || ministryMode || simMode} />
+      <BackgroundMusic active={spectralMode || ministryMode || simMode || geoMode} />
 
 
 
