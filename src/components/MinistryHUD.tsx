@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import { useDesignerScheme, applyDesignerScheme, getDesignerScheme } from '@/lib/visual-mode';
 import { sfx } from '@/lib/ui-sfx';
+import { consumeGamepadButton } from '@/lib/gamepad-dedupe';
 
 
 function bgIsLight(hex: string): boolean {
@@ -213,8 +214,8 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
   });
   const [panelOpen, setPanelOpen] = useState(false);
 
-  // Next level is unlocked only when the basin is filled (>= 50m) or fully drained (<= 5m).
-  const canNext = waterLevel >= 50 || waterLevel <= 5;
+  // Next level is unlocked only after the sea is drained below -4m.
+  const canNext = waterLevel < -4;
 
   // Gamepad controls — X (button 2) lowers water, O/B (button 1) raises it,
   // held continuously. LB/RB navigate levels. Right stick stays free for camera.
@@ -227,7 +228,6 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
   useEffect(() => { onWaterLevelChangeRef.current = onWaterLevelChange; }, [onWaterLevelChange]);
   useEffect(() => {
     let raf = 0;
-    let prevLB = false, prevRB = false;
     let lastT = performance.now();
     let sfxAccum = 0;
     const tick = (now: number) => {
@@ -252,9 +252,8 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         }
         const lb = !!pad.buttons[4]?.pressed;
         const rb = !!pad.buttons[5]?.pressed;
-        if (rb && !prevRB && onNext && (waterLevelRef.current >= 50 || waterLevelRef.current <= 5)) { sfx.navNext(); onNext(); }
-        if (lb && !prevLB && onPrev) { sfx.navPrev(); onPrev(); }
-        prevLB = lb; prevRB = rb;
+        if (consumeGamepadButton('rb', rb) && onNext && waterLevelRef.current < -4) { sfx.navNext(); onNext(); }
+        if (consumeGamepadButton('lb', lb) && onPrev) { sfx.navPrev(); onPrev(); }
       }
       raf = requestAnimationFrame(tick);
     };
