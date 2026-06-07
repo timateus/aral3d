@@ -80,7 +80,7 @@ export function useGamepad() {
         const rx = applyDeadzone(active.axes[2] ?? 0);
         const ry = applyDeadzone(active.axes[3] ?? 0);
         const b = active.buttons;
-        stateRef.current = {
+        const next: GamepadState = {
           connected: true,
           leftStick: { x: lx, y: ly },
           rightStick: { x: rx, y: ry },
@@ -101,6 +101,23 @@ export function useGamepad() {
             right: !!b[15]?.pressed,
           },
         };
+        // Debug logging — throttled stick logs, edge-triggered button logs.
+        const prev = stateRef.current;
+        const btnNames: (keyof GamepadState['buttons'])[] = ['a','b','x','y','lb','rb','up','down','left','right','start','back'];
+        for (const n of btnNames) {
+          if (next.buttons[n] && !prev.buttons[n]) console.log(`[pad] BTN ↓ ${n}`);
+          if (!next.buttons[n] && prev.buttons[n]) console.log(`[pad] BTN ↑ ${n}`);
+        }
+        const now = performance.now();
+        if (!(globalThis as any).__padLogT) (globalThis as any).__padLogT = 0;
+        if (now - (globalThis as any).__padLogT > 200) {
+          const hasMove = lx || ly || rx || ry || next.buttons.lt > 0.05 || next.buttons.rt > 0.05;
+          if (hasMove) {
+            console.log(`[pad] axes L(${lx.toFixed(2)},${ly.toFixed(2)}) R(${rx.toFixed(2)},${ry.toFixed(2)}) LT=${next.buttons.lt.toFixed(2)} RT=${next.buttons.rt.toFixed(2)}`);
+            (globalThis as any).__padLogT = now;
+          }
+        }
+        stateRef.current = next;
       } else {
         if (stateRef.current.connected) stateRef.current = emptyState();
       }
