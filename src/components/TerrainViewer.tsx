@@ -180,6 +180,7 @@ interface TerrainViewerProps {
   lifeActive?: boolean;
   spectralActive?: boolean;
   rightStickCameraEnabled?: boolean;
+  geoGuessrMarkers?: import('@/components/GeoFeatures').GeoGuessrMarkerSet | null;
 }
 
 /* ── Canvas Recorder (captures WebGL canvas stream, no camera animation) ── */
