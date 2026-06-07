@@ -46,7 +46,7 @@ export const GEO_LOCATIONS: GeoLocation[] = [
     name: 'Janpiq Qala',
     lat: 42.02734,
     lon: 60.32507,
-    zoom: 16,
+    zoom: 14,
     hint: 'Ancient fortress on the right bank of the Amu Darya.',
   },
   {
@@ -62,7 +62,7 @@ export const GEO_LOCATIONS: GeoLocation[] = [
     name: 'Qubla-Ustyurt Settlement',
     lat: 44.02710,
     lon: 58.25278,
-    zoom: 16,
+    zoom: 13,
     hint: 'Abandoned settlement and airport on the Ustyurt plateau.',
   },
 ];
