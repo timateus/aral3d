@@ -211,33 +211,37 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, getLatLonAtScreen, onMarke
     next();
   };
 
-  // Mouse click on the map:
-  //  - while guessing → place guess at clicked location
-  //  - after guess → open Google Earth at the truth location
+  // Mouse click on the map while guessing → set a PENDING guess (requires confirmation).
+  // Google Earth is only opened from the satellite image (no longer from a map click).
+  const pendingRef = useRef<{ lat: number; lon: number } | null>(null);
+  useEffect(() => { pendingRef.current = pending; }, [pending]);
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null;
-      // ignore clicks on HUD buttons/panels
       if (target && target.closest('button, a, input, select, textarea, [data-hud]')) return;
-      if (doneRef.current) return;
-      if (guessRef.current) {
-        const t = locRef.current;
-        const url = `https://earth.google.com/web/@${t.lat},${t.lon},0a,2000d,35y,0h,0t,0r`;
-        window.open(url, '_blank', 'noopener');
-        return;
-      }
-      if (!getLatLonAtScreen) { guardedPlace(); return; }
+      if (doneRef.current || guessRef.current) return;
+      if (!getLatLonAtScreen) return;
       const ll = getLatLonAtScreen(e.clientX, e.clientY);
-      if (!ll) { guardedPlace(); return; }
+      if (!ll) return;
       const now = performance.now();
       if (now - clickGuardRef.current < 300) return;
       clickGuardRef.current = now;
-      place(ll.lat, ll.lon);
+      setPending({ lat: ll.lat, lon: ll.lon });
+      sfx.navNext?.();
     };
     window.addEventListener('click', onClick);
     return () => window.removeEventListener('click', onClick);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getLatLonAtScreen]);
+
+  const confirmPending = () => {
+    const p = pendingRef.current;
+    if (!p) return;
+    setPending(null);
+    place(p.lat, p.lon);
+  };
+  const cancelPending = () => { setPending(null); sfx.exit?.(); };
+
 
   // Keyboard navigation (no controller required)
   useEffect(() => {
