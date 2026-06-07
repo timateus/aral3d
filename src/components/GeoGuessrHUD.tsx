@@ -574,6 +574,15 @@ const GeoGuessrHUD = ({ onExit, onPrev, onNext, getAimLatLon, getLatLonAtScreen,
             >
               Play again
             </button>
+            {onNext && (
+              <button
+                onClick={() => { sfx.navNext?.(); onNext(); }}
+                className="px-3 py-1.5 text-[10px] uppercase tracking-[0.3em] hover:brightness-110"
+                style={{ border: `1px solid ${inkColor}`, color: bgColor, background: inkColor }}
+              >
+                Next level →
+              </button>
+            )}
             <button
               onClick={() => { sfx.exit(); onExit(); }}
               className="px-3 py-1.5 text-[10px] uppercase tracking-[0.3em] hover:brightness-110"
