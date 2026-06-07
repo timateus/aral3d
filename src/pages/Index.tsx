@@ -290,9 +290,10 @@ const Index = () => {
         n: 5,
         name: 'Map Builder',
         instructions: [
-          'Place water, salt, saxaul, saigaks and fish on the map.',
-          'Click anywhere on the terrain to drop the selected item.',
-          'Number keys 1–9 switch the palette. Z undoes the last placement.',
+          'Walk the surface in first person — WASD or left stick.',
+          'Mouse / right stick to look. Click the screen to capture the mouse.',
+          'Hold X / A / left-mouse to continuously place the selected item.',
+          'Number keys 1–9 (or LB/RB) switch the palette. Z undoes the last placement.',
         ],
       });
     }
