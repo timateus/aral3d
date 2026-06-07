@@ -517,6 +517,7 @@ function NoahsArk({ terrain, exaggeration, waterLevel }: { terrain: TerrainData;
 const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, showWaterExtent, waterExtentYear, showPopDensity, popHexSize, popHexHeight, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone, riverInflow, userLocation, inspectorEnabled, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, flowState, flowRenderKey, terrainVersion, raisedPixels, dugPixels, showMigration, migrationYear, showChoropleth, choroplethIndicator, choroplethExaggeration, canalHighlights, highlightedCanalNames, canalTourActive, showObjectLibrary, onObjectSelect, gameModeActive, gameCharacter, onGameAddWater, bowlWorldActive, onBowlWorldComplete, showLandcover, landcoverVisibleClasses, onLandcoverAvailableClasses, showSchools, showVocabulary, showDwellings, showPlaces, agmarShowProposalSites, aryqWorldActive, onAryqWorldComplete, onNukusClick, showOverlayMetrics, showGroundwater, showPrecipitation, showSalinity, waterPlaygroundActive, sandboxActive, sandboxSimState, sandboxRenderKey, sandboxToolActive, onSandboxClick, dustActive, dustState, dustRenderKey, dustToolActive, onDustClick, showWaterways, waterwayTypeFilter, waterwayTraceMode, waterwayClearTraceSignal, terrainStyle, contourInterval, vectorInterval, hideTerrainSurface, lifeActive, spectralActive, rightStickCameraEnabled = true, geoGuessrMarkers }, ref) => {
   const screenshotFn = useRef<(() => void) | null>(null);
   const aimPixelFn = useRef<(() => { row: number; col: number } | null) | null>(null);
+  const pixelAtScreenFn = useRef<((x: number, y: number) => { row: number; col: number } | null) | null>(null);
   const canvasRecorderControls = useRef<{ start: () => void; stop: () => void } | null>(null);
   const orbitRef = useRef<any>(null);
   const [flyoverAnimating, setFlyoverAnimating] = useState(false);
@@ -534,6 +535,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
     startCanvasRecording: () => canvasRecorderControls.current?.start(),
     stopCanvasRecording: () => canvasRecorderControls.current?.stop(),
     getAimPixel: () => aimPixelFn.current?.() ?? null,
+    getPixelAtScreen: (x, y) => pixelAtScreenFn.current?.(x, y) ?? null,
   }));
 
   return (
