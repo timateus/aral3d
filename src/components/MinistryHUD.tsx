@@ -24,8 +24,8 @@ function bgIsLight(hex: string): boolean {
 }
 
 function PadHint({ label, color, bg }: { label: string; color: string; bg: string }) {
-  // Text/border color is chosen to contrast the bg; if bg is light use a dark ink.
-  const ink = bgIsLight(bg) ? '#0a0a0a' : color;
+  // Text/border color is chosen to contrast the bg; if bg is light use dark ink, otherwise white.
+  const ink = bgIsLight(bg) ? '#0a0a0a' : '#ffffff';
   return (
     <span
       className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-mono font-bold leading-none rounded"
