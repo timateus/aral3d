@@ -75,6 +75,12 @@ export function useGamepad() {
       let active: Gamepad | null = null;
       for (const p of pads) { if (p) { active = p; break; } }
       if (active) {
+        // One-time mapping log per pad id.
+        const meta = globalThis as any;
+        if (meta.__padIdLogged !== active.id) {
+          meta.__padIdLogged = active.id;
+          console.log(`[pad] connected id="${active.id}" mapping=${active.mapping} axes=${active.axes.length} buttons=${active.buttons.length}`);
+        }
         const lx = applyDeadzone(active.axes[0] ?? 0);
         const ly = applyDeadzone(active.axes[1] ?? 0);
         const rx = applyDeadzone(active.axes[2] ?? 0);
