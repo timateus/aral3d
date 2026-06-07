@@ -17,6 +17,7 @@ import MinistryHUD from '@/components/MinistryHUD';
 import WaterSimHUD from '@/components/WaterSimHUD';
 import GeoGuessrHUD from '@/components/GeoGuessrHUD';
 import BackgroundMusic from '@/components/BackgroundMusic';
+import LevelIntroSplash from '@/components/LevelIntroSplash';
 import { applyRandomSpectralPalette } from '@/lib/visual-mode';
 import CharacterSelect from '@/components/CharacterSelect';
 import ScenarioChat from '@/components/ScenarioChat';
