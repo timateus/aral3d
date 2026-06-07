@@ -1200,7 +1200,7 @@ const Index = () => {
               agmarTourActive ? AGMAR_TOUR_STEPS[agmarTourStep]?.camera.target :
               undefined
             }
-            spectralActive={spectralMode || ministryMode}
+            spectralActive={spectralMode || ministryMode || simMode}
             riverFlyover={riverFlyover}
             onRiverFlyoverDone={() => setRiverFlyover(false)}
             riverInflow={currentRiverInflow}
