@@ -39,15 +39,14 @@ function WASDHandler({ enabled, orbitRef }: { enabled: boolean; orbitRef: React.
     const right = new THREE.Vector3().crossVectors(dir, new THREE.Vector3(0, 1, 0)).normalize();
 
     const delta = new THREE.Vector3();
-    if (keys.current.w) delta.addScaledVector(dir, speed);
-    if (keys.current.s) delta.addScaledVector(dir, -speed);
-    if (keys.current.a) delta.addScaledVector(right, -speed);
-    if (keys.current.d) delta.addScaledVector(right, speed);
+    if (keys.current.w || keys.current.up) delta.addScaledVector(dir, speed);
+    if (keys.current.s || keys.current.down) delta.addScaledVector(dir, -speed);
+    if (keys.current.a || keys.current.left) delta.addScaledVector(right, -speed);
+    if (keys.current.d || keys.current.right) delta.addScaledVector(right, speed);
     if (keys.current.q) delta.y -= speed;
     if (keys.current.e) delta.y += speed;
 
     // Gamepad: left stick = pan on XZ plane (camera-relative).
-    // No vertical (Q/E) gamepad control — LB/RB are reserved for HUD level nav.
     const gp = gpRef.current;
     if (gp.connected) {
       const lx = gp.leftStick.x;
@@ -63,12 +62,14 @@ function WASDHandler({ enabled, orbitRef }: { enabled: boolean; orbitRef: React.
       window.dispatchEvent(new CustomEvent('wasd-move', { detail: { x: delta.x, y: delta.y, z: delta.z } }));
     }
 
-    // Gamepad: right stick X = rotate (azimuth). Y is reserved for HUD sliders.
-    // LT/RT = dolly (zoom out / in).
+    // Gamepad: right stick X = rotate. Y is reserved for HUD sliders — explicitly
+    // suppress rotation when vertical push dominates so a straight up/down on
+    // the right stick never rotates the camera.
     if (gp.connected && orbitRef.current) {
-      // Higher threshold on X so pushing the stick straight up/down (Y, used by
-      // HUD water-level slider) cannot bleed into rotation.
-      const rx = Math.abs(gp.rightStick.x) > 0.35 ? gp.rightStick.x : 0;
+      const rxRaw = gp.rightStick.x;
+      const ryRaw = gp.rightStick.y;
+      const xDominant = Math.abs(rxRaw) > 0.35 && Math.abs(rxRaw) > Math.abs(ryRaw) * 1.4;
+      const rx = xDominant ? rxRaw : 0;
       const target: THREE.Vector3 = orbitRef.current.target;
       if (rx) {
         const offset = new THREE.Vector3().subVectors(camera.position, target);
