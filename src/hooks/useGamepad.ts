@@ -118,8 +118,10 @@ export function useGamepad() {
         if (!(globalThis as any).__padLogT) (globalThis as any).__padLogT = 0;
         if (now - (globalThis as any).__padLogT > 200) {
           const hasMove = lx || ly || rx || ry || next.buttons.lt > 0.05 || next.buttons.rt > 0.05;
-          if (hasMove) {
-            console.log(`[pad] axes L(${lx.toFixed(2)},${ly.toFixed(2)}) R(${rx.toFixed(2)},${ry.toFixed(2)}) LT=${next.buttons.lt.toFixed(2)} RT=${next.buttons.rt.toFixed(2)}`);
+          const rawMove = active.axes.some((v, i) => Math.abs((v ?? 0)) > 0.25 && i > 3);
+          if (hasMove || rawMove) {
+            const raw = active.axes.map((v, i) => `${i}:${(v ?? 0).toFixed(2)}`).join(' ');
+            console.log(`[pad] axes L(${lx.toFixed(2)},${ly.toFixed(2)}) R(${rx.toFixed(2)},${ry.toFixed(2)}) raw[${raw}]`);
             (globalThis as any).__padLogT = now;
           }
         }
