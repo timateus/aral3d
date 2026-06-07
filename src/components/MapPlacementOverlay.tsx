@@ -102,8 +102,8 @@ function ItemMesh({ type }: { type: MapBuilderItemId }) {
             <sphereGeometry args={[0.06, 8, 8]} />
             <meshStandardMaterial color={color} roughness={0.8} />
           </mesh>
-          <mesh castShadow position={[0.19, 0.11, 0]}>
-            <cylinderGeometry args={[0.025, 0.035, 0.06, 6]} rotation={[0, 0, Math.PI / 2]} />
+          <mesh castShadow position={[0.19, 0.11, 0]} rotation={[0, 0, Math.PI / 2]}>
+            <cylinderGeometry args={[0.025, 0.035, 0.06, 6]} />
             <meshStandardMaterial color={'#8a6a45'} roughness={0.85} />
           </mesh>
           {/* legs */}
