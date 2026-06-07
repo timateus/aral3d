@@ -295,7 +295,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
       {/* Large naked arrows — bright terrain stop color */}
       {onPrev && (
         <button
-          onClick={onPrev}
+          onClick={() => { sfx.navPrev(); onPrev(); }}
           aria-label="previous level"
           className="fixed left-2 top-1/2 -translate-y-1/2 z-[70] flex items-center justify-center bg-transparent hover:opacity-70 transition-opacity"
           style={{ color: arrowColor, filter: `drop-shadow(0 0 10px ${bgColor})` }}
@@ -304,7 +304,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         </button>
       )}
       <button
-        onClick={onNext}
+        onClick={() => { if (onNext) { sfx.navNext(); onNext(); } }}
         disabled={!onNext}
         aria-label="next level"
         className="fixed right-2 top-1/2 -translate-y-1/2 z-[70] flex items-center justify-center bg-transparent hover:opacity-70 transition-opacity disabled:opacity-20 disabled:cursor-not-allowed"
@@ -312,6 +312,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
       >
         <ChevronRight style={{ width: 140, height: 140 }} strokeWidth={4} />
       </button>
+
 
       {/* Big year number overlay while dragging */}
       {dragging && (
