@@ -62,17 +62,19 @@ const WaterSimHUD = ({ onExit, onPrev, onNext, onAddWaterCenter, onBuildDamCente
     return best;
   }, [stops, bgColor]);
 
-  // Gamepad: X = place water, B/O = build dam, LB = prev level.
+  // Gamepad: X = place water, B/O = build dam, LB = prev level, RB = next level.
   const addRef = useRef(onAddWaterCenter);
   const damRef = useRef(onBuildDamCenter);
   const prevRef = useRef(onPrev);
+  const nextRef = useRef(onNext);
   useEffect(() => { addRef.current = onAddWaterCenter; }, [onAddWaterCenter]);
   useEffect(() => { damRef.current = onBuildDamCenter; }, [onBuildDamCenter]);
   useEffect(() => { prevRef.current = onPrev; }, [onPrev]);
+  useEffect(() => { nextRef.current = onNext; }, [onNext]);
 
   useEffect(() => {
     let raf = 0;
-    let prev = { x: false, b: false, lb: false };
+    let prev = { x: false, b: false, lb: false, rb: false };
     const tick = () => {
       const pads = navigator.getGamepads?.() ?? [];
       let pad: Gamepad | null = null;
@@ -81,10 +83,12 @@ const WaterSimHUD = ({ onExit, onPrev, onNext, onAddWaterCenter, onBuildDamCente
         const x = !!pad.buttons[2]?.pressed;
         const b = !!pad.buttons[1]?.pressed;
         const lb = !!pad.buttons[4]?.pressed;
+        const rb = !!pad.buttons[5]?.pressed;
         if (x && !prev.x) { sfx.make(); addRef.current(); }
         if (b && !prev.b) { sfx.make(); damRef.current(); }
         if (lb && !prev.lb && prevRef.current) { sfx.navPrev(); prevRef.current(); }
-        prev = { x, b, lb };
+        if (rb && !prev.rb && nextRef.current) { sfx.navNext(); nextRef.current(); }
+        prev = { x, b, lb, rb };
       }
       raf = requestAnimationFrame(tick);
     };
