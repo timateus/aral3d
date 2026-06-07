@@ -11,7 +11,7 @@ import {
 } from 'recharts';
 import { useDesignerScheme, applyDesignerScheme, getDesignerScheme } from '@/lib/visual-mode';
 import { sfx } from '@/lib/ui-sfx';
-import { useGamepad } from '@/hooks/useGamepad';
+
 
 function PadHint({ label, color = '#ffffff' }: { label: string; color?: string }) {
   return (
