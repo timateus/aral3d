@@ -253,7 +253,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
       {/* Exit (top-left) */}
       <div className="absolute top-5 left-5 z-40">
         <button
-          onClick={onExit}
+          onClick={() => { sfx.exit(); onExit(); }}
           className="flex items-center gap-2 px-3 py-2 text-[10px] font-mono uppercase tracking-[0.3em] text-white/80 bg-black/70 border border-white/20 hover:bg-black/90 transition-colors"
         >
           <ArrowLeft className="w-3 h-3" /> exit
