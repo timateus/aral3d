@@ -315,6 +315,7 @@ const TerrainMesh = ({ terrain, exaggeration, waterLevel, hideNoData = false, wa
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerLeave}
         onClick={handleClick}
+        userData={{ terrainSurface: true }}
       />
       {inspectorEnabled && hoverInfo && (
         <Html

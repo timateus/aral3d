@@ -110,7 +110,8 @@ const MapBuilderHUD = ({ onExit, onPrev, getAimLatLon, onItemsChange }: Props) =
     const tick = () => {
       const gp = gpRef.current;
       if (gp.connected) {
-        const padHeld = gp.buttons.a || gp.buttons.rt > 0.4;
+        const padHeld = gp.buttons.x || gp.buttons.a || gp.buttons.rt > 0.4;
+        if (padHeld && !heldRef.current && !kbMouseHeld.current) place();
         heldRef.current = kbMouseHeld.current || padHeld;
         if (gp.buttons.rb && !prevBumpers.current.rb) {
           const i = MAP_BUILDER_ITEMS.findIndex((x) => x.id === selectedRef.current);
