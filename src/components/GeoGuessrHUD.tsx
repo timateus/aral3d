@@ -73,6 +73,7 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, getLatLonAtScreen, onMarke
 
   const [idx, setIdx] = useState(0);
   const [guess, setGuess] = useState<Guess | null>(null);
+  const [pending, setPending] = useState<{ lat: number; lon: number } | null>(null);
   const [history, setHistory] = useState<Guess[]>([]);
   const [timeLeft, setTimeLeft] = useState(GUESS_SECONDS);
 
@@ -103,11 +104,13 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, getLatLonAtScreen, onMarke
         guess: { lat: guess.lat, lon: guess.lon },
         truth: { lat: guess.loc.lat, lon: guess.loc.lon, name: guess.loc.name },
       });
+    } else if (pending) {
+      onMarkersChange({ guess: { lat: pending.lat, lon: pending.lon } });
     } else {
       onMarkersChange(null);
     }
     return () => { onMarkersChange(null); };
-  }, [guess, done, history, onMarkersChange]);
+  }, [guess, pending, done, history, onMarkersChange]);
 
   const place = (latOverride?: number, lonOverride?: number) => {
     if (guessRef.current || doneRef.current) return;
@@ -179,6 +182,8 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, getLatLonAtScreen, onMarke
             // nothing
           } else if (guessRef.current) {
             next();
+          } else if (pendingRef.current) {
+            confirmPending();
           } else {
             place();
           }
@@ -210,43 +215,52 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, getLatLonAtScreen, onMarke
     next();
   };
 
-  // Mouse click on the map:
-  //  - while guessing → place guess at clicked location
-  //  - after guess → open Google Earth at the truth location
+  // Mouse click on the map while guessing → set a PENDING guess (requires confirmation).
+  // Google Earth is only opened from the satellite image (no longer from a map click).
+  const pendingRef = useRef<{ lat: number; lon: number } | null>(null);
+  useEffect(() => { pendingRef.current = pending; }, [pending]);
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null;
-      // ignore clicks on HUD buttons/panels
       if (target && target.closest('button, a, input, select, textarea, [data-hud]')) return;
-      if (doneRef.current) return;
-      if (guessRef.current) {
-        const t = locRef.current;
-        const url = `https://earth.google.com/web/@${t.lat},${t.lon},0a,2000d,35y,0h,0t,0r`;
-        window.open(url, '_blank', 'noopener');
-        return;
-      }
-      if (!getLatLonAtScreen) { guardedPlace(); return; }
+      if (doneRef.current || guessRef.current) return;
+      if (!getLatLonAtScreen) return;
       const ll = getLatLonAtScreen(e.clientX, e.clientY);
-      if (!ll) { guardedPlace(); return; }
+      if (!ll) return;
       const now = performance.now();
       if (now - clickGuardRef.current < 300) return;
       clickGuardRef.current = now;
-      place(ll.lat, ll.lon);
+      setPending({ lat: ll.lat, lon: ll.lon });
+      sfx.navNext?.();
     };
     window.addEventListener('click', onClick);
     return () => window.removeEventListener('click', onClick);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getLatLonAtScreen]);
 
+  const confirmPending = () => {
+    const p = pendingRef.current;
+    if (!p) return;
+    setPending(null);
+    place(p.lat, p.lon);
+  };
+  const cancelPending = () => { setPending(null); sfx.exit?.(); };
+
+
   // Keyboard navigation (no controller required)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
       if (t && /input|textarea|select/i.test(t.tagName)) return;
+      if (e.key === 'Escape' && pendingRef.current) {
+        e.preventDefault(); cancelPending(); return;
+      }
       if (e.key === 'Enter' || e.key === ' ' || e.key === 'x' || e.key === 'X') {
         e.preventDefault();
         if (doneRef.current) return;
-        if (guessRef.current) guardedNext(); else guardedPlace();
+        if (guessRef.current) { guardedNext(); return; }
+        if (pendingRef.current) { confirmPending(); return; }
+        guardedPlace();
       } else if ((e.key === 'ArrowLeft' || e.key === 'Backspace') && onPrev) {
         e.preventDefault();
         sfx.navPrev();
@@ -323,14 +337,28 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, getLatLonAtScreen, onMarke
           >
             {loc.name}
           </div>
-          <img
-            key={loc.id}
-            src={satelliteImageUrl(loc, 480, 360)}
-            alt={loc.name}
-            className="block"
-            style={{ width: 360, height: 270, objectFit: 'cover' }}
-            draggable={false}
-          />
+          <a
+            href={`https://earth.google.com/web/@${loc.lat},${loc.lon},0a,2000d,35y,0h,0t,0r`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block relative group"
+            title="Open this location in Google Earth"
+          >
+            <img
+              key={loc.id}
+              src={satelliteImageUrl(loc, 480, 360)}
+              alt={loc.name}
+              className="block"
+              style={{ width: 360, height: 270, objectFit: 'cover' }}
+              draggable={false}
+            />
+            <div
+              className="absolute bottom-1 right-1 flex items-center gap-1 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-opacity"
+              style={{ background: bgColor, color: inkColor, border: `1px solid ${inkColor}44` }}
+            >
+              <ExternalLink className="w-2.5 h-2.5" /> google earth
+            </div>
+          </a>
           <div
             className="mt-2 font-mono text-[10px] uppercase tracking-[0.3em] text-center flex items-center justify-center gap-3"
             style={{ color: inkColor }}
@@ -378,7 +406,7 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, getLatLonAtScreen, onMarke
       </div>
 
       {/* Bottom action — guessing */}
-      {!done && !guess && (
+      {!done && !guess && !pending && (
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40">
           <button
             onClick={guardedPlace}
@@ -393,6 +421,53 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, getLatLonAtScreen, onMarke
             Place guess
             <PadHint label="X" bg={bgColor} />
           </button>
+          <div
+            className="mt-2 font-mono text-[10px] uppercase tracking-[0.3em] text-center opacity-70"
+            style={{ color: inkColor }}
+          >
+            tip · click anywhere on the map to drop a pin
+          </div>
+        </div>
+      )}
+
+      {/* Pending guess — requires confirmation */}
+      {!done && !guess && pending && (
+        <div
+          data-hud
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 px-5 py-4 backdrop-blur-md font-mono"
+          style={{
+            background: bgColor, color: inkColor,
+            border: `2px dashed ${accent}`,
+            minWidth: 460, textAlign: 'center',
+            boxShadow: `0 0 24px ${accent}55`,
+          }}
+        >
+          <div className="text-[10px] uppercase tracking-[0.3em] opacity-70 mb-1">
+            confirm your final guess?
+          </div>
+          <div className="text-[13px] mb-3" style={{ color: accent }}>
+            {pending.lat.toFixed(3)}°, {pending.lon.toFixed(3)}°
+          </div>
+          <div className="flex items-center justify-center gap-2">
+            <button
+              onClick={cancelPending}
+              className="px-4 py-2 text-[10px] uppercase tracking-[0.3em] hover:brightness-110"
+              style={{ border: `1px solid ${inkColor}55`, color: inkColor, background: 'transparent' }}
+              title="Pick a different spot (Esc)"
+            >
+              cancel
+            </button>
+            <button
+              onClick={confirmPending}
+              className="flex items-center gap-2 px-5 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] hover:brightness-110"
+              style={{ border: `2px solid ${accent}`, color: inkColor, background: `${accent}22` }}
+              title="Confirm this final guess"
+            >
+              <Target className="w-3 h-3" style={{ color: accent }} />
+              confirm guess
+              <PadHint label="X" bg={bgColor} />
+            </button>
+          </div>
         </div>
       )}
 
