@@ -85,6 +85,15 @@ function WASDHandler({ enabled, orbitRef, rightStickCameraEnabled = true }: { en
         offset.setFromSpherical(spherical);
         camera.position.copy(target).add(offset);
         camera.lookAt(target);
+        const w = globalThis as any;
+        if (!w.__camLogT) w.__camLogT = 0;
+        const now = performance.now();
+        if (now - w.__camLogT > 200) { console.log(`[cam] R-stick rotate rx=${rxRaw.toFixed(2)} ry=${ryRaw.toFixed(2)} enabled=${rightStickCameraEnabled}`); w.__camLogT = now; }
+      } else if ((Math.abs(rxRaw) > 0.08 || Math.abs(ryRaw) > 0.08)) {
+        const w = globalThis as any;
+        if (!w.__camSkipT) w.__camSkipT = 0;
+        const now = performance.now();
+        if (now - w.__camSkipT > 500) { console.log(`[cam] R-stick IGNORED enabled=${rightStickCameraEnabled} rx=${rxRaw.toFixed(2)} ry=${ryRaw.toFixed(2)}`); w.__camSkipT = now; }
       }
       const zoom = (gp.buttons.rt > 0.1 ? gp.buttons.rt : 0) - (gp.buttons.lt > 0.1 ? gp.buttons.lt : 0);
       if (zoom !== 0) {
