@@ -226,6 +226,16 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
   }, [waterLevel]);
   const onWaterLevelChangeRef = useRef(onWaterLevelChange);
   useEffect(() => { onWaterLevelChangeRef.current = onWaterLevelChange; }, [onWaterLevelChange]);
+  const sliderRef = useRef<HTMLDivElement | null>(null);
+  const setLevelFromPointer = (clientY: number) => {
+    const rect = sliderRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const pct = Math.max(0, Math.min(1, (rect.bottom - clientY) / rect.height));
+    const next = MIN + pct * (MAX - MIN);
+    waterLevelRef.current = next;
+    onWaterLevelChangeRef.current(next);
+    flashBig();
+  };
   useEffect(() => {
     let raf = 0;
     let lastT = performance.now();
@@ -252,6 +262,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         }
         const lb = !!pad.buttons[4]?.pressed;
         const rb = !!pad.buttons[5]?.pressed;
+        if (consumeGamepadButton('ministry-next-x', xBtn) && onNext && waterLevelRef.current < -4) { sfx.navNext(); onNext(); }
         if (consumeGamepadButton('rb', rb) && onNext && waterLevelRef.current < -4) { sfx.navNext(); onNext(); }
         if (consumeGamepadButton('lb', lb) && onPrev) { sfx.navPrev(); onPrev(); }
       }
