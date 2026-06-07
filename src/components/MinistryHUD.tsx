@@ -185,25 +185,23 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
   });
   const [panelOpen, setPanelOpen] = useState(true);
 
-  // Gamepad controls — left stick Y / dpad up-down adjusts water level,
-  // LB/RB navigate levels, A toggles panel, B exits.
+  // Gamepad controls — right stick Y adjusts water level; LB/RB navigate levels.
+  // No exit binding, no panel-toggle binding, no d-pad / vertical camera.
   const { stateRef } = useGamepad();
   const waterLevelRef = useRef(waterLevel);
   useEffect(() => { waterLevelRef.current = waterLevel; }, [waterLevel]);
   useEffect(() => {
     let raf = 0;
-    let prev = { lb: false, rb: false, a: false, b: false, up: false, down: false };
+    let prev = { lb: false, rb: false };
     let lastT = performance.now();
     const tick = (now: number) => {
       const dt = Math.min(0.05, (now - lastT) / 1000);
       lastT = now;
       const s = stateRef.current;
       if (s.connected) {
-        // analog + dpad
-        const stick = -s.leftStick.y; // up = positive
-        const dpad = (s.buttons.up ? 1 : 0) + (s.buttons.down ? -1 : 0);
-        const axis = Math.abs(stick) > 0.05 ? stick : dpad;
-        if (axis !== 0) {
+        // right stick Y = slider (up = higher water)
+        const axis = -s.rightStick.y;
+        if (Math.abs(axis) > 0.05) {
           const next = Math.max(MIN, Math.min(MAX, waterLevelRef.current + axis * 25 * dt));
           if (Math.abs(next - waterLevelRef.current) > 0.001) {
             waterLevelRef.current = next;
@@ -212,23 +210,17 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
             sfx.slider();
           }
         }
-        // edge-triggered buttons
+        // edge-triggered level nav
         if (s.buttons.rb && !prev.rb && onNext) { sfx.navNext(); onNext(); }
         if (s.buttons.lb && !prev.lb && onPrev) { sfx.navPrev(); onPrev(); }
-        if (s.buttons.a && !prev.a) { sfx.toggle(); setPanelOpen((o) => !o); }
-        if (s.buttons.b && !prev.b) { sfx.exit(); onExit(); }
-        prev = {
-          lb: s.buttons.lb, rb: s.buttons.rb,
-          a: s.buttons.a, b: s.buttons.b,
-          up: s.buttons.up, down: s.buttons.down,
-        };
+        prev = { lb: s.buttons.lb, rb: s.buttons.rb };
       }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onNext, onPrev, onExit]);
+  }, [onNext, onPrev]);
 
 
   const chartData = useMemo(
