@@ -283,6 +283,20 @@ const Index = () => {
     }
     prevGeoRef.current = geoMode;
   }, [geoMode]);
+  useEffect(() => {
+    if (placeMode && !prevPlaceRef.current) {
+      setLevelIntro({
+        n: 5,
+        name: 'Map Builder',
+        instructions: [
+          'Place water, salt, saxaul, saigaks and fish on the map.',
+          'Click anywhere on the terrain to drop the selected item.',
+          'Number keys 1–9 switch the palette. Z undoes the last placement.',
+        ],
+      });
+    }
+    prevPlaceRef.current = placeMode;
+  }, [placeMode]);
 
 
   // One-shot randomizer for Spectral Earth — palette, exaggeration, camera, zoom, typography.
