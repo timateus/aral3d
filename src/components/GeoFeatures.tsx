@@ -15,7 +15,8 @@ interface CanalHighlight {
 export interface GeoGuessrMarkerSet {
   guess?: { lat: number; lon: number } | null;
   truth?: { lat: number; lon: number; name: string } | null;
-  all?: { lat: number; lon: number; name: string }[];
+  /** All rounds — render every guess+truth pair with arcs */
+  all?: { truth: { lat: number; lon: number; name: string }; guess: { lat: number; lon: number } }[];
 }
 
 interface GeoFeaturesProps {
