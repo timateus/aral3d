@@ -70,21 +70,69 @@ function BlockCube({ type }: { type: MapBuilderItemId }) {
   const map = useMemo(() => makeTexture(type, def.color), [type, def.color]);
   const isWater = type === 'water';
   const isLava = type === 'lava';
+  const isFire = type === 'fire';
+  const isSmoke = type === 'smoke';
   const isOil = type === 'oil';
+  const matRef = useRef<THREE.MeshStandardMaterial>(null);
+  const grpRef = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime;
+    if (isFire && matRef.current) {
+      matRef.current.emissiveIntensity = 1.4 + Math.sin(t * 20) * 0.6;
+    }
+    if (isLava && matRef.current) {
+      matRef.current.emissiveIntensity = 0.9 + Math.sin(t * 6) * 0.3;
+    }
+    if (isFire && grpRef.current) {
+      grpRef.current.scale.y = 1 + Math.sin(t * 14) * 0.15;
+    }
+    if (isSmoke && grpRef.current) {
+      grpRef.current.position.y = (CUBE / 2) + Math.sin(t * 2) * 0.03;
+    }
+  });
   return (
-    <mesh castShadow receiveShadow position={[0, CUBE / 2, 0]}>
-      <boxGeometry args={[CUBE, CUBE, CUBE]} />
-      <meshStandardMaterial
-        map={map}
-        color={def.color}
-        roughness={isWater || isOil ? 0.25 : 0.85}
-        metalness={isWater ? 0.15 : isOil ? 0.35 : 0}
-        transparent={isWater}
-        opacity={isWater ? 0.82 : 1}
-        emissive={isLava ? '#ff3300' : isWater ? def.color : '#000000'}
-        emissiveIntensity={isLava ? 0.9 : isWater ? 0.15 : 0}
-      />
-    </mesh>
+    <group ref={grpRef} position={[0, CUBE / 2, 0]}>
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={[CUBE, CUBE, CUBE]} />
+        <meshStandardMaterial
+          ref={matRef}
+          map={map}
+          color={def.color}
+          roughness={isWater || isOil ? 0.25 : isFire || isSmoke ? 0.95 : 0.85}
+          metalness={isWater ? 0.15 : isOil ? 0.35 : 0}
+          transparent={isWater || isSmoke || isFire}
+          opacity={isWater ? 0.82 : isSmoke ? 0.55 : isFire ? 0.9 : 1}
+          emissive={isLava ? '#ff3300' : isFire ? '#ff5500' : isWater ? def.color : '#000000'}
+          emissiveIntensity={isLava ? 0.9 : isFire ? 1.6 : isWater ? 0.15 : 0}
+        />
+      </mesh>
+      {isFire && (
+        <pointLight color="#ff7a22" intensity={1.5} distance={0.6} decay={2} position={[0, CUBE * 0.6, 0]} />
+      )}
+    </group>
+  );
+}
+
+// ---------- Flower (pixel cube + petals) ----------
+function Flower() {
+  const ref = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    if (ref.current) ref.current.rotation.y = Math.sin(clock.elapsedTime * 1.2) * 0.25;
+  });
+  const stem = '#4caf50';
+  const petal = ['#ff7ab8', '#ffd166', '#f25f5c', '#a8dadc'][Math.floor(Math.random() * 4)];
+  return (
+    <group ref={ref} position={[0, CUBE / 2, 0]}>
+      <mesh castShadow><boxGeometry args={[CUBE * 0.18, CUBE * 0.9, CUBE * 0.18]} /><meshStandardMaterial color={stem} /></mesh>
+      <mesh castShadow position={[0, CUBE * 0.55, 0]}>
+        <boxGeometry args={[CUBE * 0.55, CUBE * 0.25, CUBE * 0.55]} />
+        <meshStandardMaterial color={petal} emissive={petal} emissiveIntensity={0.3} />
+      </mesh>
+      <mesh castShadow position={[0, CUBE * 0.55, 0]}>
+        <boxGeometry args={[CUBE * 0.2, CUBE * 0.27, CUBE * 0.2]} />
+        <meshStandardMaterial color="#ffd166" emissive="#ffd166" emissiveIntensity={0.5} />
+      </mesh>
+    </group>
   );
 }
 
@@ -203,9 +251,11 @@ const MapPlacementOverlay = ({ terrain, exaggeration, items }: Props) => {
           <group key={it.id} position={[pos[0], pos[1] + yOffset, pos[2]]}>
             {it.type === 'oilpump'
               ? <OilPump />
-              : def.kind === 'block'
-                ? <BlockCube type={it.type} />
-                : <Creature type={it.type} />}
+              : it.type === 'flower'
+                ? <Flower />
+                : def.kind === 'block'
+                  ? <BlockCube type={it.type} />
+                  : <Creature type={it.type} />}
           </group>
         );
       })}
