@@ -1227,7 +1227,7 @@ const Index = () => {
     return () => window.removeEventListener('keydown', handler);
   }, [toggleScreenRecording]);
 
-  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode && !dustMode && !traceMode && !lifeMode && !spectralMode && !ministryMode && !simMode && !geoMode;
+  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode && !dustMode && !traceMode && !lifeMode && !spectralMode && !ministryMode && !simMode && !geoMode && !placeMode;
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
@@ -1643,7 +1643,7 @@ const Index = () => {
       )}
 
       {/* Background music — plays during levels with a mute toggle */}
-      <BackgroundMusic active={spectralMode || ministryMode || simMode || geoMode} />
+      <BackgroundMusic active={spectralMode || ministryMode || simMode || geoMode || placeMode} />
 
       {levelIntro && (
         <LevelIntroSplash
