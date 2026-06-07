@@ -273,7 +273,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
           Make it misbehave
         </button>
         <button
-          onClick={handlePrint}
+          onClick={() => { sfx.make(); handlePrint(); }}
           className="group flex items-center gap-3 px-6 py-4 text-sm font-semibold font-mono uppercase tracking-[0.2em] text-white backdrop-blur-md transition-all hover:brightness-110 hover:scale-105"
           style={{
             border: `3px solid ${stops[0]}`,
