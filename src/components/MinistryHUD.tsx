@@ -338,14 +338,20 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         </button>
       )}
       <button
-        onClick={() => { if (onNext) { sfx.navNext(); onNext(); } }}
-        disabled={!onNext}
+        onClick={() => { if (onNext && canNext) { sfx.navNext(); onNext(); } }}
+        disabled={!onNext || !canNext}
         aria-label="next level"
+        title={canNext ? 'next level' : 'Fill the sea or drain it dry to continue'}
         className="fixed right-2 top-1/2 -translate-y-1/2 z-[70] flex flex-col items-center justify-center bg-transparent hover:opacity-70 transition-opacity disabled:opacity-20 disabled:cursor-not-allowed"
         style={{ color: arrowColor, filter: `drop-shadow(0 0 10px ${bgColor})` }}
       >
         <ChevronRight style={{ width: 140, height: 140 }} strokeWidth={4} />
         <PadHint label="RB" color={arrowColor} bg={bgColor} />
+        {!canNext && (
+          <div className="mt-2 text-[9px] font-mono uppercase tracking-[0.2em] text-center max-w-[120px] leading-tight" style={{ color: arrowColor, opacity: 0.85 }}>
+            fill or drain<br/>to unlock
+          </div>
+        )}
       </button>
 
 
