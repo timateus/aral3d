@@ -2,6 +2,7 @@ import { ArrowLeft, ChevronLeft, MapPin, Target, Clock } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDesignerScheme } from '@/lib/visual-mode';
 import { sfx } from '@/lib/ui-sfx';
+import { consumeGamepadButton } from '@/lib/gamepad-dedupe';
 import {
   GEO_LOCATIONS,
   haversineKm,
@@ -162,12 +163,6 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, onMarkersChange }: Props) 
   // Gamepad: X = place / advance, LB = previous level — with proper edge detection
   useEffect(() => {
     let raf = 0;
-    // Require user to release X first (handles X-press from previous level mounting this HUD)
-    let xWasDown = true;
-    let lbWasDown = true;
-    let lastFireAt = 0;
-    const COOLDOWN_MS = 350;
-
     const tick = () => {
       const pads = navigator.getGamepads?.() ?? [];
       let pad: Gamepad | null = null;
@@ -175,9 +170,7 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, onMarkersChange }: Props) 
       if (pad) {
         const x = !!pad.buttons[2]?.pressed;
         const lb = !!pad.buttons[4]?.pressed;
-        const now = performance.now();
-        if (x && !xWasDown && now - lastFireAt > COOLDOWN_MS) {
-          lastFireAt = now;
+        if (consumeGamepadButton('x', x, { cooldownMs: 700 })) {
           if (doneRef.current) {
             // nothing
           } else if (guessRef.current) {
@@ -186,13 +179,10 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, onMarkersChange }: Props) 
             place();
           }
         }
-        if (lb && !lbWasDown && now - lastFireAt > COOLDOWN_MS && onPrev) {
-          lastFireAt = now;
+        if (consumeGamepadButton('lb', lb) && onPrev) {
           sfx.navPrev();
           onPrev();
         }
-        xWasDown = x;
-        lbWasDown = lb;
       }
       raf = requestAnimationFrame(tick);
     };
