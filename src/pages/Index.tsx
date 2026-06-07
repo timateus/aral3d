@@ -1624,6 +1624,44 @@ const Index = () => {
             setFlowAnimating(true);
           }}
           onMarkersChange={setGeoMarkers}
+          onNext={() => {
+            setGeoMode(false);
+            setGeoMarkers(null);
+            setPlaceMode(true);
+            setShowKhorezm(true);
+          }}
+          getAimLatLon={() => {
+            const aim = viewerRef.current?.getAimPixel();
+            if (!aim || !terrain.bounds) return null;
+            const b = terrain.bounds;
+            const lon = b.minLon + (aim.col / (terrain.width - 1)) * (b.maxLon - b.minLon);
+            const lat = b.minLat + (1 - aim.row / (terrain.height - 1)) * (b.maxLat - b.minLat);
+            return { lat, lon };
+          }}
+          getLatLonAtScreen={(x, y) => {
+            const px = viewerRef.current?.getPixelAtScreen(x, y);
+            if (!px || !terrain.bounds) return null;
+            const b = terrain.bounds;
+            const lon = b.minLon + (px.col / (terrain.width - 1)) * (b.maxLon - b.minLon);
+            const lat = b.minLat + (1 - px.row / (terrain.height - 1)) * (b.maxLat - b.minLat);
+            return { lat, lon };
+          }}
+        />
+      )}
+
+      {placeMode && terrain && (
+        <MapBuilderHUD
+          onExit={() => {
+            setPlaceMode(false);
+            setPlacedItems([]);
+            setStarted(false);
+            setVisualMode(ministryPrevVisualRef.current);
+          }}
+          onPrev={() => {
+            setPlaceMode(false);
+            setGeoMode(true);
+          }}
+          onItemsChange={setPlacedItems}
           getAimLatLon={() => {
             const aim = viewerRef.current?.getAimPixel();
             if (!aim || !terrain.bounds) return null;
