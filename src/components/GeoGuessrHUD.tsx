@@ -307,13 +307,19 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, getLatLonAtScreen, onMarke
       {/* Satellite reference image (right side) — visible while guessing AND while reviewing */}
       {!done && (
         <div
+          data-hud
           className="fixed top-24 right-6 z-40 p-2 backdrop-blur-md"
           style={{ background: bgColor, border: `1px solid ${inkColor}33` }}
         >
-          {/* Name shown immediately */}
+          {/* Name shown immediately — large + bold */}
           <div
-            className="mb-1 px-1 font-mono text-[12px] uppercase tracking-[0.25em] font-semibold"
-            style={{ color: accent }}
+            className="mb-2 px-1 font-mono font-extrabold uppercase text-center"
+            style={{
+              color: accent,
+              fontSize: 22,
+              letterSpacing: '0.18em',
+              textShadow: `0 2px 10px ${bgColor}, 0 0 24px ${accent}66`,
+            }}
           >
             {loc.name}
           </div>
@@ -338,6 +344,38 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, getLatLonAtScreen, onMarke
           </div>
         </div>
       )}
+
+      {/* Satellite / Classic terrain switcher (top-right) */}
+      <div
+        data-hud
+        className="fixed top-5 right-6 z-50 flex items-center gap-1 p-1 backdrop-blur-md"
+        style={{ background: bgColor, border: `1px solid ${inkColor}33` }}
+      >
+        <button
+          onClick={() => setTerrainMode('classic')}
+          className="flex items-center gap-1 px-2 py-1 text-[10px] font-mono uppercase tracking-[0.2em]"
+          style={{
+            background: terrainMode === 'classic' ? `${inkColor}1f` : 'transparent',
+            color: inkColor,
+            border: `1px solid ${terrainMode === 'classic' ? inkColor : 'transparent'}`,
+          }}
+          title="Classic terrain"
+        >
+          <MapIcon className="w-3 h-3" /> classic
+        </button>
+        <button
+          onClick={() => setTerrainMode('satellite')}
+          className="flex items-center gap-1 px-2 py-1 text-[10px] font-mono uppercase tracking-[0.2em]"
+          style={{
+            background: terrainMode === 'satellite' ? `${inkColor}1f` : 'transparent',
+            color: inkColor,
+            border: `1px solid ${terrainMode === 'satellite' ? inkColor : 'transparent'}`,
+          }}
+          title="Satellite basemap"
+        >
+          <Satellite className="w-3 h-3" /> satellite
+        </button>
+      </div>
 
       {/* Bottom action — guessing */}
       {!done && !guess && (
