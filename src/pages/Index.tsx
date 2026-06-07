@@ -1456,6 +1456,9 @@ const Index = () => {
         />
       )}
 
+      {/* Background music — plays during both levels with a mute toggle */}
+      <BackgroundMusic active={spectralMode || ministryMode} />
+
 
 
       {/* Quadrant View */}
