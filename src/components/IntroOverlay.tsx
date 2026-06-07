@@ -366,21 +366,38 @@ const IntroOverlay = ({ onStart, onGuidedTour, onReading, onCanalTour, onAgmarTo
           </p>
         </div>
 
-        {/* Five cards — top row 3, bottom row 2 */}
         <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
-            <button
-              onClick={() => onStartGame?.()}
-              className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-5 hover:bg-card/70 hover:border-primary/40 transition-all duration-500 text-left overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative z-10">
-                <p className="text-base font-semibold text-foreground tracking-wide mb-1">Play</p>
-                <p className="text-[11px] text-foreground/50 leading-relaxed">
-                  Missions & water simulation
+          {/* Big Play card */}
+          <button
+            onClick={() => onStartGame?.()}
+            className="group relative w-full bg-card/40 backdrop-blur-md border border-border/30 p-8 hover:bg-card/70 hover:border-primary/40 transition-all duration-500 text-left overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="relative z-10 flex items-center justify-between">
+              <div>
+                <p className="text-3xl font-semibold text-foreground tracking-wide mb-2">Play</p>
+                <p className="text-sm text-foreground/50 leading-relaxed">
+                  Spectral Earth, Ministry of Sea, Water Sim, GeoGuessr & more
                 </p>
               </div>
-              <ArrowRight className="absolute bottom-3 right-3 w-4 h-4 text-foreground/20 group-hover:text-primary/60 transition-all duration-300 group-hover:translate-x-1" />
+              <ArrowRight className="w-8 h-8 text-foreground/20 group-hover:text-primary/60 transition-all duration-300 group-hover:translate-x-2" />
+            </div>
+          </button>
+
+          {/* Explore — second, smaller */}
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              onClick={onStart}
+              className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-5 hover:bg-card/70 hover:border-muted-foreground/30 transition-all duration-500 text-left overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-muted/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="relative z-10">
+                <p className="text-lg font-semibold text-foreground tracking-wide mb-1">Explore</p>
+                <p className="text-[11px] text-foreground/50 leading-relaxed">
+                  Full map controls & simulation
+                </p>
+              </div>
+              <ArrowRight className="absolute bottom-3 right-3 w-4 h-4 text-foreground/20 group-hover:text-muted-foreground/60 transition-all duration-300 group-hover:translate-x-1" />
             </button>
 
             <button
@@ -389,187 +406,40 @@ const IntroOverlay = ({ onStart, onGuidedTour, onReading, onCanalTour, onAgmarTo
             >
               <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <div className="relative z-10">
-                <p className="text-base font-semibold text-foreground tracking-wide mb-1">Touch</p>
+                <p className="text-lg font-semibold text-foreground tracking-wide mb-1">Touch</p>
                 <p className="text-[11px] text-foreground/50 leading-relaxed">
                   3D objects & cultural heritage
                 </p>
               </div>
               <ArrowRight className="absolute bottom-3 right-3 w-4 h-4 text-foreground/20 group-hover:text-accent/60 transition-all duration-300 group-hover:translate-x-1" />
             </button>
-
-            <button
-              onClick={() => onAgmarTour?.()}
-              className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-5 hover:bg-card/70 hover:border-emerald-500/40 transition-all duration-500 text-left overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative z-10">
-                <p className="text-base font-semibold text-foreground tracking-wide mb-1">Learn</p>
-                <p className="text-[11px] text-foreground/50 leading-relaxed">
-                  Ag-MAR sustainable water tech
-                </p>
-              </div>
-              <ArrowRight className="absolute bottom-3 right-3 w-4 h-4 text-foreground/20 group-hover:text-emerald-500/60 transition-all duration-300 group-hover:translate-x-1" />
-            </button>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
-            <button
-              onClick={onGuidedTour}
-              className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-5 hover:bg-card/70 hover:border-secondary-foreground/30 transition-all duration-500 text-left overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-secondary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative z-10">
-                <p className="text-base font-semibold text-foreground tracking-wide mb-1">Walk</p>
-                <p className="text-[11px] text-foreground/50 leading-relaxed">
-                  Narrated history & canal systems
-                </p>
-              </div>
-              <ArrowRight className="absolute bottom-3 right-3 w-4 h-4 text-foreground/20 group-hover:text-secondary-foreground/60 transition-all duration-300 group-hover:translate-x-1" />
-            </button>
-
-            <button
-              onClick={() => onQuadrants?.()}
-              className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-5 hover:bg-card/70 hover:border-amber-500/40 transition-all duration-500 text-left overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative z-10">
-                <p className="text-base font-semibold text-foreground tracking-wide mb-1">Compare</p>
-                <p className="text-[11px] text-foreground/50 leading-relaxed">
-                  Four views across scale & tone
-                </p>
-              </div>
-              <ArrowRight className="absolute bottom-3 right-3 w-4 h-4 text-foreground/20 group-hover:text-amber-500/60 transition-all duration-300 group-hover:translate-x-1" />
-            </button>
-
-            <button
-              onClick={onStart}
-              className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-5 hover:bg-card/70 hover:border-muted-foreground/30 transition-all duration-500 text-left overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-muted/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative z-10">
-                <p className="text-base font-semibold text-foreground tracking-wide mb-1">Explore</p>
-                <p className="text-[11px] text-foreground/50 leading-relaxed">
-                  Full map controls & simulation
-                </p>
-              </div>
-              <ArrowRight className="absolute bottom-3 right-3 w-4 h-4 text-foreground/20 group-hover:text-muted-foreground/60 transition-all duration-300 group-hover:translate-x-1" />
-            </button>
-          </div>
-
-          {/* Third row — Sandbox + Trace + Dust + Life + Fountains + Read */}
-          <div className="grid grid-cols-8 gap-4">
-            <button
-              onClick={() => onSpectral?.()}
-              className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-5 hover:bg-card/70 hover:border-violet-400/50 transition-all duration-500 text-left overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-violet-400/10 via-pink-400/5 to-amber-300/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative z-10">
-                <p className="text-base font-semibold text-foreground tracking-wide mb-1">Spectral</p>
-                <p className="text-[11px] text-foreground/50 leading-relaxed">
-                  Design & print a color-wild Earth
-                </p>
-              </div>
-              <ArrowRight className="absolute bottom-3 right-3 w-4 h-4 text-foreground/20 group-hover:text-violet-400/80 transition-all duration-300 group-hover:translate-x-1" />
-            </button>
-
-            <button
-              onClick={() => onMinistry?.()}
-              className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-5 hover:bg-card/70 hover:border-sky-300/50 transition-all duration-500 text-left overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-sky-300/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative z-10">
-                <p className="text-base font-semibold text-foreground tracking-wide mb-1">Ministry</p>
-                <p className="text-[11px] text-foreground/50 leading-relaxed">
-                  Of Sea Adjustment — one slider, all power
-                </p>
-              </div>
-              <ArrowRight className="absolute bottom-3 right-3 w-4 h-4 text-foreground/20 group-hover:text-sky-300/80 transition-all duration-300 group-hover:translate-x-1" />
-            </button>
-
-
-            <button
-              onClick={() => onSandbox?.()}
-              className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-5 hover:bg-card/70 hover:border-orange-500/40 transition-all duration-500 text-left overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative z-10">
-                <p className="text-base font-semibold text-foreground tracking-wide mb-1">Sandbox</p>
-                <p className="text-[11px] text-foreground/50 leading-relaxed">
-                  Drop elements on the terrain
-                </p>
-              </div>
-              <ArrowRight className="absolute bottom-3 right-3 w-4 h-4 text-foreground/20 group-hover:text-orange-500/60 transition-all duration-300 group-hover:translate-x-1" />
-            </button>
-
-            <button
-              onClick={() => onTraceCanals?.()}
-              className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-5 hover:bg-card/70 hover:border-cyan-500/40 transition-all duration-500 text-left overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative z-10">
-                <p className="text-base font-semibold text-foreground tracking-wide mb-1">Trace</p>
-                <p className="text-[11px] text-foreground/50 leading-relaxed">
-                  Click a canal to follow it to the Amu Darya
-                </p>
-              </div>
-              <ArrowRight className="absolute bottom-3 right-3 w-4 h-4 text-foreground/20 group-hover:text-cyan-500/60 transition-all duration-300 group-hover:translate-x-1" />
-            </button>
-
-            <button
-              onClick={() => onDustStorm?.()}
-              className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-5 hover:bg-card/70 hover:border-amber-500/40 transition-all duration-500 text-left overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative z-10">
-                <p className="text-base font-semibold text-foreground tracking-wide mb-1">Dust Storm</p>
-                <p className="text-[11px] text-foreground/50 leading-relaxed">
-                  Particle wind across the dry seabed
-                </p>
-              </div>
-              <ArrowRight className="absolute bottom-3 right-3 w-4 h-4 text-foreground/20 group-hover:text-amber-500/60 transition-all duration-300 group-hover:translate-x-1" />
-            </button>
-
-            <button
-              onClick={() => onLife?.()}
-              className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-5 hover:bg-card/70 hover:border-fuchsia-500/40 transition-all duration-500 text-left overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative z-10">
-                <p className="text-base font-semibold text-foreground tracking-wide mb-1">Life</p>
-                <p className="text-[11px] text-foreground/50 leading-relaxed">
-                  Conway's cells bloom across the terrain
-                </p>
-              </div>
-              <ArrowRight className="absolute bottom-3 right-3 w-4 h-4 text-foreground/20 group-hover:text-fuchsia-500/60 transition-all duration-300 group-hover:translate-x-1" />
-            </button>
-
-            <button
-              onClick={() => onFountains?.()}
-              className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-5 hover:bg-card/70 hover:border-sky-400/50 transition-all duration-500 text-left overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-sky-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative z-10">
-                <p className="text-base font-semibold text-foreground tracking-wide mb-1">Fountains</p>
-                <p className="text-[11px] text-foreground/50 leading-relaxed">
-                  10 potential water fountain sites in Nukus
-                </p>
-              </div>
-              <ArrowRight className="absolute bottom-3 right-3 w-4 h-4 text-foreground/20 group-hover:text-sky-400/80 transition-all duration-300 group-hover:translate-x-1" />
-            </button>
-
-            <button
-              onClick={() => onReading?.()}
-              className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-5 hover:bg-card/70 hover:border-stone-300/50 transition-all duration-500 text-left overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-stone-200/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative z-10">
-                <p className="text-base font-semibold text-foreground tracking-wide mb-1" style={{ fontFamily: 'serif', fontStyle: 'italic' }}>Read</p>
-                <p className="text-[11px] text-foreground/50 leading-relaxed">
-                  A field notebook — scroll the map slowly
-                </p>
-              </div>
-              <ArrowRight className="absolute bottom-3 right-3 w-4 h-4 text-foreground/20 group-hover:text-stone-300/80 transition-all duration-300 group-hover:translate-x-1" />
-            </button>
+          {/* Compact grid — everything else */}
+          <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+            {[
+              { label: 'Learn', desc: 'Ag-MAR water tech', onClick: () => onAgmarTour?.(), color: 'emerald-500' },
+              { label: 'Walk', desc: 'History & canals', onClick: onGuidedTour, color: 'secondary-foreground' },
+              { label: 'Compare', desc: 'Four views', onClick: () => onQuadrants?.(), color: 'amber-500' },
+              { label: 'Spectral', desc: 'Color-wild Earth', onClick: () => onSpectral?.(), color: 'violet-400' },
+              { label: 'Sandbox', desc: 'Drop elements', onClick: () => onSandbox?.(), color: 'orange-500' },
+              { label: 'Trace', desc: 'Follow canals', onClick: () => onTraceCanals?.(), color: 'cyan-500' },
+              { label: 'Dust', desc: 'Particle wind', onClick: () => onDustStorm?.(), color: 'amber-500' },
+              { label: 'Life', desc: "Conway's cells", onClick: () => onLife?.(), color: 'fuchsia-500' },
+              { label: 'Fountains', desc: 'Nukus sites', onClick: () => onFountains?.(), color: 'sky-400' },
+              { label: 'Read', desc: 'Field notebook', onClick: () => onReading?.(), color: 'stone-300' },
+            ].map((item) => (
+              <button
+                key={item.label}
+                onClick={item.onClick}
+                className="group relative bg-card/40 backdrop-blur-md border border-border/30 p-2.5 hover:bg-card/70 transition-all duration-300 text-left overflow-hidden"
+              >
+                <div className="relative z-10">
+                  <p className="text-xs font-medium text-foreground tracking-wide">{item.label}</p>
+                  <p className="text-[9px] text-foreground/40 leading-tight mt-0.5">{item.desc}</p>
+                </div>
+              </button>
+            ))}
           </div>
         </div>
       </div>
