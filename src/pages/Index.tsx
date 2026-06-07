@@ -1538,7 +1538,7 @@ const Index = () => {
         <WaterSimHUD
           wetPixels={flowWetCount}
           damEdits={raiseEditCount}
-          lifeThreshold={Math.max(2500, Math.round(terrain.width * terrain.height * 0.012))}
+          lifeThreshold={Math.max(7000, Math.round(terrain.width * terrain.height * 0.03))}
           onExit={() => {
             setSimMode(false);
             setStarted(false);
@@ -1612,6 +1612,14 @@ const Index = () => {
             const b = terrain.bounds;
             const lon = b.minLon + (aim.col / (terrain.width - 1)) * (b.maxLon - b.minLon);
             const lat = b.minLat + (1 - aim.row / (terrain.height - 1)) * (b.maxLat - b.minLat);
+            return { lat, lon };
+          }}
+          getLatLonAtScreen={(x, y) => {
+            const px = viewerRef.current?.getPixelAtScreen(x, y);
+            if (!px || !terrain.bounds) return null;
+            const b = terrain.bounds;
+            const lon = b.minLon + (px.col / (terrain.width - 1)) * (b.maxLon - b.minLon);
+            const lat = b.minLat + (1 - px.row / (terrain.height - 1)) * (b.maxLat - b.minLat);
             return { lat, lon };
           }}
         />

@@ -1,6 +1,7 @@
-import { ArrowLeft, ChevronLeft, MapPin, Target, Clock } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, MapPin, Target, Clock, Satellite, Map as MapIcon, ExternalLink } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDesignerScheme } from '@/lib/visual-mode';
+import { useTerrainMode } from '@/hooks/useTerrainMode';
 import { sfx } from '@/lib/ui-sfx';
 import { consumeGamepadButton } from '@/lib/gamepad-dedupe';
 import {
@@ -53,12 +54,15 @@ interface Props {
   onPrev?: () => void;
   /** Returns lat/lon of the current crosshair, or null if not aimed. */
   getAimLatLon: () => { lat: number; lon: number } | null;
+  /** Returns lat/lon under a screen-space (clientX, clientY) point. */
+  getLatLonAtScreen?: (x: number, y: number) => { lat: number; lon: number } | null;
   /** Push current guess/truth markers up so the terrain can render them. */
   onMarkersChange?: (markers: GeoGuessrMarkers | null) => void;
 }
 
-const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, onMarkersChange }: Props) => {
+const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, getLatLonAtScreen, onMarkersChange }: Props) => {
   const [scheme] = useDesignerScheme();
+  const { mode: terrainMode, setMode: setTerrainMode } = useTerrainMode();
   const stops =
     scheme.terrainStops && scheme.terrainStops.length > 1
       ? scheme.terrainStops
@@ -206,6 +210,54 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, onMarkersChange }: Props) 
     next();
   };
 
+  // Mouse click on the map:
+  //  - while guessing → place guess at clicked location
+  //  - after guess → open Google Earth at the truth location
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      // ignore clicks on HUD buttons/panels
+      if (target && target.closest('button, a, input, select, textarea, [data-hud]')) return;
+      if (doneRef.current) return;
+      if (guessRef.current) {
+        const t = locRef.current;
+        const url = `https://earth.google.com/web/@${t.lat},${t.lon},0a,2000d,35y,0h,0t,0r`;
+        window.open(url, '_blank', 'noopener');
+        return;
+      }
+      if (!getLatLonAtScreen) { guardedPlace(); return; }
+      const ll = getLatLonAtScreen(e.clientX, e.clientY);
+      if (!ll) { guardedPlace(); return; }
+      const now = performance.now();
+      if (now - clickGuardRef.current < 300) return;
+      clickGuardRef.current = now;
+      place(ll.lat, ll.lon);
+    };
+    window.addEventListener('click', onClick);
+    return () => window.removeEventListener('click', onClick);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [getLatLonAtScreen]);
+
+  // Keyboard navigation (no controller required)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && /input|textarea|select/i.test(t.tagName)) return;
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'x' || e.key === 'X') {
+        e.preventDefault();
+        if (doneRef.current) return;
+        if (guessRef.current) guardedNext(); else guardedPlace();
+      } else if ((e.key === 'ArrowLeft' || e.key === 'Backspace') && onPrev) {
+        e.preventDefault();
+        sfx.navPrev();
+        onPrev();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onPrev]);
+
   return (
     <>
       {/* Exit */}
@@ -255,13 +307,19 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, onMarkersChange }: Props) 
       {/* Satellite reference image (right side) — visible while guessing AND while reviewing */}
       {!done && (
         <div
+          data-hud
           className="fixed top-24 right-6 z-40 p-2 backdrop-blur-md"
           style={{ background: bgColor, border: `1px solid ${inkColor}33` }}
         >
-          {/* Name shown immediately */}
+          {/* Name shown immediately — large + bold */}
           <div
-            className="mb-1 px-1 font-mono text-[12px] uppercase tracking-[0.25em] font-semibold"
-            style={{ color: accent }}
+            className="mb-2 px-1 font-mono font-extrabold uppercase text-center"
+            style={{
+              color: accent,
+              fontSize: 22,
+              letterSpacing: '0.18em',
+              textShadow: `0 2px 10px ${bgColor}, 0 0 24px ${accent}66`,
+            }}
           >
             {loc.name}
           </div>
@@ -287,6 +345,38 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, onMarkersChange }: Props) 
         </div>
       )}
 
+      {/* Satellite / Classic terrain switcher (top-right) */}
+      <div
+        data-hud
+        className="fixed top-5 right-6 z-50 flex items-center gap-1 p-1 backdrop-blur-md"
+        style={{ background: bgColor, border: `1px solid ${inkColor}33` }}
+      >
+        <button
+          onClick={() => setTerrainMode('classic')}
+          className="flex items-center gap-1 px-2 py-1 text-[10px] font-mono uppercase tracking-[0.2em]"
+          style={{
+            background: terrainMode === 'classic' ? `${inkColor}1f` : 'transparent',
+            color: inkColor,
+            border: `1px solid ${terrainMode === 'classic' ? inkColor : 'transparent'}`,
+          }}
+          title="Classic terrain"
+        >
+          <MapIcon className="w-3 h-3" /> classic
+        </button>
+        <button
+          onClick={() => setTerrainMode('satellite')}
+          className="flex items-center gap-1 px-2 py-1 text-[10px] font-mono uppercase tracking-[0.2em]"
+          style={{
+            background: terrainMode === 'satellite' ? `${inkColor}1f` : 'transparent',
+            color: inkColor,
+            border: `1px solid ${terrainMode === 'satellite' ? inkColor : 'transparent'}`,
+          }}
+          title="Satellite basemap"
+        >
+          <Satellite className="w-3 h-3" /> satellite
+        </button>
+      </div>
+
       {/* Bottom action — guessing */}
       {!done && !guess && (
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40">
@@ -309,6 +399,7 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, onMarkersChange }: Props) 
       {/* Result panel — shows distance + lets the user explore the true location */}
       {!done && guess && (
         <div
+          data-hud
           className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 px-6 py-4 backdrop-blur-md font-mono text-[12px]"
           style={{
             background: bgColor, color: inkColor,
@@ -326,17 +417,25 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, onMarkersChange }: Props) 
           {guess.loc.hint && (
             <div className="opacity-70 mt-2 text-[11px] italic">{guess.loc.hint}</div>
           )}
-          <div className="opacity-60 mt-2 text-[10px] uppercase tracking-[0.2em]">
-            explore the true location on the map · right stick to look around
+          <div className="flex items-center justify-center gap-2 mt-3">
+            <a
+              href={`https://earth.google.com/web/@${guess.loc.lat},${guess.loc.lon},0a,2000d,35y,0h,0t,0r`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 px-3 py-2 text-[10px] uppercase tracking-[0.3em] hover:brightness-110"
+              style={{ border: `1px solid ${inkColor}55`, color: inkColor, background: 'transparent' }}
+            >
+              <ExternalLink className="w-3 h-3" /> open in Google Earth
+            </a>
+            <button
+              onClick={guardedNext}
+              className="px-5 py-2 text-[11px] uppercase tracking-[0.3em] hover:brightness-110"
+              style={{ border: `2px solid ${accent}`, color: inkColor, background: 'transparent' }}
+            >
+              {idx + 1 < GEO_LOCATIONS.length ? 'Next location' : 'See results'}
+              <PadHint label="X" bg={bgColor} />
+            </button>
           </div>
-          <button
-            onClick={guardedNext}
-            className="mt-3 px-5 py-2 text-[11px] uppercase tracking-[0.3em] hover:brightness-110"
-            style={{ border: `2px solid ${accent}`, color: inkColor, background: 'transparent' }}
-          >
-            {idx + 1 < GEO_LOCATIONS.length ? 'Next location' : 'See results'}
-            <PadHint label="X" bg={bgColor} />
-          </button>
         </div>
       )}
 

@@ -75,6 +75,7 @@ export interface TerrainViewerHandle {
   startCanvasRecording: () => void;
   stopCanvasRecording: () => void;
   getAimPixel: () => { row: number; col: number } | null;
+  getPixelAtScreen: (x: number, y: number) => { row: number; col: number } | null;
 }
 
 interface MetricItem {
@@ -352,13 +353,20 @@ function ScreenshotHelper({ onReady }: { onReady: (fn: () => void) => void }) {
   return null;
 }
 
-function AimPixelHelper({ terrain, onReady }: { terrain: TerrainData; onReady: (fn: () => { row: number; col: number } | null) => void }) {
-  const { camera, scene } = useThree();
+function AimPixelHelper({
+  terrain,
+  onReady,
+  onScreenReady,
+}: {
+  terrain: TerrainData;
+  onReady: (fn: () => { row: number; col: number } | null) => void;
+  onScreenReady: (fn: (x: number, y: number) => { row: number; col: number } | null) => void;
+}) {
+  const { camera, scene, gl } = useThree();
   useEffect(() => {
     const raycaster = new THREE.Raycaster();
-    const center = new THREE.Vector2(0, 0);
-    onReady(() => {
-      raycaster.setFromCamera(center, camera);
+    const hitAt = (ndc: THREE.Vector2) => {
+      raycaster.setFromCamera(ndc, camera);
       const hits = raycaster.intersectObjects(scene.children, true);
       for (const hit of hits) {
         if (!hit.uv) continue;
@@ -367,8 +375,16 @@ function AimPixelHelper({ terrain, onReady }: { terrain: TerrainData; onReady: (
         if (row >= 0 && row < terrain.height && col >= 0 && col < terrain.width) return { row, col };
       }
       return null;
+    };
+    const center = new THREE.Vector2(0, 0);
+    onReady(() => hitAt(center));
+    onScreenReady((x, y) => {
+      const rect = gl.domElement.getBoundingClientRect();
+      const nx = ((x - rect.left) / rect.width) * 2 - 1;
+      const ny = -(((y - rect.top) / rect.height) * 2 - 1);
+      return hitAt(new THREE.Vector2(nx, ny));
     });
-  }, [camera, scene, terrain, onReady]);
+  }, [camera, scene, gl, terrain, onReady, onScreenReady]);
   return null;
 }
 
@@ -501,6 +517,7 @@ function NoahsArk({ terrain, exaggeration, waterLevel }: { terrain: TerrainData;
 const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, showWaterExtent, waterExtentYear, showPopDensity, popHexSize, popHexHeight, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone, riverInflow, userLocation, inspectorEnabled, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, flowState, flowRenderKey, terrainVersion, raisedPixels, dugPixels, showMigration, migrationYear, showChoropleth, choroplethIndicator, choroplethExaggeration, canalHighlights, highlightedCanalNames, canalTourActive, showObjectLibrary, onObjectSelect, gameModeActive, gameCharacter, onGameAddWater, bowlWorldActive, onBowlWorldComplete, showLandcover, landcoverVisibleClasses, onLandcoverAvailableClasses, showSchools, showVocabulary, showDwellings, showPlaces, agmarShowProposalSites, aryqWorldActive, onAryqWorldComplete, onNukusClick, showOverlayMetrics, showGroundwater, showPrecipitation, showSalinity, waterPlaygroundActive, sandboxActive, sandboxSimState, sandboxRenderKey, sandboxToolActive, onSandboxClick, dustActive, dustState, dustRenderKey, dustToolActive, onDustClick, showWaterways, waterwayTypeFilter, waterwayTraceMode, waterwayClearTraceSignal, terrainStyle, contourInterval, vectorInterval, hideTerrainSurface, lifeActive, spectralActive, rightStickCameraEnabled = true, geoGuessrMarkers }, ref) => {
   const screenshotFn = useRef<(() => void) | null>(null);
   const aimPixelFn = useRef<(() => { row: number; col: number } | null) | null>(null);
+  const pixelAtScreenFn = useRef<((x: number, y: number) => { row: number; col: number } | null) | null>(null);
   const canvasRecorderControls = useRef<{ start: () => void; stop: () => void } | null>(null);
   const orbitRef = useRef<any>(null);
   const [flyoverAnimating, setFlyoverAnimating] = useState(false);
@@ -518,6 +535,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
     startCanvasRecording: () => canvasRecorderControls.current?.start(),
     stopCanvasRecording: () => canvasRecorderControls.current?.stop(),
     getAimPixel: () => aimPixelFn.current?.() ?? null,
+    getPixelAtScreen: (x, y) => pixelAtScreenFn.current?.(x, y) ?? null,
   }));
 
   return (
@@ -653,7 +671,11 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
         />
       )}
       <ScreenshotHelper onReady={(fn) => { screenshotFn.current = fn; }} />
-      <AimPixelHelper terrain={terrain} onReady={(fn) => { aimPixelFn.current = fn; }} />
+      <AimPixelHelper
+        terrain={terrain}
+        onReady={(fn) => { aimPixelFn.current = fn; }}
+        onScreenReady={(fn) => { pixelAtScreenFn.current = fn; }}
+      />
       {recording && onWaterLevelChange && onRecordingDone && (
         <VideoAnimator
           recording={recording}
