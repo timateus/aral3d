@@ -443,7 +443,7 @@ export function applyRandomSpectralPalette() {
   applyDesignerScheme({
     ...wild,
     ...MIRAGE_UI,
-    sceneBackground: wild.background,
+    sceneBackground: '#FAF8F4',
   });
 }
 
