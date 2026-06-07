@@ -4,6 +4,22 @@ import { useDesignerScheme } from '@/lib/visual-mode';
 import { sfx } from '@/lib/ui-sfx';
 import { useGamepad } from '@/hooks/useGamepad';
 
+function PadHint({ label, color = '#ffffff' }: { label: string; color?: string }) {
+  return (
+    <span
+      className="ml-2 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-mono font-bold leading-none rounded"
+      style={{
+        border: `1.5px solid ${color}`,
+        color,
+        background: 'rgba(0,0,0,0.55)',
+        minWidth: 18,
+      }}
+    >
+      {label}
+    </span>
+  );
+}
+
 
 interface Props {
   onExit: () => void;
