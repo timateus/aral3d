@@ -225,6 +225,11 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
     let raf = 0;
     let prevLB = false, prevRB = false;
     let lastT = performance.now();
+    // Track axis "rest" values so we can ignore controller axes that sit at
+    // an idle position other than 0 (eg trigger-as-axis sitting at -1).
+    const restValues = new Map<number, number>();
+    let calibrated = false;
+    const calibStart = performance.now();
     const tick = (now: number) => {
       const dt = Math.min(0.05, (now - lastT) / 1000);
       lastT = now;
@@ -232,11 +237,29 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
       let pad: Gamepad | null = null;
       for (const p of pads) { if (p) { pad = p; break; } }
       if (pad) {
-        // Right stick Y is axis[3] in Standard mapping. Add d-pad as fallback.
-        const rawY = pad.axes[3] ?? 0;
+        // Calibrate rest values for ~0.5s after first seeing the pad.
+        if (!calibrated) {
+          for (let i = 0; i < pad.axes.length; i++) {
+            restValues.set(i, pad.axes[i] ?? 0);
+          }
+          if (now - calibStart > 400) calibrated = true;
+        }
+        // Search axes 3, 5, 4 (common right-stick-Y locations) for deflection
+        // away from their resting value. Skip axis 0/2 — those are stick X.
+        let axis = 0;
+        const candidates = [3, 5, 4, 7];
+        for (const ai of candidates) {
+          const raw = pad.axes[ai];
+          if (raw == null) continue;
+          const rest = restValues.get(ai) ?? 0;
+          const delta = raw - rest;
+          if (Math.abs(delta) > 0.2 && Math.abs(delta) > Math.abs(axis)) {
+            axis = -delta;
+          }
+        }
+        // D-pad fallback (always works regardless of axis mapping)
         const dpad = ((pad.buttons[12]?.pressed ? 1 : 0) - (pad.buttons[13]?.pressed ? 1 : 0));
-        let axis = Math.abs(rawY) > 0.15 ? -rawY : 0;
-        if (axis === 0 && dpad !== 0) axis = dpad;
+        if (Math.abs(axis) < 0.15 && dpad !== 0) axis = dpad;
         if (axis !== 0) {
           const next = Math.max(MIN, Math.min(MAX, waterLevelRef.current + axis * 30 * dt));
           if (Math.abs(next - waterLevelRef.current) > 0.001) {
