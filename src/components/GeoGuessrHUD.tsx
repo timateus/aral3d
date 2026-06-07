@@ -52,6 +52,7 @@ export interface GeoGuessrMarkers {
 interface Props {
   onExit: () => void;
   onPrev?: () => void;
+  onNext?: () => void;
   /** Returns lat/lon of the current crosshair, or null if not aimed. */
   getAimLatLon: () => { lat: number; lon: number } | null;
   /** Returns lat/lon under a screen-space (clientX, clientY) point. */
@@ -60,7 +61,7 @@ interface Props {
   onMarkersChange?: (markers: GeoGuessrMarkers | null) => void;
 }
 
-const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, getLatLonAtScreen, onMarkersChange }: Props) => {
+const GeoGuessrHUD = ({ onExit, onPrev, onNext, getAimLatLon, getLatLonAtScreen, onMarkersChange }: Props) => {
   const [scheme] = useDesignerScheme();
   const { mode: terrainMode, setMode: setTerrainMode } = useTerrainMode();
   const stops =
