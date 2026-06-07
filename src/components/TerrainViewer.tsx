@@ -671,7 +671,11 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
         />
       )}
       <ScreenshotHelper onReady={(fn) => { screenshotFn.current = fn; }} />
-      <AimPixelHelper terrain={terrain} onReady={(fn) => { aimPixelFn.current = fn; }} />
+      <AimPixelHelper
+        terrain={terrain}
+        onReady={(fn) => { aimPixelFn.current = fn; }}
+        onScreenReady={(fn) => { pixelAtScreenFn.current = fn; }}
+      />
       {recording && onWaterLevelChange && onRecordingDone && (
         <VideoAnimator
           recording={recording}
