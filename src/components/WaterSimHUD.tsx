@@ -166,18 +166,64 @@ const WaterSimHUD = ({
         </button>
       )}
 
-      {/* Next arrow (to level 4) */}
+      {/* Next arrow (to level 4) — gated by life bar */}
       {onNext && (
         <button
-          onClick={() => { sfx.navNext(); onNext(); }}
+          onClick={() => { if (lifeFull) { sfx.navNext(); onNext(); } }}
+          disabled={!lifeFull}
           aria-label="next level"
-          className="fixed right-2 top-1/2 -translate-y-1/2 z-[70] flex flex-col items-center justify-center bg-transparent hover:opacity-70 transition-opacity"
+          title={lifeFull ? 'next level' : 'Pour water to bring life back'}
+          className="fixed right-2 top-1/2 -translate-y-1/2 z-[70] flex flex-col items-center justify-center bg-transparent hover:opacity-70 transition-opacity disabled:opacity-25 disabled:cursor-not-allowed"
           style={{ color: arrowColor, filter: `drop-shadow(0 0 10px ${bgColor})` }}
         >
           <ChevronRight style={{ width: 140, height: 140 }} strokeWidth={4} />
           <PadHint label="RB" bg={bgColor} />
+          {!lifeFull && (
+            <div className="mt-2 text-[9px] font-mono uppercase tracking-[0.2em] text-center max-w-[140px] leading-tight" style={{ color: arrowColor, opacity: 0.85 }}>
+              pour water<br/>to revive life
+            </div>
+          )}
         </button>
       )}
+
+      {/* Life bar (top-center under headline) */}
+      <div className="fixed top-[180px] left-1/2 -translate-x-1/2 z-40 w-[min(560px,80vw)] pointer-events-none">
+        <div className="flex items-center justify-between mb-1 font-mono text-[10px] uppercase tracking-[0.3em]" style={{ color: inkColor }}>
+          <span>life</span>
+          <span style={{ opacity: 0.7 }}>{Math.round(lifePct * 100)}%</span>
+        </div>
+        <div
+          className="relative h-4 overflow-hidden"
+          style={{
+            background: `${inkColor}1a`,
+            border: `1.5px solid ${inkColor}55`,
+            borderRadius: 2,
+          }}
+        >
+          <div
+            className="absolute inset-y-0 left-0 transition-[width] duration-300 ease-out"
+            style={{
+              width: `${lifePct * 100}%`,
+              background: `linear-gradient(90deg, ${stops[0]}, ${lifeColor})`,
+              boxShadow: lifeFull ? `0 0 18px ${lifeColor}` : `0 0 10px ${stops[0]}88`,
+            }}
+          />
+        </div>
+        {lifeFull && (
+          <div
+            className="mt-3 text-center italic"
+            style={{
+              fontFamily: '"Georgia", serif',
+              fontSize: 'clamp(20px, 2.4vw, 32px)',
+              color: lifeColor,
+              textShadow: `0 2px 14px ${bgColor}`,
+            }}
+          >
+            life has returned — press <strong>X</strong> or <strong>RB</strong> for the next level
+          </div>
+        )}
+      </div>
+
 
       {/* Center crosshair so users know where X / B will apply */}
       <div
