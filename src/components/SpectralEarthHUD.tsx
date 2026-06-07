@@ -287,6 +287,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
         >
           <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" style={{ color: stops[2 % stops.length] }} />
           Make it misbehave
+          <PadHint label="X" color={stops[2 % stops.length]} />
         </button>
         <button
           onClick={() => { sfx.make(); handlePrint(); }}
