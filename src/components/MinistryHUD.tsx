@@ -422,7 +422,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
                 return (
                   <button
                     key={s.key}
-                    onClick={() => setVisible((v) => ({ ...v, [s.key]: !v[s.key] }))}
+                    onClick={() => { sfx.toggle(); setVisible((v) => ({ ...v, [s.key]: !v[s.key] })); }}
                     className="flex items-center gap-1.5 py-0.5 text-[12px] italic transition-opacity"
                     style={{
                       color: on ? s.color : `${contrastColor}66`,
