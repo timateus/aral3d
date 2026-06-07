@@ -209,6 +209,7 @@ const Index = () => {
   const [fountainsMode, setFountainsMode] = useState(false);
   const [spectralMode, setSpectralMode] = useState(false);
   const [ministryMode, setMinistryMode] = useState(false);
+  const [simMode, setSimMode] = useState(false);
   const ministryPrevVisualRef = useRef<import('@/lib/visual-mode').VisualMode>('dark');
   const [spectralCamPos, setSpectralCamPos] = useState<[number, number, number]>([0, 14, 14]);
   const [spectralCamTarget, setSpectralCamTarget] = useState<[number, number, number]>([0, 0, 0]);
