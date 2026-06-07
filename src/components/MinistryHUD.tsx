@@ -307,7 +307,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
           }}
         >
           {(() => {
-            const text = 'How should ecological data be communicated… or experienced?';
+            const text = 'Travel to the future with the slider';
             return text.split(/(\s+)/).map((tok, i) => {
               if (/^\s+$/.test(tok)) return <span key={i}>{tok}</span>;
               const c = stops[i % stops.length];
