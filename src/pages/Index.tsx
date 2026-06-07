@@ -1542,10 +1542,7 @@ const Index = () => {
           onNext={() => {
             // Hand off to Level 2 — keep the current spectral palette + scene.
             ministryPrevVisualRef.current = spectralPrevModeRef.current;
-            setSpectralMode(false);
-            setMinistryMode(true);
-            setWaterLevelManual(true);
-            setWaterLevel(53);
+            enterGameLevel(2);
           }}
         />
       )}
@@ -1562,19 +1559,11 @@ const Index = () => {
           }}
           onPrev={() => {
             // Back to Level 1 — preserve the spectral session.
-            setMinistryMode(false);
-            setSpectralMode(true);
+            enterGameLevel(1);
           }}
           onNext={() => {
             // Hand off to Level 3 (water simulation sandbox).
-            setMinistryMode(false);
-            setSimMode(true);
-            setShowKhorezm(true);
-            setShowWaterExtent(false);
-            setWaterFlowActive(true);
-            setFlowAnimating(true);
-            setFlowSpeed(20);
-            setFlowWaterAmount(20);
+            enterGameLevel(3);
           }}
         />
       )}
