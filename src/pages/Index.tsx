@@ -1533,15 +1533,18 @@ const Index = () => {
         <GeoGuessrHUD
           onExit={() => {
             setGeoMode(false);
+            setGeoMarkers(null);
             setStarted(false);
             setVisualMode(ministryPrevVisualRef.current);
           }}
           onPrev={() => {
             setGeoMode(false);
+            setGeoMarkers(null);
             setSimMode(true);
             setWaterFlowActive(true);
             setFlowAnimating(true);
           }}
+          onMarkersChange={setGeoMarkers}
           getAimLatLon={() => {
             const aim = viewerRef.current?.getAimPixel();
             if (!aim || !terrain.bounds) return null;
