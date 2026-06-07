@@ -209,7 +209,6 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
   };
 
   // Gamepad: X = make it misbehave, LB = prev level, RB = next level.
-  // No exit / print / vertical-camera bindings (per controller spec).
   useEffect(() => {
     let raf = 0;
     const tick = () => {
@@ -223,6 +222,21 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onRandomize, onNext]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && /input|textarea|select/i.test(t.tagName)) return;
+      if (e.key === ' ' || e.key === 'Enter' || e.key === 'x' || e.key === 'X') {
+        e.preventDefault(); sfx.make(); onRandomize();
+      } else if (e.key === 'ArrowRight' && onNext) {
+        e.preventDefault(); sfx.navNext(); onNext();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, [onRandomize, onNext]);
 
   return (
