@@ -43,8 +43,8 @@ function WASDHandler({ enabled, orbitRef }: { enabled: boolean; orbitRef: React.
     if (keys.current.q) delta.y -= speed;
     if (keys.current.e) delta.y += speed;
 
-    // Gamepad: left stick translates on XZ plane (camera-relative),
-    // LB/RB or LT/RT for vertical
+    // Gamepad: left stick = pan on XZ plane (camera-relative).
+    // No vertical (Q/E) gamepad control — LB/RB are reserved for HUD level nav.
     const gp = gpRef.current;
     if (gp.connected) {
       const lx = gp.leftStick.x;
@@ -53,10 +53,6 @@ function WASDHandler({ enabled, orbitRef }: { enabled: boolean; orbitRef: React.
         delta.addScaledVector(dir, -ly * speed);
         delta.addScaledVector(right, lx * speed);
       }
-      if (gp.buttons.rb) delta.y += speed;
-      if (gp.buttons.lb) delta.y -= speed;
-      if (gp.buttons.rt > 0.1) delta.y += speed * gp.buttons.rt;
-      if (gp.buttons.lt > 0.1) delta.y -= speed * gp.buttons.lt;
     }
 
     if (delta.lengthSq() > 0) {
@@ -64,18 +60,26 @@ function WASDHandler({ enabled, orbitRef }: { enabled: boolean; orbitRef: React.
       window.dispatchEvent(new CustomEvent('wasd-move', { detail: { x: delta.x, y: delta.y, z: delta.z } }));
     }
 
-    // Gamepad: right stick orbits camera around target (azimuth + polar)
+    // Gamepad: right stick X = rotate (azimuth). Y is reserved for HUD sliders.
+    // LT/RT = dolly (zoom out / in).
     if (gp.connected && orbitRef.current) {
       const rx = gp.rightStick.x;
-      const ry = gp.rightStick.y;
-      if (rx || ry) {
-        const target: THREE.Vector3 = orbitRef.current.target;
+      const target: THREE.Vector3 = orbitRef.current.target;
+      if (rx) {
         const offset = new THREE.Vector3().subVectors(camera.position, target);
         const spherical = new THREE.Spherical().setFromVector3(offset);
         const rotSpeed = 0.04;
         spherical.theta -= rx * rotSpeed;
-        spherical.phi = THREE.MathUtils.clamp(spherical.phi + ry * rotSpeed, 0.1, Math.PI / 2.1);
         offset.setFromSpherical(spherical);
+        camera.position.copy(target).add(offset);
+        camera.lookAt(target);
+      }
+      const zoom = (gp.buttons.rt > 0.1 ? gp.buttons.rt : 0) - (gp.buttons.lt > 0.1 ? gp.buttons.lt : 0);
+      if (zoom !== 0) {
+        const offset = new THREE.Vector3().subVectors(camera.position, target);
+        const factor = 1 - zoom * 0.04;
+        const newLen = THREE.MathUtils.clamp(offset.length() * factor, 2, 30);
+        offset.setLength(newLen);
         camera.position.copy(target).add(offset);
         camera.lookAt(target);
       }
