@@ -210,6 +210,54 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, getLatLonAtScreen, onMarke
     next();
   };
 
+  // Mouse click on the map:
+  //  - while guessing → place guess at clicked location
+  //  - after guess → open Google Earth at the truth location
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      // ignore clicks on HUD buttons/panels
+      if (target && target.closest('button, a, input, select, textarea, [data-hud]')) return;
+      if (doneRef.current) return;
+      if (guessRef.current) {
+        const t = locRef.current;
+        const url = `https://earth.google.com/web/@${t.lat},${t.lon},0a,2000d,35y,0h,0t,0r`;
+        window.open(url, '_blank', 'noopener');
+        return;
+      }
+      if (!getLatLonAtScreen) { guardedPlace(); return; }
+      const ll = getLatLonAtScreen(e.clientX, e.clientY);
+      if (!ll) { guardedPlace(); return; }
+      const now = performance.now();
+      if (now - clickGuardRef.current < 300) return;
+      clickGuardRef.current = now;
+      place(ll.lat, ll.lon);
+    };
+    window.addEventListener('click', onClick);
+    return () => window.removeEventListener('click', onClick);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [getLatLonAtScreen]);
+
+  // Keyboard navigation (no controller required)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && /input|textarea|select/i.test(t.tagName)) return;
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'x' || e.key === 'X') {
+        e.preventDefault();
+        if (doneRef.current) return;
+        if (guessRef.current) guardedNext(); else guardedPlace();
+      } else if ((e.key === 'ArrowLeft' || e.key === 'Backspace') && onPrev) {
+        e.preventDefault();
+        sfx.navPrev();
+        onPrev();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onPrev]);
+
   return (
     <>
       {/* Exit */}
