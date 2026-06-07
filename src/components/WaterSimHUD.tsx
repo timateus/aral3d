@@ -108,6 +108,25 @@ const WaterSimHUD = ({
     return () => cancelAnimationFrame(raf);
   }, []);
 
+  // Keyboard navigation (no controller required)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && /input|textarea|select/i.test(t.tagName)) return;
+      if (e.key === ' ' || e.key === 'Enter' || e.key === 'x' || e.key === 'X') {
+        e.preventDefault(); sfx.make(); addRef.current();
+      } else if (e.key === 'b' || e.key === 'B') {
+        e.preventDefault(); sfx.make(); damRef.current();
+      } else if (e.key === 'ArrowLeft' && prevRef.current) {
+        e.preventDefault(); sfx.navPrev(); prevRef.current();
+      } else if (e.key === 'ArrowRight' && nextRef.current && lifeFullRef.current) {
+        e.preventDefault(); sfx.navNext(); nextRef.current();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   return (
     <>
       {/* Exit */}
