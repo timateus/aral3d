@@ -211,7 +211,10 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
     irrigatedArea: false,
     tempAnomaly: false,
   });
-  const [panelOpen, setPanelOpen] = useState(true);
+  const [panelOpen, setPanelOpen] = useState(false);
+
+  // Next level is unlocked only when the basin is filled (>= 50m) or fully drained (<= 5m).
+  const canNext = waterLevel >= 50 || waterLevel <= 5;
 
   // Gamepad controls — X (button 2) lowers water, O/B (button 1) raises it,
   // held continuously. LB/RB navigate levels. Right stick stays free for camera.
@@ -249,7 +252,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         }
         const lb = !!pad.buttons[4]?.pressed;
         const rb = !!pad.buttons[5]?.pressed;
-        if (rb && !prevRB && onNext) { sfx.navNext(); onNext(); }
+        if (rb && !prevRB && onNext && (waterLevelRef.current >= 50 || waterLevelRef.current <= 5)) { sfx.navNext(); onNext(); }
         if (lb && !prevLB && onPrev) { sfx.navPrev(); onPrev(); }
         prevLB = lb; prevRB = rb;
       }
@@ -304,7 +307,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
           }}
         >
           {(() => {
-            const text = 'How should ecological data be communicated… or experienced?';
+            const text = 'Travel to the future with the slider';
             return text.split(/(\s+)/).map((tok, i) => {
               if (/^\s+$/.test(tok)) return <span key={i}>{tok}</span>;
               const c = stops[i % stops.length];
@@ -335,14 +338,20 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         </button>
       )}
       <button
-        onClick={() => { if (onNext) { sfx.navNext(); onNext(); } }}
-        disabled={!onNext}
+        onClick={() => { if (onNext && canNext) { sfx.navNext(); onNext(); } }}
+        disabled={!onNext || !canNext}
         aria-label="next level"
+        title={canNext ? 'next level' : 'Fill the sea or drain it dry to continue'}
         className="fixed right-2 top-1/2 -translate-y-1/2 z-[70] flex flex-col items-center justify-center bg-transparent hover:opacity-70 transition-opacity disabled:opacity-20 disabled:cursor-not-allowed"
         style={{ color: arrowColor, filter: `drop-shadow(0 0 10px ${bgColor})` }}
       >
         <ChevronRight style={{ width: 140, height: 140 }} strokeWidth={4} />
         <PadHint label="RB" color={arrowColor} bg={bgColor} />
+        {!canNext && (
+          <div className="mt-2 text-[9px] font-mono uppercase tracking-[0.2em] text-center max-w-[120px] leading-tight" style={{ color: arrowColor, opacity: 0.85 }}>
+            fill or drain<br/>to unlock
+          </div>
+        )}
       </button>
 
 
@@ -386,12 +395,74 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
             );
           })}
         </div>
-        <div className="relative h-[72vh] w-16 flex items-center justify-center">
-          <div className="absolute -top-6 left-1/2 -translate-x-1/2 pointer-events-none flex gap-1">
+        <div className="relative h-[72vh] w-24 flex items-center justify-center">
+          <div className="absolute -top-8 left-1/2 -translate-x-1/2 pointer-events-none flex gap-1">
             <PadHint label="X−" color={waterColor} bg={bgColor} />
             <PadHint label="O+" color={waterColor} bg={bgColor} />
           </div>
-          <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-white/15 pointer-events-none" />
+
+          {/* Fat track */}
+          <div
+            className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-5 rounded-full pointer-events-none overflow-hidden"
+            style={{
+              background: 'rgba(255,255,255,0.08)',
+              border: `1px solid ${waterColor}55`,
+              boxShadow: `inset 0 0 12px rgba(0,0,0,0.4)`,
+            }}
+          >
+            {/* Fill from bottom up */}
+            <div
+              className="absolute left-0 right-0 bottom-0"
+              style={{
+                height: `${((waterLevel - MIN) / (MAX - MIN)) * 100}%`,
+                background: `linear-gradient(to top, ${waterColor}, ${waterColor}cc)`,
+                boxShadow: `0 0 16px ${waterColor}aa`,
+                transition: 'height 60ms linear',
+              }}
+            />
+            {/* Threshold markers: drain (<=5) and fill (>=50) zones */}
+            <div
+              className="absolute left-0 right-0 pointer-events-none"
+              style={{
+                top: `${(1 - (50 - MIN) / (MAX - MIN)) * 100}%`,
+                borderTop: `2px dashed ${waterColor}`,
+                opacity: 0.7,
+              }}
+            />
+            <div
+              className="absolute left-0 right-0 pointer-events-none"
+              style={{
+                top: `${(1 - (5 - MIN) / (MAX - MIN)) * 100}%`,
+                borderTop: `2px dashed ${waterColor}`,
+                opacity: 0.7,
+              }}
+            />
+          </div>
+
+          {/* Stylish thumb indicator */}
+          <div
+            className="absolute left-1/2 pointer-events-none"
+            style={{
+              top: `${(1 - (waterLevel - MIN) / (MAX - MIN)) * 100}%`,
+              transform: 'translate(-50%, -50%)',
+              transition: 'top 60ms linear',
+            }}
+          >
+            <div
+              className="rounded-full flex items-center justify-center"
+              style={{
+                width: 36,
+                height: 36,
+                background: waterColor,
+                border: `3px solid ${bgColor}`,
+                boxShadow: `0 0 24px ${waterColor}, 0 2px 8px rgba(0,0,0,0.5)`,
+              }}
+            >
+              <div className="w-2 h-2 rounded-full" style={{ background: bgColor }} />
+            </div>
+          </div>
+
+          {/* Transparent input on top for interaction */}
           <input
             type="range"
             min={MIN}
@@ -402,7 +473,6 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
             onPointerUp={flashBig}
             onChange={(e) => {
               const v = Number(e.target.value);
-              console.log(`[ministry] slider onChange v=${v.toFixed(2)} prev=${waterLevel.toFixed(2)}`);
               flashBig();
               sfx.slider();
               onWaterLevelChange(v);
@@ -413,13 +483,14 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
               writingMode: 'vertical-lr' as any,
               WebkitAppearance: 'slider-vertical' as any,
               height: '72vh',
-              width: 56,
+              width: 80,
               direction: 'rtl',
               cursor: 'ns-resize',
               accentColor: waterColor,
               background: 'transparent',
+              opacity: 0,
               position: 'relative',
-              zIndex: 1,
+              zIndex: 2,
             }}
           />
         </div>

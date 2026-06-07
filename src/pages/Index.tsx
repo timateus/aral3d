@@ -17,6 +17,7 @@ import MinistryHUD from '@/components/MinistryHUD';
 import WaterSimHUD from '@/components/WaterSimHUD';
 import GeoGuessrHUD from '@/components/GeoGuessrHUD';
 import BackgroundMusic from '@/components/BackgroundMusic';
+import LevelIntroSplash from '@/components/LevelIntroSplash';
 import { applyRandomSpectralPalette } from '@/lib/visual-mode';
 import CharacterSelect from '@/components/CharacterSelect';
 import ScenarioChat from '@/components/ScenarioChat';
@@ -213,6 +214,7 @@ const Index = () => {
   const [simMode, setSimMode] = useState(false);
   const [geoMode, setGeoMode] = useState(false);
   const [geoMarkers, setGeoMarkers] = useState<import('@/components/GeoFeatures').GeoGuessrMarkerSet | null>(null);
+  const [levelIntro, setLevelIntro] = useState<{ n: number; name: string; instructions: string[] } | null>(null);
   const ministryPrevVisualRef = useRef<import('@/lib/visual-mode').VisualMode>('dark');
   const [spectralCamPos, setSpectralCamPos] = useState<[number, number, number]>([0, 14, 14]);
   const [spectralCamTarget, setSpectralCamTarget] = useState<[number, number, number]>([0, 0, 0]);
@@ -221,6 +223,65 @@ const Index = () => {
   const spectralPrevExaggerationRef = useRef<number>(10);
 
   // Ministry (Level 2): user-controlled camera via OrbitControls — no auto-orbit.
+
+  // Level intro splash — rising-edge triggers on entering each level.
+  const prevSpectralRef = useRef(false);
+  const prevMinistryRef = useRef(false);
+  const prevSimRef = useRef(false);
+  const prevGeoRef = useRef(false);
+  useEffect(() => {
+    if (spectralMode && !prevSpectralRef.current) {
+      setLevelIntro({
+        n: 1,
+        name: 'Spectral Earth',
+        instructions: [
+          'A randomized chromatic portrait of the Aral region.',
+          'Re-roll palettes, exaggerate the terrain, and wander.',
+        ],
+      });
+    }
+    prevSpectralRef.current = spectralMode;
+  }, [spectralMode]);
+  useEffect(() => {
+    if (ministryMode && !prevMinistryRef.current) {
+      setLevelIntro({
+        n: 2,
+        name: 'Great Water Level',
+        instructions: [
+          'Travel to the future with the slider.',
+          'Fill the sea or drain it dry to unlock the next level.',
+        ],
+      });
+    }
+    prevMinistryRef.current = ministryMode;
+  }, [ministryMode]);
+  useEffect(() => {
+    if (simMode && !prevSimRef.current) {
+      setLevelIntro({
+        n: 3,
+        name: 'Hydraulic Sandbox',
+        instructions: [
+          'Pour water and raise dams across Khorezm.',
+          'Aim with the camera. Sculpt the basin yourself.',
+        ],
+      });
+    }
+    prevSimRef.current = simMode;
+  }, [simMode]);
+  useEffect(() => {
+    if (geoMode && !prevGeoRef.current) {
+      setLevelIntro({
+        n: 4,
+        name: 'Satellite GeoGuessr',
+        instructions: [
+          'A satellite image will appear. Pin it on the terrain.',
+          'Closer guesses score higher. You have 60 seconds per round.',
+        ],
+      });
+    }
+    prevGeoRef.current = geoMode;
+  }, [geoMode]);
+
 
   // One-shot randomizer for Spectral Earth — palette, exaggeration, camera, zoom, typography.
   const randomizeSpectral = useCallback(() => {
@@ -1558,6 +1619,15 @@ const Index = () => {
 
       {/* Background music — plays during levels with a mute toggle */}
       <BackgroundMusic active={spectralMode || ministryMode || simMode || geoMode} />
+
+      {levelIntro && (
+        <LevelIntroSplash
+          number={levelIntro.n}
+          name={levelIntro.name}
+          instructions={levelIntro.instructions}
+          onBegin={() => setLevelIntro(null)}
+        />
+      )}
 
 
 
