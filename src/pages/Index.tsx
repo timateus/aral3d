@@ -212,6 +212,7 @@ const Index = () => {
   const [ministryMode, setMinistryMode] = useState(false);
   const [simMode, setSimMode] = useState(false);
   const [geoMode, setGeoMode] = useState(false);
+  const [geoMarkers, setGeoMarkers] = useState<import('@/components/GeoFeatures').GeoGuessrMarkerSet | null>(null);
   const ministryPrevVisualRef = useRef<import('@/lib/visual-mode').VisualMode>('dark');
   const [spectralCamPos, setSpectralCamPos] = useState<[number, number, number]>([0, 14, 14]);
   const [spectralCamTarget, setSpectralCamTarget] = useState<[number, number, number]>([0, 0, 0]);
