@@ -404,7 +404,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
               {nearestYear ?? '—'} · {waterLevel.toFixed(1)} m
             </div>
             <button
-              onClick={() => setPanelOpen((o) => !o)}
+              onClick={() => { sfx.toggle(); setPanelOpen((o) => !o); }}
               aria-label={panelOpen ? 'minimize' : 'expand'}
               className="p-1 hover:opacity-70 transition-opacity"
               style={{ color: contrastColor }}
