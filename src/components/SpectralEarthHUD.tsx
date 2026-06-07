@@ -317,7 +317,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
             style={{ color: arrowColor, filter: 'drop-shadow(0 0 10px rgba(0,0,0,0.45))' }}
           >
             <ChevronRight style={{ width: 112, height: 112 }} strokeWidth={2} />
-            <PadHint label="RB" color={arrowColor} />
+            <PadHint label="RB" color={arrowColor} bg={bgColor} />
           </button>
         );
       })()}
