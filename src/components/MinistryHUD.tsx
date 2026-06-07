@@ -10,6 +10,9 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { useDesignerScheme, applyDesignerScheme, getDesignerScheme } from '@/lib/visual-mode';
+import { sfx } from '@/lib/ui-sfx';
+import { useGamepad } from '@/hooks/useGamepad';
+
 
 export interface MinistryAnnual {
   year: number;
