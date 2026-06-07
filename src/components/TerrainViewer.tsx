@@ -21,6 +21,7 @@ import MigrationLayer from './MigrationLayer';
 import ChoroplethLayer from './ChoroplethLayer';
 import RiverFlyover from './RiverFlyover';
 import MapControls from './MapControls';
+import FirstPersonController from './FirstPersonController';
 import ObjectLibrary3D from './ObjectLibrary3D';
 import type { LibraryObject } from './ObjectLibrary3D';
 import SchoolsLayer from './SchoolsLayer';
@@ -184,6 +185,7 @@ interface TerrainViewerProps {
   rightStickCameraEnabled?: boolean;
   geoGuessrMarkers?: import('@/components/GeoFeatures').GeoGuessrMarkerSet | null;
   placedItems?: import('@/lib/map-builder-items').PlacedItem[] | null;
+  firstPersonMode?: boolean;
 }
 
 /* ── Canvas Recorder (captures WebGL canvas stream, no camera animation) ── */
