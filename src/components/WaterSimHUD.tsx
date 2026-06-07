@@ -42,9 +42,20 @@ interface Props {
   onBuildDamCenter: () => void;
   wetPixels?: number;
   damEdits?: number;
+  /** wetPixels needed to "fill life" and unlock next level. */
+  lifeThreshold?: number;
 }
 
-const WaterSimHUD = ({ onExit, onPrev, onNext, onAddWaterCenter, onBuildDamCenter, wetPixels = 0, damEdits = 0 }: Props) => {
+const WaterSimHUD = ({
+  onExit,
+  onPrev,
+  onNext,
+  onAddWaterCenter,
+  onBuildDamCenter,
+  wetPixels = 0,
+  damEdits = 0,
+  lifeThreshold = 6000,
+}: Props) => {
   const [scheme] = useDesignerScheme();
   const stops = (scheme.terrainStops && scheme.terrainStops.length > 1)
     ? scheme.terrainStops
@@ -63,15 +74,21 @@ const WaterSimHUD = ({ onExit, onPrev, onNext, onAddWaterCenter, onBuildDamCente
     return best;
   }, [stops, bgColor]);
 
-  // Gamepad: X = place water, B/O = build dam, LB = prev level, RB = next level.
+  const lifePct = Math.max(0, Math.min(1, wetPixels / Math.max(1, lifeThreshold)));
+  const lifeFull = wetPixels >= lifeThreshold;
+  const lifeColor = stops[1 % stops.length] || '#6ee7a8'; // vegetation-ish
+
+  // Gamepad: X = place water, B/O = build dam, LB = prev, RB = next (gated).
   const addRef = useRef(onAddWaterCenter);
   const damRef = useRef(onBuildDamCenter);
   const prevRef = useRef(onPrev);
   const nextRef = useRef(onNext);
+  const lifeFullRef = useRef(lifeFull);
   useEffect(() => { addRef.current = onAddWaterCenter; }, [onAddWaterCenter]);
   useEffect(() => { damRef.current = onBuildDamCenter; }, [onBuildDamCenter]);
   useEffect(() => { prevRef.current = onPrev; }, [onPrev]);
   useEffect(() => { nextRef.current = onNext; }, [onNext]);
+  useEffect(() => { lifeFullRef.current = lifeFull; }, [lifeFull]);
 
   useEffect(() => {
     let raf = 0;
@@ -83,7 +100,7 @@ const WaterSimHUD = ({ onExit, onPrev, onNext, onAddWaterCenter, onBuildDamCente
         if (consumeGamepadButton('x', !!pad.buttons[2]?.pressed)) { sfx.make(); addRef.current(); }
         if (consumeGamepadButton('b', !!pad.buttons[1]?.pressed)) { sfx.make(); damRef.current(); }
         if (consumeGamepadButton('lb', !!pad.buttons[4]?.pressed) && prevRef.current) { sfx.navPrev(); prevRef.current(); }
-        if (consumeGamepadButton('rb', !!pad.buttons[5]?.pressed) && nextRef.current) { sfx.navNext(); nextRef.current(); }
+        if (consumeGamepadButton('rb', !!pad.buttons[5]?.pressed) && nextRef.current && lifeFullRef.current) { sfx.navNext(); nextRef.current(); }
       }
       raf = requestAnimationFrame(tick);
     };
