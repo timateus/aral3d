@@ -373,6 +373,7 @@ function AimPixelHelper({
       raycaster.setFromCamera(ndc, camera);
       const hits = raycaster.intersectObjects(scene.children, true);
       for (const hit of hits) {
+        if (!hit.object.userData?.terrainSurface) continue;
         if (!hit.uv) continue;
         const col = Math.floor(hit.uv.x * (terrain.width - 1));
         const row = Math.floor((1 - hit.uv.y) * (terrain.height - 1));
