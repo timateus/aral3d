@@ -11,16 +11,17 @@ import {
 } from 'recharts';
 import { useDesignerScheme, applyDesignerScheme, getDesignerScheme } from '@/lib/visual-mode';
 import { sfx } from '@/lib/ui-sfx';
-import { useGamepad } from '@/hooks/useGamepad';
 
-function PadHint({ label, color = '#ffffff' }: { label: string; color?: string }) {
+
+function PadHint({ label, color, bg }: { label: string; color: string; bg: string }) {
+  // bg = map background; color = contrasting ink that reads on top of bg.
   return (
     <span
       className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-mono font-bold leading-none rounded"
       style={{
         border: `1.5px solid ${color}`,
         color,
-        background: 'rgba(0,0,0,0.55)',
+        background: bg,
         minWidth: 18,
       }}
     >
@@ -202,34 +203,44 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
   const [panelOpen, setPanelOpen] = useState(true);
 
   // Gamepad controls — right stick Y adjusts water level; LB/RB navigate levels.
-  // No exit binding, no panel-toggle binding, no d-pad / vertical camera.
-  const { stateRef } = useGamepad();
+  // We read navigator.getGamepads() directly here for max reliability (some
+  // controllers report axes on indices other than [3] and we want any movement
+  // on the right-vertical axis to drive the slider).
   const waterLevelRef = useRef(waterLevel);
   useEffect(() => { waterLevelRef.current = waterLevel; }, [waterLevel]);
+  const onWaterLevelChangeRef = useRef(onWaterLevelChange);
+  useEffect(() => { onWaterLevelChangeRef.current = onWaterLevelChange; }, [onWaterLevelChange]);
   useEffect(() => {
     let raf = 0;
-    let prev = { lb: false, rb: false };
+    let prevLB = false, prevRB = false;
     let lastT = performance.now();
     const tick = (now: number) => {
       const dt = Math.min(0.05, (now - lastT) / 1000);
       lastT = now;
-      const s = stateRef.current;
-      if (s.connected) {
-        // right stick Y = slider (up = higher water)
-        const axis = -s.rightStick.y;
-        if (Math.abs(axis) > 0.05) {
-          const next = Math.max(MIN, Math.min(MAX, waterLevelRef.current + axis * 25 * dt));
+      const pads = navigator.getGamepads?.() ?? [];
+      let pad: Gamepad | null = null;
+      for (const p of pads) { if (p) { pad = p; break; } }
+      if (pad) {
+        // Right stick Y is axis[3] in Standard mapping. Add d-pad as fallback.
+        const rawY = pad.axes[3] ?? 0;
+        const dpad = ((pad.buttons[12]?.pressed ? 1 : 0) - (pad.buttons[13]?.pressed ? 1 : 0));
+        let axis = Math.abs(rawY) > 0.15 ? -rawY : 0;
+        if (axis === 0 && dpad !== 0) axis = dpad;
+        if (axis !== 0) {
+          const next = Math.max(MIN, Math.min(MAX, waterLevelRef.current + axis * 30 * dt));
           if (Math.abs(next - waterLevelRef.current) > 0.001) {
             waterLevelRef.current = next;
-            onWaterLevelChange(next);
+            onWaterLevelChangeRef.current(next);
             flashBig();
             sfx.slider();
           }
         }
-        // edge-triggered level nav
-        if (s.buttons.rb && !prev.rb && onNext) { sfx.navNext(); onNext(); }
-        if (s.buttons.lb && !prev.lb && onPrev) { sfx.navPrev(); onPrev(); }
-        prev = { lb: s.buttons.lb, rb: s.buttons.rb };
+        // Level nav — edge triggered
+        const lb = !!pad.buttons[4]?.pressed;
+        const rb = !!pad.buttons[5]?.pressed;
+        if (rb && !prevRB && onNext) { sfx.navNext(); onNext(); }
+        if (lb && !prevLB && onPrev) { sfx.navPrev(); onPrev(); }
+        prevLB = lb; prevRB = rb;
       }
       raf = requestAnimationFrame(tick);
     };
@@ -309,7 +320,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
           style={{ color: arrowColor, filter: `drop-shadow(0 0 10px ${bgColor})` }}
         >
           <ChevronLeft style={{ width: 140, height: 140 }} strokeWidth={4} />
-          <PadHint label="LB" color={arrowColor} />
+          <PadHint label="LB" color={arrowColor} bg={bgColor} />
         </button>
       )}
       <button
@@ -320,7 +331,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         style={{ color: arrowColor, filter: `drop-shadow(0 0 10px ${bgColor})` }}
       >
         <ChevronRight style={{ width: 140, height: 140 }} strokeWidth={4} />
-        <PadHint label="RB" color={arrowColor} />
+        <PadHint label="RB" color={arrowColor} bg={bgColor} />
       </button>
 
 
@@ -366,7 +377,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         </div>
         <div className="relative h-[72vh] w-16 flex items-center justify-center">
           <div className="absolute -top-6 left-1/2 -translate-x-1/2 pointer-events-none">
-            <PadHint label="R-stick Y" color={waterColor} />
+            <PadHint label="R-stick Y" color={waterColor} bg={bgColor} />
           </div>
           <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-white/15 pointer-events-none" />
           <input

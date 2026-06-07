@@ -63,7 +63,9 @@ function WASDHandler({ enabled, orbitRef }: { enabled: boolean; orbitRef: React.
     // Gamepad: right stick X = rotate (azimuth). Y is reserved for HUD sliders.
     // LT/RT = dolly (zoom out / in).
     if (gp.connected && orbitRef.current) {
-      const rx = gp.rightStick.x;
+      // Higher threshold on X so pushing the stick straight up/down (Y, used by
+      // HUD water-level slider) cannot bleed into rotation.
+      const rx = Math.abs(gp.rightStick.x) > 0.35 ? gp.rightStick.x : 0;
       const target: THREE.Vector3 = orbitRef.current.target;
       if (rx) {
         const offset = new THREE.Vector3().subVectors(camera.position, target);
