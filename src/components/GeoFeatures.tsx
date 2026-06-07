@@ -12,6 +12,12 @@ interface CanalHighlight {
   color: string;
 }
 
+export interface GeoGuessrMarkerSet {
+  guess?: { lat: number; lon: number } | null;
+  truth?: { lat: number; lon: number; name: string } | null;
+  all?: { lat: number; lon: number; name: string }[];
+}
+
 interface GeoFeaturesProps {
   terrain: TerrainData;
   exaggeration: number;
@@ -28,6 +34,7 @@ interface GeoFeaturesProps {
   highlightedCanalNames?: Set<string>;
   canalTourActive?: boolean;
   onNukusClick?: () => void;
+  geoGuessrMarkers?: GeoGuessrMarkerSet | null;
 }
 
 interface City {
@@ -160,7 +167,7 @@ function geoToMeshPos(
   return [x, zHeight, -planeY];
 }
 
-const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, riverInflow, userLocation, canalHighlights, highlightedCanalNames, canalTourActive, onNukusClick }: GeoFeaturesProps) => {
+const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, riverInflow, userLocation, canalHighlights, highlightedCanalNames, canalTourActive, onNukusClick, geoGuessrMarkers }: GeoFeaturesProps) => {
   const bounds = terrain.bounds;
   const w = terrain.width;
   const h = terrain.height;
@@ -580,6 +587,69 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
         if (!pos) return null;
         return <CanalHighlightMarker key={`canal-hl-${i}`} pos={pos} canal={ch.canal} color={ch.color} />;
       })}
+
+      {/* GeoGuessr markers — guess (red), truth (green), arc connecting them, plus all truths */}
+      {geoGuessrMarkers && (() => {
+        const m = geoGuessrMarkers;
+        const guessPos = m.guess ? geoToMeshPos(m.guess.lat, m.guess.lon, bounds, terrain, exaggeration, meshWidth, meshHeight) : null;
+        const truthPos = m.truth ? geoToMeshPos(m.truth.lat, m.truth.lon, bounds, terrain, exaggeration, meshWidth, meshHeight) : null;
+        const arcPoints: [number, number, number][] = [];
+        if (guessPos && truthPos) {
+          const apexH = Math.max(0.4, Math.hypot(truthPos[0] - guessPos[0], truthPos[2] - guessPos[2]) * 0.4);
+          const mid: [number, number, number] = [
+            (guessPos[0] + truthPos[0]) / 2,
+            Math.max(guessPos[1], truthPos[1]) + apexH,
+            (guessPos[2] + truthPos[2]) / 2,
+          ];
+          const N = 40;
+          for (let i = 0; i <= N; i++) {
+            const t = i / N;
+            const it = 1 - t;
+            const x = it * it * guessPos[0] + 2 * it * t * mid[0] + t * t * truthPos[0];
+            const y = it * it * guessPos[1] + 2 * it * t * mid[1] + t * t * truthPos[1];
+            const z = it * it * guessPos[2] + 2 * it * t * mid[2] + t * t * truthPos[2];
+            arcPoints.push([x, y, z]);
+          }
+        }
+        const Pin = ({ pos, color, label }: { pos: [number, number, number]; color: string; label: string }) => (
+          <group position={pos}>
+            <mesh position={[0, 0.2, 0]}>
+              <cylinderGeometry args={[0.015, 0.015, 0.4, 8]} />
+              <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.6} />
+            </mesh>
+            <mesh position={[0, 0.45, 0]}>
+              <sphereGeometry args={[0.08, 16, 16]} />
+              <meshStandardMaterial color={color} emissive={color} emissiveIntensity={1} />
+            </mesh>
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
+              <ringGeometry args={[0.08, 0.14, 32]} />
+              <meshStandardMaterial color={color} transparent opacity={0.55} />
+            </mesh>
+            <Html position={[0, 0.65, 0]} center distanceFactor={10} style={{ pointerEvents: 'none' }}>
+              <div style={{
+                color: '#fff', padding: '2px 8px', fontSize: '11px',
+                fontFamily: "'Inter', system-ui, sans-serif", fontWeight: 700,
+                whiteSpace: 'nowrap', background: color, borderRadius: '4px',
+                textShadow: '0 1px 4px rgba(0,0,0,0.7)',
+              }}>{label}</div>
+            </Html>
+          </group>
+        );
+        return (
+          <>
+            {guessPos && <Pin pos={guessPos} color="#ff3b30" label="Your guess" />}
+            {truthPos && <Pin pos={truthPos} color="#34d399" label={m.truth!.name} />}
+            {arcPoints.length > 0 && (
+              <Line points={arcPoints} color="#ffd166" lineWidth={2} dashed dashSize={0.1} gapSize={0.05} />
+            )}
+            {m.all && m.all.map((loc, i) => {
+              const pos = geoToMeshPos(loc.lat, loc.lon, bounds, terrain, exaggeration, meshWidth, meshHeight);
+              if (!pos) return null;
+              return <Pin key={`all-${i}`} pos={pos} color="#34d399" label={loc.name} />;
+            })}
+          </>
+        );
+      })()}
     </group>
   );
 };

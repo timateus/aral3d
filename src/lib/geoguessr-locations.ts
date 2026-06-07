@@ -3,6 +3,7 @@
 // `zoom` is the Mapbox static-tile zoom that approximates the Earth camera distance.
 //   ~600m   distance → zoom 17
 //   ~10000m distance → zoom 13
+//   ~50000m distance → zoom 11
 
 export interface GeoLocation {
   id: string;
@@ -39,6 +40,30 @@ export const GEO_LOCATIONS: GeoLocation[] = [
     lon: 58.73721,
     zoom: 17,
     hint: 'Saxaul trees planted on the Aralkum to fight dust storms.',
+  },
+  {
+    id: 'janpiq-qala',
+    name: 'Janpiq Qala',
+    lat: 42.02734,
+    lon: 60.32507,
+    zoom: 16,
+    hint: 'Ancient fortress on the right bank of the Amu Darya.',
+  },
+  {
+    id: 'kokaral-dam',
+    name: 'Syr Darya Delta & Kokaral Dam',
+    lat: 46.13594,
+    lon: 60.86532,
+    zoom: 10,
+    hint: 'The dam saving the North Aral Sea.',
+  },
+  {
+    id: 'qubla-ustyurt',
+    name: 'Qubla-Ustyurt Settlement',
+    lat: 44.02710,
+    lon: 58.25278,
+    zoom: 16,
+    hint: 'Abandoned settlement and airport on the Ustyurt plateau.',
   },
 ];
 

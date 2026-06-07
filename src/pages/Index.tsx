@@ -212,6 +212,7 @@ const Index = () => {
   const [ministryMode, setMinistryMode] = useState(false);
   const [simMode, setSimMode] = useState(false);
   const [geoMode, setGeoMode] = useState(false);
+  const [geoMarkers, setGeoMarkers] = useState<import('@/components/GeoFeatures').GeoGuessrMarkerSet | null>(null);
   const ministryPrevVisualRef = useRef<import('@/lib/visual-mode').VisualMode>('dark');
   const [spectralCamPos, setSpectralCamPos] = useState<[number, number, number]>([0, 14, 14]);
   const [spectralCamTarget, setSpectralCamTarget] = useState<[number, number, number]>([0, 0, 0]);
@@ -1158,6 +1159,7 @@ const Index = () => {
         {terrain && (
           <TerrainViewer
             ref={viewerRef}
+            geoGuessrMarkers={geoMode ? geoMarkers : null}
             terrain={terrain}
             exaggeration={exaggeration}
             waterLevel={waterLevel}
@@ -1531,15 +1533,18 @@ const Index = () => {
         <GeoGuessrHUD
           onExit={() => {
             setGeoMode(false);
+            setGeoMarkers(null);
             setStarted(false);
             setVisualMode(ministryPrevVisualRef.current);
           }}
           onPrev={() => {
             setGeoMode(false);
+            setGeoMarkers(null);
             setSimMode(true);
             setWaterFlowActive(true);
             setFlowAnimating(true);
           }}
+          onMarkersChange={setGeoMarkers}
           getAimLatLon={() => {
             const aim = viewerRef.current?.getAimPixel();
             if (!aim || !terrain.bounds) return null;
