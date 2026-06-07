@@ -179,25 +179,25 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
     w.document.close();
   };
 
-  // Gamepad: A = make it misbehave, Y = make your own (print), RB = next, B = exit
+  // Gamepad: X = make it misbehave, LB = prev level, RB = next level.
+  // No exit / print / vertical-camera bindings (per controller spec).
   useEffect(() => {
     let raf = 0;
-    let prev = { a: false, b: false, y: false, rb: false };
+    let prev = { x: false, lb: false, rb: false };
     const tick = () => {
       const s = stateRef.current;
       if (s.connected) {
-        if (s.buttons.a && !prev.a) { sfx.make(); onRandomize(); }
-        if (s.buttons.y && !prev.y) { sfx.make(); handlePrint(); }
+        if (s.buttons.x && !prev.x) { sfx.make(); onRandomize(); }
         if (s.buttons.rb && !prev.rb && onNext) { sfx.navNext(); onNext(); }
-        if (s.buttons.b && !prev.b) { sfx.exit(); onExit(); }
-        prev = { a: s.buttons.a, b: s.buttons.b, y: s.buttons.y, rb: s.buttons.rb };
+        // LB intentionally has no prev target on level 1 (it's the first level)
+        prev = { x: s.buttons.x, lb: s.buttons.lb, rb: s.buttons.rb };
       }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onRandomize, onExit, onNext]);
+  }, [onRandomize, onNext]);
 
   return (
 
