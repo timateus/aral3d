@@ -262,7 +262,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         }
         const lb = !!pad.buttons[4]?.pressed;
         const rb = !!pad.buttons[5]?.pressed;
-        if (consumeGamepadButton('ministry-next-x', xBtn) && onNext && waterLevelRef.current < -4) { sfx.navNext(); onNext(); }
+        if (consumeGamepadButton('x', xBtn) && onNext && waterLevelRef.current < -4) { sfx.navNext(); onNext(); }
         if (consumeGamepadButton('rb', rb) && onNext && waterLevelRef.current < -4) { sfx.navNext(); onNext(); }
         if (consumeGamepadButton('lb', lb) && onPrev) { sfx.navPrev(); onPrev(); }
       }
