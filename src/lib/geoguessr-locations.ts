@@ -62,7 +62,7 @@ export const GEO_LOCATIONS: GeoLocation[] = [
     name: 'Qubla-Ustyurt Settlement',
     lat: 44.02710,
     lon: 58.25278,
-    zoom: 16,
+    zoom: 13,
     hint: 'Abandoned settlement and airport on the Ustyurt plateau.',
   },
 ];
