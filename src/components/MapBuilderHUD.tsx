@@ -70,11 +70,10 @@ const MapBuilderHUD = ({ onExit, onPrev, getAimLatLon, onItemsChange }: Props) =
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ----- Sandspiel-style simulation tick -----
+  // ----- Sandspiel-style simulation tick (intense) -----
   useEffect(() => {
     const tick = setInterval(() => {
       setItems((prev) => {
-        // Group by cell
         const cells = new Map<string, PlacedItem[]>();
         for (const it of prev) {
           const k = cellKey(it.lat, it.lon);
@@ -82,44 +81,112 @@ const MapBuilderHUD = ({ onExit, onPrev, getAimLatLon, onItemsChange }: Props) =
           if (!arr) { arr = []; cells.set(k, arr); }
           arr.push(it);
         }
-        const hasTypeAround = (lat: number, lon: number, type: MapBuilderItemId) => {
+        const neighborsOf = (lat: number, lon: number) => {
+          const out: PlacedItem[] = [];
           for (const dla of [-CELL_DEG, 0, CELL_DEG]) {
             for (const dlo of [-CELL_DEG, 0, CELL_DEG]) {
+              if (dla === 0 && dlo === 0) continue;
               const arr = cells.get(cellKey(lat + dla, lon + dlo));
-              if (arr?.some((x) => x.type === type)) return true;
+              if (arr) out.push(...arr);
             }
           }
-          return false;
+          return out;
         };
+        const hasType = (lat: number, lon: number, type: MapBuilderItemId) =>
+          neighborsOf(lat, lon).some((x) => x.type === type);
 
         const removed = new Set<string>();
         const next: PlacedItem[] = [];
+        const additions: PlacedItem[] = [];
+
+        const stackAt = (lat: number, lon: number) => {
+          const k = cellKey(lat, lon);
+          return [...next, ...additions].filter(
+            (x) => !removed.has(x.id) && getItemDef(x.type).kind === 'block' && cellKey(x.lat, x.lon) === k
+          ).length;
+        };
+        const placeBlock = (type: MapBuilderItemId, lat: number, lon: number, age = 0) => {
+          if (stackAt(lat, lon) >= 10) return;
+          additions.push({ id: nextId(), type, lat, lon, stack: stackAt(lat, lon), age });
+        };
 
         for (const it of prev) {
-          // Seed adjacent to water -> bloom into plant
-          if (it.type === 'seed' && hasTypeAround(it.lat, it.lon, 'water')) {
-            next.push({ ...it, type: 'plant', age: 0 });
-            continue;
+          // SEED → bloom into PLANT next to water
+          if (it.type === 'seed') {
+            if (hasType(it.lat, it.lon, 'water')) {
+              next.push({ ...it, type: 'plant', age: 0 });
+              continue;
+            }
+            next.push(it); continue;
           }
-          // Lava: burn flammable neighbors, decay after a few ticks to sand
+          // PLANT → grow age, occasionally spawn FLOWER neighbors, spread to dirt
+          if (it.type === 'plant') {
+            const age = (it.age ?? 0) + 1;
+            if (Math.random() < 0.35) {
+              const dirs = [[-CELL_DEG, 0], [CELL_DEG, 0], [0, -CELL_DEG], [0, CELL_DEG]];
+              const [dla, dlo] = dirs[Math.floor(Math.random() * 4)];
+              const nlat = Math.round((it.lat + dla) / CELL_DEG) * CELL_DEG;
+              const nlon = Math.round((it.lon + dlo) / CELL_DEG) * CELL_DEG;
+              const n = neighborsOf(nlat - dla, nlon - dlo);
+              const occupied = cells.get(cellKey(nlat, nlon))?.some((x) => getItemDef(x.type).kind === 'block');
+              if (!occupied && hasType(it.lat, it.lon, 'water')) {
+                placeBlock(Math.random() < 0.5 ? 'flower' : 'plant', nlat, nlon);
+              }
+            }
+            if (age > 3 && Math.random() < 0.5) {
+              next.push({ ...it, type: 'flower', age: 0 });
+              continue;
+            }
+            next.push({ ...it, age }); continue;
+          }
+          // LAVA → spawn FIRE on flammable neighbors, decay to sand
           if (it.type === 'lava') {
-            for (const dla of [-CELL_DEG, 0, CELL_DEG]) {
-              for (const dlo of [-CELL_DEG, 0, CELL_DEG]) {
-                const arr = cells.get(cellKey(it.lat + dla, it.lon + dlo));
-                if (!arr) continue;
-                for (const n of arr) if (FLAMMABLE.includes(n.type)) removed.add(n.id);
+            for (const n of neighborsOf(it.lat, it.lon)) {
+              if (FLAMMABLE.includes(n.type)) {
+                removed.add(n.id);
+                placeBlock('fire', n.lat, n.lon);
               }
             }
             const age = (it.age ?? 0) + 1;
-            if (age >= 4) next.push({ ...it, type: 'sand', age: 0 });
+            if (age >= 6) { placeBlock('smoke', it.lat, it.lon); next.push({ ...it, type: 'sand', age: 0 }); }
             else next.push({ ...it, age });
             continue;
+          }
+          // FIRE → spread to flammable neighbors, short lifetime, leaves smoke
+          if (it.type === 'fire') {
+            for (const n of neighborsOf(it.lat, it.lon)) {
+              if (FLAMMABLE.includes(n.type) && Math.random() < 0.6) {
+                removed.add(n.id);
+                placeBlock('fire', n.lat, n.lon);
+              }
+              if (n.type === 'water' && Math.random() < 0.4) {
+                removed.add(it.id);
+              }
+            }
+            const age = (it.age ?? 0) + 1;
+            if (age >= 4) { placeBlock('smoke', it.lat, it.lon); removed.add(it.id); }
+            else next.push({ ...it, age });
+            continue;
+          }
+          // SMOKE → fades
+          if (it.type === 'smoke') {
+            const age = (it.age ?? 0) + 1;
+            if (age >= 5) { removed.add(it.id); continue; }
+            next.push({ ...it, age }); continue;
           }
           next.push(it);
         }
 
+        // WATER cells: occasionally spawn fish
+        const waterCells = prev.filter((x) => x.type === 'water');
+        for (const w of waterCells) {
+          if (Math.random() < 0.04) {
+            const hasFish = neighborsOf(w.lat, w.lon).some((n) => n.type === 'fish');
+            if (!hasFish) additions.push({ id: nextId(), type: 'fish', lat: w.lat, lon: w.lon });
+          }
+        }
+
         // Oil pumps expel oil into a random adjacent cell each tick
-        const additions: PlacedItem[] = [];
         for (const it of prev) {
           if (it.type !== 'oilpump') continue;
           const dirs = [-CELL_DEG, 0, CELL_DEG];
@@ -128,11 +195,7 @@ const MapBuilderHUD = ({ onExit, onPrev, getAimLatLon, onItemsChange }: Props) =
           if (dx === 0 && dz === 0) continue;
           const nlat = Math.round((it.lat + dx) / CELL_DEG) * CELL_DEG;
           const nlon = Math.round((it.lon + dz) / CELL_DEG) * CELL_DEG;
-          const k = cellKey(nlat, nlon);
-          const stack = [...next, ...additions].filter(
-            (x) => !removed.has(x.id) && getItemDef(x.type).kind === 'block' && cellKey(x.lat, x.lon) === k
-          ).length;
-          if (stack < 8) additions.push({ id: nextId(), type: 'oil', lat: nlat, lon: nlon, stack });
+          placeBlock('oil', nlat, nlon);
         }
 
         return [...next.filter((x) => !removed.has(x.id)), ...additions];
