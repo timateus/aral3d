@@ -305,20 +305,22 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         <button
           onClick={() => { sfx.navPrev(); onPrev(); }}
           aria-label="previous level"
-          className="fixed left-2 top-1/2 -translate-y-1/2 z-[70] flex items-center justify-center bg-transparent hover:opacity-70 transition-opacity"
+          className="fixed left-2 top-1/2 -translate-y-1/2 z-[70] flex flex-col items-center justify-center bg-transparent hover:opacity-70 transition-opacity"
           style={{ color: arrowColor, filter: `drop-shadow(0 0 10px ${bgColor})` }}
         >
           <ChevronLeft style={{ width: 140, height: 140 }} strokeWidth={4} />
+          <PadHint label="LB" color={arrowColor} />
         </button>
       )}
       <button
         onClick={() => { if (onNext) { sfx.navNext(); onNext(); } }}
         disabled={!onNext}
         aria-label="next level"
-        className="fixed right-2 top-1/2 -translate-y-1/2 z-[70] flex items-center justify-center bg-transparent hover:opacity-70 transition-opacity disabled:opacity-20 disabled:cursor-not-allowed"
+        className="fixed right-2 top-1/2 -translate-y-1/2 z-[70] flex flex-col items-center justify-center bg-transparent hover:opacity-70 transition-opacity disabled:opacity-20 disabled:cursor-not-allowed"
         style={{ color: arrowColor, filter: `drop-shadow(0 0 10px ${bgColor})` }}
       >
         <ChevronRight style={{ width: 140, height: 140 }} strokeWidth={4} />
+        <PadHint label="RB" color={arrowColor} />
       </button>
 
 
