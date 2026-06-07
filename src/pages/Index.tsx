@@ -1620,6 +1620,15 @@ const Index = () => {
       {/* Background music — plays during levels with a mute toggle */}
       <BackgroundMusic active={spectralMode || ministryMode || simMode || geoMode} />
 
+      {levelIntro && (
+        <LevelIntroSplash
+          number={levelIntro.n}
+          name={levelIntro.name}
+          instructions={levelIntro.instructions}
+          onBegin={() => setLevelIntro(null)}
+        />
+      )}
+
 
 
 
