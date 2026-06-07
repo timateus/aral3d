@@ -27,7 +27,7 @@ export const GEO_LOCATIONS: GeoLocation[] = [
   },
   {
     id: 'salt-mining',
-    name: 'Salt mining',
+    name: 'Barsakelmes Salt Mining',
     lat: 43.36758,
     lon: 57.96974,
     zoom: 13,
