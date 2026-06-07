@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
-import track1 from '@/assets/aralkum-01.mp3.asset.json';
-import track2 from '@/assets/aralkum-04.mp3.asset.json';
-import track3 from '@/assets/aralkum-06.mp3.asset.json';
+import track1 from '@/assets/Kobyz_Kachapuri.mp3.asset.json';
+import track2 from '@/assets/Kobyz_Kachapuri_1.mp3.asset.json';
+import track3 from '@/assets/Kobyz_Lullwater.mp3.asset.json';
 
 const TRACKS = [track1.url, track2.url, track3.url];
 
