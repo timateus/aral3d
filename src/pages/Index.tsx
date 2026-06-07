@@ -1663,14 +1663,6 @@ const Index = () => {
             enterGameLevel(4);
           }}
           onItemsChange={setPlacedItems}
-          getAimLatLon={() => {
-            const aim = viewerRef.current?.getAimPixel();
-            if (!aim || !terrain.bounds) return null;
-            const b = terrain.bounds;
-            const lon = b.minLon + (aim.col / (terrain.width - 1)) * (b.maxLon - b.minLon);
-            const lat = b.minLat + (1 - aim.row / (terrain.height - 1)) * (b.maxLat - b.minLat);
-            return { lat, lon };
-          }}
         />
       )}
 

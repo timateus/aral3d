@@ -3,6 +3,8 @@ import { useThree, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { TerrainData } from '@/lib/geotiff-loader';
 import { useGamepad } from '@/hooks/useGamepad';
+import { firstPersonBridge } from '@/lib/first-person-bridge';
+import { cellKey, getItemDef, CUBE_SIZE } from '@/lib/map-builder-items';
 
 interface Props {
   active: boolean;
@@ -171,17 +173,32 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
     pos.current.x = THREE.MathUtils.clamp(pos.current.x, -meshWidth / 2 + 0.05, meshWidth / 2 - 0.05);
     pos.current.z = THREE.MathUtils.clamp(pos.current.z, -meshHeight / 2 + 0.05, meshHeight / 2 - 0.05);
 
-    const groundY = sampleHeight(pos.current.x, pos.current.z);
+    // Ground = terrain height + stacked block height at current cell
+    let groundY = sampleHeight(pos.current.x, pos.current.z);
+    const ll = worldXZToLatLon(pos.current.x, pos.current.z);
+    if (ll) {
+      const k = cellKey(ll.lat, ll.lon);
+      let blockCount = 0;
+      for (const it of firstPersonBridge.placedItems) {
+        if (getItemDef(it.type).kind !== 'block') continue;
+        if (cellKey(it.lat, it.lon) === k) blockCount++;
+      }
+      groundY += blockCount * CUBE_SIZE;
+    }
     pos.current.y = groundY + EYE_HEIGHT;
 
     camera.position.copy(pos.current);
     const quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(pitch.current, yaw.current, 0, 'YXZ'));
     camera.quaternion.copy(quat);
 
-    if (onPositionChange) {
-      const ll = worldXZToLatLon(pos.current.x, pos.current.z);
-      if (ll) onPositionChange(ll.lat, ll.lon);
-    }
+    // Publish "in front" aim point (~0.5 world units ahead) for placement.
+    const aheadDist = 0.5;
+    const ax = pos.current.x + -Math.sin(yaw.current) * aheadDist;
+    const az = pos.current.z + -Math.cos(yaw.current) * aheadDist;
+    const aimLL = worldXZToLatLon(ax, az);
+    if (aimLL) firstPersonBridge.aim = aimLL;
+
+    if (onPositionChange && ll) onPositionChange(ll.lat, ll.lon);
 
     // Trigger: mouse-left, X, A button, or RT (Space removed per request — X only).
     const held =
