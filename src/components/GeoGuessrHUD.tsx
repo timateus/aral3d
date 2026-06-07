@@ -438,22 +438,6 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, getLatLonAtScreen, onMarke
           </div>
         </div>
       )}
-          {guess.loc.hint && (
-            <div className="opacity-70 mt-2 text-[11px] italic">{guess.loc.hint}</div>
-          )}
-          <div className="opacity-60 mt-2 text-[10px] uppercase tracking-[0.2em]">
-            explore the true location on the map · right stick to look around
-          </div>
-          <button
-            onClick={guardedNext}
-            className="mt-3 px-5 py-2 text-[11px] uppercase tracking-[0.3em] hover:brightness-110"
-            style={{ border: `2px solid ${accent}`, color: inkColor, background: 'transparent' }}
-          >
-            {idx + 1 < GEO_LOCATIONS.length ? 'Next location' : 'See results'}
-            <PadHint label="X" bg={bgColor} />
-          </button>
-        </div>
-      )}
 
       {/* Final summary — compact side panel so the map stays visible */}
       {done && (
