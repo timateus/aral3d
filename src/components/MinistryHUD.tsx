@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import { useDesignerScheme, applyDesignerScheme, getDesignerScheme } from '@/lib/visual-mode';
 import { sfx } from '@/lib/ui-sfx';
+import { consumeGamepadButton } from '@/lib/gamepad-dedupe';
 
 
 function bgIsLight(hex: string): boolean {
@@ -213,8 +214,8 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
   });
   const [panelOpen, setPanelOpen] = useState(false);
 
-  // Next level is unlocked only when the basin is filled (>= 50m) or fully drained (<= 5m).
-  const canNext = waterLevel >= 50 || waterLevel <= 5;
+  // Next level is unlocked only after the sea is drained below -4m.
+  const canNext = waterLevel < -4;
 
   // Gamepad controls — X (button 2) lowers water, O/B (button 1) raises it,
   // held continuously. LB/RB navigate levels. Right stick stays free for camera.
@@ -225,9 +226,18 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
   }, [waterLevel]);
   const onWaterLevelChangeRef = useRef(onWaterLevelChange);
   useEffect(() => { onWaterLevelChangeRef.current = onWaterLevelChange; }, [onWaterLevelChange]);
+  const sliderRef = useRef<HTMLDivElement | null>(null);
+  const setLevelFromPointer = (clientY: number) => {
+    const rect = sliderRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const pct = Math.max(0, Math.min(1, (rect.bottom - clientY) / rect.height));
+    const next = MIN + pct * (MAX - MIN);
+    waterLevelRef.current = next;
+    onWaterLevelChangeRef.current(next);
+    flashBig();
+  };
   useEffect(() => {
     let raf = 0;
-    let prevLB = false, prevRB = false;
     let lastT = performance.now();
     let sfxAccum = 0;
     const tick = (now: number) => {
@@ -252,9 +262,9 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         }
         const lb = !!pad.buttons[4]?.pressed;
         const rb = !!pad.buttons[5]?.pressed;
-        if (rb && !prevRB && onNext && (waterLevelRef.current >= 50 || waterLevelRef.current <= 5)) { sfx.navNext(); onNext(); }
-        if (lb && !prevLB && onPrev) { sfx.navPrev(); onPrev(); }
-        prevLB = lb; prevRB = rb;
+        if (consumeGamepadButton('x', xBtn) && onNext && waterLevelRef.current < -4) { sfx.navNext(); onNext(); }
+        if (consumeGamepadButton('rb', rb) && onNext && waterLevelRef.current < -4) { sfx.navNext(); onNext(); }
+        if (consumeGamepadButton('lb', lb) && onPrev) { sfx.navPrev(); onPrev(); }
       }
       raf = requestAnimationFrame(tick);
     };
@@ -341,7 +351,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         onClick={() => { if (onNext && canNext) { sfx.navNext(); onNext(); } }}
         disabled={!onNext || !canNext}
         aria-label="next level"
-        title={canNext ? 'next level' : 'Fill the sea or drain it dry to continue'}
+        title={canNext ? 'next level' : 'Drain below -4m to continue'}
         className="fixed right-2 top-1/2 -translate-y-1/2 z-[70] flex flex-col items-center justify-center bg-transparent hover:opacity-70 transition-opacity disabled:opacity-20 disabled:cursor-not-allowed"
         style={{ color: arrowColor, filter: `drop-shadow(0 0 10px ${bgColor})` }}
       >
@@ -349,33 +359,35 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         <PadHint label="RB" color={arrowColor} bg={bgColor} />
         {!canNext && (
           <div className="mt-2 text-[9px] font-mono uppercase tracking-[0.2em] text-center max-w-[120px] leading-tight" style={{ color: arrowColor, opacity: 0.85 }}>
-            fill or drain<br/>to unlock
+            drain below<br/>-4m
+          </div>
+        )}
+        {canNext && (
+          <div className="mt-2 text-[10px] font-mono uppercase tracking-[0.16em] text-center max-w-[180px] leading-tight" style={{ color: arrowColor, opacity: 0.95 }}>
+            you&apos;ve successfully drained the sea.<br/>X for the next level
           </div>
         )}
       </button>
 
 
-      {/* Big year number overlay while dragging */}
-      {dragging && (
-        <div className="fixed inset-0 z-30 pointer-events-none flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-[10px] font-mono uppercase tracking-[0.4em] text-white/50 mb-2">year</div>
-            <div
-              className="font-mono font-extralight leading-none"
-              style={{
-                fontSize: 'clamp(96px, 16vw, 220px)',
-                color: waterColor,
-                textShadow: '0 0 60px rgba(0,0,0,0.7)',
-              }}
-            >
-              {bigLabel}
-            </div>
-            <div className="text-xs font-mono uppercase tracking-[0.3em] text-white/60 mt-3">
-              {waterLevel.toFixed(2)} m
-            </div>
-          </div>
+      {/* Persistent year / future marker */}
+      <div className="fixed left-1/2 bottom-24 -translate-x-1/2 z-30 pointer-events-none text-center">
+        <div className="text-[11px] font-mono uppercase tracking-[0.45em] mb-2" style={{ color: contrastColor, opacity: 0.62 }}>year</div>
+        <div
+          className="font-mono font-extralight leading-none tabular-nums"
+          style={{
+            fontSize: dragging ? 'clamp(104px, 14vw, 190px)' : 'clamp(64px, 9vw, 132px)',
+            color: waterColor,
+            textShadow: `0 5px 30px ${bgColor}, 0 0 2px ${contrastColor}55`,
+            transition: 'font-size 140ms ease-out',
+          }}
+        >
+          {bigLabel}
         </div>
-      )}
+        <div className="text-xs font-mono uppercase tracking-[0.3em] mt-2" style={{ color: contrastColor, opacity: 0.7 }}>
+          {waterLevel.toFixed(2)} m
+        </div>
+      </div>
 
 
       {/* Vertical slider with labels */}
@@ -396,18 +408,36 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
           })}
         </div>
         <div className="relative h-[72vh] w-24 flex items-center justify-center">
-          <div className="absolute -top-8 left-1/2 -translate-x-1/2 pointer-events-none flex gap-1">
+          <div className="absolute -top-12 left-1/2 -translate-x-1/2 pointer-events-none flex gap-1">
             <PadHint label="X−" color={waterColor} bg={bgColor} />
             <PadHint label="O+" color={waterColor} bg={bgColor} />
           </div>
 
           {/* Fat track */}
           <div
-            className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-5 rounded-full pointer-events-none overflow-hidden"
+            ref={sliderRef}
+            className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-16 pointer-events-auto cursor-ns-resize touch-none overflow-hidden"
+            onPointerDown={(e) => {
+              e.currentTarget.setPointerCapture(e.pointerId);
+              setLevelFromPointer(e.clientY);
+              sfx.slider();
+            }}
+            onPointerMove={(e) => {
+              if (e.buttons !== 1) return;
+              setLevelFromPointer(e.clientY);
+            }}
+            onPointerUp={(e) => {
+              if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+                e.currentTarget.releasePointerCapture(e.pointerId);
+              }
+              setLevelFromPointer(e.clientY);
+              sfx.slider();
+            }}
             style={{
-              background: 'rgba(255,255,255,0.08)',
-              border: `1px solid ${waterColor}55`,
-              boxShadow: `inset 0 0 12px rgba(0,0,0,0.4)`,
+              background: `linear-gradient(90deg, ${contrastColor}10, ${contrastColor}20, ${contrastColor}10)`,
+              border: `2px solid ${waterColor}88`,
+              boxShadow: `inset 0 0 18px ${bgColor}, 0 6px 18px rgba(0,0,0,0.35)`,
+              borderRadius: 4,
             }}
           >
             {/* Fill from bottom up */}
@@ -415,26 +445,17 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
               className="absolute left-0 right-0 bottom-0"
               style={{
                 height: `${((waterLevel - MIN) / (MAX - MIN)) * 100}%`,
-                background: `linear-gradient(to top, ${waterColor}, ${waterColor}cc)`,
-                boxShadow: `0 0 16px ${waterColor}aa`,
-                transition: 'height 60ms linear',
+                background: `linear-gradient(to top, ${waterColor}, ${waterColor}dd 65%, ${contrastColor}22)`,
+                boxShadow: `0 -8px 24px ${waterColor}77`,
               }}
             />
-            {/* Threshold markers: drain (<=5) and fill (>=50) zones */}
+            {/* Drain unlock marker (< -4m) */}
             <div
               className="absolute left-0 right-0 pointer-events-none"
               style={{
-                top: `${(1 - (50 - MIN) / (MAX - MIN)) * 100}%`,
+                top: `${(1 - (-4 - MIN) / (MAX - MIN)) * 100}%`,
                 borderTop: `2px dashed ${waterColor}`,
-                opacity: 0.7,
-              }}
-            />
-            <div
-              className="absolute left-0 right-0 pointer-events-none"
-              style={{
-                top: `${(1 - (5 - MIN) / (MAX - MIN)) * 100}%`,
-                borderTop: `2px dashed ${waterColor}`,
-                opacity: 0.7,
+                opacity: 0.9,
               }}
             />
           </div>
@@ -461,38 +482,6 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
               <div className="w-2 h-2 rounded-full" style={{ background: bgColor }} />
             </div>
           </div>
-
-          {/* Transparent input on top for interaction */}
-          <input
-            type="range"
-            min={MIN}
-            max={MAX}
-            step={0.01}
-            value={waterLevel}
-            onPointerDown={flashBig}
-            onPointerUp={flashBig}
-            onChange={(e) => {
-              const v = Number(e.target.value);
-              flashBig();
-              sfx.slider();
-              onWaterLevelChange(v);
-            }}
-            aria-label="value"
-            className="ministry-slider"
-            style={{
-              writingMode: 'vertical-lr' as any,
-              WebkitAppearance: 'slider-vertical' as any,
-              height: '72vh',
-              width: 80,
-              direction: 'rtl',
-              cursor: 'ns-resize',
-              accentColor: waterColor,
-              background: 'transparent',
-              opacity: 0,
-              position: 'relative',
-              zIndex: 2,
-            }}
-          />
         </div>
       </div>
 

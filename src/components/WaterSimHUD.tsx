@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight, ArrowLeft, Droplets, Mountain } from 'lucide
 import { useEffect, useMemo, useRef } from 'react';
 import { useDesignerScheme } from '@/lib/visual-mode';
 import { sfx } from '@/lib/ui-sfx';
+import { consumeGamepadButton } from '@/lib/gamepad-dedupe';
 
 function bgIsLight(hex: string): boolean {
   const h = (hex || '').replace('#', '');
@@ -74,21 +75,15 @@ const WaterSimHUD = ({ onExit, onPrev, onNext, onAddWaterCenter, onBuildDamCente
 
   useEffect(() => {
     let raf = 0;
-    let prev = { x: false, b: false, lb: false, rb: false };
     const tick = () => {
       const pads = navigator.getGamepads?.() ?? [];
       let pad: Gamepad | null = null;
       for (const p of pads) { if (p) { pad = p; break; } }
       if (pad) {
-        const x = !!pad.buttons[2]?.pressed;
-        const b = !!pad.buttons[1]?.pressed;
-        const lb = !!pad.buttons[4]?.pressed;
-        const rb = !!pad.buttons[5]?.pressed;
-        if (x && !prev.x) { sfx.make(); addRef.current(); }
-        if (b && !prev.b) { sfx.make(); damRef.current(); }
-        if (lb && !prev.lb && prevRef.current) { sfx.navPrev(); prevRef.current(); }
-        if (rb && !prev.rb && nextRef.current) { sfx.navNext(); nextRef.current(); }
-        prev = { x, b, lb, rb };
+        if (consumeGamepadButton('x', !!pad.buttons[2]?.pressed)) { sfx.make(); addRef.current(); }
+        if (consumeGamepadButton('b', !!pad.buttons[1]?.pressed)) { sfx.make(); damRef.current(); }
+        if (consumeGamepadButton('lb', !!pad.buttons[4]?.pressed) && prevRef.current) { sfx.navPrev(); prevRef.current(); }
+        if (consumeGamepadButton('rb', !!pad.buttons[5]?.pressed) && nextRef.current) { sfx.navNext(); nextRef.current(); }
       }
       raf = requestAnimationFrame(tick);
     };
