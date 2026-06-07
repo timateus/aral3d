@@ -6,11 +6,14 @@ export type MapBuilderItemId =
   | 'sand'
   | 'saxaul'
   | 'reed'
-  | 'seed'      // grows into a plant when adjacent to water
-  | 'lava'      // burns flammable neighbors, decays to sand
-  | 'oilpump'   // continuously expels oil into adjacent cells
-  | 'oil'       // spawned by oil pump, flammable
-  | 'plant'     // bloomed seed (auto)
+  | 'seed'
+  | 'lava'
+  | 'oilpump'
+  | 'oil'
+  | 'plant'
+  | 'flower'
+  | 'fire'
+  | 'smoke'
   | 'camel'
   | 'fish';
 
