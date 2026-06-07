@@ -9,6 +9,7 @@ import TerrainMesh from './TerrainMesh';
 import MapboxTerrainMesh from './MapboxTerrainMesh';
 import { useTerrainMode } from '@/hooks/useTerrainMode';
 import GeoFeatures from './GeoFeatures';
+import MapPlacementOverlay from './MapPlacementOverlay';
 import WaterExtentLayer from './WaterExtentLayer';
 import PopulationDensityLayer, { PopData } from './PopulationDensityLayer';
 import LandcoverLayer, { LandcoverRasterData } from './LandcoverLayer';
