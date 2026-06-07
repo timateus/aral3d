@@ -331,7 +331,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         style={{ color: arrowColor, filter: `drop-shadow(0 0 10px ${bgColor})` }}
       >
         <ChevronRight style={{ width: 140, height: 140 }} strokeWidth={4} />
-        <PadHint label="RB" color={arrowColor} />
+        <PadHint label="RB" color={arrowColor} bg={bgColor} />
       </button>
 
 
