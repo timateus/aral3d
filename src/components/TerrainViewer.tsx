@@ -75,6 +75,7 @@ export interface TerrainViewerHandle {
   startCanvasRecording: () => void;
   stopCanvasRecording: () => void;
   getAimPixel: () => { row: number; col: number } | null;
+  getPixelAtScreen: (x: number, y: number) => { row: number; col: number } | null;
 }
 
 interface MetricItem {
