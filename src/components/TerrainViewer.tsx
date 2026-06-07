@@ -182,6 +182,7 @@ interface TerrainViewerProps {
   spectralActive?: boolean;
   rightStickCameraEnabled?: boolean;
   geoGuessrMarkers?: import('@/components/GeoFeatures').GeoGuessrMarkerSet | null;
+  placedItems?: import('@/lib/map-builder-items').PlacedItem[] | null;
 }
 
 /* ── Canvas Recorder (captures WebGL canvas stream, no camera animation) ── */
