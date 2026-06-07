@@ -248,10 +248,15 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, getLatLonAtScreen, onMarke
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
       if (t && /input|textarea|select/i.test(t.tagName)) return;
+      if (e.key === 'Escape' && pendingRef.current) {
+        e.preventDefault(); cancelPending(); return;
+      }
       if (e.key === 'Enter' || e.key === ' ' || e.key === 'x' || e.key === 'X') {
         e.preventDefault();
         if (doneRef.current) return;
-        if (guessRef.current) guardedNext(); else guardedPlace();
+        if (guessRef.current) { guardedNext(); return; }
+        if (pendingRef.current) { confirmPending(); return; }
+        guardedPlace();
       } else if ((e.key === 'ArrowLeft' || e.key === 'Backspace') && onPrev) {
         e.preventDefault();
         sfx.navPrev();
