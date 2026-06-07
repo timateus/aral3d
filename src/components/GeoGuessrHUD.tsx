@@ -44,7 +44,7 @@ interface Guess {
 export interface GeoGuessrMarkers {
   guess?: { lat: number; lon: number } | null;
   truth?: { lat: number; lon: number; name: string } | null;
-  all?: { lat: number; lon: number; name: string }[];
+  all?: { truth: { lat: number; lon: number; name: string }; guess: { lat: number; lon: number } }[];
 }
 
 interface Props {
