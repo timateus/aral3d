@@ -250,9 +250,6 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         const restX = restValues.get(3) ?? 0;
         let axis = rawX - restX;
         if (Math.abs(axis) < 0.18) axis = 0;
-        // D-pad fallback (always works regardless of axis mapping)
-        const dpad = ((pad.buttons[12]?.pressed ? 1 : 0) - (pad.buttons[13]?.pressed ? 1 : 0));
-        if (Math.abs(axis) < 0.15 && dpad !== 0) axis = dpad;
         if (axis !== 0) {
           const next = Math.max(MIN, Math.min(MAX, waterLevelRef.current + axis * 30 * dt));
           if (Math.abs(next - waterLevelRef.current) > 0.001) {

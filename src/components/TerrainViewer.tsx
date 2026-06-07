@@ -74,6 +74,7 @@ export interface TerrainViewerHandle {
   recordVideo: () => void;
   startCanvasRecording: () => void;
   stopCanvasRecording: () => void;
+  getAimPixel: () => { row: number; col: number } | null;
 }
 
 interface MetricItem {
@@ -178,6 +179,7 @@ interface TerrainViewerProps {
   hideTerrainSurface?: boolean;
   lifeActive?: boolean;
   spectralActive?: boolean;
+  rightStickCameraEnabled?: boolean;
 }
 
 /* ── Canvas Recorder (captures WebGL canvas stream, no camera animation) ── */
