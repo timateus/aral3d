@@ -24,6 +24,7 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
     for (const p of pads0) { if (p) { pad0 = p; break; } }
     if (pad0) {
       consumeGamepadButton('splash-x', !!pad0.buttons[2]?.pressed, { ignoreBlock: true });
+      consumeGamepadButton('splash-lb', !!pad0.buttons[4]?.pressed, { ignoreBlock: true });
       consumeGamepadButton('splash-rb', !!pad0.buttons[5]?.pressed, { ignoreBlock: true });
       consumeGamepadButton('splash-rt', !!pad0.buttons[7]?.pressed, { ignoreBlock: true });
       consumeGamepadButton('splash-a', !!pad0.buttons[0]?.pressed, { ignoreBlock: true });
