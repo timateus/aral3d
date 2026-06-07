@@ -15,7 +15,8 @@ interface CanalHighlight {
 export interface GeoGuessrMarkerSet {
   guess?: { lat: number; lon: number } | null;
   truth?: { lat: number; lon: number; name: string } | null;
-  all?: { lat: number; lon: number; name: string }[];
+  /** All rounds — render every guess+truth pair with arcs */
+  all?: { truth: { lat: number; lon: number; name: string }; guess: { lat: number; lon: number } }[];
 }
 
 interface GeoFeaturesProps {
@@ -642,10 +643,36 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
             {arcPoints.length > 0 && (
               <Line points={arcPoints} color="#ffd166" lineWidth={2} dashed dashSize={0.1} gapSize={0.05} />
             )}
-            {m.all && m.all.map((loc, i) => {
-              const pos = geoToMeshPos(loc.lat, loc.lon, bounds, terrain, exaggeration, meshWidth, meshHeight);
-              if (!pos) return null;
-              return <Pin key={`all-${i}`} pos={pos} color="#34d399" label={loc.name} />;
+            {m.all && m.all.map((entry, i) => {
+              const tPos = geoToMeshPos(entry.truth.lat, entry.truth.lon, bounds, terrain, exaggeration, meshWidth, meshHeight);
+              const gPos = geoToMeshPos(entry.guess.lat, entry.guess.lon, bounds, terrain, exaggeration, meshWidth, meshHeight);
+              const linePts: [number, number, number][] = [];
+              if (tPos && gPos) {
+                const apexH = Math.max(0.4, Math.hypot(tPos[0] - gPos[0], tPos[2] - gPos[2]) * 0.4);
+                const mid: [number, number, number] = [
+                  (gPos[0] + tPos[0]) / 2,
+                  Math.max(gPos[1], tPos[1]) + apexH,
+                  (gPos[2] + tPos[2]) / 2,
+                ];
+                const N = 30;
+                for (let k = 0; k <= N; k++) {
+                  const t = k / N, it = 1 - t;
+                  linePts.push([
+                    it * it * gPos[0] + 2 * it * t * mid[0] + t * t * tPos[0],
+                    it * it * gPos[1] + 2 * it * t * mid[1] + t * t * tPos[1],
+                    it * it * gPos[2] + 2 * it * t * mid[2] + t * t * tPos[2],
+                  ]);
+                }
+              }
+              return (
+                <group key={`all-${i}`}>
+                  {tPos && <Pin pos={tPos} color="#34d399" label={entry.truth.name} />}
+                  {gPos && <Pin pos={gPos} color="#ff3b30" label={`guess ${i + 1}`} />}
+                  {linePts.length > 0 && (
+                    <Line points={linePts} color="#ffd166" lineWidth={1.5} dashed dashSize={0.08} gapSize={0.05} />
+                  )}
+                </group>
+              );
             })}
           </>
         );

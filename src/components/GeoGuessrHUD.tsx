@@ -44,7 +44,7 @@ interface Guess {
 export interface GeoGuessrMarkers {
   guess?: { lat: number; lon: number } | null;
   truth?: { lat: number; lon: number; name: string } | null;
-  all?: { lat: number; lon: number; name: string }[];
+  all?: { truth: { lat: number; lon: number; name: string }; guess: { lat: number; lon: number } }[];
 }
 
 interface Props {
@@ -87,7 +87,12 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, onMarkersChange }: Props) 
   useEffect(() => {
     if (!onMarkersChange) return;
     if (done) {
-      onMarkersChange({ all: history.map((g) => ({ lat: g.loc.lat, lon: g.loc.lon, name: g.loc.name })) });
+      onMarkersChange({
+        all: history.map((g) => ({
+          truth: { lat: g.loc.lat, lon: g.loc.lon, name: g.loc.name },
+          guess: { lat: g.lat, lon: g.lon },
+        })),
+      });
     } else if (guess) {
       onMarkersChange({
         guess: { lat: guess.lat, lon: guess.lon },
@@ -112,6 +117,11 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, onMarkersChange }: Props) 
     const target = locRef.current;
     const dKm = haversineKm(lat, lon, target.lat, target.lon);
     const score = scoreFor(dKm);
+    console.log('[geoguessr] place', {
+      target: target.name, targetLatLon: [target.lat, target.lon],
+      guessLatLon: [lat, lon], distanceKm: dKm, score,
+      usedFallback: !(latOverride === undefined),
+    });
     const g: Guess = { loc: target, lat, lon, distanceKm: dKm, score };
     setGuess(g);
     setHistory((h) => [...h, g]);
@@ -345,23 +355,21 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, onMarkersChange }: Props) 
         <div
           className="fixed top-20 right-6 bottom-6 z-50 font-mono w-[360px] flex flex-col"
           style={{
-            background: 'rgba(0,0,0,0.78)',
-            color: '#fff',
-            border: `2px solid ${accent}`,
-            boxShadow: `0 0 32px ${accent}66`,
-            backdropFilter: 'blur(8px)',
+            background: bgColor,
+            color: inkColor,
+            border: `1px solid ${inkColor}33`,
           }}
         >
-          <div className="px-5 pt-4 pb-3 border-b border-white/10">
+          <div className="px-5 pt-4 pb-3" style={{ borderBottom: `1px solid ${inkColor}22` }}>
             <div className="text-[10px] uppercase tracking-[0.4em] opacity-70 text-center">final score</div>
             <div
               className="text-5xl font-bold my-1 text-center tabular-nums"
-              style={{ color: accent, textShadow: `0 0 16px ${accent}` }}
+              style={{ color: inkColor }}
             >
               {totalScore.toLocaleString()}
             </div>
             <div className="text-[10px] opacity-60 text-center">
-              / {GEO_LOCATIONS.length * 5000} · true locations on the map
+              / {GEO_LOCATIONS.length * 5000} · pins on the map
             </div>
           </div>
 
@@ -370,7 +378,7 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, onMarkersChange }: Props) 
               <div
                 key={i}
                 className="flex items-center gap-2 p-1.5"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #222' }}
+                style={{ background: `${inkColor}0a`, border: `1px solid ${inkColor}22` }}
               >
                 <img
                   src={satelliteImageUrl(g.loc, 160, 120)}
@@ -386,25 +394,25 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, onMarkersChange }: Props) 
                     {g.distanceKm.toFixed(1)} km
                   </div>
                 </div>
-                <div className="text-sm font-bold tabular-nums" style={{ color: accent }}>
+                <div className="text-sm font-bold tabular-nums">
                   +{g.score.toLocaleString()}
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="flex justify-center gap-2 px-3 py-3 border-t border-white/10">
+          <div className="flex justify-center gap-2 px-3 py-3" style={{ borderTop: `1px solid ${inkColor}22` }}>
             <button
               onClick={() => { setIdx(0); setHistory([]); setGuess(null); setTimeLeft(GUESS_SECONDS); }}
               className="px-3 py-1.5 text-[10px] uppercase tracking-[0.3em] hover:brightness-110"
-              style={{ border: `2px solid ${accent}`, color: '#fff', background: 'transparent' }}
+              style={{ border: `1px solid ${inkColor}55`, color: inkColor, background: 'transparent' }}
             >
               Play again
             </button>
             <button
               onClick={() => { sfx.exit(); onExit(); }}
               className="px-3 py-1.5 text-[10px] uppercase tracking-[0.3em] hover:brightness-110"
-              style={{ border: `2px solid #555`, color: '#fff', background: 'transparent' }}
+              style={{ border: `1px solid ${inkColor}33`, color: inkColor, background: 'transparent' }}
             >
               Exit
             </button>
