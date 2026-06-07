@@ -23,8 +23,8 @@ interface Props {
 let _uid = 0;
 const nextId = () => `pl-${++_uid}-${Date.now().toString(36)}`;
 const PLACE_INTERVAL_MS = 140;
-const SIM_TICK_MS = 600;
-const FLAMMABLE: MapBuilderItemId[] = ['seed', 'plant', 'saxaul', 'reed', 'oil'];
+const SIM_TICK_MS = 220;
+const FLAMMABLE: MapBuilderItemId[] = ['seed', 'plant', 'flower', 'saxaul', 'reed', 'oil'];
 
 const MapBuilderHUD = ({ onExit, onPrev, getAimLatLon, onItemsChange }: Props) => {
   const [selected, setSelected] = useState<MapBuilderItemId>('water');
