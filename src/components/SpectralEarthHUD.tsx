@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useDesignerScheme } from '@/lib/visual-mode';
 import { sfx } from '@/lib/ui-sfx';
 import { useGamepad } from '@/hooks/useGamepad';
+import { consumeGamepadButton } from '@/lib/gamepad-dedupe';
 
 function bgIsLight(hex: string): boolean {
   const h = (hex || '').replace('#', '');
@@ -83,9 +84,9 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
       case1: pick(CASES, s + 7),
       case2: pick(CASES, s + 8),
       size1: 36 + (Math.abs(Math.sin(s * 1.7)) * 56), // 36-92px
-      size2: 18 + (Math.abs(Math.sin(s * 2.3)) * 26), // 18-44px
-      tracking1: -0.02 + Math.abs(Math.sin(s * 3.1)) * 0.12,
-      tracking2: -0.01 + Math.abs(Math.sin(s * 4.7)) * 0.1,
+      size2: 20 + (Math.abs(Math.sin(s * 2.3)) * 10), // 20-30px
+      tracking1: Math.abs(Math.sin(s * 3.1)) * 0.035,
+      tracking2: Math.abs(Math.sin(s * 4.7)) * 0.03,
     };
   }, [randomSeed]);
 
@@ -211,14 +212,11 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
   // No exit / print / vertical-camera bindings (per controller spec).
   useEffect(() => {
     let raf = 0;
-    let prev = { x: false, lb: false, rb: false };
     const tick = () => {
       const s = stateRef.current;
       if (s.connected) {
-        if (s.buttons.x && !prev.x) { sfx.make(); onRandomize(); }
-        if (s.buttons.rb && !prev.rb && onNext) { sfx.navNext(); onNext(); }
-        // LB intentionally has no prev target on level 1 (it's the first level)
-        prev = { x: s.buttons.x, lb: s.buttons.lb, rb: s.buttons.rb };
+        if (consumeGamepadButton('x', s.buttons.x)) { sfx.make(); onRandomize(); }
+        if (consumeGamepadButton('rb', s.buttons.rb) && onNext) { sfx.navNext(); onNext(); }
       }
       raf = requestAnimationFrame(tick);
     };

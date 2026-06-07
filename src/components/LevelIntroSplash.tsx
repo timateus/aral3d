@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { sfx } from '@/lib/ui-sfx';
+import { consumeGamepadButton, setGamepadInputBlocked } from '@/lib/gamepad-dedupe';
 
 interface Props {
   number: number;
@@ -12,20 +13,19 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin }: Props) => {
   // Gamepad X (button 2) dismisses.
   useEffect(() => {
     let raf = 0;
-    let prev = false;
+    setGamepadInputBlocked(true);
     const tick = () => {
       const pads = navigator.getGamepads?.() ?? [];
       let pad: Gamepad | null = null;
       for (const p of pads) { if (p) { pad = p; break; } }
       if (pad) {
         const x = !!pad.buttons[2]?.pressed;
-        if (x && !prev) { sfx.navNext(); onBegin(); return; }
-        prev = x;
+        if (consumeGamepadButton('x', x, { cooldownMs: 700, ignoreBlock: true })) { sfx.navNext(); onBegin(); return; }
       }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    return () => { cancelAnimationFrame(raf); setGamepadInputBlocked(false); };
   }, [onBegin]);
 
   // Keyboard: any key / Enter / Space dismisses.
@@ -47,15 +47,18 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin }: Props) => {
       style={{ background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(10px)' }}
     >
       <div className="text-center px-8 max-w-2xl">
-        <div className="text-[11px] font-mono uppercase tracking-[0.5em] text-white/50 mb-3">
+        <div className="text-sm md:text-base font-mono uppercase tracking-[0.45em] text-white/55 mb-4">
           level {number}
         </div>
-        <h1 className="text-5xl md:text-7xl font-extralight tracking-[0.2em] uppercase text-white mb-8">
+        <h1
+          className="text-6xl md:text-8xl font-black tracking-[0.08em] uppercase text-white mb-9"
+          style={{ fontFamily: '"Trebuchet MS", "Inter", system-ui, sans-serif', textShadow: '0 8px 30px rgba(0,0,0,0.45)' }}
+        >
           {name}
         </h1>
-        <div className="space-y-2 mb-10">
+        <div className="space-y-4 mb-12">
           {instructions.map((line, i) => (
-            <p key={i} className="text-base md:text-lg italic text-white/80" style={{ fontFamily: '"Georgia", serif' }}>
+            <p key={i} className="text-2xl md:text-4xl italic text-white/85 leading-tight" style={{ fontFamily: '"Trebuchet MS", "Inter", system-ui, sans-serif' }}>
               {line}
             </p>
           ))}
