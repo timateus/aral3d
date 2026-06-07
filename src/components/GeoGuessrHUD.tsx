@@ -335,14 +335,28 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, getLatLonAtScreen, onMarke
           >
             {loc.name}
           </div>
-          <img
-            key={loc.id}
-            src={satelliteImageUrl(loc, 480, 360)}
-            alt={loc.name}
-            className="block"
-            style={{ width: 360, height: 270, objectFit: 'cover' }}
-            draggable={false}
-          />
+          <a
+            href={`https://earth.google.com/web/@${loc.lat},${loc.lon},0a,2000d,35y,0h,0t,0r`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block relative group"
+            title="Open this location in Google Earth"
+          >
+            <img
+              key={loc.id}
+              src={satelliteImageUrl(loc, 480, 360)}
+              alt={loc.name}
+              className="block"
+              style={{ width: 360, height: 270, objectFit: 'cover' }}
+              draggable={false}
+            />
+            <div
+              className="absolute bottom-1 right-1 flex items-center gap-1 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-opacity"
+              style={{ background: bgColor, color: inkColor, border: `1px solid ${inkColor}44` }}
+            >
+              <ExternalLink className="w-2.5 h-2.5" /> google earth
+            </div>
+          </a>
           <div
             className="mt-2 font-mono text-[10px] uppercase tracking-[0.3em] text-center flex items-center justify-center gap-3"
             style={{ color: inkColor }}
