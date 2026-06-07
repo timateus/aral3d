@@ -41,6 +41,9 @@ export const MAP_BUILDER_ITEMS: MapBuilderItem[] = [
   // Auto-spawned (not in palette):
   { id: 'oil',     label: 'Oil',      emoji: '🛢️', color: '#1a1410', kind: 'block', hidden: true },
   { id: 'plant',   label: 'Plant',    emoji: '🌿', color: '#4caf50', kind: 'block', hidden: true },
+  { id: 'flower',  label: 'Flower',   emoji: '🌸', color: '#ff7ab8', kind: 'block', hidden: true },
+  { id: 'fire',    label: 'Fire',     emoji: '🔥', color: '#ff8a14', kind: 'block', hidden: true },
+  { id: 'smoke',   label: 'Smoke',    emoji: '💨', color: '#555555', kind: 'block', hidden: true },
 ];
 
 export const PALETTE_ITEMS = MAP_BUILDER_ITEMS.filter((i) => !i.hidden);
