@@ -442,7 +442,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
                 boxShadow: `0 -8px 24px ${waterColor}77`,
               }}
             />
-            {/* Threshold markers: drain (<=5) and fill (>=50) zones */}
+            {/* Drain unlock marker (< -4m) */}
             <div
               className="absolute left-0 right-0 pointer-events-none"
               style={{
@@ -475,38 +475,6 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
               <div className="w-2 h-2 rounded-full" style={{ background: bgColor }} />
             </div>
           </div>
-
-          {/* Transparent input on top for interaction */}
-          <input
-            type="range"
-            min={MIN}
-            max={MAX}
-            step={0.01}
-            value={waterLevel}
-            onPointerDown={flashBig}
-            onPointerUp={flashBig}
-            onChange={(e) => {
-              const v = Number(e.target.value);
-              flashBig();
-              sfx.slider();
-              onWaterLevelChange(v);
-            }}
-            aria-label="value"
-            className="ministry-slider"
-            style={{
-              writingMode: 'vertical-lr' as any,
-              WebkitAppearance: 'slider-vertical' as any,
-              height: '72vh',
-              width: 80,
-              direction: 'rtl',
-              cursor: 'ns-resize',
-              accentColor: waterColor,
-              background: 'transparent',
-              opacity: 0,
-              position: 'relative',
-              zIndex: 2,
-            }}
-          />
         </div>
       </div>
 
