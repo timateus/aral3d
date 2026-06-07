@@ -1515,6 +1515,7 @@ const Index = () => {
             const row = aim?.row ?? Math.floor(terrain.height / 2);
             const col = aim?.col ?? Math.floor(terrain.width / 2);
             handleRaiseTerrainClick(row, col);
+          }}
           onNext={() => {
             // Hand off to Level 4 (satellite geoguessr).
             setSimMode(false);
