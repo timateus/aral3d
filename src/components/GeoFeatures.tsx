@@ -12,6 +12,12 @@ interface CanalHighlight {
   color: string;
 }
 
+export interface GeoGuessrMarkerSet {
+  guess?: { lat: number; lon: number } | null;
+  truth?: { lat: number; lon: number; name: string } | null;
+  all?: { lat: number; lon: number; name: string }[];
+}
+
 interface GeoFeaturesProps {
   terrain: TerrainData;
   exaggeration: number;
@@ -28,6 +34,7 @@ interface GeoFeaturesProps {
   highlightedCanalNames?: Set<string>;
   canalTourActive?: boolean;
   onNukusClick?: () => void;
+  geoGuessrMarkers?: GeoGuessrMarkerSet | null;
 }
 
 interface City {
