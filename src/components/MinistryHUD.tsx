@@ -211,7 +211,10 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
     irrigatedArea: false,
     tempAnomaly: false,
   });
-  const [panelOpen, setPanelOpen] = useState(true);
+  const [panelOpen, setPanelOpen] = useState(false);
+
+  // Next level is unlocked only when the basin is filled (>= 50m) or fully drained (<= 5m).
+  const canNext = waterLevel >= 50 || waterLevel <= 5;
 
   // Gamepad controls — X (button 2) lowers water, O/B (button 1) raises it,
   // held continuously. LB/RB navigate levels. Right stick stays free for camera.
