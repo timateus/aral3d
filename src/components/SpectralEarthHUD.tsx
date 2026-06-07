@@ -53,6 +53,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
   const stops = scheme.terrainStops && scheme.terrainStops.length > 1
     ? scheme.terrainStops
     : [scheme.water, scheme.land, scheme.vegetation, scheme.alert];
+  const bgColor = scheme.sceneBackground ?? scheme.background ?? '#000000';
 
   const { stateRef } = useGamepad();
 
