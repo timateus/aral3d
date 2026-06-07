@@ -219,7 +219,7 @@ const WaterSimHUD = ({
               textShadow: `0 2px 14px ${bgColor}`,
             }}
           >
-            life has returned — press <strong>X</strong> or <strong>RB</strong> for the next level
+            life has returned — press <strong>RB</strong> (or the arrow →) for the next level
           </div>
         )}
       </div>
