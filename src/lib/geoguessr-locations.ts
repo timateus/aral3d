@@ -1,0 +1,69 @@
+// Satellite imagery GeoGuessr locations.
+// Coordinates parsed from Google Earth share links (the @lat,lon,alt_a,distance_d,...).
+// `zoom` is the Mapbox static-tile zoom that approximates the Earth camera distance.
+//   ~600m   distance → zoom 17
+//   ~10000m distance → zoom 13
+
+export interface GeoLocation {
+  id: string;
+  name: string;
+  lat: number;
+  lon: number;
+  /** Mapbox static-image zoom that roughly matches the Earth view. */
+  zoom: number;
+  /** A short hint shown after the guess is locked in (optional). */
+  hint?: string;
+}
+
+export const GEO_LOCATIONS: GeoLocation[] = [
+  {
+    id: 'savitsky',
+    name: 'Savitsky Museum',
+    lat: 42.46559,
+    lon: 59.61240,
+    zoom: 17,
+    hint: 'Nukus — the Louvre of the Steppe.',
+  },
+  {
+    id: 'salt-mining',
+    name: 'Salt mining',
+    lat: 43.36758,
+    lon: 57.96974,
+    zoom: 13,
+    hint: 'Evaporation ponds carved out of the former seabed.',
+  },
+  {
+    id: 'saxaul',
+    name: 'Saxaul forest',
+    lat: 44.01322,
+    lon: 58.73721,
+    zoom: 17,
+    hint: 'Saxaul trees planted on the Aralkum to fight dust storms.',
+  },
+];
+
+const MAPBOX_TOKEN =
+  'pk.eyJ1IjoidGltYXRldXMiLCJhIjoiY2s2ZmhwMzd2MGNsbjNsbHJjeW9jeTZjeiJ9.nz7s6DdDjUYWUFSpVjFYaw';
+
+export function satelliteImageUrl(loc: GeoLocation, w = 640, h = 480): string {
+  return `https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/${loc.lon},${loc.lat},${loc.zoom},0/${w}x${h}@2x?access_token=${MAPBOX_TOKEN}&attribution=false&logo=false`;
+}
+
+/** Great-circle distance in km between two lat/lon points. */
+export function haversineKm(aLat: number, aLon: number, bLat: number, bLon: number): number {
+  const R = 6371;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(bLat - aLat);
+  const dLon = toRad(bLon - aLon);
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(aLat)) * Math.cos(toRad(bLat)) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
+}
+
+/** Score 0–5000 based on distance (5000 at 0 km, 0 at >=300 km). */
+export function scoreFor(distanceKm: number): number {
+  const max = 300;
+  const x = Math.max(0, 1 - distanceKm / max);
+  return Math.round(5000 * x * x);
+}
