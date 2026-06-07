@@ -290,9 +290,10 @@ const Index = () => {
         n: 5,
         name: 'Map Builder',
         instructions: [
-          'Place water, salt, saxaul, saigaks and fish on the map.',
-          'Click anywhere on the terrain to drop the selected item.',
-          'Number keys 1–9 switch the palette. Z undoes the last placement.',
+          'Walk the surface in first person — WASD or left stick.',
+          'Mouse / right stick to look. Click the screen to capture the mouse.',
+          'Hold X / A / left-mouse to continuously place the selected item.',
+          'Number keys 1–9 (or LB/RB) switch the palette. Z undoes the last placement.',
         ],
       });
     }
@@ -1239,6 +1240,7 @@ const Index = () => {
             ref={viewerRef}
             geoGuessrMarkers={geoMode ? geoMarkers : null}
             placedItems={placeMode ? placedItems : null}
+            firstPersonMode={placeMode}
             terrain={terrain}
             exaggeration={exaggeration}
             waterLevel={waterLevel}
@@ -1669,14 +1671,6 @@ const Index = () => {
             const b = terrain.bounds;
             const lon = b.minLon + (aim.col / (terrain.width - 1)) * (b.maxLon - b.minLon);
             const lat = b.minLat + (1 - aim.row / (terrain.height - 1)) * (b.maxLat - b.minLat);
-            return { lat, lon };
-          }}
-          getLatLonAtScreen={(x, y) => {
-            const px = viewerRef.current?.getPixelAtScreen(x, y);
-            if (!px || !terrain.bounds) return null;
-            const b = terrain.bounds;
-            const lon = b.minLon + (px.col / (terrain.width - 1)) * (b.maxLon - b.minLon);
-            const lat = b.minLat + (1 - px.row / (terrain.height - 1)) * (b.maxLat - b.minLat);
             return { lat, lon };
           }}
         />
