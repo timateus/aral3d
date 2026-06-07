@@ -202,34 +202,44 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
   const [panelOpen, setPanelOpen] = useState(true);
 
   // Gamepad controls — right stick Y adjusts water level; LB/RB navigate levels.
-  // No exit binding, no panel-toggle binding, no d-pad / vertical camera.
-  const { stateRef } = useGamepad();
+  // We read navigator.getGamepads() directly here for max reliability (some
+  // controllers report axes on indices other than [3] and we want any movement
+  // on the right-vertical axis to drive the slider).
   const waterLevelRef = useRef(waterLevel);
   useEffect(() => { waterLevelRef.current = waterLevel; }, [waterLevel]);
+  const onWaterLevelChangeRef = useRef(onWaterLevelChange);
+  useEffect(() => { onWaterLevelChangeRef.current = onWaterLevelChange; }, [onWaterLevelChange]);
   useEffect(() => {
     let raf = 0;
-    let prev = { lb: false, rb: false };
+    let prevLB = false, prevRB = false;
     let lastT = performance.now();
     const tick = (now: number) => {
       const dt = Math.min(0.05, (now - lastT) / 1000);
       lastT = now;
-      const s = stateRef.current;
-      if (s.connected) {
-        // right stick Y = slider (up = higher water)
-        const axis = -s.rightStick.y;
-        if (Math.abs(axis) > 0.05) {
-          const next = Math.max(MIN, Math.min(MAX, waterLevelRef.current + axis * 25 * dt));
+      const pads = navigator.getGamepads?.() ?? [];
+      let pad: Gamepad | null = null;
+      for (const p of pads) { if (p) { pad = p; break; } }
+      if (pad) {
+        // Right stick Y is axis[3] in Standard mapping. Add d-pad as fallback.
+        const rawY = pad.axes[3] ?? 0;
+        const dpad = ((pad.buttons[12]?.pressed ? 1 : 0) - (pad.buttons[13]?.pressed ? 1 : 0));
+        let axis = Math.abs(rawY) > 0.15 ? -rawY : 0;
+        if (axis === 0 && dpad !== 0) axis = dpad;
+        if (axis !== 0) {
+          const next = Math.max(MIN, Math.min(MAX, waterLevelRef.current + axis * 30 * dt));
           if (Math.abs(next - waterLevelRef.current) > 0.001) {
             waterLevelRef.current = next;
-            onWaterLevelChange(next);
+            onWaterLevelChangeRef.current(next);
             flashBig();
             sfx.slider();
           }
         }
-        // edge-triggered level nav
-        if (s.buttons.rb && !prev.rb && onNext) { sfx.navNext(); onNext(); }
-        if (s.buttons.lb && !prev.lb && onPrev) { sfx.navPrev(); onPrev(); }
-        prev = { lb: s.buttons.lb, rb: s.buttons.rb };
+        // Level nav — edge triggered
+        const lb = !!pad.buttons[4]?.pressed;
+        const rb = !!pad.buttons[5]?.pressed;
+        if (rb && !prevRB && onNext) { sfx.navNext(); onNext(); }
+        if (lb && !prevLB && onPrev) { sfx.navPrev(); onPrev(); }
+        prevLB = lb; prevRB = rb;
       }
       raf = requestAnimationFrame(tick);
     };
