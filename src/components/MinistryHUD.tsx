@@ -398,9 +398,11 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
             onPointerDown={flashBig}
             onPointerUp={flashBig}
             onChange={(e) => {
+              const v = Number(e.target.value);
+              console.log(`[ministry] slider onChange v=${v.toFixed(2)} prev=${waterLevel.toFixed(2)}`);
               flashBig();
               sfx.slider();
-              onWaterLevelChange(Number(e.target.value));
+              onWaterLevelChange(v);
             }}
             aria-label="value"
             className="ministry-slider"
