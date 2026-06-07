@@ -3,6 +3,8 @@ import { useThree, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { TerrainData } from '@/lib/geotiff-loader';
 import { useGamepad } from '@/hooks/useGamepad';
+import { firstPersonBridge } from '@/lib/first-person-bridge';
+import { cellKey, getItemDef, CUBE_SIZE } from '@/lib/map-builder-items';
 
 interface Props {
   active: boolean;
