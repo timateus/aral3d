@@ -73,6 +73,7 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, getLatLonAtScreen, onMarke
 
   const [idx, setIdx] = useState(0);
   const [guess, setGuess] = useState<Guess | null>(null);
+  const [pending, setPending] = useState<{ lat: number; lon: number } | null>(null);
   const [history, setHistory] = useState<Guess[]>([]);
   const [timeLeft, setTimeLeft] = useState(GUESS_SECONDS);
 
