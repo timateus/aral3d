@@ -52,6 +52,7 @@ export interface GeoGuessrMarkers {
 interface Props {
   onExit: () => void;
   onPrev?: () => void;
+  onNext?: () => void;
   /** Returns lat/lon of the current crosshair, or null if not aimed. */
   getAimLatLon: () => { lat: number; lon: number } | null;
   /** Returns lat/lon under a screen-space (clientX, clientY) point. */
@@ -60,7 +61,7 @@ interface Props {
   onMarkersChange?: (markers: GeoGuessrMarkers | null) => void;
 }
 
-const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, getLatLonAtScreen, onMarkersChange }: Props) => {
+const GeoGuessrHUD = ({ onExit, onPrev, onNext, getAimLatLon, getLatLonAtScreen, onMarkersChange }: Props) => {
   const [scheme] = useDesignerScheme();
   const { mode: terrainMode, setMode: setTerrainMode } = useTerrainMode();
   const stops =
@@ -573,6 +574,15 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, getLatLonAtScreen, onMarke
             >
               Play again
             </button>
+            {onNext && (
+              <button
+                onClick={() => { sfx.navNext?.(); onNext(); }}
+                className="px-3 py-1.5 text-[10px] uppercase tracking-[0.3em] hover:brightness-110"
+                style={{ border: `1px solid ${inkColor}`, color: bgColor, background: inkColor }}
+              >
+                Next level →
+              </button>
+            )}
             <button
               onClick={() => { sfx.exit(); onExit(); }}
               className="px-3 py-1.5 text-[10px] uppercase tracking-[0.3em] hover:brightness-110"

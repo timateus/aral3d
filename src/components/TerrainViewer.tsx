@@ -9,6 +9,7 @@ import TerrainMesh from './TerrainMesh';
 import MapboxTerrainMesh from './MapboxTerrainMesh';
 import { useTerrainMode } from '@/hooks/useTerrainMode';
 import GeoFeatures from './GeoFeatures';
+import MapPlacementOverlay from './MapPlacementOverlay';
 import WaterExtentLayer from './WaterExtentLayer';
 import PopulationDensityLayer, { PopData } from './PopulationDensityLayer';
 import LandcoverLayer, { LandcoverRasterData } from './LandcoverLayer';
@@ -182,6 +183,7 @@ interface TerrainViewerProps {
   spectralActive?: boolean;
   rightStickCameraEnabled?: boolean;
   geoGuessrMarkers?: import('@/components/GeoFeatures').GeoGuessrMarkerSet | null;
+  placedItems?: import('@/lib/map-builder-items').PlacedItem[] | null;
 }
 
 /* ── Canvas Recorder (captures WebGL canvas stream, no camera animation) ── */
@@ -514,7 +516,7 @@ function NoahsArk({ terrain, exaggeration, waterLevel }: { terrain: TerrainData;
   );
 }
 
-const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, showWaterExtent, waterExtentYear, showPopDensity, popHexSize, popHexHeight, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone, riverInflow, userLocation, inspectorEnabled, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, flowState, flowRenderKey, terrainVersion, raisedPixels, dugPixels, showMigration, migrationYear, showChoropleth, choroplethIndicator, choroplethExaggeration, canalHighlights, highlightedCanalNames, canalTourActive, showObjectLibrary, onObjectSelect, gameModeActive, gameCharacter, onGameAddWater, bowlWorldActive, onBowlWorldComplete, showLandcover, landcoverVisibleClasses, onLandcoverAvailableClasses, showSchools, showVocabulary, showDwellings, showPlaces, agmarShowProposalSites, aryqWorldActive, onAryqWorldComplete, onNukusClick, showOverlayMetrics, showGroundwater, showPrecipitation, showSalinity, waterPlaygroundActive, sandboxActive, sandboxSimState, sandboxRenderKey, sandboxToolActive, onSandboxClick, dustActive, dustState, dustRenderKey, dustToolActive, onDustClick, showWaterways, waterwayTypeFilter, waterwayTraceMode, waterwayClearTraceSignal, terrainStyle, contourInterval, vectorInterval, hideTerrainSurface, lifeActive, spectralActive, rightStickCameraEnabled = true, geoGuessrMarkers }, ref) => {
+const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, showWaterExtent, waterExtentYear, showPopDensity, popHexSize, popHexHeight, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone, riverInflow, userLocation, inspectorEnabled, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, flowState, flowRenderKey, terrainVersion, raisedPixels, dugPixels, showMigration, migrationYear, showChoropleth, choroplethIndicator, choroplethExaggeration, canalHighlights, highlightedCanalNames, canalTourActive, showObjectLibrary, onObjectSelect, gameModeActive, gameCharacter, onGameAddWater, bowlWorldActive, onBowlWorldComplete, showLandcover, landcoverVisibleClasses, onLandcoverAvailableClasses, showSchools, showVocabulary, showDwellings, showPlaces, agmarShowProposalSites, aryqWorldActive, onAryqWorldComplete, onNukusClick, showOverlayMetrics, showGroundwater, showPrecipitation, showSalinity, waterPlaygroundActive, sandboxActive, sandboxSimState, sandboxRenderKey, sandboxToolActive, onSandboxClick, dustActive, dustState, dustRenderKey, dustToolActive, onDustClick, showWaterways, waterwayTypeFilter, waterwayTraceMode, waterwayClearTraceSignal, terrainStyle, contourInterval, vectorInterval, hideTerrainSurface, lifeActive, spectralActive, rightStickCameraEnabled = true, geoGuessrMarkers, placedItems }, ref) => {
   const screenshotFn = useRef<(() => void) | null>(null);
   const aimPixelFn = useRef<(() => { row: number; col: number } | null) | null>(null);
   const pixelAtScreenFn = useRef<((x: number, y: number) => { row: number; col: number } | null) | null>(null);
@@ -587,6 +589,9 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
               {showWaterways && <WaterwaysLayer terrain={terrain} exaggeration={exaggeration} typeFilter={waterwayTypeFilter || 'all'} traceMode={!!waterwayTraceMode} clearTraceSignal={waterwayClearTraceSignal || 0} />}
               <WaterPlaygroundOverlay terrain={terrain} exaggeration={exaggeration} active={!!waterPlaygroundActive} />
               {waterPlaygroundActive && <NoahsArk terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} />}
+              {placedItems && placedItems.length > 0 && (
+                <MapPlacementOverlay terrain={terrain} exaggeration={exaggeration} items={placedItems} />
+              )}
             </>
           )}
           {sandboxActive && sandboxSimState && sandboxRenderKey !== undefined && (

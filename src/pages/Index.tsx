@@ -18,6 +18,7 @@ import WaterSimHUD from '@/components/WaterSimHUD';
 import GeoGuessrHUD from '@/components/GeoGuessrHUD';
 import BackgroundMusic from '@/components/BackgroundMusic';
 import LevelIntroSplash from '@/components/LevelIntroSplash';
+import MapBuilderHUD from '@/components/MapBuilderHUD';
 import { applyRandomSpectralPalette } from '@/lib/visual-mode';
 import CharacterSelect from '@/components/CharacterSelect';
 import ScenarioChat from '@/components/ScenarioChat';
@@ -214,6 +215,9 @@ const Index = () => {
   const [simMode, setSimMode] = useState(false);
   const [geoMode, setGeoMode] = useState(false);
   const [geoMarkers, setGeoMarkers] = useState<import('@/components/GeoFeatures').GeoGuessrMarkerSet | null>(null);
+  const [placeMode, setPlaceMode] = useState(false);
+  const [placedItems, setPlacedItems] = useState<import('@/lib/map-builder-items').PlacedItem[]>([]);
+  const prevPlaceRef = useRef(false);
   const [levelIntro, setLevelIntro] = useState<{ n: number; name: string; instructions: string[] } | null>(null);
   const ministryPrevVisualRef = useRef<import('@/lib/visual-mode').VisualMode>('dark');
   const [spectralCamPos, setSpectralCamPos] = useState<[number, number, number]>([0, 14, 14]);
@@ -280,6 +284,20 @@ const Index = () => {
     }
     prevGeoRef.current = geoMode;
   }, [geoMode]);
+  useEffect(() => {
+    if (placeMode && !prevPlaceRef.current) {
+      setLevelIntro({
+        n: 5,
+        name: 'Map Builder',
+        instructions: [
+          'Place water, salt, saxaul, saigaks and fish on the map.',
+          'Click anywhere on the terrain to drop the selected item.',
+          'Number keys 1–9 switch the palette. Z undoes the last placement.',
+        ],
+      });
+    }
+    prevPlaceRef.current = placeMode;
+  }, [placeMode]);
 
 
   // One-shot randomizer for Spectral Earth — palette, exaggeration, camera, zoom, typography.
@@ -1210,7 +1228,7 @@ const Index = () => {
     return () => window.removeEventListener('keydown', handler);
   }, [toggleScreenRecording]);
 
-  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode && !dustMode && !traceMode && !lifeMode && !spectralMode && !ministryMode && !simMode && !geoMode;
+  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode && !dustMode && !traceMode && !lifeMode && !spectralMode && !ministryMode && !simMode && !geoMode && !placeMode;
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
@@ -1220,6 +1238,7 @@ const Index = () => {
           <TerrainViewer
             ref={viewerRef}
             geoGuessrMarkers={geoMode ? geoMarkers : null}
+            placedItems={placeMode ? placedItems : null}
             terrain={terrain}
             exaggeration={exaggeration}
             waterLevel={waterLevel}
@@ -1264,7 +1283,7 @@ const Index = () => {
               agmarTourActive ? AGMAR_TOUR_STEPS[agmarTourStep]?.camera.target :
               undefined
             }
-            spectralActive={spectralMode || ministryMode || simMode}
+            spectralActive={spectralMode || ministryMode || simMode || geoMode || placeMode}
             rightStickCameraEnabled={true}
             riverFlyover={riverFlyover}
             onRiverFlyoverDone={() => setRiverFlyover(false)}
@@ -1606,6 +1625,44 @@ const Index = () => {
             setFlowAnimating(true);
           }}
           onMarkersChange={setGeoMarkers}
+          onNext={() => {
+            setGeoMode(false);
+            setGeoMarkers(null);
+            setPlaceMode(true);
+            setShowKhorezm(true);
+          }}
+          getAimLatLon={() => {
+            const aim = viewerRef.current?.getAimPixel();
+            if (!aim || !terrain.bounds) return null;
+            const b = terrain.bounds;
+            const lon = b.minLon + (aim.col / (terrain.width - 1)) * (b.maxLon - b.minLon);
+            const lat = b.minLat + (1 - aim.row / (terrain.height - 1)) * (b.maxLat - b.minLat);
+            return { lat, lon };
+          }}
+          getLatLonAtScreen={(x, y) => {
+            const px = viewerRef.current?.getPixelAtScreen(x, y);
+            if (!px || !terrain.bounds) return null;
+            const b = terrain.bounds;
+            const lon = b.minLon + (px.col / (terrain.width - 1)) * (b.maxLon - b.minLon);
+            const lat = b.minLat + (1 - px.row / (terrain.height - 1)) * (b.maxLat - b.minLat);
+            return { lat, lon };
+          }}
+        />
+      )}
+
+      {placeMode && terrain && (
+        <MapBuilderHUD
+          onExit={() => {
+            setPlaceMode(false);
+            setPlacedItems([]);
+            setStarted(false);
+            setVisualMode(ministryPrevVisualRef.current);
+          }}
+          onPrev={() => {
+            setPlaceMode(false);
+            setGeoMode(true);
+          }}
+          onItemsChange={setPlacedItems}
           getAimLatLon={() => {
             const aim = viewerRef.current?.getAimPixel();
             if (!aim || !terrain.bounds) return null;
@@ -1626,7 +1683,7 @@ const Index = () => {
       )}
 
       {/* Background music — plays during levels with a mute toggle */}
-      <BackgroundMusic active={spectralMode || ministryMode || simMode || geoMode} />
+      <BackgroundMusic active={spectralMode || ministryMode || simMode || geoMode || placeMode} />
 
       {levelIntro && (
         <LevelIntroSplash

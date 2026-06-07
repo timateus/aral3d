@@ -132,7 +132,7 @@ function areaHaToMeshRadius(area_ha: number): number {
   return Math.max(0.02, radius_km / km_per_mesh_unit);
 }
 
-function geoToMeshPos(
+export function geoToMeshPos(
   lat: number,
   lon: number,
   bounds: GeoBounds,
