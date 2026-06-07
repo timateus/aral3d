@@ -216,7 +216,10 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
   // Gamepad controls — X (button 2) lowers water, O/B (button 1) raises it,
   // held continuously. LB/RB navigate levels. Right stick stays free for camera.
   const waterLevelRef = useRef(waterLevel);
-  useEffect(() => { waterLevelRef.current = waterLevel; }, [waterLevel]);
+  useEffect(() => {
+    console.log(`[ministry] waterLevel prop -> ${waterLevel.toFixed(2)}`);
+    waterLevelRef.current = waterLevel;
+  }, [waterLevel]);
   const onWaterLevelChangeRef = useRef(onWaterLevelChange);
   useEffect(() => { onWaterLevelChangeRef.current = onWaterLevelChange; }, [onWaterLevelChange]);
   useEffect(() => {
@@ -398,9 +401,11 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
             onPointerDown={flashBig}
             onPointerUp={flashBig}
             onChange={(e) => {
+              const v = Number(e.target.value);
+              console.log(`[ministry] slider onChange v=${v.toFixed(2)} prev=${waterLevel.toFixed(2)}`);
               flashBig();
               sfx.slider();
-              onWaterLevelChange(Number(e.target.value));
+              onWaterLevelChange(v);
             }}
             aria-label="value"
             className="ministry-slider"

@@ -75,12 +75,18 @@ export function useGamepad() {
       let active: Gamepad | null = null;
       for (const p of pads) { if (p) { active = p; break; } }
       if (active) {
+        // One-time mapping log per pad id.
+        const meta = globalThis as any;
+        if (meta.__padIdLogged !== active.id) {
+          meta.__padIdLogged = active.id;
+          console.log(`[pad] connected id="${active.id}" mapping=${active.mapping} axes=${active.axes.length} buttons=${active.buttons.length}`);
+        }
         const lx = applyDeadzone(active.axes[0] ?? 0);
         const ly = applyDeadzone(active.axes[1] ?? 0);
         const rx = applyDeadzone(active.axes[2] ?? 0);
         const ry = applyDeadzone(active.axes[3] ?? 0);
         const b = active.buttons;
-        stateRef.current = {
+        const next: GamepadState = {
           connected: true,
           leftStick: { x: lx, y: ly },
           rightStick: { x: rx, y: ry },
@@ -101,6 +107,25 @@ export function useGamepad() {
             right: !!b[15]?.pressed,
           },
         };
+        // Debug logging — throttled stick logs, edge-triggered button logs.
+        const prev = stateRef.current;
+        const btnNames: (keyof GamepadState['buttons'])[] = ['a','b','x','y','lb','rb','up','down','left','right','start','back'];
+        for (const n of btnNames) {
+          if (next.buttons[n] && !prev.buttons[n]) console.log(`[pad] BTN ↓ ${n}`);
+          if (!next.buttons[n] && prev.buttons[n]) console.log(`[pad] BTN ↑ ${n}`);
+        }
+        const now = performance.now();
+        if (!(globalThis as any).__padLogT) (globalThis as any).__padLogT = 0;
+        if (now - (globalThis as any).__padLogT > 200) {
+          const hasMove = lx || ly || rx || ry || next.buttons.lt > 0.05 || next.buttons.rt > 0.05;
+          const rawMove = active.axes.some((v, i) => Math.abs((v ?? 0)) > 0.25 && i > 3);
+          if (hasMove || rawMove) {
+            const raw = active.axes.map((v, i) => `${i}:${(v ?? 0).toFixed(2)}`).join(' ');
+            console.log(`[pad] axes L(${lx.toFixed(2)},${ly.toFixed(2)}) R(${rx.toFixed(2)},${ry.toFixed(2)}) raw[${raw}]`);
+            (globalThis as any).__padLogT = now;
+          }
+        }
+        stateRef.current = next;
       } else {
         if (stateRef.current.connected) stateRef.current = emptyState();
       }
