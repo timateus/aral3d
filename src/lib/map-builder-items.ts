@@ -47,7 +47,7 @@ export function getItemDef(t: MapBuilderItemId): MapBuilderItem {
 }
 
 /** Snap lat/lon to a discrete grid so repeated placement at the same spot stacks. */
-export const CELL_DEG = 0.0008; // ~80m — visible cube footprint
+export const CELL_DEG = 0.035; // broad voxel grid so repeated aim/clicks stack visibly
 export function snapLatLon(lat: number, lon: number) {
   return {
     lat: Math.round(lat / CELL_DEG) * CELL_DEG,
