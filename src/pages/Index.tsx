@@ -1239,6 +1239,7 @@ const Index = () => {
             ref={viewerRef}
             geoGuessrMarkers={geoMode ? geoMarkers : null}
             placedItems={placeMode ? placedItems : null}
+            firstPersonMode={placeMode}
             terrain={terrain}
             exaggeration={exaggeration}
             waterLevel={waterLevel}
