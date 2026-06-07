@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { TerrainData } from '@/lib/geotiff-loader';
 import { geoToMeshPos } from './GeoFeatures';
-import { PlacedItem, getItemDef, MapBuilderItemId } from '@/lib/map-builder-items';
+import { PlacedItem, getItemDef, MapBuilderItemId, CUBE_SIZE } from '@/lib/map-builder-items';
 
 interface Props {
   terrain: TerrainData;
@@ -11,7 +11,7 @@ interface Props {
   items: PlacedItem[];
 }
 
-const CUBE = 0.06; // small minecraft-style voxel
+const CUBE = CUBE_SIZE;
 
 // ---------- Procedural pixel textures (one per material) ----------
 const textureCache = new Map<MapBuilderItemId, THREE.CanvasTexture>();
@@ -28,7 +28,6 @@ function makeTexture(type: MapBuilderItemId, baseColor: string): THREE.CanvasTex
   const base = new THREE.Color(baseColor);
   const rand = () => Math.random();
 
-  // Type-specific noise pattern
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       let shade = 0;
@@ -40,11 +39,15 @@ function makeTexture(type: MapBuilderItemId, baseColor: string): THREE.CanvasTex
         case 'sand':
           shade = (rand() - 0.5) * 0.18; break;
         case 'saxaul':
-        case 'tree':
         case 'reed':
+        case 'plant':
           shade = (rand() - 0.5) * 0.22; break;
-        case 'yurt':
-          shade = (y % 4 === 0 ? -0.1 : 0) + (rand() - 0.5) * 0.05; break;
+        case 'seed':
+          shade = (rand() < 0.2 ? -0.2 : 0) + (rand() - 0.5) * 0.06; break;
+        case 'oil':
+          shade = (rand() - 0.5) * 0.08 - 0.05; break;
+        case 'lava':
+          shade = Math.sin((x * 0.7 + y * 0.3) * 1.4) * 0.18 + (rand() - 0.5) * 0.1; break;
         default:
           shade = (rand() - 0.5) * 0.1;
       }
@@ -61,29 +64,66 @@ function makeTexture(type: MapBuilderItemId, baseColor: string): THREE.CanvasTex
   return tex;
 }
 
-// ---------- Block cube (material) ----------
+// ---------- Block cube ----------
 function BlockCube({ type }: { type: MapBuilderItemId }) {
   const def = getItemDef(type);
   const map = useMemo(() => makeTexture(type, def.color), [type, def.color]);
   const isWater = type === 'water';
+  const isLava = type === 'lava';
+  const isOil = type === 'oil';
   return (
     <mesh castShadow receiveShadow position={[0, CUBE / 2, 0]}>
       <boxGeometry args={[CUBE, CUBE, CUBE]} />
       <meshStandardMaterial
         map={map}
         color={def.color}
-        roughness={isWater ? 0.25 : 0.85}
-        metalness={isWater ? 0.15 : 0}
+        roughness={isWater || isOil ? 0.25 : 0.85}
+        metalness={isWater ? 0.15 : isOil ? 0.35 : 0}
         transparent={isWater}
         opacity={isWater ? 0.82 : 1}
-        emissive={isWater ? def.color : '#000000'}
-        emissiveIntensity={isWater ? 0.15 : 0}
+        emissive={isLava ? '#ff3300' : isWater ? def.color : '#000000'}
+        emissiveIntensity={isLava ? 0.9 : isWater ? 0.15 : 0}
       />
     </mesh>
   );
 }
 
-// ---------- Creature cubes (Minecraft mobs) ----------
+// ---------- Oil pump derrick ----------
+function OilPump() {
+  const armRef = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    if (armRef.current) armRef.current.rotation.x = Math.sin(clock.elapsedTime * 2.4) * 0.5;
+  });
+  const dark = '#1d1d1d';
+  const metal = '#444';
+  return (
+    <group position={[0, 0, 0]}>
+      {/* base */}
+      <mesh castShadow receiveShadow position={[0, CUBE * 0.5, 0]}>
+        <boxGeometry args={[CUBE * 1.4, CUBE, CUBE * 1.4]} />
+        <meshStandardMaterial color={dark} roughness={0.7} />
+      </mesh>
+      {/* tower */}
+      <mesh castShadow position={[0, CUBE * 1.6, 0]}>
+        <boxGeometry args={[CUBE * 0.5, CUBE * 1.2, CUBE * 0.5]} />
+        <meshStandardMaterial color={metal} />
+      </mesh>
+      {/* rocking arm */}
+      <group ref={armRef} position={[0, CUBE * 2.0, 0]}>
+        <mesh castShadow position={[CUBE * 0.6, 0, 0]}>
+          <boxGeometry args={[CUBE * 2.0, CUBE * 0.2, CUBE * 0.2]} />
+          <meshStandardMaterial color={metal} />
+        </mesh>
+        <mesh castShadow position={[CUBE * 1.4, -CUBE * 0.4, 0]}>
+          <boxGeometry args={[CUBE * 0.25, CUBE * 0.8, CUBE * 0.25]} />
+          <meshStandardMaterial color={dark} />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
+// ---------- Creature cubes ----------
 function CreatureBody({ type }: { type: MapBuilderItemId }) {
   const def = getItemDef(type);
   const c = def.color;
@@ -93,20 +133,6 @@ function CreatureBody({ type }: { type: MapBuilderItemId }) {
       <group>
         <mesh castShadow><boxGeometry args={[0.08, 0.04, 0.04]} /><meshStandardMaterial color={c} /></mesh>
         <mesh castShadow position={[-0.06, 0, 0]}><boxGeometry args={[0.03, 0.05, 0.02]} /><meshStandardMaterial color={c} /></mesh>
-      </group>
-    );
-  }
-  if (type === 'saiga') {
-    return (
-      <group>
-        <mesh castShadow position={[0, 0.04, 0]}><boxGeometry args={[0.1, 0.05, 0.05]} /><meshStandardMaterial color={c} /></mesh>
-        <mesh castShadow position={[0.06, 0.06, 0]}><boxGeometry args={[0.04, 0.04, 0.04]} /><meshStandardMaterial color={c} /></mesh>
-        <mesh castShadow position={[0.09, 0.05, 0]}><boxGeometry args={[0.03, 0.025, 0.025]} /><meshStandardMaterial color={dark} /></mesh>
-        {[[-0.035, 0.02], [0.035, 0.02], [-0.035, -0.02], [0.035, -0.02]].map(([dx, dz], i) => (
-          <mesh key={i} castShadow position={[dx, 0.01, dz]}>
-            <boxGeometry args={[0.018, 0.04, 0.018]} /><meshStandardMaterial color={dark} />
-          </mesh>
-        ))}
       </group>
     );
   }
@@ -134,17 +160,11 @@ function Creature({ type }: { type: MapBuilderItemId }) {
   useFrame(({ clock }) => {
     if (!ref.current) return;
     const t = clock.elapsedTime * speed + seed;
-    const x = Math.cos(t) * radius;
-    const z = Math.sin(t * 0.9) * radius;
-    ref.current.position.x = x;
-    ref.current.position.z = z;
-    if (type === 'fish') {
-      ref.current.position.y = 0.08 + Math.sin(t * 2) * 0.04;
-    } else {
-      // tiny bob from "walking"
-      ref.current.position.y = Math.abs(Math.sin(t * 4)) * 0.015;
-    }
-    // Face direction of travel
+    ref.current.position.x = Math.cos(t) * radius;
+    ref.current.position.z = Math.sin(t * 0.9) * radius;
+    ref.current.position.y = type === 'fish'
+      ? 0.08 + Math.sin(t * 2) * 0.04
+      : Math.abs(Math.sin(t * 4)) * 0.015;
     const yaw = Math.atan2(-Math.sin(t * 0.9) * 0.9 * radius, -Math.sin(t) * radius);
     ref.current.rotation.y = yaw;
   });
@@ -181,7 +201,11 @@ const MapPlacementOverlay = ({ terrain, exaggeration, items }: Props) => {
         const yOffset = def.kind === 'block' ? stack * CUBE : 0;
         return (
           <group key={it.id} position={[pos[0], pos[1] + yOffset, pos[2]]}>
-            {def.kind === 'block' ? <BlockCube type={it.type} /> : <Creature type={it.type} />}
+            {it.type === 'oilpump'
+              ? <OilPump />
+              : def.kind === 'block'
+                ? <BlockCube type={it.type} />
+                : <Creature type={it.type} />}
           </group>
         );
       })}
