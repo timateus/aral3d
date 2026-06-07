@@ -1455,11 +1455,69 @@ const Index = () => {
             setMinistryMode(false);
             setSpectralMode(true);
           }}
+          onNext={() => {
+            // Hand off to Level 3 (water simulation sandbox).
+            setMinistryMode(false);
+            setSimMode(true);
+            setShowKhorezm(true);
+            setShowWaterExtent(false);
+            setWaterFlowActive(true);
+            setFlowAnimating(true);
+            setFlowSpeed(20);
+            setFlowWaterAmount(20);
+          }}
         />
       )}
 
-      {/* Background music — plays during both levels with a mute toggle */}
-      <BackgroundMusic active={spectralMode || ministryMode} />
+      {simMode && terrain && (
+        <WaterSimHUD
+          wetPixels={flowWetCount}
+          canalEdits={canalEditCount}
+          onExit={() => {
+            setSimMode(false);
+            setStarted(false);
+            setWaterFlowActive(false);
+            setFlowAnimating(false);
+            setVisualMode(ministryPrevVisualRef.current);
+          }}
+          onPrev={() => {
+            // Back to Level 2
+            setSimMode(false);
+            setWaterFlowActive(false);
+            setFlowAnimating(false);
+            setMinistryMode(true);
+          }}
+          onAddWaterCenter={() => {
+            // Splash a large volume of water near the centre of the terrain
+            // and ensure the flow simulation is running.
+            const row = Math.floor(terrain.height / 2);
+            const col = Math.floor(terrain.width / 2);
+            let state = flowStateRef.current;
+            if (!state) {
+              state = createFlowState(terrain);
+              flowStateRef.current = state;
+            }
+            addWaterAt(state, row, col, 50, 6);
+            setFlowState(state);
+            setFlowRenderKey(k => k + 1);
+            setFlowAnimating(true);
+            let count = 0;
+            for (let i = 0; i < state.waterDepth.length; i++) {
+              if (state.waterDepth[i] > 0.01) count++;
+            }
+            setFlowWetCount(count);
+          }}
+          onDigCenter={() => {
+            const row = Math.floor(terrain.height / 2);
+            const col = Math.floor(terrain.width / 2);
+            handleDigCanalClick(row, col);
+          }}
+        />
+      )}
+
+      {/* Background music — plays during levels with a mute toggle */}
+      <BackgroundMusic active={spectralMode || ministryMode || simMode} />
+
 
 
 
