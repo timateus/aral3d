@@ -261,7 +261,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
       {/* Bottom action buttons — constant font/size, readable on black */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4">
         <button
-          onClick={onRandomize}
+          onClick={() => { sfx.make(); onRandomize(); }}
           className="group flex items-center gap-3 px-8 py-4 text-base font-semibold font-mono uppercase tracking-[0.2em] text-white backdrop-blur-md transition-all hover:brightness-110 hover:scale-105"
           style={{
             border: `3px solid ${stops[2 % stops.length]}`,
