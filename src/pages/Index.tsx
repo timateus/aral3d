@@ -18,6 +18,7 @@ import WaterSimHUD from '@/components/WaterSimHUD';
 import GeoGuessrHUD from '@/components/GeoGuessrHUD';
 import BackgroundMusic from '@/components/BackgroundMusic';
 import LevelIntroSplash from '@/components/LevelIntroSplash';
+import MapBuilderHUD from '@/components/MapBuilderHUD';
 import { applyRandomSpectralPalette } from '@/lib/visual-mode';
 import CharacterSelect from '@/components/CharacterSelect';
 import ScenarioChat from '@/components/ScenarioChat';
