@@ -312,10 +312,11 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
           <button
             onClick={() => { sfx.navNext(); onNext(); }}
             aria-label="next level"
-            className="fixed right-2 top-1/2 -translate-y-1/2 z-[70] flex items-center justify-center bg-transparent hover:opacity-70 transition-opacity"
+            className="fixed right-2 top-1/2 -translate-y-1/2 z-[70] flex flex-col items-center justify-center bg-transparent hover:opacity-70 transition-opacity"
             style={{ color: arrowColor, filter: 'drop-shadow(0 0 10px rgba(0,0,0,0.45))' }}
           >
             <ChevronRight style={{ width: 112, height: 112 }} strokeWidth={2} />
+            <PadHint label="RB" color={arrowColor} />
           </button>
         );
       })()}
