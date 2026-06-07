@@ -55,6 +55,7 @@ const MapBuilderHUD = ({ onExit, onPrev, getAimLatLon, onItemsChange }: Props) =
       if (t && /input|textarea|select/i.test(t.tagName)) return;
       if (e.key === 'x' || e.key === 'X') {
         e.preventDefault();
+        if (!heldRef.current) place();
         heldRef.current = true;
         kbMouseHeld.current = true;
       } else if (e.key >= '1' && e.key <= '9') {
@@ -88,7 +89,7 @@ const MapBuilderHUD = ({ onExit, onPrev, getAimLatLon, onItemsChange }: Props) =
     const md = (e: MouseEvent) => {
       const t = e.target as HTMLElement | null;
       if (t && t.closest('[data-hud], button, a, input, select, textarea')) return;
-      if (e.button === 0) { heldRef.current = true; kbMouseHeld.current = true; }
+      if (e.button === 0) { if (!heldRef.current) place(); heldRef.current = true; kbMouseHeld.current = true; }
     };
     const mu = (e: MouseEvent) => { if (e.button === 0) { heldRef.current = false; kbMouseHeld.current = false; } };
     window.addEventListener('keydown', dn);
