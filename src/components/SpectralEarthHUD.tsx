@@ -248,7 +248,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
 
       {/* Back button — constant font, readable on black */}
       <button
-        onClick={onExit}
+        onClick={() => { sfx.exit(); onExit(); }}
         className="absolute top-5 left-5 z-40 flex items-center gap-2 px-3 py-2 text-xs font-mono uppercase tracking-[0.2em] text-white backdrop-blur-md transition-colors hover:brightness-110"
         style={{
           border: `2px solid ${stops[1 % stops.length]}`,
