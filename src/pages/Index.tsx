@@ -14,6 +14,7 @@ import IntroOverlay from '@/components/IntroOverlay';
 import FountainsOfNukus from '@/components/FountainsOfNukus';
 import SpectralEarthHUD from '@/components/SpectralEarthHUD';
 import MinistryHUD from '@/components/MinistryHUD';
+import WaterSimHUD from '@/components/WaterSimHUD';
 import BackgroundMusic from '@/components/BackgroundMusic';
 import { applyRandomSpectralPalette } from '@/lib/visual-mode';
 import CharacterSelect from '@/components/CharacterSelect';
