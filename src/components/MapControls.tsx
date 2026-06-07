@@ -6,19 +6,22 @@ import { useGamepad } from '@/hooks/useGamepad';
 
 function WASDHandler({ enabled, orbitRef }: { enabled: boolean; orbitRef: React.MutableRefObject<any> }) {
   const { camera } = useThree();
-  const keys = useRef({ w: false, a: false, s: false, d: false, q: false, e: false });
+  const keys = useRef({ w: false, a: false, s: false, d: false, q: false, e: false, up: false, down: false, left: false, right: false });
   const speed = 0.12;
   const { stateRef: gpRef } = useGamepad();
 
   useEffect(() => {
-    const onDown = (e: KeyboardEvent) => {
+    const map = (e: KeyboardEvent): keyof typeof keys.current | null => {
       const k = e.key.toLowerCase();
-      if (k in keys.current) (keys.current as any)[k] = true;
+      if (k === 'w' || k === 'a' || k === 's' || k === 'd' || k === 'q' || k === 'e') return k as any;
+      if (e.key === 'ArrowUp') return 'up';
+      if (e.key === 'ArrowDown') return 'down';
+      if (e.key === 'ArrowLeft') return 'left';
+      if (e.key === 'ArrowRight') return 'right';
+      return null;
     };
-    const onUp = (e: KeyboardEvent) => {
-      const k = e.key.toLowerCase();
-      if (k in keys.current) (keys.current as any)[k] = false;
-    };
+    const onDown = (e: KeyboardEvent) => { const k = map(e); if (k) (keys.current as any)[k] = true; };
+    const onUp = (e: KeyboardEvent) => { const k = map(e); if (k) (keys.current as any)[k] = false; };
     window.addEventListener('keydown', onDown);
     window.addEventListener('keyup', onUp);
     return () => {
