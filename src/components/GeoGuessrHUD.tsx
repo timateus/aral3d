@@ -1,6 +1,7 @@
-import { ArrowLeft, ChevronLeft, MapPin, Target, Clock } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, MapPin, Target, Clock, Satellite, Map as MapIcon, ExternalLink } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDesignerScheme } from '@/lib/visual-mode';
+import { useTerrainMode } from '@/hooks/useTerrainMode';
 import { sfx } from '@/lib/ui-sfx';
 import { consumeGamepadButton } from '@/lib/gamepad-dedupe';
 import {
