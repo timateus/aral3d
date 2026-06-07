@@ -4,7 +4,7 @@ import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { useGamepad } from '@/hooks/useGamepad';
 
-function WASDHandler({ enabled, orbitRef }: { enabled: boolean; orbitRef: React.MutableRefObject<any> }) {
+function WASDHandler({ enabled, orbitRef, rightStickCameraEnabled = true }: { enabled: boolean; orbitRef: React.MutableRefObject<any>; rightStickCameraEnabled?: boolean }) {
   const { camera } = useThree();
   const keys = useRef({ w: false, a: false, s: false, d: false, q: false, e: false, up: false, down: false, left: false, right: false });
   const speed = 0.12;
@@ -20,7 +20,7 @@ function WASDHandler({ enabled, orbitRef }: { enabled: boolean; orbitRef: React.
       if (e.key === 'ArrowRight') return 'right';
       return null;
     };
-    const onDown = (e: KeyboardEvent) => { const k = map(e); if (k) (keys.current as any)[k] = true; };
+    const onDown = (e: KeyboardEvent) => { const k = map(e); if (k) { e.preventDefault(); (keys.current as any)[k] = true; } };
     const onUp = (e: KeyboardEvent) => { const k = map(e); if (k) (keys.current as any)[k] = false; };
     window.addEventListener('keydown', onDown);
     window.addEventListener('keyup', onUp);
@@ -55,6 +55,14 @@ function WASDHandler({ enabled, orbitRef }: { enabled: boolean; orbitRef: React.
         delta.addScaledVector(dir, -ly * speed);
         delta.addScaledVector(right, lx * speed);
       }
+
+      // Controller arrows / D-pad pan the map exactly like the left stick.
+      const dpadX = (gp.buttons.right ? 1 : 0) - (gp.buttons.left ? 1 : 0);
+      const dpadY = (gp.buttons.down ? 1 : 0) - (gp.buttons.up ? 1 : 0);
+      if (dpadX || dpadY) {
+        delta.addScaledVector(dir, -dpadY * speed);
+        delta.addScaledVector(right, dpadX * speed);
+      }
     }
 
     if (delta.lengthSq() > 0) {
@@ -62,20 +70,18 @@ function WASDHandler({ enabled, orbitRef }: { enabled: boolean; orbitRef: React.
       window.dispatchEvent(new CustomEvent('wasd-move', { detail: { x: delta.x, y: delta.y, z: delta.z } }));
     }
 
-    // Gamepad: right stick X = rotate. Y is reserved for HUD sliders — explicitly
-    // suppress rotation when vertical push dominates so a straight up/down on
-    // the right stick never rotates the camera.
+    // Gamepad: outside the slider level, right stick controls camera orbit on both axes.
+    // In the slider level, HUD owns the right stick and camera rotation is disabled.
     if (gp.connected && orbitRef.current) {
       const rxRaw = gp.rightStick.x;
       const ryRaw = gp.rightStick.y;
-      const xDominant = Math.abs(rxRaw) > 0.35 && Math.abs(rxRaw) > Math.abs(ryRaw) * 1.4;
-      const rx = xDominant ? rxRaw : 0;
       const target: THREE.Vector3 = orbitRef.current.target;
-      if (rx) {
+      if (rightStickCameraEnabled && (Math.abs(rxRaw) > 0.08 || Math.abs(ryRaw) > 0.08)) {
         const offset = new THREE.Vector3().subVectors(camera.position, target);
         const spherical = new THREE.Spherical().setFromVector3(offset);
         const rotSpeed = 0.04;
-        spherical.theta -= rx * rotSpeed;
+        spherical.theta -= rxRaw * rotSpeed;
+        spherical.phi = THREE.MathUtils.clamp(spherical.phi + ryRaw * rotSpeed, 0.12, Math.PI / 2.05);
         offset.setFromSpherical(spherical);
         camera.position.copy(target).add(offset);
         camera.lookAt(target);
@@ -95,7 +101,7 @@ function WASDHandler({ enabled, orbitRef }: { enabled: boolean; orbitRef: React.
   return null;
 }
 
-export default function MapControls({ enabled, orbitRef, gameModeActive, sandboxActive }: { enabled: boolean; orbitRef: React.MutableRefObject<any>; gameModeActive?: boolean; sandboxActive?: boolean }) {
+export default function MapControls({ enabled, orbitRef, gameModeActive, sandboxActive, rightStickCameraEnabled = true }: { enabled: boolean; orbitRef: React.MutableRefObject<any>; gameModeActive?: boolean; sandboxActive?: boolean; rightStickCameraEnabled?: boolean }) {
   useEffect(() => {
     const handler = (e: Event) => {
       const { x, y, z } = (e as CustomEvent).detail;
@@ -132,7 +138,7 @@ export default function MapControls({ enabled, orbitRef, gameModeActive, sandbox
         }}
       />
       {/* Disable WASD/gamepad handler in game mode — GameMode handles its own movement */}
-      <WASDHandler enabled={enabled && !gameModeActive} orbitRef={orbitRef} />
+      <WASDHandler enabled={enabled && !gameModeActive} orbitRef={orbitRef} rightStickCameraEnabled={rightStickCameraEnabled} />
     </>
   );
 }

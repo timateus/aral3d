@@ -14,7 +14,7 @@ function bgIsLight(hex: string): boolean {
 }
 
 function PadHint({ label, color, bg }: { label: string; color: string; bg: string }) {
-  const ink = bgIsLight(bg) ? '#0a0a0a' : color;
+  const ink = bgIsLight(bg) ? '#0a0a0a' : '#ffffff';
   return (
     <span
       className="ml-2 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-mono font-bold leading-none rounded"
