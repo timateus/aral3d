@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  MAP_BUILDER_ITEMS,
   PALETTE_ITEMS,
   MapBuilderItemId,
   PlacedItem,
