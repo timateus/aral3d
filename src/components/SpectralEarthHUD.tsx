@@ -286,33 +286,33 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
       </button>
 
       {/* Bottom action buttons — bg = map background */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4">
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 flex items-end gap-4">
         <button
           onClick={() => { sfx.make(); onRandomize(); }}
-          className="group flex items-center gap-3 px-8 py-4 text-base font-semibold font-mono uppercase tracking-[0.2em] backdrop-blur-md transition-all hover:brightness-110 hover:scale-105"
+          className="group flex items-center gap-4 px-12 py-6 text-2xl md:text-3xl font-extrabold font-mono uppercase tracking-[0.2em] backdrop-blur-md transition-all hover:brightness-110 hover:scale-105"
           style={{
-            border: `3px solid ${stops[2 % stops.length]}`,
+            border: `4px solid ${stops[2 % stops.length]}`,
             background: bgColor,
             color: inkColor,
-            boxShadow: `0 0 24px ${stops[1 % stops.length]}55`,
+            boxShadow: `0 0 36px ${stops[1 % stops.length]}88`,
           }}
         >
-          <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" style={{ color: stops[2 % stops.length] }} />
+          <Sparkles className="w-7 h-7 group-hover:rotate-12 transition-transform" style={{ color: stops[2 % stops.length] }} />
           Make it misbehave
           <PadHint label="X" color={stops[2 % stops.length]} bg={bgColor} />
         </button>
         <button
           onClick={() => { sfx.make(); handlePrint(); }}
-          className="group flex items-center gap-3 px-6 py-4 text-sm font-semibold font-mono uppercase tracking-[0.2em] backdrop-blur-md transition-all hover:brightness-110 hover:scale-105"
+          className="group flex items-center gap-2 px-3 py-2 text-[11px] font-medium font-mono uppercase tracking-[0.18em] backdrop-blur-md transition-all hover:brightness-110"
           style={{
-            border: `3px solid ${stops[0]}`,
+            border: `1px solid ${stops[0]}`,
             background: bgColor,
             color: inkColor,
-            boxShadow: `0 0 24px ${stops[0]}55`,
           }}
+          title="Print this map"
         >
-          <Printer className="w-4 h-4" style={{ color: stops[0] }} />
-          Make your own
+          <Printer className="w-3 h-3" style={{ color: stops[0] }} />
+          Print Earth
         </button>
       </div>
 
