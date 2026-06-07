@@ -1,20 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
-import { MAP_BUILDER_ITEMS, MapBuilderItemId, PlacedItem, getItemDef } from '@/lib/map-builder-items';
+import { MAP_BUILDER_ITEMS, MapBuilderItemId, PlacedItem, getItemDef, snapLatLon, cellKey } from '@/lib/map-builder-items';
 import { sfx } from '@/lib/ui-sfx';
 import { useGamepad } from '@/hooks/useGamepad';
 
 interface Props {
   onExit: () => void;
   onPrev: () => void;
-  /** Resolve the center aim into lat/lon (used for placement under crosshair). */
   getAimLatLon?: () => { lat: number; lon: number } | null;
-  /** Push the latest placed-items list up so the 3D scene can render it. */
   onItemsChange: (items: PlacedItem[]) => void;
 }
 
 let _uid = 0;
 const nextId = () => `pl-${++_uid}-${Date.now().toString(36)}`;
-const PLACE_INTERVAL_MS = 120;
+const PLACE_INTERVAL_MS = 140;
 
 const MapBuilderHUD = ({ onExit, onPrev, getAimLatLon, onItemsChange }: Props) => {
   const [selected, setSelected] = useState<MapBuilderItemId>('water');
@@ -24,6 +22,7 @@ const MapBuilderHUD = ({ onExit, onPrev, getAimLatLon, onItemsChange }: Props) =
   const heldRef = useRef(false);
   const { stateRef: gpRef } = useGamepad();
   const prevBumpers = useRef({ lb: false, rb: false });
+  const kbMouseHeld = useRef(false);
 
   useEffect(() => { selectedRef.current = selected; }, [selected]);
   useEffect(() => { itemsRef.current = items; onItemsChange(items); }, [items, onItemsChange]);
@@ -31,30 +30,34 @@ const MapBuilderHUD = ({ onExit, onPrev, getAimLatLon, onItemsChange }: Props) =
   const place = () => {
     const ll = getAimLatLon?.();
     if (!ll) return;
-    setItems((prev) => [...prev, { id: nextId(), type: selectedRef.current, lat: ll.lat, lon: ll.lon }]);
+    const snapped = snapLatLon(ll.lat, ll.lon);
+    const key = cellKey(snapped.lat, snapped.lon);
+    const def = getItemDef(selectedRef.current);
+    // Creatures never stack — only blocks build upward.
+    const stack = def.kind === 'block'
+      ? itemsRef.current.filter((it) => getItemDef(it.type).kind === 'block' && cellKey(it.lat, it.lon) === key).length
+      : 0;
+    setItems((prev) => [...prev, { id: nextId(), type: selectedRef.current, lat: snapped.lat, lon: snapped.lon, stack }]);
   };
 
-  // Continuous-place loop while held.
+  // Continuous-place loop while held
   useEffect(() => {
-    const t = setInterval(() => {
-      if (heldRef.current) place();
-    }, PLACE_INTERVAL_MS);
+    const t = setInterval(() => { if (heldRef.current) place(); }, PLACE_INTERVAL_MS);
     return () => clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Trigger sources: window mouse/keyboard (FPS controller also listens, but we mirror so HUD owns the timer).
+  // Keyboard handlers (X = place, 1-9 swap, [/] cycle, Z undo, Esc exit)
   useEffect(() => {
-    const setHeld = (v: boolean) => { heldRef.current = v; };
     const dn = (e: KeyboardEvent) => {
       if (e.repeat) return;
       const t = e.target as HTMLElement | null;
       if (t && /input|textarea|select/i.test(t.tagName)) return;
-      if (e.key === ' ' || e.key === 'x' || e.key === 'X' || e.key === 'Enter') {
+      if (e.key === 'x' || e.key === 'X') {
         e.preventDefault();
-        setHeld(true);
-      }
-      if (e.key >= '1' && e.key <= '9') {
+        heldRef.current = true;
+        kbMouseHeld.current = true;
+      } else if (e.key >= '1' && e.key <= '9') {
         const idx = parseInt(e.key, 10) - 1;
         if (MAP_BUILDER_ITEMS[idx]) { setSelected(MAP_BUILDER_ITEMS[idx].id); sfx.click(); }
       } else if (e.key === '0' && MAP_BUILDER_ITEMS[9]) {
@@ -67,7 +70,6 @@ const MapBuilderHUD = ({ onExit, onPrev, getAimLatLon, onItemsChange }: Props) =
         if (document.pointerLockElement) (document as any).exitPointerLock?.();
         else onExit();
       } else if (e.key === '[' || e.key === ',') {
-        // cycle palette left
         const i = MAP_BUILDER_ITEMS.findIndex((x) => x.id === selectedRef.current);
         const n = (i - 1 + MAP_BUILDER_ITEMS.length) % MAP_BUILDER_ITEMS.length;
         setSelected(MAP_BUILDER_ITEMS[n].id); sfx.click();
@@ -78,14 +80,17 @@ const MapBuilderHUD = ({ onExit, onPrev, getAimLatLon, onItemsChange }: Props) =
       }
     };
     const up = (e: KeyboardEvent) => {
-      if (e.key === ' ' || e.key === 'x' || e.key === 'X' || e.key === 'Enter') setHeld(false);
+      if (e.key === 'x' || e.key === 'X') {
+        heldRef.current = false;
+        kbMouseHeld.current = false;
+      }
     };
     const md = (e: MouseEvent) => {
       const t = e.target as HTMLElement | null;
       if (t && t.closest('[data-hud], button, a, input, select, textarea')) return;
-      if (e.button === 0) setHeld(true);
+      if (e.button === 0) { heldRef.current = true; kbMouseHeld.current = true; }
     };
-    const mu = (e: MouseEvent) => { if (e.button === 0) setHeld(false); };
+    const mu = (e: MouseEvent) => { if (e.button === 0) { heldRef.current = false; kbMouseHeld.current = false; } };
     window.addEventListener('keydown', dn);
     window.addEventListener('keyup', up);
     window.addEventListener('mousedown', md);
@@ -99,14 +104,14 @@ const MapBuilderHUD = ({ onExit, onPrev, getAimLatLon, onItemsChange }: Props) =
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Gamepad polling loop: A/RT = place, LB/RB = cycle palette, Y = undo, B = exit.
+  // Gamepad polling loop
   useEffect(() => {
     let raf = 0;
     const tick = () => {
       const gp = gpRef.current;
       if (gp.connected) {
-        heldRef.current = heldRef.current || gp.buttons.a || gp.buttons.rt > 0.4;
-        // edge: bumpers
+        const padHeld = gp.buttons.a || gp.buttons.rt > 0.4;
+        heldRef.current = kbMouseHeld.current || padHeld;
         if (gp.buttons.rb && !prevBumpers.current.rb) {
           const i = MAP_BUILDER_ITEMS.findIndex((x) => x.id === selectedRef.current);
           setSelected(MAP_BUILDER_ITEMS[(i + 1) % MAP_BUILDER_ITEMS.length].id);
@@ -119,10 +124,6 @@ const MapBuilderHUD = ({ onExit, onPrev, getAimLatLon, onItemsChange }: Props) =
         }
         prevBumpers.current.lb = gp.buttons.lb;
         prevBumpers.current.rb = gp.buttons.rb;
-        // When neither place button held → release.
-        if (!gp.buttons.a && gp.buttons.rt <= 0.4 && !isKeyboardOrMouseHeld()) {
-          heldRef.current = false;
-        }
       }
       raf = requestAnimationFrame(tick);
     };
@@ -130,33 +131,6 @@ const MapBuilderHUD = ({ onExit, onPrev, getAimLatLon, onItemsChange }: Props) =
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // helper: re-check window-mouse / key state via the latest heldRef would loop; just mirror state.
-  // The keyboard/mouse handlers above already set heldRef directly; we only need to make sure
-  // the gamepad branch doesn't *reset* a key/mouse-held state. Track it via a tiny flag:
-  const kbMouseHeld = useRef(false);
-  useEffect(() => {
-    const set = (v: boolean) => { kbMouseHeld.current = v; };
-    const dn = (e: KeyboardEvent) => { if (['x','X',' ','Enter'].includes(e.key)) set(true); };
-    const up = (e: KeyboardEvent) => { if (['x','X',' ','Enter'].includes(e.key)) set(false); };
-    const md = (e: MouseEvent) => {
-      const t = e.target as HTMLElement | null;
-      if (t && t.closest('[data-hud], button, a, input, select, textarea')) return;
-      if (e.button === 0) set(true);
-    };
-    const mu = (e: MouseEvent) => { if (e.button === 0) set(false); };
-    window.addEventListener('keydown', dn);
-    window.addEventListener('keyup', up);
-    window.addEventListener('mousedown', md);
-    window.addEventListener('mouseup', mu);
-    return () => {
-      window.removeEventListener('keydown', dn);
-      window.removeEventListener('keyup', up);
-      window.removeEventListener('mousedown', md);
-      window.removeEventListener('mouseup', mu);
-    };
-  }, []);
-  function isKeyboardOrMouseHeld() { return kbMouseHeld.current; }
 
   return (
     <>
@@ -173,7 +147,7 @@ const MapBuilderHUD = ({ onExit, onPrev, getAimLatLon, onItemsChange }: Props) =
       {/* Top bar */}
       <div data-hud className="fixed top-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-4 py-2 rounded-md bg-black/60 backdrop-blur-md border border-white/15">
         <span className="text-white/90 font-mono text-[11px] tracking-wider uppercase">Level 5 · Map Builder</span>
-        <span className="text-white/40 font-mono text-[10px]">WASD walk · mouse / R-stick look · hold X / A / click to place · 1–9 swap · Z undo</span>
+        <span className="text-white/40 font-mono text-[10px]">WASD walk · mouse / R-stick look · hold X / A / click to place · stacks on repeat · 1–9 swap · Z undo</span>
       </div>
 
       {/* Prev / Exit */}
