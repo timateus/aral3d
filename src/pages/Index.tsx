@@ -1283,7 +1283,7 @@ const Index = () => {
               agmarTourActive ? AGMAR_TOUR_STEPS[agmarTourStep]?.camera.target :
               undefined
             }
-            spectralActive={spectralMode || ministryMode || simMode}
+            spectralActive={spectralMode || ministryMode || simMode || geoMode || placeMode}
             rightStickCameraEnabled={true}
             riverFlyover={riverFlyover}
             onRiverFlyoverDone={() => setRiverFlyover(false)}
