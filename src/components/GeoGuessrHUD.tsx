@@ -404,7 +404,7 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, getLatLonAtScreen, onMarke
       </div>
 
       {/* Bottom action — guessing */}
-      {!done && !guess && (
+      {!done && !guess && !pending && (
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40">
           <button
             onClick={guardedPlace}
@@ -419,6 +419,53 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, getLatLonAtScreen, onMarke
             Place guess
             <PadHint label="X" bg={bgColor} />
           </button>
+          <div
+            className="mt-2 font-mono text-[10px] uppercase tracking-[0.3em] text-center opacity-70"
+            style={{ color: inkColor }}
+          >
+            tip · click anywhere on the map to drop a pin
+          </div>
+        </div>
+      )}
+
+      {/* Pending guess — requires confirmation */}
+      {!done && !guess && pending && (
+        <div
+          data-hud
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 px-5 py-4 backdrop-blur-md font-mono"
+          style={{
+            background: bgColor, color: inkColor,
+            border: `2px dashed ${accent}`,
+            minWidth: 460, textAlign: 'center',
+            boxShadow: `0 0 24px ${accent}55`,
+          }}
+        >
+          <div className="text-[10px] uppercase tracking-[0.3em] opacity-70 mb-1">
+            confirm your final guess?
+          </div>
+          <div className="text-[13px] mb-3" style={{ color: accent }}>
+            {pending.lat.toFixed(3)}°, {pending.lon.toFixed(3)}°
+          </div>
+          <div className="flex items-center justify-center gap-2">
+            <button
+              onClick={cancelPending}
+              className="px-4 py-2 text-[10px] uppercase tracking-[0.3em] hover:brightness-110"
+              style={{ border: `1px solid ${inkColor}55`, color: inkColor, background: 'transparent' }}
+              title="Pick a different spot (Esc)"
+            >
+              cancel
+            </button>
+            <button
+              onClick={confirmPending}
+              className="flex items-center gap-2 px-5 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] hover:brightness-110"
+              style={{ border: `2px solid ${accent}`, color: inkColor, background: `${accent}22` }}
+              title="Confirm this final guess"
+            >
+              <Target className="w-3 h-3" style={{ color: accent }} />
+              confirm guess
+              <PadHint label="X" bg={bgColor} />
+            </button>
+          </div>
         </div>
       )}
 
