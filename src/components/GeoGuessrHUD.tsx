@@ -340,78 +340,74 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, onMarkersChange }: Props) 
         </div>
       )}
 
-      {/* Final summary — high contrast, scrollable list with thumbnails */}
+      {/* Final summary — compact side panel so the map stays visible */}
       {done && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-6"
-          style={{ background: 'rgba(0,0,0,0.92)' }}
+          className="fixed top-20 right-6 bottom-6 z-50 font-mono w-[360px] flex flex-col"
+          style={{
+            background: 'rgba(0,0,0,0.78)',
+            color: '#fff',
+            border: `2px solid ${accent}`,
+            boxShadow: `0 0 32px ${accent}66`,
+            backdropFilter: 'blur(8px)',
+          }}
         >
-          <div
-            className="font-mono w-full max-w-3xl px-8 py-6 max-h-[90vh] overflow-y-auto"
-            style={{
-              background: '#000', color: '#fff',
-              border: `3px solid ${accent}`,
-              boxShadow: `0 0 48px ${accent}77`,
-            }}
-          >
-            <div className="text-[11px] uppercase tracking-[0.4em] opacity-70 text-center">final score</div>
+          <div className="px-5 pt-4 pb-3 border-b border-white/10">
+            <div className="text-[10px] uppercase tracking-[0.4em] opacity-70 text-center">final score</div>
             <div
-              className="text-7xl font-bold my-3 text-center tabular-nums"
-              style={{ color: accent, textShadow: `0 0 24px ${accent}` }}
+              className="text-5xl font-bold my-1 text-center tabular-nums"
+              style={{ color: accent, textShadow: `0 0 16px ${accent}` }}
             >
               {totalScore.toLocaleString()}
             </div>
-            <div className="text-[12px] opacity-70 mb-6 text-center">
-              / {GEO_LOCATIONS.length * 5000} possible · all true locations marked on the map
+            <div className="text-[10px] opacity-60 text-center">
+              / {GEO_LOCATIONS.length * 5000} · true locations on the map
             </div>
+          </div>
 
-            <div className="space-y-3">
-              {history.map((g, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-4 p-2"
-                  style={{ background: '#0c0c0c', border: '1px solid #222' }}
-                >
-                  <img
-                    src={satelliteImageUrl(g.loc, 240, 180)}
-                    alt={g.loc.name}
-                    style={{ width: 120, height: 90, objectFit: 'cover', flexShrink: 0 }}
-                    draggable={false}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[13px] font-semibold uppercase tracking-wider truncate">
-                      {g.loc.name}
-                    </div>
-                    <div className="text-[11px] opacity-70 mt-0.5">
-                      {g.distanceKm.toFixed(1)} km away
-                    </div>
+          <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
+            {history.map((g, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-2 p-1.5"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #222' }}
+              >
+                <img
+                  src={satelliteImageUrl(g.loc, 160, 120)}
+                  alt={g.loc.name}
+                  style={{ width: 64, height: 48, objectFit: 'cover', flexShrink: 0 }}
+                  draggable={false}
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="text-[11px] font-semibold uppercase tracking-wider truncate">
+                    {g.loc.name}
                   </div>
-                  <div
-                    className="text-2xl font-bold tabular-nums"
-                    style={{ color: accent }}
-                  >
-                    +{g.score.toLocaleString()}
+                  <div className="text-[10px] opacity-70">
+                    {g.distanceKm.toFixed(1)} km
                   </div>
                 </div>
-              ))}
-            </div>
+                <div className="text-sm font-bold tabular-nums" style={{ color: accent }}>
+                  +{g.score.toLocaleString()}
+                </div>
+              </div>
+            ))}
+          </div>
 
-            <div className="flex justify-center gap-3 mt-6">
-              <button
-                onClick={() => { setIdx(0); setHistory([]); setGuess(null); setTimeLeft(GUESS_SECONDS); }}
-                className="px-5 py-2 text-[11px] uppercase tracking-[0.3em] hover:brightness-110"
-                style={{ border: `2px solid ${accent}`, color: '#fff', background: 'transparent' }}
-              >
-                Play again
-              </button>
-              <button
-                onClick={() => { sfx.exit(); onExit(); }}
-                className="px-5 py-2 text-[11px] uppercase tracking-[0.3em] hover:brightness-110"
-                style={{ border: `2px solid #555`, color: '#fff', background: 'transparent' }}
-              >
-                Exit
-              </button>
-            </div>
+          <div className="flex justify-center gap-2 px-3 py-3 border-t border-white/10">
+            <button
+              onClick={() => { setIdx(0); setHistory([]); setGuess(null); setTimeLeft(GUESS_SECONDS); }}
+              className="px-3 py-1.5 text-[10px] uppercase tracking-[0.3em] hover:brightness-110"
+              style={{ border: `2px solid ${accent}`, color: '#fff', background: 'transparent' }}
+            >
+              Play again
+            </button>
+            <button
+              onClick={() => { sfx.exit(); onExit(); }}
+              className="px-3 py-1.5 text-[10px] uppercase tracking-[0.3em] hover:brightness-110"
+              style={{ border: `2px solid #555`, color: '#fff', background: 'transparent' }}
+            >
+              Exit
+            </button>
           </div>
         </div>
       )}
