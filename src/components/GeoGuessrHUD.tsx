@@ -378,7 +378,7 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, onMarkersChange }: Props) 
               <div
                 key={i}
                 className="flex items-center gap-2 p-1.5"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #222' }}
+                style={{ background: `${inkColor}0a`, border: `1px solid ${inkColor}22` }}
               >
                 <img
                   src={satelliteImageUrl(g.loc, 160, 120)}
@@ -394,25 +394,25 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, onMarkersChange }: Props) 
                     {g.distanceKm.toFixed(1)} km
                   </div>
                 </div>
-                <div className="text-sm font-bold tabular-nums" style={{ color: accent }}>
+                <div className="text-sm font-bold tabular-nums">
                   +{g.score.toLocaleString()}
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="flex justify-center gap-2 px-3 py-3 border-t border-white/10">
+          <div className="flex justify-center gap-2 px-3 py-3" style={{ borderTop: `1px solid ${inkColor}22` }}>
             <button
               onClick={() => { setIdx(0); setHistory([]); setGuess(null); setTimeLeft(GUESS_SECONDS); }}
               className="px-3 py-1.5 text-[10px] uppercase tracking-[0.3em] hover:brightness-110"
-              style={{ border: `2px solid ${accent}`, color: '#fff', background: 'transparent' }}
+              style={{ border: `1px solid ${inkColor}55`, color: inkColor, background: 'transparent' }}
             >
               Play again
             </button>
             <button
               onClick={() => { sfx.exit(); onExit(); }}
               className="px-3 py-1.5 text-[10px] uppercase tracking-[0.3em] hover:brightness-110"
-              style={{ border: `2px solid #555`, color: '#fff', background: 'transparent' }}
+              style={{ border: `1px solid ${inkColor}33`, color: inkColor, background: 'transparent' }}
             >
               Exit
             </button>
