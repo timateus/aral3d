@@ -104,11 +104,13 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, getLatLonAtScreen, onMarke
         guess: { lat: guess.lat, lon: guess.lon },
         truth: { lat: guess.loc.lat, lon: guess.loc.lon, name: guess.loc.name },
       });
+    } else if (pending) {
+      onMarkersChange({ guess: { lat: pending.lat, lon: pending.lon } });
     } else {
       onMarkersChange(null);
     }
     return () => { onMarkersChange(null); };
-  }, [guess, done, history, onMarkersChange]);
+  }, [guess, pending, done, history, onMarkersChange]);
 
   const place = (latOverride?: number, lonOverride?: number) => {
     if (guessRef.current || doneRef.current) return;
