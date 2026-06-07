@@ -366,6 +366,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
             onPointerUp={flashBig}
             onChange={(e) => {
               flashBig();
+              sfx.slider();
               onWaterLevelChange(Number(e.target.value));
             }}
             aria-label="value"
