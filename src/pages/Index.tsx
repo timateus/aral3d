@@ -1231,6 +1231,30 @@ const Index = () => {
 
   const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode && !dustMode && !traceMode && !lifeMode && !spectralMode && !ministryMode && !simMode && !geoMode && !placeMode;
 
+  const enterGameLevel = useCallback((level: number) => {
+    setStarted(true);
+    setSpectralMode(level === 1);
+    setMinistryMode(level === 2);
+    setSimMode(level === 3);
+    setGeoMode(level === 4);
+    setPlaceMode(level === 5);
+    setGeoMarkers(null);
+    setShowWaterExtent(false);
+    setShowKhorezm(level >= 3);
+    setTerrainMode('classic');
+    if (level >= 1 && level <= 5) setVisualMode('designer');
+    setWaterFlowActive(level === 3);
+    setFlowAnimating(level === 3);
+    if (level === 2) {
+      setWaterLevelManual(true);
+      setWaterLevel(53);
+    }
+    if (level === 3) {
+      setFlowSpeed(20);
+      setFlowWaterAmount(20);
+    }
+  }, [setTerrainMode, setVisualMode]);
+
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
       {/* 3D Viewer */}
