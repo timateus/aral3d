@@ -113,7 +113,7 @@ const MapboxTerrainMesh = ({ terrain, exaggeration, token, onError }: Props) => 
     material.needsUpdate = true;
   }, [satellite, material]);
 
-  return <mesh geometry={geometry} material={material} rotation={[-Math.PI / 2, 0, 0]} />;
+  return <mesh geometry={geometry} material={material} rotation={[-Math.PI / 2, 0, 0]} userData={{ terrainSurface: true }} />;
 };
 
 export default MapboxTerrainMesh;

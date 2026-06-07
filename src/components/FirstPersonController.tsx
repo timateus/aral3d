@@ -132,13 +132,13 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
     if (!active) return;
     const gp = gpRef.current;
 
-    // ---- Look (right stick): user reported axes flipped → invert both signs ----
+    // ---- Look (right stick): normalized in useGamepad; x = yaw, y = pitch ----
     if (gp.connected) {
       const rx = gp.rightStick.x;
       const ry = gp.rightStick.y;
       if (rx || ry) {
-        yaw.current += rx * LOOK_SENS_PAD * dt;
-        pitch.current = THREE.MathUtils.clamp(pitch.current + ry * LOOK_SENS_PAD * dt, -1.2, 1.2);
+        yaw.current -= rx * LOOK_SENS_PAD * dt;
+        pitch.current = THREE.MathUtils.clamp(pitch.current - ry * LOOK_SENS_PAD * dt, -1.2, 1.2);
       }
     }
     if (keys.current['ArrowLeft']) yaw.current += 1.6 * dt;
@@ -153,16 +153,16 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
     if (keys.current['KeyA'] || keys.current['a']) str -= 1;
     if (keys.current['KeyD'] || keys.current['d']) str += 1;
     if (gp.connected) {
-      // user reported left-stick fwd/back flipped → invert: push-up (negative y) should be forward
-      fwd += gp.leftStick.y;
+      // Standard gamepad axes: push-up is negative y, which should move forward.
+      fwd += -gp.leftStick.y;
       str += gp.leftStick.x;
     }
     const sprint = keys.current['ShiftLeft'] || keys.current['ShiftRight'] || keys.current['shift'] || (gp.connected && gp.buttons.lb);
     const speed = WALK_SPEED * (sprint ? SPRINT_MULT : 1);
     if (fwd || str) {
       const mag = Math.min(1, Math.hypot(fwd, str));
-      const dirX = Math.sin(yaw.current) * fwd + Math.cos(yaw.current) * str;
-      const dirZ = Math.cos(yaw.current) * fwd - Math.sin(yaw.current) * str;
+      const dirX = -Math.sin(yaw.current) * fwd + Math.cos(yaw.current) * str;
+      const dirZ = -Math.cos(yaw.current) * fwd - Math.sin(yaw.current) * str;
       const len = Math.hypot(dirX, dirZ) || 1;
       pos.current.x += (dirX / len) * speed * dt * mag;
       pos.current.z += (dirZ / len) * speed * dt * mag;

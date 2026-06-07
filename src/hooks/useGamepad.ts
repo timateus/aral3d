@@ -131,11 +131,15 @@ export function useGamepad() {
         const ryAxis = meta2.__padRY === -1 ? 3 : meta2.__padRY;
         const rx = applyDeadzone(deltas[rxAxis] ?? 0);
         const ry = applyDeadzone(deltas[ryAxis] ?? 0);
+        // The controller reports the right-stick axes crossed in this app's camera modes.
+        // Normalize once here so every consumer gets horizontal on x and vertical on y.
+        const rightX = ry;
+        const rightY = rx;
         const b = active.buttons;
         const next: GamepadState = {
           connected: true,
-          leftStick: { x: lx, y: ly },
-          rightStick: { x: rx, y: ry },
+            leftStick: { x: lx, y: ly },
+            rightStick: { x: rightX, y: rightY },
           buttons: {
             a: !!b[0]?.pressed,
             b: !!b[1]?.pressed,
@@ -163,7 +167,7 @@ export function useGamepad() {
         const now = performance.now();
         if (!(globalThis as any).__padLogT) (globalThis as any).__padLogT = 0;
         if (now - (globalThis as any).__padLogT > 200) {
-          const hasMove = lx || ly || rx || ry || next.buttons.lt > 0.05 || next.buttons.rt > 0.05;
+          const hasMove = lx || ly || rightX || rightY || next.buttons.lt > 0.05 || next.buttons.rt > 0.05;
           const rawMove = active.axes.some((v, i) => Math.abs((v ?? 0)) > 0.25 && i > 3);
           if (hasMove || rawMove) {
             const m = globalThis as any;
@@ -171,7 +175,7 @@ export function useGamepad() {
               .map((v, i) => `${i}:${(v ?? 0).toFixed(2)}(Δ${((v ?? 0) - (m.__padIdle?.[i] ?? 0)).toFixed(2)})`)
               .join(' ');
             console.log(
-              `[pad] L(${lx.toFixed(2)},${ly.toFixed(2)}) R(${rx.toFixed(2)},${ry.toFixed(2)}) ` +
+              `[pad] L(${lx.toFixed(2)},${ly.toFixed(2)}) R(${rightX.toFixed(2)},${rightY.toFixed(2)}) ` +
               `RX=ax${m.__padRX} RY=ax${m.__padRY} raw[${raw}]`,
             );
             (globalThis as any).__padLogT = now;

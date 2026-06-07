@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { sfx } from '@/lib/ui-sfx';
 import { consumeGamepadButton, setGamepadInputBlocked } from '@/lib/gamepad-dedupe';
 
@@ -7,9 +8,11 @@ interface Props {
   name: string;
   instructions: string[];
   onBegin: () => void;
+  onPrev?: () => void;
+  onNext?: () => void;
 }
 
-const LevelIntroSplash = ({ number, name, instructions, onBegin }: Props) => {
+const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext }: Props) => {
   // Gamepad X (2) / A (0) / RB (5) / RT (7) dismiss.
   useEffect(() => {
     let raf = 0;
@@ -21,6 +24,7 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin }: Props) => {
     for (const p of pads0) { if (p) { pad0 = p; break; } }
     if (pad0) {
       consumeGamepadButton('splash-x', !!pad0.buttons[2]?.pressed, { ignoreBlock: true });
+      consumeGamepadButton('splash-lb', !!pad0.buttons[4]?.pressed, { ignoreBlock: true });
       consumeGamepadButton('splash-rb', !!pad0.buttons[5]?.pressed, { ignoreBlock: true });
       consumeGamepadButton('splash-rt', !!pad0.buttons[7]?.pressed, { ignoreBlock: true });
       consumeGamepadButton('splash-a', !!pad0.buttons[0]?.pressed, { ignoreBlock: true });
@@ -34,7 +38,19 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin }: Props) => {
       if (pad) {
         const fire = (n: string, b: number) =>
           consumeGamepadButton(n, !!pad!.buttons[b]?.pressed, { cooldownMs: 700, ignoreBlock: true });
-        if (fire('splash-x', 2) || fire('splash-rb', 5) || fire('splash-rt', 7) || fire('splash-a', 0)) {
+        if (fire('splash-lb', 4) && onPrev) {
+          sfx.navPrev();
+          onPrev();
+          raf = requestAnimationFrame(tick);
+          return;
+        }
+        if (fire('splash-rb', 5) && onNext) {
+          sfx.navNext();
+          onNext();
+          raf = requestAnimationFrame(tick);
+          return;
+        }
+        if (fire('splash-x', 2) || fire('splash-rt', 7) || fire('splash-a', 0)) {
           done = true;
           sfx.navNext();
           onBegin();
@@ -45,7 +61,7 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin }: Props) => {
     };
     raf = requestAnimationFrame(tick);
     return () => { cancelAnimationFrame(raf); setGamepadInputBlocked(false); };
-  }, [onBegin]);
+  }, [onBegin, onPrev, onNext]);
 
   // Keyboard: any of Enter / Space / X dismiss.
   useEffect(() => {
@@ -69,6 +85,26 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin }: Props) => {
         WebkitBackdropFilter: 'blur(32px) saturate(120%)',
       }}
     >
+      {onPrev && (
+        <button
+          onClick={(e) => { e.stopPropagation(); sfx.navPrev(); onPrev(); }}
+          aria-label="previous level"
+          className="absolute left-4 top-1/2 -translate-y-1/2 text-white/75 hover:text-white transition-colors"
+        >
+          <ChevronLeft style={{ width: 120, height: 120 }} strokeWidth={3} />
+          <div className="font-mono text-xs uppercase tracking-[0.35em]">L1</div>
+        </button>
+      )}
+      {onNext && (
+        <button
+          onClick={(e) => { e.stopPropagation(); sfx.navNext(); onNext(); }}
+          aria-label="next level"
+          className="absolute right-4 top-1/2 -translate-y-1/2 text-white/75 hover:text-white transition-colors"
+        >
+          <ChevronRight style={{ width: 120, height: 120 }} strokeWidth={3} />
+          <div className="font-mono text-xs uppercase tracking-[0.35em]">R1</div>
+        </button>
+      )}
       <div className="text-center px-8 max-w-3xl">
         <div className="text-sm md:text-base font-mono uppercase tracking-[0.5em] text-white/55 mb-6">
           level {number}

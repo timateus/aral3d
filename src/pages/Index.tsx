@@ -1231,6 +1231,30 @@ const Index = () => {
 
   const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode && !dustMode && !traceMode && !lifeMode && !spectralMode && !ministryMode && !simMode && !geoMode && !placeMode;
 
+  const enterGameLevel = useCallback((level: number) => {
+    setStarted(true);
+    setSpectralMode(level === 1);
+    setMinistryMode(level === 2);
+    setSimMode(level === 3);
+    setGeoMode(level === 4);
+    setPlaceMode(level === 5);
+    setGeoMarkers(null);
+    setShowWaterExtent(false);
+    setShowKhorezm(level >= 3);
+    setTerrainMode('classic');
+    if (level >= 1 && level <= 5) setVisualMode('designer');
+    setWaterFlowActive(level === 3);
+    setFlowAnimating(level === 3);
+    if (level === 2) {
+      setWaterLevelManual(true);
+      setWaterLevel(53);
+    }
+    if (level === 3) {
+      setFlowSpeed(20);
+      setFlowWaterAmount(20);
+    }
+  }, [setTerrainMode, setVisualMode]);
+
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
       {/* 3D Viewer */}
@@ -1518,10 +1542,7 @@ const Index = () => {
           onNext={() => {
             // Hand off to Level 2 — keep the current spectral palette + scene.
             ministryPrevVisualRef.current = spectralPrevModeRef.current;
-            setSpectralMode(false);
-            setMinistryMode(true);
-            setWaterLevelManual(true);
-            setWaterLevel(53);
+            enterGameLevel(2);
           }}
         />
       )}
@@ -1538,19 +1559,11 @@ const Index = () => {
           }}
           onPrev={() => {
             // Back to Level 1 — preserve the spectral session.
-            setMinistryMode(false);
-            setSpectralMode(true);
+            enterGameLevel(1);
           }}
           onNext={() => {
             // Hand off to Level 3 (water simulation sandbox).
-            setMinistryMode(false);
-            setSimMode(true);
-            setShowKhorezm(true);
-            setShowWaterExtent(false);
-            setWaterFlowActive(true);
-            setFlowAnimating(true);
-            setFlowSpeed(20);
-            setFlowWaterAmount(20);
+            enterGameLevel(3);
           }}
         />
       )}
@@ -1569,10 +1582,7 @@ const Index = () => {
           }}
           onPrev={() => {
             // Back to Level 2
-            setSimMode(false);
-            setWaterFlowActive(false);
-            setFlowAnimating(false);
-            setMinistryMode(true);
+            enterGameLevel(2);
           }}
           onAddWaterCenter={() => {
             // Splash a large volume of water exactly where the center aim mark hits.
@@ -1602,11 +1612,7 @@ const Index = () => {
           }}
           onNext={() => {
             // Hand off to Level 4 (satellite geoguessr).
-            setSimMode(false);
-            setWaterFlowActive(false);
-            setFlowAnimating(false);
-            setGeoMode(true);
-            setShowKhorezm(true);
+            enterGameLevel(4);
           }}
         />
       )}
@@ -1620,18 +1626,11 @@ const Index = () => {
             setVisualMode(ministryPrevVisualRef.current);
           }}
           onPrev={() => {
-            setGeoMode(false);
-            setGeoMarkers(null);
-            setSimMode(true);
-            setWaterFlowActive(true);
-            setFlowAnimating(true);
+            enterGameLevel(3);
           }}
           onMarkersChange={setGeoMarkers}
           onNext={() => {
-            setGeoMode(false);
-            setGeoMarkers(null);
-            setPlaceMode(true);
-            setShowKhorezm(true);
+            enterGameLevel(5);
           }}
           getAimLatLon={() => {
             const aim = viewerRef.current?.getAimPixel();
@@ -1661,8 +1660,7 @@ const Index = () => {
             setVisualMode(ministryPrevVisualRef.current);
           }}
           onPrev={() => {
-            setPlaceMode(false);
-            setGeoMode(true);
+            enterGameLevel(4);
           }}
           onItemsChange={setPlacedItems}
           getAimLatLon={() => {
@@ -1685,6 +1683,8 @@ const Index = () => {
           name={levelIntro.name}
           instructions={levelIntro.instructions}
           onBegin={() => setLevelIntro(null)}
+          onPrev={levelIntro.n > 1 ? () => enterGameLevel(levelIntro.n - 1) : undefined}
+          onNext={levelIntro.n < 5 ? () => enterGameLevel(levelIntro.n + 1) : undefined}
         />
       )}
 

@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronLeft, MapPin, Target, Clock, Satellite, Map as MapIcon, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, Target, Clock, Satellite, Map as MapIcon, ExternalLink } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDesignerScheme } from '@/lib/visual-mode';
 import { useTerrainMode } from '@/hooks/useTerrainMode';
@@ -178,6 +178,7 @@ const GeoGuessrHUD = ({ onExit, onPrev, onNext, getAimLatLon, getLatLonAtScreen,
       if (pad) {
         const x = !!pad.buttons[2]?.pressed;
         const lb = !!pad.buttons[4]?.pressed;
+        const rb = !!pad.buttons[5]?.pressed;
         if (consumeGamepadButton('x', x, { cooldownMs: 700 })) {
           if (doneRef.current) {
             // nothing
@@ -192,6 +193,10 @@ const GeoGuessrHUD = ({ onExit, onPrev, onNext, getAimLatLon, getLatLonAtScreen,
         if (consumeGamepadButton('lb', lb) && onPrev) {
           sfx.navPrev();
           onPrev();
+        }
+        if (consumeGamepadButton('rb', rb) && doneRef.current && onNext) {
+          sfx.navNext?.();
+          onNext();
         }
       }
       raf = requestAnimationFrame(tick);
@@ -516,6 +521,18 @@ const GeoGuessrHUD = ({ onExit, onPrev, onNext, getAimLatLon, getLatLonAtScreen,
       )}
 
       {/* Final summary — compact side panel so the map stays visible */}
+      {done && (
+        <button
+          onClick={() => { sfx.navNext?.(); onNext?.(); }}
+          aria-label="next level"
+          className="fixed right-2 top-1/2 -translate-y-1/2 z-[70] flex flex-col items-center justify-center bg-transparent hover:opacity-70 transition-opacity"
+          style={{ color: accent, filter: `drop-shadow(0 0 10px ${bgColor})` }}
+        >
+          <ChevronRight style={{ width: 140, height: 140 }} strokeWidth={4} />
+          <PadHint label="RB" bg={bgColor} />
+        </button>
+      )}
+
       {done && (
         <div
           className="fixed top-20 right-6 bottom-6 z-50 font-mono w-[360px] flex flex-col"
