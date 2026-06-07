@@ -10,6 +10,9 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { useDesignerScheme, applyDesignerScheme, getDesignerScheme } from '@/lib/visual-mode';
+import { sfx } from '@/lib/ui-sfx';
+import { useGamepad } from '@/hooks/useGamepad';
+
 
 export interface MinistryAnnual {
   year: number;
@@ -182,6 +185,52 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
   });
   const [panelOpen, setPanelOpen] = useState(true);
 
+  // Gamepad controls — left stick Y / dpad up-down adjusts water level,
+  // LB/RB navigate levels, A toggles panel, B exits.
+  const { stateRef } = useGamepad();
+  const waterLevelRef = useRef(waterLevel);
+  useEffect(() => { waterLevelRef.current = waterLevel; }, [waterLevel]);
+  useEffect(() => {
+    let raf = 0;
+    let prev = { lb: false, rb: false, a: false, b: false, up: false, down: false };
+    let lastT = performance.now();
+    const tick = (now: number) => {
+      const dt = Math.min(0.05, (now - lastT) / 1000);
+      lastT = now;
+      const s = stateRef.current;
+      if (s.connected) {
+        // analog + dpad
+        const stick = -s.leftStick.y; // up = positive
+        const dpad = (s.buttons.up ? 1 : 0) + (s.buttons.down ? -1 : 0);
+        const axis = Math.abs(stick) > 0.05 ? stick : dpad;
+        if (axis !== 0) {
+          const next = Math.max(MIN, Math.min(MAX, waterLevelRef.current + axis * 25 * dt));
+          if (Math.abs(next - waterLevelRef.current) > 0.001) {
+            waterLevelRef.current = next;
+            onWaterLevelChange(next);
+            flashBig();
+            sfx.slider();
+          }
+        }
+        // edge-triggered buttons
+        if (s.buttons.rb && !prev.rb && onNext) { sfx.navNext(); onNext(); }
+        if (s.buttons.lb && !prev.lb && onPrev) { sfx.navPrev(); onPrev(); }
+        if (s.buttons.a && !prev.a) { sfx.toggle(); setPanelOpen((o) => !o); }
+        if (s.buttons.b && !prev.b) { sfx.exit(); onExit(); }
+        prev = {
+          lb: s.buttons.lb, rb: s.buttons.rb,
+          a: s.buttons.a, b: s.buttons.b,
+          up: s.buttons.up, down: s.buttons.down,
+        };
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onNext, onPrev, onExit]);
+
+
   const chartData = useMemo(
     () => annualData.filter((r) => r.year != null),
     [annualData],
@@ -204,7 +253,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
       {/* Exit (top-left) */}
       <div className="absolute top-5 left-5 z-40">
         <button
-          onClick={onExit}
+          onClick={() => { sfx.exit(); onExit(); }}
           className="flex items-center gap-2 px-3 py-2 text-[10px] font-mono uppercase tracking-[0.3em] text-white/80 bg-black/70 border border-white/20 hover:bg-black/90 transition-colors"
         >
           <ArrowLeft className="w-3 h-3" /> exit
@@ -246,7 +295,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
       {/* Large naked arrows — bright terrain stop color */}
       {onPrev && (
         <button
-          onClick={onPrev}
+          onClick={() => { sfx.navPrev(); onPrev(); }}
           aria-label="previous level"
           className="fixed left-2 top-1/2 -translate-y-1/2 z-[70] flex items-center justify-center bg-transparent hover:opacity-70 transition-opacity"
           style={{ color: arrowColor, filter: `drop-shadow(0 0 10px ${bgColor})` }}
@@ -255,7 +304,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         </button>
       )}
       <button
-        onClick={onNext}
+        onClick={() => { if (onNext) { sfx.navNext(); onNext(); } }}
         disabled={!onNext}
         aria-label="next level"
         className="fixed right-2 top-1/2 -translate-y-1/2 z-[70] flex items-center justify-center bg-transparent hover:opacity-70 transition-opacity disabled:opacity-20 disabled:cursor-not-allowed"
@@ -263,6 +312,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
       >
         <ChevronRight style={{ width: 140, height: 140 }} strokeWidth={4} />
       </button>
+
 
       {/* Big year number overlay while dragging */}
       {dragging && (
@@ -316,6 +366,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
             onPointerUp={flashBig}
             onChange={(e) => {
               flashBig();
+              sfx.slider();
               onWaterLevelChange(Number(e.target.value));
             }}
             aria-label="value"
@@ -353,7 +404,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
               {nearestYear ?? '—'} · {waterLevel.toFixed(1)} m
             </div>
             <button
-              onClick={() => setPanelOpen((o) => !o)}
+              onClick={() => { sfx.toggle(); setPanelOpen((o) => !o); }}
               aria-label={panelOpen ? 'minimize' : 'expand'}
               className="p-1 hover:opacity-70 transition-opacity"
               style={{ color: contrastColor }}
@@ -371,7 +422,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
                 return (
                   <button
                     key={s.key}
-                    onClick={() => setVisible((v) => ({ ...v, [s.key]: !v[s.key] }))}
+                    onClick={() => { sfx.toggle(); setVisible((v) => ({ ...v, [s.key]: !v[s.key] })); }}
                     className="flex items-center gap-1.5 py-0.5 text-[12px] italic transition-opacity"
                     style={{
                       color: on ? s.color : `${contrastColor}66`,

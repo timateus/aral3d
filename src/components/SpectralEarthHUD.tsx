@@ -1,6 +1,9 @@
 import { ArrowLeft, ArrowRight, Sparkles, Printer, ChevronRight } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useDesignerScheme } from '@/lib/visual-mode';
+import { sfx } from '@/lib/ui-sfx';
+import { useGamepad } from '@/hooks/useGamepad';
+
 
 interface Props {
   onExit: () => void;
@@ -34,6 +37,10 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
   const stops = scheme.terrainStops && scheme.terrainStops.length > 1
     ? scheme.terrainStops
     : [scheme.water, scheme.land, scheme.vegetation, scheme.alert];
+
+  const { stateRef } = useGamepad();
+
+
 
   // Re-randomize fonts/sizes only when randomSeed changes
   const style = useMemo(() => {
@@ -172,8 +179,28 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
     w.document.close();
   };
 
+  // Gamepad: A = make it misbehave, Y = make your own (print), RB = next, B = exit
+  useEffect(() => {
+    let raf = 0;
+    let prev = { a: false, b: false, y: false, rb: false };
+    const tick = () => {
+      const s = stateRef.current;
+      if (s.connected) {
+        if (s.buttons.a && !prev.a) { sfx.make(); onRandomize(); }
+        if (s.buttons.y && !prev.y) { sfx.make(); handlePrint(); }
+        if (s.buttons.rb && !prev.rb && onNext) { sfx.navNext(); onNext(); }
+        if (s.buttons.b && !prev.b) { sfx.exit(); onExit(); }
+        prev = { a: s.buttons.a, b: s.buttons.b, y: s.buttons.y, rb: s.buttons.rb };
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onRandomize, onExit, onNext]);
 
   return (
+
     <>
       {/* Centered manifesto, terrain-colored, no animation */}
       <div className="fixed inset-0 z-30 pointer-events-none flex items-center justify-center">
@@ -221,7 +248,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
 
       {/* Back button — constant font, readable on black */}
       <button
-        onClick={onExit}
+        onClick={() => { sfx.exit(); onExit(); }}
         className="absolute top-5 left-5 z-40 flex items-center gap-2 px-3 py-2 text-xs font-mono uppercase tracking-[0.2em] text-white backdrop-blur-md transition-colors hover:brightness-110"
         style={{
           border: `2px solid ${stops[1 % stops.length]}`,
@@ -234,7 +261,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
       {/* Bottom action buttons — constant font/size, readable on black */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4">
         <button
-          onClick={onRandomize}
+          onClick={() => { sfx.make(); onRandomize(); }}
           className="group flex items-center gap-3 px-8 py-4 text-base font-semibold font-mono uppercase tracking-[0.2em] text-white backdrop-blur-md transition-all hover:brightness-110 hover:scale-105"
           style={{
             border: `3px solid ${stops[2 % stops.length]}`,
@@ -246,7 +273,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
           Make it misbehave
         </button>
         <button
-          onClick={handlePrint}
+          onClick={() => { sfx.make(); handlePrint(); }}
           className="group flex items-center gap-3 px-6 py-4 text-sm font-semibold font-mono uppercase tracking-[0.2em] text-white backdrop-blur-md transition-all hover:brightness-110 hover:scale-105"
           style={{
             border: `3px solid ${stops[0]}`,
@@ -266,7 +293,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
         const arrowColor = stops[2 % stops.length] || stops[0];
         return (
           <button
-            onClick={onNext}
+            onClick={() => { sfx.navNext(); onNext(); }}
             aria-label="next level"
             className="fixed right-2 top-1/2 -translate-y-1/2 z-[70] flex items-center justify-center bg-transparent hover:opacity-70 transition-opacity"
             style={{ color: arrowColor, filter: 'drop-shadow(0 0 10px rgba(0,0,0,0.45))' }}
