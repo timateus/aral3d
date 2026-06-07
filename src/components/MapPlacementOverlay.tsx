@@ -251,9 +251,11 @@ const MapPlacementOverlay = ({ terrain, exaggeration, items }: Props) => {
           <group key={it.id} position={[pos[0], pos[1] + yOffset, pos[2]]}>
             {it.type === 'oilpump'
               ? <OilPump />
-              : def.kind === 'block'
-                ? <BlockCube type={it.type} />
-                : <Creature type={it.type} />}
+              : it.type === 'flower'
+                ? <Flower />
+                : def.kind === 'block'
+                  ? <BlockCube type={it.type} />
+                  : <Creature type={it.type} />}
           </group>
         );
       })}
