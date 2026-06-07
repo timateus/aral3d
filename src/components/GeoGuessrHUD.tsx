@@ -117,6 +117,11 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, onMarkersChange }: Props) 
     const target = locRef.current;
     const dKm = haversineKm(lat, lon, target.lat, target.lon);
     const score = scoreFor(dKm);
+    console.log('[geoguessr] place', {
+      target: target.name, targetLatLon: [target.lat, target.lon],
+      guessLatLon: [lat, lon], distanceKm: dKm, score,
+      usedFallback: !(latOverride === undefined),
+    });
     const g: Guess = { loc: target, lat, lon, distanceKm: dKm, score };
     setGuess(g);
     setHistory((h) => [...h, g]);
