@@ -54,12 +54,15 @@ interface Props {
   onPrev?: () => void;
   /** Returns lat/lon of the current crosshair, or null if not aimed. */
   getAimLatLon: () => { lat: number; lon: number } | null;
+  /** Returns lat/lon under a screen-space (clientX, clientY) point. */
+  getLatLonAtScreen?: (x: number, y: number) => { lat: number; lon: number } | null;
   /** Push current guess/truth markers up so the terrain can render them. */
   onMarkersChange?: (markers: GeoGuessrMarkers | null) => void;
 }
 
-const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, onMarkersChange }: Props) => {
+const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, getLatLonAtScreen, onMarkersChange }: Props) => {
   const [scheme] = useDesignerScheme();
+  const { mode: terrainMode, setMode: setTerrainMode } = useTerrainMode();
   const stops =
     scheme.terrainStops && scheme.terrainStops.length > 1
       ? scheme.terrainStops
