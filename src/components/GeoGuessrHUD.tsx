@@ -180,6 +180,8 @@ const GeoGuessrHUD = ({ onExit, onPrev, getAimLatLon, getLatLonAtScreen, onMarke
             // nothing
           } else if (guessRef.current) {
             next();
+          } else if (pendingRef.current) {
+            confirmPending();
           } else {
             place();
           }
