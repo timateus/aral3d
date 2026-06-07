@@ -83,8 +83,19 @@ export function useGamepad() {
         }
         const lx = applyDeadzone(active.axes[0] ?? 0);
         const ly = applyDeadzone(active.axes[1] ?? 0);
-        const rx = applyDeadzone(active.axes[2] ?? 0);
-        const ry = applyDeadzone(active.axes[3] ?? 0);
+        // Right stick: standard mapping uses axes 2/3, but many controllers
+        // report RX/RY on axes 2, 3, 4, or 5 depending on browser/OS. Pick
+        // the largest-magnitude candidate so the right stick always works.
+        const pick = (...idxs: number[]) => {
+          let best = 0;
+          for (const i of idxs) {
+            const v = applyDeadzone(active!.axes[i] ?? 0);
+            if (Math.abs(v) > Math.abs(best)) best = v;
+          }
+          return best;
+        };
+        const rx = pick(2, 5);
+        const ry = pick(3, 4);
         const b = active.buttons;
         const next: GamepadState = {
           connected: true,
