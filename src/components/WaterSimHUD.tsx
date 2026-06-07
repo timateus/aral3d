@@ -42,9 +42,20 @@ interface Props {
   onBuildDamCenter: () => void;
   wetPixels?: number;
   damEdits?: number;
+  /** wetPixels needed to "fill life" and unlock next level. */
+  lifeThreshold?: number;
 }
 
-const WaterSimHUD = ({ onExit, onPrev, onNext, onAddWaterCenter, onBuildDamCenter, wetPixels = 0, damEdits = 0 }: Props) => {
+const WaterSimHUD = ({
+  onExit,
+  onPrev,
+  onNext,
+  onAddWaterCenter,
+  onBuildDamCenter,
+  wetPixels = 0,
+  damEdits = 0,
+  lifeThreshold = 6000,
+}: Props) => {
   const [scheme] = useDesignerScheme();
   const stops = (scheme.terrainStops && scheme.terrainStops.length > 1)
     ? scheme.terrainStops
@@ -63,15 +74,21 @@ const WaterSimHUD = ({ onExit, onPrev, onNext, onAddWaterCenter, onBuildDamCente
     return best;
   }, [stops, bgColor]);
 
-  // Gamepad: X = place water, B/O = build dam, LB = prev level, RB = next level.
+  const lifePct = Math.max(0, Math.min(1, wetPixels / Math.max(1, lifeThreshold)));
+  const lifeFull = wetPixels >= lifeThreshold;
+  const lifeColor = stops[1 % stops.length] || '#6ee7a8'; // vegetation-ish
+
+  // Gamepad: X = place water, B/O = build dam, LB = prev, RB = next (gated).
   const addRef = useRef(onAddWaterCenter);
   const damRef = useRef(onBuildDamCenter);
   const prevRef = useRef(onPrev);
   const nextRef = useRef(onNext);
+  const lifeFullRef = useRef(lifeFull);
   useEffect(() => { addRef.current = onAddWaterCenter; }, [onAddWaterCenter]);
   useEffect(() => { damRef.current = onBuildDamCenter; }, [onBuildDamCenter]);
   useEffect(() => { prevRef.current = onPrev; }, [onPrev]);
   useEffect(() => { nextRef.current = onNext; }, [onNext]);
+  useEffect(() => { lifeFullRef.current = lifeFull; }, [lifeFull]);
 
   useEffect(() => {
     let raf = 0;
@@ -83,7 +100,7 @@ const WaterSimHUD = ({ onExit, onPrev, onNext, onAddWaterCenter, onBuildDamCente
         if (consumeGamepadButton('x', !!pad.buttons[2]?.pressed)) { sfx.make(); addRef.current(); }
         if (consumeGamepadButton('b', !!pad.buttons[1]?.pressed)) { sfx.make(); damRef.current(); }
         if (consumeGamepadButton('lb', !!pad.buttons[4]?.pressed) && prevRef.current) { sfx.navPrev(); prevRef.current(); }
-        if (consumeGamepadButton('rb', !!pad.buttons[5]?.pressed) && nextRef.current) { sfx.navNext(); nextRef.current(); }
+        if (consumeGamepadButton('rb', !!pad.buttons[5]?.pressed) && nextRef.current && lifeFullRef.current) { sfx.navNext(); nextRef.current(); }
       }
       raf = requestAnimationFrame(tick);
     };
@@ -149,18 +166,64 @@ const WaterSimHUD = ({ onExit, onPrev, onNext, onAddWaterCenter, onBuildDamCente
         </button>
       )}
 
-      {/* Next arrow (to level 4) */}
+      {/* Next arrow (to level 4) — gated by life bar */}
       {onNext && (
         <button
-          onClick={() => { sfx.navNext(); onNext(); }}
+          onClick={() => { if (lifeFull) { sfx.navNext(); onNext(); } }}
+          disabled={!lifeFull}
           aria-label="next level"
-          className="fixed right-2 top-1/2 -translate-y-1/2 z-[70] flex flex-col items-center justify-center bg-transparent hover:opacity-70 transition-opacity"
+          title={lifeFull ? 'next level' : 'Pour water to bring life back'}
+          className="fixed right-2 top-1/2 -translate-y-1/2 z-[70] flex flex-col items-center justify-center bg-transparent hover:opacity-70 transition-opacity disabled:opacity-25 disabled:cursor-not-allowed"
           style={{ color: arrowColor, filter: `drop-shadow(0 0 10px ${bgColor})` }}
         >
           <ChevronRight style={{ width: 140, height: 140 }} strokeWidth={4} />
           <PadHint label="RB" bg={bgColor} />
+          {!lifeFull && (
+            <div className="mt-2 text-[9px] font-mono uppercase tracking-[0.2em] text-center max-w-[140px] leading-tight" style={{ color: arrowColor, opacity: 0.85 }}>
+              pour water<br/>to revive life
+            </div>
+          )}
         </button>
       )}
+
+      {/* Life bar (top-center under headline) */}
+      <div className="fixed top-[180px] left-1/2 -translate-x-1/2 z-40 w-[min(560px,80vw)] pointer-events-none">
+        <div className="flex items-center justify-between mb-1 font-mono text-[10px] uppercase tracking-[0.3em]" style={{ color: inkColor }}>
+          <span>life</span>
+          <span style={{ opacity: 0.7 }}>{Math.round(lifePct * 100)}%</span>
+        </div>
+        <div
+          className="relative h-4 overflow-hidden"
+          style={{
+            background: `${inkColor}1a`,
+            border: `1.5px solid ${inkColor}55`,
+            borderRadius: 2,
+          }}
+        >
+          <div
+            className="absolute inset-y-0 left-0 transition-[width] duration-300 ease-out"
+            style={{
+              width: `${lifePct * 100}%`,
+              background: `linear-gradient(90deg, ${stops[0]}, ${lifeColor})`,
+              boxShadow: lifeFull ? `0 0 18px ${lifeColor}` : `0 0 10px ${stops[0]}88`,
+            }}
+          />
+        </div>
+        {lifeFull && (
+          <div
+            className="mt-3 text-center italic"
+            style={{
+              fontFamily: '"Georgia", serif',
+              fontSize: 'clamp(20px, 2.4vw, 32px)',
+              color: lifeColor,
+              textShadow: `0 2px 14px ${bgColor}`,
+            }}
+          >
+            life has returned — press <strong>RB</strong> (or the arrow →) for the next level
+          </div>
+        )}
+      </div>
+
 
       {/* Center crosshair so users know where X / B will apply */}
       <div

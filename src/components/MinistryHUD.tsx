@@ -362,12 +362,45 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
             drain below<br/>-4m
           </div>
         )}
-        {canNext && (
-          <div className="mt-2 text-[10px] font-mono uppercase tracking-[0.16em] text-center max-w-[180px] leading-tight" style={{ color: arrowColor, opacity: 0.95 }}>
-            you&apos;ve successfully drained the sea.<br/>X for the next level
-          </div>
-        )}
       </button>
+
+      {/* Huge centered success overlay — appears once sea is drained */}
+      {canNext && (
+        <div className="fixed inset-x-0 top-[18vh] z-[60] pointer-events-none text-center px-6">
+          <div
+            className="mx-auto max-w-[92vw]"
+            style={{
+              fontFamily: '"Georgia", "Trebuchet MS", serif',
+              fontStyle: 'italic',
+              fontSize: 'clamp(36px, 6.4vw, 88px)',
+              lineHeight: 1.05,
+              color: waterColor,
+              textShadow: `0 4px 24px ${bgColor}, 0 0 2px ${contrastColor}66`,
+              letterSpacing: '0.005em',
+            }}
+          >
+            you&apos;ve successfully drained the sea.
+          </div>
+          <div
+            className="mt-5 inline-flex items-center gap-3 px-5 py-3 rounded-sm"
+            style={{
+              background: `${bgColor}cc`,
+              border: `2px solid ${waterColor}`,
+              boxShadow: `0 0 30px ${waterColor}55`,
+            }}
+          >
+            <span
+              className="inline-flex items-center justify-center w-9 h-9 text-sm font-mono font-bold rounded-full"
+              style={{ border: `2px solid ${contrastColor}`, color: contrastColor }}
+            >
+              X
+            </span>
+            <span className="text-sm font-mono uppercase tracking-[0.35em]" style={{ color: contrastColor }}>
+              or RB · next level
+            </span>
+          </div>
+        </div>
+      )}
 
 
       {/* Persistent year / future marker */}
