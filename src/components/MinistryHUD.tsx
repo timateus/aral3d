@@ -213,7 +213,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
   });
   const [panelOpen, setPanelOpen] = useState(true);
 
-  // Gamepad controls — right stick Y adjusts water level; LB/RB navigate levels.
+  // Gamepad controls — right stick X adjusts water level; LB/RB navigate levels.
   // We read navigator.getGamepads() directly here for max reliability (some
   // controllers report axes on indices other than [3] and we want any movement
   // on the right-vertical axis to drive the slider).
@@ -244,19 +244,12 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
           }
           if (now - calibStart > 400) calibrated = true;
         }
-        // Search axes 3, 5, 4 (common right-stick-Y locations) for deflection
-        // away from their resting value. Skip axis 0/2 — those are stick X.
-        let axis = 0;
-        const candidates = [3, 5, 4, 7];
-        for (const ai of candidates) {
-          const raw = pad.axes[ai];
-          if (raw == null) continue;
-          const rest = restValues.get(ai) ?? 0;
-          const delta = raw - rest;
-          if (Math.abs(delta) > 0.2 && Math.abs(delta) > Math.abs(axis)) {
-            axis = -delta;
-          }
-        }
+        // User mapping: right-stick horizontal = slider. On this controller it
+        // arrives on axis 3; positive/right raises the level, neutral stops.
+        const rawX = pad.axes[3] ?? 0;
+        const restX = restValues.get(3) ?? 0;
+        let axis = rawX - restX;
+        if (Math.abs(axis) < 0.18) axis = 0;
         // D-pad fallback (always works regardless of axis mapping)
         const dpad = ((pad.buttons[12]?.pressed ? 1 : 0) - (pad.buttons[13]?.pressed ? 1 : 0));
         if (Math.abs(axis) < 0.15 && dpad !== 0) axis = dpad;
@@ -411,7 +404,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         </div>
         <div className="relative h-[72vh] w-16 flex items-center justify-center">
           <div className="absolute -top-6 left-1/2 -translate-x-1/2 pointer-events-none">
-            <PadHint label="R-stick Y" color={waterColor} bg={bgColor} />
+            <PadHint label="R-stick X" color={waterColor} bg={bgColor} />
           </div>
           <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-white/15 pointer-events-none" />
           <input

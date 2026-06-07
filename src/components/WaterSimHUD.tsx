@@ -1,4 +1,4 @@
-import { ChevronLeft, ArrowLeft, Droplets, Shovel } from 'lucide-react';
+import { ChevronLeft, ArrowLeft, Droplets, Mountain } from 'lucide-react';
 import { useEffect, useMemo, useRef } from 'react';
 import { useDesignerScheme } from '@/lib/visual-mode';
 import { sfx } from '@/lib/ui-sfx';
@@ -37,12 +37,12 @@ interface Props {
   onExit: () => void;
   onPrev?: () => void;
   onAddWaterCenter: () => void;
-  onDigCenter: () => void;
+  onBuildDamCenter: () => void;
   wetPixels?: number;
-  canalEdits?: number;
+  damEdits?: number;
 }
 
-const WaterSimHUD = ({ onExit, onPrev, onAddWaterCenter, onDigCenter, wetPixels = 0, canalEdits = 0 }: Props) => {
+const WaterSimHUD = ({ onExit, onPrev, onAddWaterCenter, onBuildDamCenter, wetPixels = 0, damEdits = 0 }: Props) => {
   const [scheme] = useDesignerScheme();
   const stops = (scheme.terrainStops && scheme.terrainStops.length > 1)
     ? scheme.terrainStops
@@ -61,12 +61,12 @@ const WaterSimHUD = ({ onExit, onPrev, onAddWaterCenter, onDigCenter, wetPixels 
     return best;
   }, [stops, bgColor]);
 
-  // Gamepad: X = place water, B = dig canal, LB = prev level.
+  // Gamepad: X = place water, B/O = build dam, LB = prev level.
   const addRef = useRef(onAddWaterCenter);
-  const digRef = useRef(onDigCenter);
+  const damRef = useRef(onBuildDamCenter);
   const prevRef = useRef(onPrev);
   useEffect(() => { addRef.current = onAddWaterCenter; }, [onAddWaterCenter]);
-  useEffect(() => { digRef.current = onDigCenter; }, [onDigCenter]);
+  useEffect(() => { damRef.current = onBuildDamCenter; }, [onBuildDamCenter]);
   useEffect(() => { prevRef.current = onPrev; }, [onPrev]);
 
   useEffect(() => {
@@ -81,7 +81,7 @@ const WaterSimHUD = ({ onExit, onPrev, onAddWaterCenter, onDigCenter, wetPixels 
         const b = !!pad.buttons[1]?.pressed;
         const lb = !!pad.buttons[4]?.pressed;
         if (x && !prev.x) { sfx.make(); addRef.current(); }
-        if (b && !prev.b) { sfx.make(); digRef.current(); }
+        if (b && !prev.b) { sfx.make(); damRef.current(); }
         if (lb && !prev.lb && prevRef.current) { sfx.navPrev(); prevRef.current(); }
         prev = { x, b, lb };
       }
@@ -118,7 +118,7 @@ const WaterSimHUD = ({ onExit, onPrev, onAddWaterCenter, onDigCenter, wetPixels 
           }}
         >
           {(() => {
-            const text = 'What if you could rewrite the rivers?';
+            const text = 'do you feel the wetness of water?';
             return text.split(/(\s+)/).map((tok, i) => {
               if (/^\s+$/.test(tok)) return <span key={i}>{tok}</span>;
               const c = stops[i % stops.length];
@@ -173,7 +173,7 @@ const WaterSimHUD = ({ onExit, onPrev, onAddWaterCenter, onDigCenter, wetPixels 
           <PadHint label="X" bg={bgColor} />
         </button>
         <button
-          onClick={() => { sfx.make(); onDigCenter(); }}
+          onClick={() => { sfx.make(); onBuildDamCenter(); }}
           className="flex items-center gap-3 px-6 py-4 text-sm font-semibold font-mono uppercase tracking-[0.2em] backdrop-blur-md transition-all hover:brightness-110 hover:scale-105"
           style={{
             border: `3px solid ${stops[2 % stops.length]}`,
@@ -181,10 +181,10 @@ const WaterSimHUD = ({ onExit, onPrev, onAddWaterCenter, onDigCenter, wetPixels 
             color: inkColor,
             boxShadow: `0 0 24px ${stops[2 % stops.length]}55`,
           }}
-          title="Carve a canal segment at the cursor"
+          title="Build a dam at the cursor"
         >
-          <Shovel className="w-4 h-4" style={{ color: stops[2 % stops.length] }} />
-          Dig canal
+          <Mountain className="w-4 h-4" style={{ color: stops[2 % stops.length] }} />
+          Build dam
           <PadHint label="O" bg={bgColor} />
         </button>
       </div>
@@ -195,7 +195,7 @@ const WaterSimHUD = ({ onExit, onPrev, onAddWaterCenter, onDigCenter, wetPixels 
         style={{ background: bgColor, color: inkColor, border: `1px solid ${inkColor}33` }}
       >
         <div>wet pixels · {wetPixels.toLocaleString()}</div>
-        <div>canal edits · {canalEdits.toLocaleString()}</div>
+        <div>dams built · {damEdits.toLocaleString()}</div>
         <div className="opacity-60 mt-1">click map to splash · drag to paint</div>
       </div>
     </>
