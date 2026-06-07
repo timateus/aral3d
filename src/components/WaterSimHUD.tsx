@@ -1,4 +1,4 @@
-import { ChevronLeft, ArrowLeft, Droplets, Mountain } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowLeft, Droplets, Mountain } from 'lucide-react';
 import { useEffect, useMemo, useRef } from 'react';
 import { useDesignerScheme } from '@/lib/visual-mode';
 import { sfx } from '@/lib/ui-sfx';
