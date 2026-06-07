@@ -273,6 +273,31 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onNext, onPrev]);
 
+  // Keyboard navigation
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && /input|textarea|select/i.test(t.tagName)) return;
+      if (e.key === 'ArrowLeft' && onPrev) {
+        e.preventDefault(); sfx.navPrev(); onPrev();
+      } else if (e.key === 'ArrowRight' && onNext && waterLevelRef.current < -4) {
+        e.preventDefault(); sfx.navNext(); onNext();
+      } else if ((e.key === 'Enter' || e.key === ' ' || e.key === 'x' || e.key === 'X') && onNext && waterLevelRef.current < -4) {
+        e.preventDefault(); sfx.navNext(); onNext();
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        const next = Math.max(-30, waterLevelRef.current - 0.5);
+        if (next !== waterLevelRef.current) { waterLevelRef.current = next; onWaterLevelChangeRef.current(next); sfx.slider(); }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const next = Math.min(20, waterLevelRef.current + 0.5);
+        if (next !== waterLevelRef.current) { waterLevelRef.current = next; onWaterLevelChangeRef.current(next); sfx.slider(); }
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onNext, onPrev]);
+
 
   const chartData = useMemo(
     () => annualData.filter((r) => r.year != null),
