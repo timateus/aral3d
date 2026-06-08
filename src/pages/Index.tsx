@@ -19,6 +19,8 @@ import GeoGuessrHUD from '@/components/GeoGuessrHUD';
 import BackgroundMusic from '@/components/BackgroundMusic';
 import LevelIntroSplash from '@/components/LevelIntroSplash';
 import MapBuilderHUD from '@/components/MapBuilderHUD';
+import SchoolTwelveOverlay from '@/components/SchoolTwelveOverlay';
+
 import { applyRandomSpectralPalette } from '@/lib/visual-mode';
 import CharacterSelect from '@/components/CharacterSelect';
 import ScenarioChat from '@/components/ScenarioChat';
@@ -216,8 +218,11 @@ const Index = () => {
   const [geoMode, setGeoMode] = useState(false);
   const [geoMarkers, setGeoMarkers] = useState<import('@/components/GeoFeatures').GeoGuessrMarkerSet | null>(null);
   const [placeMode, setPlaceMode] = useState(false);
+  const [schoolMode, setSchoolMode] = useState(false);
   const [placedItems, setPlacedItems] = useState<import('@/lib/map-builder-items').PlacedItem[]>([]);
   const prevPlaceRef = useRef(false);
+  const prevSchoolRef = useRef(false);
+
   const [levelIntro, setLevelIntro] = useState<{ n: number; name: string; instructions: string[] } | null>(null);
   const ministryPrevVisualRef = useRef<import('@/lib/visual-mode').VisualMode>('dark');
   const [spectralCamPos, setSpectralCamPos] = useState<[number, number, number]>([0, 14, 14]);
@@ -299,6 +304,20 @@ const Index = () => {
     }
     prevPlaceRef.current = placeMode;
   }, [placeMode]);
+  useEffect(() => {
+    if (schoolMode && !prevSchoolRef.current) {
+      setLevelIntro({
+        n: 6,
+        name: 'Kegeyli School 12',
+        instructions: [
+          'You are guided to School 12 in Kegeyli.',
+          'Walk with WASD or use auto-walk. A student is waiting at the door.',
+        ],
+      });
+    }
+    prevSchoolRef.current = schoolMode;
+  }, [schoolMode]);
+
 
 
   // One-shot randomizer for Spectral Earth — palette, exaggeration, camera, zoom, typography.
@@ -1229,7 +1248,7 @@ const Index = () => {
     return () => window.removeEventListener('keydown', handler);
   }, [toggleScreenRecording]);
 
-  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode && !dustMode && !traceMode && !lifeMode && !spectralMode && !ministryMode && !simMode && !geoMode && !placeMode;
+  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode && !dustMode && !traceMode && !lifeMode && !spectralMode && !ministryMode && !simMode && !geoMode && !placeMode && !schoolMode;
 
   const enterGameLevel = useCallback((level: number) => {
     setStarted(true);
@@ -1238,9 +1257,10 @@ const Index = () => {
     setSimMode(level === 3);
     setGeoMode(level === 4);
     setPlaceMode(level === 5);
+    setSchoolMode(level === 6);
     setGeoMarkers(null);
     setShowWaterExtent(false);
-    setShowKhorezm(level >= 3);
+    setShowKhorezm(level >= 3 && level <= 5);
     setTerrainMode('classic');
     if (level >= 1 && level <= 5) setVisualMode('designer');
     setWaterFlowActive(level === 3);
@@ -1254,6 +1274,7 @@ const Index = () => {
       setFlowWaterAmount(20);
     }
   }, [setTerrainMode, setVisualMode]);
+
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
@@ -1572,7 +1593,7 @@ const Index = () => {
         <WaterSimHUD
           wetPixels={flowWetCount}
           damEdits={raiseEditCount}
-          lifeThreshold={Math.max(7000, Math.round(terrain.width * terrain.height * 0.03))}
+          lifeThreshold={Math.max(21000, Math.round(terrain.width * terrain.height * 0.09))}
           onExit={() => {
             setSimMode(false);
             setStarted(false);
@@ -1662,12 +1683,25 @@ const Index = () => {
           onPrev={() => {
             enterGameLevel(4);
           }}
+          onNext={() => {
+            enterGameLevel(6);
+          }}
           onItemsChange={setPlacedItems}
         />
       )}
 
+      {schoolMode && (
+        <SchoolTwelveOverlay
+          onExit={() => {
+            setSchoolMode(false);
+            setStarted(false);
+          }}
+          onPrev={() => enterGameLevel(5)}
+        />
+      )}
+
       {/* Background music — plays during levels with a mute toggle */}
-      <BackgroundMusic active={spectralMode || ministryMode || simMode || geoMode || placeMode} />
+      <BackgroundMusic active={spectralMode || ministryMode || simMode || geoMode || placeMode || schoolMode} />
 
       {levelIntro && (
         <LevelIntroSplash
@@ -1676,9 +1710,10 @@ const Index = () => {
           instructions={levelIntro.instructions}
           onBegin={() => setLevelIntro(null)}
           onPrev={levelIntro.n > 1 ? () => enterGameLevel(levelIntro.n - 1) : undefined}
-          onNext={levelIntro.n < 5 ? () => enterGameLevel(levelIntro.n + 1) : undefined}
+          onNext={levelIntro.n < 6 ? () => enterGameLevel(levelIntro.n + 1) : undefined}
         />
       )}
+
 
 
 

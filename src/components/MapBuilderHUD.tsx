@@ -15,10 +15,12 @@ import { useGamepad } from '@/hooks/useGamepad';
 interface Props {
   onExit: () => void;
   onPrev: () => void;
+  onNext?: () => void;
   /** Optional override; defaults to the "in-front-of-camera" aim from FPC. */
   getAimLatLon?: () => { lat: number; lon: number } | null;
   onItemsChange: (items: PlacedItem[]) => void;
 }
+
 
 let _uid = 0;
 const nextId = () => `pl-${++_uid}-${Date.now().toString(36)}`;
@@ -26,7 +28,7 @@ const PLACE_INTERVAL_MS = 140;
 const SIM_TICK_MS = 220;
 const FLAMMABLE: MapBuilderItemId[] = ['seed', 'plant', 'flower', 'saxaul', 'reed', 'oil'];
 
-const MapBuilderHUD = ({ onExit, onPrev, getAimLatLon, onItemsChange }: Props) => {
+const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: Props) => {
   const [selected, setSelected] = useState<MapBuilderItemId>('water');
   const [items, setItems] = useState<PlacedItem[]>([]);
   const selectedRef = useRef(selected);
@@ -309,6 +311,19 @@ const MapBuilderHUD = ({ onExit, onPrev, getAimLatLon, onItemsChange }: Props) =
         onClick={() => { sfx.exit(); onExit(); }}
         className="fixed top-4 right-4 z-40 px-3 py-1.5 rounded-md bg-black/60 backdrop-blur-md border border-white/15 text-white/90 font-mono text-[11px] hover:bg-black/80"
       >Exit</button>
+      {onNext && (
+        <button
+          data-hud
+          onClick={() => { sfx.navNext(); onNext(); }}
+          aria-label="next level"
+          className="fixed right-2 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center justify-center text-white/85 hover:text-white"
+          title="Next level: Kegeyli School 12"
+        >
+          <svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+          <span className="mt-1 px-2 py-0.5 text-[10px] font-mono border border-white/40 rounded">→ Level 6</span>
+        </button>
+      )}
+
 
       <div data-hud className="fixed top-16 right-4 z-40 px-3 py-1.5 rounded-md bg-black/60 backdrop-blur-md border border-white/15 text-white/90 font-mono text-[11px]">
         Placed: <span className="text-white">{items.length}</span>
