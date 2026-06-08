@@ -80,11 +80,10 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
       onClick={() => { sfx.navNext(); onBegin(); }}
       className="fixed inset-0 z-[9999] flex items-center justify-center cursor-pointer animate-in fade-in duration-300"
       style={{
-        background: 'rgba(6,8,14,0.9)',
-        backdropFilter: 'blur(32px) saturate(120%)',
-        WebkitBackdropFilter: 'blur(32px) saturate(120%)',
+        background: '#06080e',
       }}
     >
+
       {onPrev && (
         <button
           onClick={(e) => { e.stopPropagation(); sfx.navPrev(); onPrev(); }}
