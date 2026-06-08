@@ -60,7 +60,7 @@ export function stepFlow(state: WaterFlowState): boolean {
   const outflow = new Float32Array(width * height);
   const inflow = new Float32Array(width * height);
 
-  const flowRate = 0.25; // fraction of excess that flows per step
+  const flowRate = 0.68; // fraction of excess that flows per step
   let anyFlow = false;
 
   for (let r = 0; r < height; r++) {
