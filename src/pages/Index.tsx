@@ -1248,7 +1248,7 @@ const Index = () => {
     return () => window.removeEventListener('keydown', handler);
   }, [toggleScreenRecording]);
 
-  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode && !dustMode && !traceMode && !lifeMode && !spectralMode && !ministryMode && !simMode && !geoMode && !placeMode;
+  const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode && !dustMode && !traceMode && !lifeMode && !spectralMode && !ministryMode && !simMode && !geoMode && !placeMode && !schoolMode;
 
   const enterGameLevel = useCallback((level: number) => {
     setStarted(true);
