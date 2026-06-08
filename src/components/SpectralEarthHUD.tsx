@@ -1,9 +1,12 @@
 import { ArrowLeft, ArrowRight, Sparkles, Printer, ChevronRight } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import QRCode from 'qrcode';
+import { supabase } from '@/integrations/supabase/client';
 import { useDesignerScheme } from '@/lib/visual-mode';
 import { sfx } from '@/lib/ui-sfx';
 import { useGamepad } from '@/hooks/useGamepad';
 import { consumeGamepadButton } from '@/lib/gamepad-dedupe';
+
 
 function bgIsLight(hex: string): boolean {
   const h = (hex || '').replace('#', '');
@@ -101,7 +104,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
       return <span key={i} style={{ color: c }}>{tok}</span>;
     });
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     const canvas = document.querySelector('canvas') as HTMLCanvasElement | null;
     if (!canvas) return;
 
@@ -132,7 +135,6 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
       ctx.font = `${italic === 'italic' ? 'italic ' : ''}${weight} ${fontPx}px ${fontFamily}`;
       ctx.textBaseline = 'top';
       const tokens = display.split(/(\s+)/);
-      // measure total width including tracking
       const trackPx = tracking * fontPx;
       let total = 0;
       for (const tok of tokens) {
@@ -149,7 +151,6 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
         }
         const c = stops[(idx + offset) % stops.length];
         ctx.fillStyle = c;
-        // soft shadow for readability over any terrain
         ctx.shadowColor = 'rgba(0,0,0,0.65)';
         ctx.shadowBlur = Math.max(4, fontPx * 0.12);
         ctx.fillText(tok, x, y);
@@ -160,7 +161,6 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
       return y + fontPx * 1.15;
     };
 
-    // Vertically centered manifesto, scaled to image width.
     const f1 = Math.round(W * 0.045);
     const f2 = Math.round(W * 0.024);
     const blockH = f1 * 1.15 + f2 * 1.15 + f1 * 0.5;
@@ -169,7 +169,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
     y += f1 * 0.35;
     drawColorized(line2, 3, y, f2, style.font2, style.weight2, style.style2, style.case2, style.tracking2);
 
-    // Footer baked into image: Aral School 2026
+    // Footer
     const footPx = Math.round(W * 0.014);
     ctx.font = `${footPx}px "Courier New", monospace`;
     ctx.fillStyle = '#ffffff';
@@ -180,7 +180,6 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
     const rightLabel = 'SPECTRAL EARTH';
     const rw = ctx.measureText(rightLabel).width;
     ctx.fillText(rightLabel, W - Math.round(W * 0.03) - rw, H - Math.round(W * 0.02));
-    // swatches
     const sw = Math.round(W * 0.014);
     const swY = H - Math.round(W * 0.02) - sw + 2;
     const swStartX = Math.round(W / 2 - (stops.length * (sw + 4)) / 2);
@@ -192,21 +191,63 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
     ctx.shadowBlur = 0;
 
     const url = out.toDataURL('image/png');
+
+    // --- Upload to shared-cards bucket + build /share/:id URL + QR ---
+    let shareUrl = '';
+    let qrDataUrl = '';
+    try {
+      const id = (crypto as any).randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+      const blob = await (await fetch(url)).blob();
+      const { error } = await supabase.storage
+        .from('shared-cards')
+        .upload(`${id}.png`, blob, { contentType: 'image/png', upsert: false });
+      if (!error) {
+        shareUrl = `${window.location.origin}/share/${id}`;
+        qrDataUrl = await QRCode.toDataURL(shareUrl, { margin: 1, width: 320, errorCorrectionLevel: 'M' });
+      }
+    } catch (e) {
+      console.warn('[print] share upload failed', e);
+    }
+
     const w = window.open('', '_blank');
     if (!w) return;
     w.document.write(`
       <!doctype html><html><head><title>Spectral Earth — Aral School 2026</title>
       <style>
         @page { size: auto; margin: 8mm; }
-        html,body { margin:0; padding:0; background:#fff; }
-        img { display:block; width:100%; height:auto; }
+        html,body { margin:0; padding:0; background:#fff; font-family: "Courier New", monospace; }
+        .page { position: relative; }
+        .map { display:block; width:100%; height:auto; }
+        .share {
+          position: absolute; right: 4mm; bottom: 4mm;
+          background: #fff; padding: 6px 8px;
+          border: 1.5px solid #000; display: flex; align-items: center; gap: 8px;
+          box-shadow: 0 1px 0 #000;
+        }
+        .share img { width: 96px; height: 96px; display: block; }
+        .share .meta { font-size: 9px; line-height: 1.3; max-width: 110px; }
+        .share .meta b { display: block; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; }
+        .share .meta a { color: #000; text-decoration: none; word-break: break-all; }
       </style></head>
       <body>
-        <img src="${url}" onload="setTimeout(()=>window.print(),300)" />
+        <div class="page">
+          <img class="map" src="${url}" onload="setTimeout(()=>window.print(),400)" />
+          ${qrDataUrl ? `
+            <div class="share">
+              <img src="${qrDataUrl}" alt="QR" />
+              <div class="meta">
+                <b>Share to Instagram</b>
+                Scan, then tap Share on your phone.
+                <a href="${shareUrl}">${shareUrl.replace(/^https?:\/\//, '')}</a>
+              </div>
+            </div>
+          ` : ''}
+        </div>
       </body></html>
     `);
     w.document.close();
   };
+
 
   // Gamepad: X = make it misbehave, LB = prev level, RB = next level.
   useEffect(() => {
