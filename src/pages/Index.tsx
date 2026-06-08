@@ -746,8 +746,8 @@ const Index = () => {
     for (let i = 0; i < state.waterDepth.length; i++) {
       if (state.waterDepth[i] > 0.01) count++;
     }
-    setFlowWetCount(count);
-  }, [terrain, flowWaterAmount]);
+    updateHydraulicProgress(count);
+  }, [terrain, flowWaterAmount, updateHydraulicProgress]);
 
   const doFlowStep = useCallback(() => {
     const state = flowStateRef.current;
@@ -1663,7 +1663,7 @@ const Index = () => {
             for (let i = 0; i < state.waterDepth.length; i++) {
               if (state.waterDepth[i] > 0.01) count++;
             }
-            setFlowWetCount(count);
+            updateHydraulicProgress(count);
           }}
           onBuildDamCenter={() => {
             const aim = viewerRef.current?.getAimPixel();

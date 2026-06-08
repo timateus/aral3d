@@ -50,7 +50,7 @@ function pairScore(active: Gamepad, pair: [number, number]): number {
 function selectRightStickAxes(active: Gamepad, current?: [number, number]) {
   const standard: [number, number] = [2, 3];
   const validCurrent = current && RIGHT_STICK_PAIRS.some(([x, y]) => x === current[0] && y === current[1]) ? current : undefined;
-  if (active.mapping === 'standard' || pairScore(active, standard) > 0.05) return standard;
+  if (pairScore(active, standard) > 0.08) return standard;
 
   let best: [number, number] = validCurrent ?? standard;
   let bestScore = validCurrent ? pairScore(active, validCurrent) : 0;
