@@ -752,15 +752,15 @@ const Index = () => {
   const doFlowStep = useCallback(() => {
     const state = flowStateRef.current;
     if (!state) return;
-    stepFlow(state);
+    for (let i = 0; i < 4; i++) stepFlow(state);
     setFlowState(state);
     setFlowRenderKey(k => k + 1);
     let count = 0;
     for (let i = 0; i < state.waterDepth.length; i++) {
       if (state.waterDepth[i] > 0.01) count++;
     }
-    setFlowWetCount(count);
-  }, []);
+    updateHydraulicProgress(count);
+  }, [updateHydraulicProgress]);
 
   const resetFlow = useCallback(() => {
     flowStateRef.current = null;
