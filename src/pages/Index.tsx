@@ -60,6 +60,7 @@ import LifeHUD from '@/components/LifeHUD';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { useGamepad } from '@/hooks/useGamepad';
+import { firstPersonBridge } from '@/lib/first-person-bridge';
 
 function GamepadIndicator({ btnBase }: { btnBase: string }) {
   const { connected, padId } = useGamepad();
@@ -401,7 +402,8 @@ const Index = () => {
   const [contourInterval, setContourInterval] = useState<number>(25);
   const [vectorInterval, setVectorInterval] = useState<number>(50);
   const [hideTerrainSurface, setHideTerrainSurface] = useState<boolean>(false);
-  const schoolTarget = useMemo(() => ({ lat: 42.748792, lon: 59.583295 }), []);
+  const schoolStart = useMemo(() => ({ lat: 42.462, lon: 59.603 }), []);
+  const schoolTarget = useMemo(() => ({ lat: 42.7574883, lon: 59.5618668 }), []);
 
   // Lifted data panel state
   const [annualData, setAnnualData] = useState<AralAnnual[]>([]);
@@ -684,6 +686,20 @@ const Index = () => {
     return { terrain: result, hideNoData: expanded };
   }, [satelliteEnabled, mapboxTerrain, baseTerrain, seabedTerrain, khorezmTerrain, southKhorezmTerrain, showKhorezm, watershedTerrain, showWatershed]);
 
+  const simLifeThreshold = useMemo(
+    () => terrain ? Math.max(21000, Math.round(terrain.width * terrain.height * 0.09)) : 21000,
+    [terrain],
+  );
+
+  const updateHydraulicProgress = useCallback((count: number) => {
+    if (count >= simLifeThreshold) {
+      setSimCompleted(true);
+      setFlowWetCount(simLifeThreshold);
+      return;
+    }
+    setFlowWetCount((prev) => simCompleted ? Math.max(prev, simLifeThreshold) : count);
+  }, [simCompleted, simLifeThreshold]);
+
   // Listen for game mode state events
   useEffect(() => {
     const handler = (e: Event) => {
@@ -730,21 +746,21 @@ const Index = () => {
     for (let i = 0; i < state.waterDepth.length; i++) {
       if (state.waterDepth[i] > 0.01) count++;
     }
-    setFlowWetCount(count);
-  }, [terrain, flowWaterAmount]);
+    updateHydraulicProgress(count);
+  }, [terrain, flowWaterAmount, updateHydraulicProgress]);
 
   const doFlowStep = useCallback(() => {
     const state = flowStateRef.current;
     if (!state) return;
-    stepFlow(state);
+    for (let i = 0; i < 4; i++) stepFlow(state);
     setFlowState(state);
     setFlowRenderKey(k => k + 1);
     let count = 0;
     for (let i = 0; i < state.waterDepth.length; i++) {
       if (state.waterDepth[i] > 0.01) count++;
     }
-    setFlowWetCount(count);
-  }, []);
+    updateHydraulicProgress(count);
+  }, [updateHydraulicProgress]);
 
   const resetFlow = useCallback(() => {
     flowStateRef.current = null;
@@ -1647,7 +1663,7 @@ const Index = () => {
             for (let i = 0; i < state.waterDepth.length; i++) {
               if (state.waterDepth[i] > 0.01) count++;
             }
-            setFlowWetCount(count);
+            updateHydraulicProgress(count);
           }}
           onBuildDamCenter={() => {
             const aim = viewerRef.current?.getAimPixel();

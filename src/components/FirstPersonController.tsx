@@ -31,6 +31,7 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
   const savedCam = useRef<{ p: THREE.Vector3; q: THREE.Quaternion } | null>(null);
   const keys = useRef<Record<string, boolean>>({});
   const prevTrigger = useRef(false);
+  const avatarRef = useRef<THREE.Group>(null);
 
   const meshWidth = 10;
   const meshHeight = 10 * (terrain.height / terrain.width);
@@ -71,8 +72,11 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
   useEffect(() => {
     if (!active) return;
     savedCam.current = { p: camera.position.clone(), q: camera.quaternion.clone() };
-    if (!initialized.current) {
-      pos.current.set(0, 0, 0);
+    if (!initialized.current || thirdPerson) {
+      const start = thirdPerson && firstPersonBridge.school.start
+        ? latLonToWorldXZ(firstPersonBridge.school.start.lat, firstPersonBridge.school.start.lon)
+        : null;
+      pos.current.set(start?.x ?? 0, 0, start?.z ?? 0);
       yaw.current = 0;
       pitch.current = -0.1;
       initialized.current = true;
@@ -87,7 +91,7 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
       firstPersonBridge.school.autoWalk = false;
       onTriggerChange?.(false);
     };
-  }, [active, camera, onTriggerChange]);
+  }, [active, camera, onTriggerChange, thirdPerson]);
 
   useEffect(() => {
     if (!active) return;
@@ -195,7 +199,7 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
     }
 
     const sprint = keys.current.ShiftLeft || keys.current.ShiftRight || keys.current.shift || (gp.connected && gp.buttons.lb);
-    const speed = WALK_SPEED * (sprint ? SPRINT_MULT : 1);
+    const speed = (thirdPerson ? 0.95 : WALK_SPEED) * (sprint ? SPRINT_MULT : 1);
     if (fwd || str) {
       const mag = Math.min(1, Math.hypot(fwd, str));
       const dirX = -Math.sin(yaw.current) * fwd + Math.cos(yaw.current) * str;
@@ -231,9 +235,13 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
     pos.current.y = groundY + EYE_HEIGHT;
 
     if (thirdPerson) {
-      const camOffsetX = Math.sin(yaw.current) * 0.7;
-      const camOffsetZ = Math.cos(yaw.current) * 0.7;
-      camera.position.set(pos.current.x + camOffsetX, pos.current.y + 0.42, pos.current.z + camOffsetZ);
+      if (avatarRef.current) {
+        avatarRef.current.position.set(pos.current.x, pos.current.y + 0.05, pos.current.z);
+        avatarRef.current.rotation.y = yaw.current;
+      }
+      const camOffsetX = Math.sin(yaw.current) * 1.0;
+      const camOffsetZ = Math.cos(yaw.current) * 1.0;
+      camera.position.set(pos.current.x + camOffsetX, pos.current.y + 0.55, pos.current.z + camOffsetZ);
       camera.lookAt(pos.current.x, pos.current.y + 0.1, pos.current.z);
     } else {
       camera.position.copy(pos.current);
@@ -260,7 +268,20 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
     }
   });
 
-  return null;
+  if (!thirdPerson) return null;
+
+  return (
+    <group ref={avatarRef} scale={0.55}>
+      <mesh position={[0, 0.12, 0]}>
+        <sphereGeometry args={[0.12, 16, 16]} />
+        <meshStandardMaterial color="#f0c674" emissive="#f0c674" emissiveIntensity={0.28} />
+      </mesh>
+      <mesh position={[-0.04, 0.14, -0.1]}><sphereGeometry args={[0.022, 8, 8]} /><meshStandardMaterial color="#111827" /></mesh>
+      <mesh position={[0.04, 0.14, -0.1]}><sphereGeometry args={[0.022, 8, 8]} /><meshStandardMaterial color="#111827" /></mesh>
+      <mesh position={[0, 0.23, 0]}><coneGeometry args={[0.06, 0.1, 8]} /><meshStandardMaterial color="#8ec8e8" /></mesh>
+      <pointLight color="#f0c674" intensity={0.35} distance={0.8} />
+    </group>
+  );
 };
 
 export default FirstPersonController;

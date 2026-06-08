@@ -132,15 +132,21 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
       const display = transform === 'uppercase' ? text.toUpperCase()
         : transform === 'lowercase' ? text.toLowerCase()
         : text;
-      ctx.font = `${italic === 'italic' ? 'italic ' : ''}${weight} ${fontPx}px ${fontFamily}`;
       ctx.textBaseline = 'top';
       const tokens = display.split(/(\s+)/);
-      const trackPx = tracking * fontPx;
-      let total = 0;
-      for (const tok of tokens) {
-        if (!tok) continue;
-        total += ctx.measureText(tok).width + trackPx * tok.length;
+      const measure = (px: number) => {
+        ctx.font = `${italic === 'italic' ? 'italic ' : ''}${weight} ${px}px ${fontFamily}`;
+        const track = tracking * px;
+        return tokens.reduce((sum, tok) => sum + (tok ? ctx.measureText(tok).width + track * tok.length : 0), 0);
+      };
+      const maxWidth = W * 0.88;
+      let actualPx = fontPx;
+      let total = measure(actualPx);
+      if (total > maxWidth) {
+        actualPx = Math.max(14, Math.floor(actualPx * (maxWidth / total)));
+        total = measure(actualPx);
       }
+      const trackPx = tracking * actualPx;
       let x = (W - total) / 2;
       let idx = 0;
       for (const tok of tokens) {
@@ -152,17 +158,17 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
         const c = stops[(idx + offset) % stops.length];
         ctx.fillStyle = c;
         ctx.shadowColor = 'rgba(0,0,0,0.65)';
-        ctx.shadowBlur = Math.max(4, fontPx * 0.12);
+        ctx.shadowBlur = Math.max(4, actualPx * 0.12);
         ctx.fillText(tok, x, y);
         ctx.shadowBlur = 0;
         x += ctx.measureText(tok).width + trackPx * tok.length;
         idx++;
       }
-      return y + fontPx * 1.15;
+      return y + actualPx * 1.15;
     };
 
-    const f1 = Math.round(W * 0.045);
-    const f2 = Math.round(W * 0.024);
+    const f1 = Math.round(W * 0.036);
+    const f2 = Math.round(W * 0.021);
     const blockH = f1 * 1.15 + f2 * 1.15 + f1 * 0.5;
     let y = (H - blockH) / 2;
     y = drawColorized(line1, 0, y, f1, style.font1, style.weight1, style.style1, style.case1, style.tracking1);
@@ -214,10 +220,10 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
     w.document.write(`
       <!doctype html><html><head><title>Spectral Earth — Aral School 2026</title>
       <style>
-        @page { size: auto; margin: 8mm; }
+        @page { size: landscape; margin: 6mm; }
         html,body { margin:0; padding:0; background:#fff; font-family: "Courier New", monospace; }
-        .page { position: relative; }
-        .map { display:block; width:100%; height:auto; }
+        .page { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+        .map { display:block; width:100%; height:100%; object-fit: contain; }
         .share {
           position: absolute; right: 4mm; bottom: 4mm;
           background: #fff; padding: 6px 8px;
