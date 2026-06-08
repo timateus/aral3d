@@ -17,6 +17,7 @@ export const firstPersonBridge: {
     arrived: boolean;
     dialogOpen: boolean;
     target: { lat: number; lon: number } | null;
+    start: { lat: number; lon: number } | null;
   };
 } = {
   aim: null,
@@ -28,5 +29,6 @@ export const firstPersonBridge: {
     arrived: false,
     dialogOpen: false,
     target: null,
+    start: null,
   },
 };
