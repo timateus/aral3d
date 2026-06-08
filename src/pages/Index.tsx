@@ -220,6 +220,11 @@ const Index = () => {
   const [placeMode, setPlaceMode] = useState(false);
   const [schoolMode, setSchoolMode] = useState(false);
   const [placedItems, setPlacedItems] = useState<import('@/lib/map-builder-items').PlacedItem[]>([]);
+  const [schoolAutoWalking, setSchoolAutoWalking] = useState(false);
+  const [schoolDistanceMeters, setSchoolDistanceMeters] = useState(0);
+  const [schoolArrived, setSchoolArrived] = useState(false);
+  const [schoolDialogOpen, setSchoolDialogOpen] = useState(false);
+  const [simCompleted, setSimCompleted] = useState(false);
   const prevPlaceRef = useRef(false);
   const prevSchoolRef = useRef(false);
 
@@ -396,6 +401,7 @@ const Index = () => {
   const [contourInterval, setContourInterval] = useState<number>(25);
   const [vectorInterval, setVectorInterval] = useState<number>(50);
   const [hideTerrainSurface, setHideTerrainSurface] = useState<boolean>(false);
+  const schoolTarget = useMemo(() => ({ lat: 42.748792, lon: 59.583295 }), []);
 
   // Lifted data panel state
   const [annualData, setAnnualData] = useState<AralAnnual[]>([]);
@@ -1260,11 +1266,17 @@ const Index = () => {
     setSchoolMode(level === 6);
     setGeoMarkers(null);
     setShowWaterExtent(false);
-    setShowKhorezm(level >= 3 && level <= 5);
+    setShowKhorezm(level >= 3 && level <= 6);
     setTerrainMode('classic');
-    if (level >= 1 && level <= 5) setVisualMode('designer');
+    if (level >= 1 && level <= 6) setVisualMode('designer');
     setWaterFlowActive(level === 3);
     setFlowAnimating(level === 3);
+    if (level !== 6) {
+      firstPersonBridge.school.active = false;
+      firstPersonBridge.school.autoWalk = false;
+      firstPersonBridge.school.arrived = false;
+      firstPersonBridge.school.dialogOpen = false;
+    }
     if (level === 2) {
       setWaterLevelManual(true);
       setWaterLevel(53);
@@ -1272,8 +1284,19 @@ const Index = () => {
     if (level === 3) {
       setFlowSpeed(20);
       setFlowWaterAmount(20);
+      setSimCompleted(false);
     }
-  }, [setTerrainMode, setVisualMode]);
+    if (level === 6) {
+      firstPersonBridge.school.active = true;
+      firstPersonBridge.school.autoWalk = false;
+      firstPersonBridge.school.arrived = false;
+      firstPersonBridge.school.dialogOpen = false;
+      firstPersonBridge.school.target = schoolTarget;
+      setSchoolAutoWalking(false);
+      setSchoolArrived(false);
+      setSchoolDialogOpen(false);
+    }
+  }, [schoolTarget, setTerrainMode, setVisualMode]);
 
 
   return (
@@ -1284,8 +1307,9 @@ const Index = () => {
           <TerrainViewer
             ref={viewerRef}
             geoGuessrMarkers={geoMode ? geoMarkers : null}
-            placedItems={placeMode ? placedItems : null}
-            firstPersonMode={placeMode}
+            placedItems={placeMode || schoolMode ? placedItems : null}
+            firstPersonMode={placeMode || schoolMode}
+            thirdPersonMode={schoolMode}
             terrain={terrain}
             exaggeration={exaggeration}
             waterLevel={waterLevel}
@@ -1330,7 +1354,7 @@ const Index = () => {
               agmarTourActive ? AGMAR_TOUR_STEPS[agmarTourStep]?.camera.target :
               undefined
             }
-            spectralActive={spectralMode || ministryMode || simMode || geoMode || placeMode}
+            spectralActive={spectralMode || ministryMode || simMode || geoMode || placeMode || schoolMode || !!levelIntro}
             rightStickCameraEnabled={true}
             riverFlyover={riverFlyover}
             onRiverFlyoverDone={() => setRiverFlyover(false)}
@@ -1591,7 +1615,7 @@ const Index = () => {
 
       {simMode && terrain && (
         <WaterSimHUD
-          wetPixels={flowWetCount}
+          wetPixels={simCompleted ? Math.max(21000, Math.round(terrain.width * terrain.height * 0.09)) : flowWetCount}
           damEdits={raiseEditCount}
           lifeThreshold={Math.max(21000, Math.round(terrain.width * terrain.height * 0.09))}
           onExit={() => {
@@ -1695,8 +1719,22 @@ const Index = () => {
           onExit={() => {
             setSchoolMode(false);
             setStarted(false);
+            firstPersonBridge.school.active = false;
           }}
           onPrev={() => enterGameLevel(5)}
+          onToggleAutoWalk={() => {
+            const next = !schoolAutoWalking;
+            setSchoolAutoWalking(next);
+            firstPersonBridge.school.autoWalk = next;
+          }}
+          autoWalking={schoolAutoWalking}
+          distanceMeters={schoolDistanceMeters}
+          arrived={schoolArrived}
+          dialogOpen={schoolDialogOpen}
+          onDialogOpen={(open) => {
+            setSchoolDialogOpen(open);
+            firstPersonBridge.school.dialogOpen = open;
+          }}
         />
       )}
 
