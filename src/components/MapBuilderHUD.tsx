@@ -28,7 +28,7 @@ const PLACE_INTERVAL_MS = 140;
 const SIM_TICK_MS = 220;
 const FLAMMABLE: MapBuilderItemId[] = ['seed', 'plant', 'flower', 'saxaul', 'reed', 'oil'];
 
-const MapBuilderHUD = ({ onExit, onPrev, getAimLatLon, onItemsChange }: Props) => {
+const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: Props) => {
   const [selected, setSelected] = useState<MapBuilderItemId>('water');
   const [items, setItems] = useState<PlacedItem[]>([]);
   const selectedRef = useRef(selected);
