@@ -36,18 +36,29 @@ function emptyState(): GamepadState {
   };
 }
 
-function selectRightStickAxes(active: Gamepad) {
-  const preferredPairs: Array<[number, number]> = [[2, 3], [3, 2], [4, 3], [3, 4], [4, 5], [5, 4]];
-  let best: [number, number] = [2, 3];
-  let bestScore = -1;
-  for (const [xIdx, yIdx] of preferredPairs) {
-    if (xIdx === yIdx) continue;
-    const x = active.axes[xIdx] ?? 0;
-    const y = active.axes[yIdx] ?? 0;
-    const score = Math.abs(x) + Math.abs(y) * 0.9;
-    if (score > bestScore) {
+const RIGHT_STICK_PAIRS: Array<[number, number]> = [[2, 3], [3, 4], [4, 5], [2, 5]];
+
+function axisValue(active: Gamepad, idx: number): number {
+  const v = active.axes[idx] ?? 0;
+  return Number.isFinite(v) && Math.abs(v) <= 1.05 ? v : 0;
+}
+
+function pairScore(active: Gamepad, pair: [number, number]): number {
+  return Math.hypot(axisValue(active, pair[0]), axisValue(active, pair[1]));
+}
+
+function selectRightStickAxes(active: Gamepad, current?: [number, number]) {
+  const standard: [number, number] = [2, 3];
+  const validCurrent = current && RIGHT_STICK_PAIRS.some(([x, y]) => x === current[0] && y === current[1]) ? current : undefined;
+  if (active.mapping === 'standard' || pairScore(active, standard) > 0.05) return standard;
+
+  let best: [number, number] = validCurrent ?? standard;
+  let bestScore = validCurrent ? pairScore(active, validCurrent) : 0;
+  for (const pair of RIGHT_STICK_PAIRS) {
+    const score = pairScore(active, pair);
+    if (score > bestScore + 0.12) {
       bestScore = score;
-      best = [xIdx, yIdx];
+      best = pair;
     }
   }
   return best;
@@ -80,7 +91,14 @@ export function useGamepad() {
 
     const initialPads = navigator.getGamepads?.() ?? [];
     for (const p of initialPads) {
-      if (p) { setConnected(true); setPadId(p.id); break; }
+      if (p) {
+        setConnected(true);
+        setPadId(p.id);
+        const meta = globalThis as any;
+        meta.__padRightAxes = undefined;
+        meta.__padRightAxesId = undefined;
+        break;
+      }
     }
 
     const tick = () => {
@@ -94,25 +112,19 @@ export function useGamepad() {
           console.log(`[pad] connected id="${active.id}" mapping=${active.mapping} axes=${active.axes.length} buttons=${active.buttons.length}`);
         }
 
-        const lx = applyDeadzone(active.axes[0] ?? 0);
-        const ly = applyDeadzone(active.axes[1] ?? 0);
+        const lx = applyDeadzone(axisValue(active, 0));
+        const ly = applyDeadzone(axisValue(active, 1));
 
         if (!meta.__padRightAxes || meta.__padRightAxesId !== active.id) {
           meta.__padRightAxes = selectRightStickAxes(active);
           meta.__padRightAxesId = active.id;
         } else {
-          const [currentX, currentY] = meta.__padRightAxes as [number, number];
-          const currentScore = Math.abs(active.axes[currentX] ?? 0) + Math.abs(active.axes[currentY] ?? 0) * 0.9;
-          if (currentScore < 0.12) {
-            const candidate = selectRightStickAxes(active);
-            const candidateScore = Math.abs(active.axes[candidate[0]] ?? 0) + Math.abs(active.axes[candidate[1]] ?? 0) * 0.9;
-            if (candidateScore > currentScore + 0.18) meta.__padRightAxes = candidate;
-          }
+          meta.__padRightAxes = selectRightStickAxes(active, meta.__padRightAxes as [number, number]);
         }
 
         const [rxIdx, ryIdx] = (meta.__padRightAxes as [number, number]) ?? [2, 3];
-        const rightX = applyDeadzone(active.axes[rxIdx] ?? 0);
-        const rightY = applyDeadzone(active.axes[ryIdx] ?? 0);
+        const rightX = applyDeadzone(axisValue(active, rxIdx));
+        const rightY = applyDeadzone(axisValue(active, ryIdx));
 
         const b = active.buttons;
         const next: GamepadState = {
