@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import VoxelPage from "./pages/Voxel";
+import SharePage from "./pages/Share";
 
 
 const queryClient = new QueryClient();
@@ -20,11 +21,13 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/voxel" element={<VoxelPage />} />
+          <Route path="/share/:id" element={<SharePage />} />
 
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
+
     </TooltipProvider>
   </QueryClientProvider>
 );
