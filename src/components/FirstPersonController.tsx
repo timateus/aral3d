@@ -104,7 +104,11 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
     if (!active) return;
     const el = gl.domElement;
     const onClick = () => {
-      if (document.pointerLockElement !== el) el.requestPointerLock?.();
+      if (!el.isConnected) return;
+      if (document.pointerLockElement !== el) {
+        try { el.requestPointerLock?.(); } catch { /* element may have been removed */ }
+      }
+
     };
     const onMove = (e: MouseEvent) => {
       if (document.pointerLockElement !== el) return;
