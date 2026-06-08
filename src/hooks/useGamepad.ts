@@ -18,7 +18,6 @@ const DEADZONE = 0.15;
 
 function applyDeadzone(v: number): number {
   if (Math.abs(v) < DEADZONE) return 0;
-  // rescale so values just outside deadzone start from 0
   const sign = Math.sign(v);
   return sign * ((Math.abs(v) - DEADZONE) / (1 - DEADZONE));
 }
@@ -37,11 +36,23 @@ function emptyState(): GamepadState {
   };
 }
 
-/**
- * Polls navigator.getGamepads() and writes the latest snapshot to a ref
- * so consumers (useFrame loops) can read without re-rendering.
- * Returns a stable ref + a `connected` state for UI display.
- */
+function selectRightStickAxes(active: Gamepad) {
+  const preferredPairs: Array<[number, number]> = [[2, 3], [3, 2], [4, 3], [3, 4], [4, 5], [5, 4]];
+  let best: [number, number] = [2, 3];
+  let bestScore = -1;
+  for (const [xIdx, yIdx] of preferredPairs) {
+    if (xIdx === yIdx) continue;
+    const x = active.axes[xIdx] ?? 0;
+    const y = active.axes[yIdx] ?? 0;
+    const score = Math.abs(x) + Math.abs(y) * 0.9;
+    if (score > bestScore) {
+      bestScore = score;
+      best = [xIdx, yIdx];
+    }
+  }
+  return best;
+}
+
 export function useGamepad() {
   const stateRef = useRef<GamepadState>(emptyState());
   const [connected, setConnected] = useState(false);
@@ -54,6 +65,9 @@ export function useGamepad() {
       setConnected(true);
       setPadId(e.gamepad.id);
       toast.success('🎮 Controller connected', { description: e.gamepad.id });
+      const meta = globalThis as any;
+      meta.__padRightAxes = undefined;
+      meta.__padRightAxesId = undefined;
     };
     const onDisconnect = (e: GamepadEvent) => {
       setConnected(false);
@@ -64,7 +78,6 @@ export function useGamepad() {
     window.addEventListener('gamepadconnected', onConnect);
     window.addEventListener('gamepaddisconnected', onDisconnect);
 
-    // Some browsers (Safari) won't fire connect until first input — poll initially
     const initialPads = navigator.getGamepads?.() ?? [];
     for (const p of initialPads) {
       if (p) { setConnected(true); setPadId(p.id); break; }
@@ -75,27 +88,37 @@ export function useGamepad() {
       let active: Gamepad | null = null;
       for (const p of pads) { if (p) { active = p; break; } }
       if (active) {
-        // One-time mapping log per pad id.
         const meta = globalThis as any;
         if (meta.__padIdLogged !== active.id) {
           meta.__padIdLogged = active.id;
           console.log(`[pad] connected id="${active.id}" mapping=${active.mapping} axes=${active.axes.length} buttons=${active.buttons.length}`);
         }
+
         const lx = applyDeadzone(active.axes[0] ?? 0);
         const ly = applyDeadzone(active.axes[1] ?? 0);
-        // Standard mapping: axes[2] = right-stick X, axes[3] = right-stick Y.
-        // We previously tried to auto-detect / swap these for misbehaving pads,
-        // but it caused intermittent flipping. Keep the straight mapping —
-        // consumers can negate per-mode if a specific control feels inverted.
-        const rx = applyDeadzone(active.axes[2] ?? 0);
-        const ry = applyDeadzone(active.axes[3] ?? 0);
-        const rightX = rx;
-        const rightY = ry;
+
+        if (!meta.__padRightAxes || meta.__padRightAxesId !== active.id) {
+          meta.__padRightAxes = selectRightStickAxes(active);
+          meta.__padRightAxesId = active.id;
+        } else {
+          const [currentX, currentY] = meta.__padRightAxes as [number, number];
+          const currentScore = Math.abs(active.axes[currentX] ?? 0) + Math.abs(active.axes[currentY] ?? 0) * 0.9;
+          if (currentScore < 0.12) {
+            const candidate = selectRightStickAxes(active);
+            const candidateScore = Math.abs(active.axes[candidate[0]] ?? 0) + Math.abs(active.axes[candidate[1]] ?? 0) * 0.9;
+            if (candidateScore > currentScore + 0.18) meta.__padRightAxes = candidate;
+          }
+        }
+
+        const [rxIdx, ryIdx] = (meta.__padRightAxes as [number, number]) ?? [2, 3];
+        const rightX = applyDeadzone(active.axes[rxIdx] ?? 0);
+        const rightY = applyDeadzone(active.axes[ryIdx] ?? 0);
+
         const b = active.buttons;
         const next: GamepadState = {
           connected: true,
-            leftStick: { x: lx, y: ly },
-            rightStick: { x: rightX, y: rightY },
+          leftStick: { x: lx, y: ly },
+          rightStick: { x: rightX, y: rightY },
           buttons: {
             a: !!b[0]?.pressed,
             b: !!b[1]?.pressed,
@@ -114,7 +137,6 @@ export function useGamepad() {
           },
         };
 
-        // Debug logging — throttled stick logs, edge-triggered button logs.
         const prev = stateRef.current;
         const btnNames: (keyof GamepadState['buttons'])[] = ['a','b','x','y','lb','rb','up','down','left','right','start','back'];
         for (const n of btnNames) {
@@ -125,16 +147,10 @@ export function useGamepad() {
         if (!(globalThis as any).__padLogT) (globalThis as any).__padLogT = 0;
         if (now - (globalThis as any).__padLogT > 200) {
           const hasMove = lx || ly || rightX || rightY || next.buttons.lt > 0.05 || next.buttons.rt > 0.05;
-          const rawMove = active.axes.some((v, i) => Math.abs((v ?? 0)) > 0.25 && i > 3);
+          const rawMove = active.axes.some((v) => Math.abs(v ?? 0) > 0.25);
           if (hasMove || rawMove) {
-            const m = globalThis as any;
-            const raw = active.axes
-              .map((v, i) => `${i}:${(v ?? 0).toFixed(2)}(Δ${((v ?? 0) - (m.__padIdle?.[i] ?? 0)).toFixed(2)})`)
-              .join(' ');
-            console.log(
-              `[pad] L(${lx.toFixed(2)},${ly.toFixed(2)}) R(${rightX.toFixed(2)},${rightY.toFixed(2)}) ` +
-              `RX=ax${m.__padRX} RY=ax${m.__padRY} raw[${raw}]`,
-            );
+            const raw = active.axes.map((v, i) => `${i}:${(v ?? 0).toFixed(2)}`).join(' ');
+            console.log(`[pad] L(${lx.toFixed(2)},${ly.toFixed(2)}) R(${rightX.toFixed(2)},${rightY.toFixed(2)}) RX=ax${rxIdx} RY=ax${ryIdx} raw[${raw}]`);
             (globalThis as any).__padLogT = now;
           }
         }
@@ -155,6 +171,3 @@ export function useGamepad() {
 
   return { stateRef, connected, padId };
 }
-
-// Singleton ref so multiple components share a single poll loop's data.
-// (Each useGamepad() instance still polls, but they all see the same browser state.)

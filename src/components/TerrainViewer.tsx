@@ -186,6 +186,7 @@ interface TerrainViewerProps {
   geoGuessrMarkers?: import('@/components/GeoFeatures').GeoGuessrMarkerSet | null;
   placedItems?: import('@/lib/map-builder-items').PlacedItem[] | null;
   firstPersonMode?: boolean;
+  thirdPersonMode?: boolean;
 }
 
 /* ── Canvas Recorder (captures WebGL canvas stream, no camera animation) ── */
@@ -519,7 +520,7 @@ function NoahsArk({ terrain, exaggeration, waterLevel }: { terrain: TerrainData;
   );
 }
 
-const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, showWaterExtent, waterExtentYear, showPopDensity, popHexSize, popHexHeight, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone, riverInflow, userLocation, inspectorEnabled, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, flowState, flowRenderKey, terrainVersion, raisedPixels, dugPixels, showMigration, migrationYear, showChoropleth, choroplethIndicator, choroplethExaggeration, canalHighlights, highlightedCanalNames, canalTourActive, showObjectLibrary, onObjectSelect, gameModeActive, gameCharacter, onGameAddWater, bowlWorldActive, onBowlWorldComplete, showLandcover, landcoverVisibleClasses, onLandcoverAvailableClasses, showSchools, showVocabulary, showDwellings, showPlaces, agmarShowProposalSites, aryqWorldActive, onAryqWorldComplete, onNukusClick, showOverlayMetrics, showGroundwater, showPrecipitation, showSalinity, waterPlaygroundActive, sandboxActive, sandboxSimState, sandboxRenderKey, sandboxToolActive, onSandboxClick, dustActive, dustState, dustRenderKey, dustToolActive, onDustClick, showWaterways, waterwayTypeFilter, waterwayTraceMode, waterwayClearTraceSignal, terrainStyle, contourInterval, vectorInterval, hideTerrainSurface, lifeActive, spectralActive, rightStickCameraEnabled = true, geoGuessrMarkers, placedItems, firstPersonMode }, ref) => {
+const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ terrain, exaggeration, waterLevel, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, showWaterExtent, waterExtentYear, showPopDensity, popHexSize, popHexHeight, hideNoData, waterBounds, started, onWaterLevelChange, recording, onRecordingDone, scenarioActions, currentMetrics, narrativeActive, narrativeCameraPosition, narrativeCameraTarget, riverFlyover, onRiverFlyoverDone, riverInflow, userLocation, inspectorEnabled, damToolActive, onDamPlace, canalToolActive, onCanalDig, waterFlowActive, onWaterFlowClick, flowState, flowRenderKey, terrainVersion, raisedPixels, dugPixels, showMigration, migrationYear, showChoropleth, choroplethIndicator, choroplethExaggeration, canalHighlights, highlightedCanalNames, canalTourActive, showObjectLibrary, onObjectSelect, gameModeActive, gameCharacter, onGameAddWater, bowlWorldActive, onBowlWorldComplete, showLandcover, landcoverVisibleClasses, onLandcoverAvailableClasses, showSchools, showVocabulary, showDwellings, showPlaces, agmarShowProposalSites, aryqWorldActive, onAryqWorldComplete, onNukusClick, showOverlayMetrics, showGroundwater, showPrecipitation, showSalinity, waterPlaygroundActive, sandboxActive, sandboxSimState, sandboxRenderKey, sandboxToolActive, onSandboxClick, dustActive, dustState, dustRenderKey, dustToolActive, onDustClick, showWaterways, waterwayTypeFilter, waterwayTraceMode, waterwayClearTraceSignal, terrainStyle, contourInterval, vectorInterval, hideTerrainSurface, lifeActive, spectralActive, rightStickCameraEnabled = true, geoGuessrMarkers, placedItems, firstPersonMode, thirdPersonMode = false }, ref) => {
   const screenshotFn = useRef<(() => void) | null>(null);
   const aimPixelFn = useRef<(() => { row: number; col: number } | null) | null>(null);
   const pixelAtScreenFn = useRef<((x: number, y: number) => { row: number; col: number } | null) | null>(null);
@@ -576,7 +577,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
           </group>
           {!sandboxActive && (
             <>
-              <GeoFeatures terrain={terrain} exaggeration={exaggeration} showBorders={showBorders} showRivers={showRivers} show13thBasin={show13thBasin} show19thBasin={show19thBasin} show21stBasin={show21stBasin} showLakes={showLakes} show21cLakes={show21cLakes} riverInflow={riverInflow} userLocation={userLocation} canalHighlights={canalHighlights} highlightedCanalNames={highlightedCanalNames} canalTourActive={canalTourActive} onNukusClick={onNukusClick} geoGuessrMarkers={geoGuessrMarkers} />
+              <GeoFeatures terrain={terrain} exaggeration={exaggeration} showBorders={showBorders} showRivers={showRivers} show13thBasin={show13thBasin} show19thBasin={show19thBasin} show21stBasin={show21stBasin} showLakes={showLakes} show21cLakes={show21cLakes} riverInflow={riverInflow} userLocation={userLocation} canalHighlights={canalHighlights} highlightedCanalNames={highlightedCanalNames} canalTourActive={canalTourActive} onNukusClick={onNukusClick} geoGuessrMarkers={geoGuessrMarkers} showCityMarkers={!spectralActive} />
               {showWaterExtent && <WaterExtentLayer terrain={terrain} exaggeration={exaggeration} year={waterExtentYear} />}
               {showPopDensity && <PopulationDensityLayer terrain={terrain} exaggeration={exaggeration} onDataLoaded={setPopData} hexSize={popHexSize} hexHeightExag={popHexHeight} />}
               {showMigration && <MigrationLayer terrain={terrain} exaggeration={exaggeration} year={migrationYear ?? waterExtentYear} />}
@@ -711,7 +712,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
       />
 
       {firstPersonMode && (
-        <FirstPersonController active={firstPersonMode} terrain={terrain} exaggeration={exaggeration} />
+        <FirstPersonController active={firstPersonMode} terrain={terrain} exaggeration={exaggeration} thirdPerson={thirdPersonMode} />
       )}
 
       {!aryqWorldActive && !sandboxActive && (

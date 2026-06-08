@@ -12,6 +12,7 @@ interface Props {
   exaggeration: number;
   onPositionChange?: (lat: number, lon: number) => void;
   onTriggerChange?: (held: boolean) => void;
+  thirdPerson?: boolean;
 }
 
 const EYE_HEIGHT = 0.18;
@@ -20,7 +21,7 @@ const SPRINT_MULT = 2.2;
 const LOOK_SENS_MOUSE = 0.0025;
 const LOOK_SENS_PAD = 1.8;
 
-const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange, onTriggerChange }: Props) => {
+const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange, onTriggerChange, thirdPerson = false }: Props) => {
   const { camera, gl } = useThree();
   const { stateRef: gpRef } = useGamepad();
   const yaw = useRef(0);
@@ -56,6 +57,17 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
     return { lat, lon };
   };
 
+  const latLonToWorldXZ = (lat: number, lon: number) => {
+    const b = terrain.bounds;
+    if (!b) return null;
+    const nx = (lon - b.minLon) / (b.maxLon - b.minLon);
+    const ny = (lat - b.minLat) / (b.maxLat - b.minLat);
+    return {
+      x: (nx - 0.5) * meshWidth,
+      z: -((ny - 0.5) * meshHeight),
+    };
+  };
+
   useEffect(() => {
     if (!active) return;
     savedCam.current = { p: camera.position.clone(), q: camera.quaternion.clone() };
@@ -71,12 +83,12 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
         camera.quaternion.copy(savedCam.current.q);
       }
       prevTrigger.current = false;
+      firstPersonBridge.player = null;
+      firstPersonBridge.school.autoWalk = false;
       onTriggerChange?.(false);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active]);
+  }, [active, camera, onTriggerChange]);
 
-  // Keyboard — listen on document (capture phase) and use e.code so WASD works regardless of layout/focus.
   useEffect(() => {
     if (!active) return;
     const dn = (e: KeyboardEvent) => {
@@ -99,16 +111,14 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
     };
   }, [active]);
 
-  // Mouse look + pointer lock + mouse-button trigger
   useEffect(() => {
     if (!active) return;
     const el = gl.domElement;
     const onClick = () => {
       if (!el.isConnected) return;
       if (document.pointerLockElement !== el) {
-        try { el.requestPointerLock?.(); } catch { /* element may have been removed */ }
+        try { el.requestPointerLock?.(); } catch {}
       }
-
     };
     const onMove = (e: MouseEvent) => {
       if (document.pointerLockElement !== el) return;
@@ -118,9 +128,11 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
     const onDown = (e: MouseEvent) => {
       const t = e.target as HTMLElement | null;
       if (t && t.closest('[data-hud], button, a, input, select, textarea')) return;
-      if (e.button === 0) keys.current['__mouse'] = true;
+      if (e.button === 0) keys.current.__mouse = true;
     };
-    const onUp = (e: MouseEvent) => { if (e.button === 0) keys.current['__mouse'] = false; };
+    const onUp = (e: MouseEvent) => {
+      if (e.button === 0) keys.current.__mouse = false;
+    };
     el.addEventListener('click', onClick);
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mousedown', onDown);
@@ -138,7 +150,6 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
     if (!active) return;
     const gp = gpRef.current;
 
-    // ---- Look (right stick): normalized in useGamepad; x = yaw, y = pitch ----
     if (gp.connected) {
       const rx = gp.rightStick.x;
       const ry = gp.rightStick.y;
@@ -147,23 +158,43 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
         pitch.current = THREE.MathUtils.clamp(pitch.current - ry * LOOK_SENS_PAD * dt, -1.2, 1.2);
       }
     }
-    if (keys.current['ArrowLeft']) yaw.current += 1.6 * dt;
-    if (keys.current['ArrowRight']) yaw.current -= 1.6 * dt;
-    if (keys.current['ArrowUp']) pitch.current = Math.min(1.2, pitch.current + 1.2 * dt);
-    if (keys.current['ArrowDown']) pitch.current = Math.max(-1.2, pitch.current - 1.2 * dt);
+    if (keys.current.ArrowLeft) yaw.current += 1.6 * dt;
+    if (keys.current.ArrowRight) yaw.current -= 1.6 * dt;
+    if (keys.current.ArrowUp) pitch.current = Math.min(1.2, pitch.current + 1.2 * dt);
+    if (keys.current.ArrowDown) pitch.current = Math.max(-1.2, pitch.current - 1.2 * dt);
 
-    // ---- Move ----
-    let fwd = 0, str = 0;
-    if (keys.current['KeyW'] || keys.current['w']) fwd += 1;
-    if (keys.current['KeyS'] || keys.current['s']) fwd -= 1;
-    if (keys.current['KeyA'] || keys.current['a']) str -= 1;
-    if (keys.current['KeyD'] || keys.current['d']) str += 1;
+    let fwd = 0;
+    let str = 0;
+    if (keys.current.KeyW || keys.current.w) fwd += 1;
+    if (keys.current.KeyS || keys.current.s) fwd -= 1;
+    if (keys.current.KeyA || keys.current.a) str -= 1;
+    if (keys.current.KeyD || keys.current.d) str += 1;
     if (gp.connected) {
-      // Standard gamepad axes: push-up is negative y, which should move forward.
       fwd += -gp.leftStick.y;
       str += gp.leftStick.x;
     }
-    const sprint = keys.current['ShiftLeft'] || keys.current['ShiftRight'] || keys.current['shift'] || (gp.connected && gp.buttons.lb);
+
+    if (thirdPerson && firstPersonBridge.school.active && firstPersonBridge.school.autoWalk && firstPersonBridge.school.target) {
+      const targetWorld = latLonToWorldXZ(firstPersonBridge.school.target.lat, firstPersonBridge.school.target.lon);
+      if (targetWorld) {
+        const dx = targetWorld.x - pos.current.x;
+        const dz = targetWorld.z - pos.current.z;
+        const dist = Math.hypot(dx, dz);
+        if (dist > 0.18) {
+          const desiredYaw = Math.atan2(-dx, -dz);
+          let deltaYaw = desiredYaw - yaw.current;
+          while (deltaYaw > Math.PI) deltaYaw -= Math.PI * 2;
+          while (deltaYaw < -Math.PI) deltaYaw += Math.PI * 2;
+          yaw.current += THREE.MathUtils.clamp(deltaYaw, -2.2 * dt, 2.2 * dt);
+          fwd = 1;
+          str = 0;
+        } else {
+          firstPersonBridge.school.autoWalk = false;
+        }
+      }
+    }
+
+    const sprint = keys.current.ShiftLeft || keys.current.ShiftRight || keys.current.shift || (gp.connected && gp.buttons.lb);
     const speed = WALK_SPEED * (sprint ? SPRINT_MULT : 1);
     if (fwd || str) {
       const mag = Math.min(1, Math.hypot(fwd, str));
@@ -177,7 +208,6 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
     pos.current.x = THREE.MathUtils.clamp(pos.current.x, -meshWidth / 2 + 0.05, meshWidth / 2 - 0.05);
     pos.current.z = THREE.MathUtils.clamp(pos.current.z, -meshHeight / 2 + 0.05, meshHeight / 2 - 0.05);
 
-    // Ground = terrain height + stacked block height at current cell
     let groundY = sampleHeight(pos.current.x, pos.current.z);
     const ll = worldXZToLatLon(pos.current.x, pos.current.z);
     if (ll) {
@@ -188,15 +218,30 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
         if (cellKey(it.lat, it.lon) === k) blockCount++;
       }
       groundY += blockCount * CUBE_SIZE;
+      firstPersonBridge.player = ll;
+      if (thirdPerson && firstPersonBridge.school.active && firstPersonBridge.school.target) {
+        const dx = ll.lon - firstPersonBridge.school.target.lon;
+        const dy = ll.lat - firstPersonBridge.school.target.lat;
+        if (!firstPersonBridge.school.arrived && Math.hypot(dx, dy) < 0.12) {
+          firstPersonBridge.school.arrived = true;
+          firstPersonBridge.school.autoWalk = false;
+        }
+      }
     }
     pos.current.y = groundY + EYE_HEIGHT;
 
-    camera.position.copy(pos.current);
-    const quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(pitch.current, yaw.current, 0, 'YXZ'));
-    camera.quaternion.copy(quat);
+    if (thirdPerson) {
+      const camOffsetX = Math.sin(yaw.current) * 0.7;
+      const camOffsetZ = Math.cos(yaw.current) * 0.7;
+      camera.position.set(pos.current.x + camOffsetX, pos.current.y + 0.42, pos.current.z + camOffsetZ);
+      camera.lookAt(pos.current.x, pos.current.y + 0.1, pos.current.z);
+    } else {
+      camera.position.copy(pos.current);
+      const quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(pitch.current, yaw.current, 0, 'YXZ'));
+      camera.quaternion.copy(quat);
+    }
 
-    // Publish "in front" aim point (~0.5 world units ahead) for placement.
-    const aheadDist = 0.5;
+    const aheadDist = thirdPerson ? 0.35 : 0.5;
     const ax = pos.current.x + -Math.sin(yaw.current) * aheadDist;
     const az = pos.current.z + -Math.cos(yaw.current) * aheadDist;
     const aimLL = worldXZToLatLon(ax, az);
@@ -204,11 +249,10 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
 
     if (onPositionChange && ll) onPositionChange(ll.lat, ll.lon);
 
-    // Trigger: mouse-left, X, A button, or RT (Space removed per request — X only).
     const held =
-      !!keys.current['__mouse'] ||
-      !!keys.current['KeyX'] ||
-      !!keys.current['x'] ||
+      !!keys.current.__mouse ||
+      !!keys.current.KeyX ||
+      !!keys.current.x ||
       (gp.connected && (gp.buttons.a || gp.buttons.rt > 0.4));
     if (held !== prevTrigger.current) {
       prevTrigger.current = held;

@@ -36,6 +36,7 @@ interface GeoFeaturesProps {
   canalTourActive?: boolean;
   onNukusClick?: () => void;
   geoGuessrMarkers?: GeoGuessrMarkerSet | null;
+  showCityMarkers?: boolean;
 }
 
 interface City {
@@ -168,7 +169,7 @@ export function geoToMeshPos(
   return [x, zHeight, -planeY];
 }
 
-const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, riverInflow, userLocation, canalHighlights, highlightedCanalNames, canalTourActive, onNukusClick, geoGuessrMarkers }: GeoFeaturesProps) => {
+const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thBasin, show19thBasin, show21stBasin, showLakes, show21cLakes, riverInflow, userLocation, canalHighlights, highlightedCanalNames, canalTourActive, onNukusClick, geoGuessrMarkers, showCityMarkers = true }: GeoFeaturesProps) => {
   const bounds = terrain.bounds;
   const w = terrain.width;
   const h = terrain.height;
@@ -446,7 +447,7 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
       })}
 
       {/* City markers */}
-      {cityMarkers.map((city) => {
+      {showCityMarkers && cityMarkers.map((city) => {
         const isNukus = city.name === 'Nukus';
         return (
           <group key={city.name} position={city.pos}>
