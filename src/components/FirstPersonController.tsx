@@ -253,8 +253,24 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
 
     if (thirdPerson) {
       if (avatarRef.current) {
-        avatarRef.current.position.set(pos.current.x, pos.current.y + 0.05, pos.current.z);
-        avatarRef.current.rotation.y = Math.atan2(camera.position.x - pos.current.x, camera.position.z - pos.current.z);
+        avatarRef.current.position.set(pos.current.x, pos.current.y + 0.18, pos.current.z);
+        // Billboard: always face the camera.
+        avatarRef.current.rotation.y = Math.atan2(
+          camera.position.x - pos.current.x,
+          camera.position.z - pos.current.z
+        );
+      }
+      if (npcRef.current && firstPersonBridge.school.target) {
+        const t = firstPersonBridge.school.target;
+        const tw = latLonToWorldXZ(t.lat, t.lon);
+        if (tw) {
+          const ny = sampleHeight(tw.x, tw.z) + 0.22;
+          npcRef.current.position.set(tw.x, ny, tw.z);
+          npcRef.current.rotation.y = Math.atan2(
+            camera.position.x - tw.x,
+            camera.position.z - tw.z
+          );
+        }
       }
       // Pulled-back over-the-shoulder zoom so the avatar billboard is fully visible.
       const camDist = 1.1;
