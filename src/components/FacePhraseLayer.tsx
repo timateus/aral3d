@@ -39,19 +39,18 @@ interface ShownPhrase {
 }
 
 // Data-layer card shown while ☝ index-finger gesture is held.
-const LAYERS = [
-  { name: 'Canals',           desc: 'Soviet-era irrigation channels that bled the Aral Sea dry — over 40,000 km cut through cotton fields.' },
-  { name: 'Demographics',     desc: 'Karakalpakstan holds ~1.9M people; out-migration from the shore rose sharply after the 1990s collapse.' },
-  { name: 'Schools (TDS)',    desc: 'Schools colour-coded by Total Dissolved Solids. Green = safe; red = above WHO salinity limits.' },
-  { name: 'Groundwater',      desc: 'Pillar height = depth to water table. Salinity follows the receding sea — the aquifer is now brackish.' },
-  { name: 'Salinity',         desc: 'Soil salinity along the former seabed. Wind lifts the salt into dust storms reaching 500 km inland.' },
-  { name: 'Population Density', desc: 'Hex-binned counts. Density clusters along the Amu Darya; the desiccated north is nearly empty.' },
-  { name: 'Landcover',        desc: 'Cropland, bare soil, sparse vegetation. The Aralkum is the youngest desert on Earth — born 1960–2010.' },
-  { name: 'Rivers & Waterways', desc: 'Stream thickness scales with order and inflow. The Amu Darya rarely reaches the sea anymore.' },
-  { name: 'Historical Basins', desc: '13th, 19th, and 21st century shorelines. The sea has retreated and advanced — but never this fast.' },
-  { name: 'Maternal Mortality', desc: 'Per 100k live births. Elevated rates linked to salinity, anemia, and contaminated water.' },
-  { name: 'Sewage Coverage',  desc: 'Share of households connected to sanitation. Coverage drops sharply outside Nukus.' },
-  { name: 'Migration',        desc: 'Net arrivals vs. emigrants. The Aral shore has lost more than 100,000 residents since 1991.' },
+// `key` matches the toggle handled by Index.tsx (face:layer event).
+const LAYERS: { key: string; name: string; desc: string }[] = [
+  { key: 'salinity',     name: 'Salinity',           desc: 'Soil salinity along the former seabed. Wind lifts the salt into dust storms reaching 500 km inland.' },
+  { key: 'landcover',    name: 'Landcover',          desc: 'Cropland, bare soil, sparse vegetation. The Aralkum is the youngest desert on Earth — born 1960–2010.' },
+  { key: 'waterways',    name: 'Rivers & Waterways', desc: 'Stream thickness scales with order and inflow. The Amu Darya rarely reaches the sea anymore.' },
+  { key: 'schools',      name: 'Schools (TDS)',      desc: 'Schools coloured by Total Dissolved Solids. Green = safe; red = above WHO salinity limits.' },
+  { key: 'groundwater',  name: 'Groundwater',        desc: 'Pillar height = depth to water table. Salinity follows the receding sea — the aquifer is now brackish.' },
+  { key: 'popDensity',   name: 'Population Density', desc: 'Hex-binned counts. Density clusters along the Amu Darya; the desiccated north is nearly empty.' },
+  { key: 'choropleth',   name: 'Demographics',       desc: 'District-level choropleth. Out-migration from the shore rose sharply after the 1990s collapse.' },
+  { key: 'migration',    name: 'Migration',          desc: 'Net arrivals vs. emigrants. The Aral shore has lost more than 100,000 residents since 1991.' },
+  { key: 'basin13',      name: '13th-century Basin', desc: 'Medieval shoreline. The sea has retreated and advanced before — but never this fast.' },
+  { key: 'basin19',      name: '19th-century Basin', desc: 'Pre-Soviet extent, when the Aral was the world\'s 4th-largest lake.' },
 ];
 
 export const FacePhraseLayer = () => {
@@ -63,7 +62,7 @@ export const FacePhraseLayer = () => {
   ), [scheme]);
 
   const [phrase, setPhrase] = useState<ShownPhrase | null>(null);
-  const [layer, setLayer] = useState<{ name: string; desc: string } | null>(null);
+  const [layer, setLayer] = useState<{ key: string; name: string; desc: string } | null>(null);
 
   useEffect(() => {
     let idCounter = 0;
@@ -89,8 +88,17 @@ export const FacePhraseLayer = () => {
     };
     const onFingerUp = (e: Event) => {
       const { active } = (e as CustomEvent).detail;
-      if (active) setLayer(LAYERS[Math.floor(Math.random() * LAYERS.length)]);
-      else setLayer(null);
+      if (active) {
+        const next = LAYERS[Math.floor(Math.random() * LAYERS.length)];
+        setLayer(next);
+        // Tell Index.tsx to actually show the layer on the terrain.
+        window.dispatchEvent(new CustomEvent('face:layer', { detail: { key: next.key, active: true } }));
+      } else {
+        setLayer((cur) => {
+          if (cur) window.dispatchEvent(new CustomEvent('face:layer', { detail: { key: cur.key, active: false } }));
+          return null;
+        });
+      }
     };
     window.addEventListener('face:phrase', onPhrase);
     window.addEventListener('face:fingerup', onFingerUp);
@@ -134,12 +142,12 @@ export const FacePhraseLayer = () => {
 
       {layer && (
         <div
-          className="fixed left-1/2 top-1/2 z-[44] -translate-x-1/2 -translate-y-1/2 pointer-events-none animate-scale-in"
-          style={{ maxWidth: 'min(560px, 80vw)' }}
+          className="fixed left-1/2 bottom-16 z-[44] -translate-x-1/2 pointer-events-none animate-fade-in"
+          style={{ maxWidth: 'min(640px, 88vw)' }}
         >
-          <div className="px-6 py-5 rounded-md bg-black/75 backdrop-blur-md border border-white/20">
-            <div className="text-[11px] font-mono uppercase tracking-[0.3em] text-white/60 mb-2">☝ data layer</div>
-            <div className="text-3xl font-bold text-white mb-3" style={{ fontFamily: '"Impact", sans-serif', letterSpacing: '0.02em' }}>
+          <div className="px-5 py-4 rounded-md bg-black/75 backdrop-blur-md border border-white/20">
+            <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-white/60 mb-1.5">☝ data layer</div>
+            <div className="text-2xl font-bold text-white mb-1.5" style={{ fontFamily: '"Impact", sans-serif', letterSpacing: '0.02em' }}>
               {layer.name}
             </div>
             <div className="text-sm text-white/85 leading-relaxed" style={{ fontFamily: '"Georgia", serif' }}>

@@ -58,12 +58,15 @@ function isFingerFold(lm: any[], tip: number, pip: number) {
 }
 function isOpenPalm(lm: any[]): boolean {
   if (!lm || lm.length < 21) return false;
-  return (
-    isFingerExt(lm, 8, 6)  &&
-    isFingerExt(lm, 12, 10) &&
-    isFingerExt(lm, 16, 14) &&
-    isFingerExt(lm, 20, 18)
-  );
+  // Relaxed: at least 3 of 4 non-thumb fingers extended. MediaPipe drops a
+  // finger or two when the hand is near the edge of the frame, which used
+  // to make orbit "get stuck" mid-rotation.
+  let ext = 0;
+  if (isFingerExt(lm, 8, 6))  ext++;
+  if (isFingerExt(lm, 12, 10)) ext++;
+  if (isFingerExt(lm, 16, 14)) ext++;
+  if (isFingerExt(lm, 20, 18)) ext++;
+  return ext >= 3;
 }
 function isOneFingerUp(lm: any[]): boolean {
   if (!lm || lm.length < 21) return false;
@@ -77,18 +80,17 @@ function isOneFingerUp(lm: any[]): boolean {
 
 type PalmDir = 'left' | 'right' | 'top' | 'bottom' | null;
 function palmDirection(cx: number, cy: number): PalmDir {
-  // cx, cy in [0,1] (image space — selfieMode already flipped)
+  // cx, cy in [0,1]. Small deadzone, and bias HORIZONTAL: if the hand is
+  // clearly to the left/right of center, lock to L/R even if it drifts up
+  // or down a little (otherwise rotation flapped to top/bottom and stuck).
   const dx = cx - 0.5;
   const dy = cy - 0.5;
-  const T = 0.12; // deadzone around center
-  if (Math.abs(dx) < T && Math.abs(dy) < T) return null;
-  if (Math.abs(dx) > Math.abs(dy)) {
-    // selfieMode is on so image-x already matches viewer-x. But the user
-    // sees a MIRRORED feed: their physical-left hand appears on screen-right.
-    // We want "palm on the LEFT side of the screen → rotate LEFT".
-    return dx < 0 ? 'left' : 'right';
-  }
-  return dy < 0 ? 'top' : 'bottom';
+  const DZ = 0.08;
+  const H_BIAS = 0.10; // |dx| above this → always horizontal
+  if (Math.abs(dx) < DZ && Math.abs(dy) < DZ) return null;
+  if (Math.abs(dx) >= H_BIAS) return dx < 0 ? 'left' : 'right';
+  if (Math.abs(dy) > Math.abs(dx)) return dy < 0 ? 'top' : 'bottom';
+  return dx < 0 ? 'left' : 'right';
 }
 
 const FaceCameraBackground = () => {
@@ -101,6 +103,7 @@ const FaceCameraBackground = () => {
   const stateRef = useRef({
     lastHandCount: 0,
     palmDir: null as PalmDir,
+    palmDirAt: 0,           // ms timestamp of last positive palmDir
     twoHandMode: null as null | 'in' | 'out',
     fingerUpActive: false,
   });
@@ -193,28 +196,37 @@ const FaceCameraBackground = () => {
 
             st.twoHandMode = null;
 
-            if (isOpenPalm(lm)) {
+            const palmOK = isOpenPalm(lm);
+            const oneUp = isOneFingerUp(lm);
+            // Treat hand-as-palm if it's NOT clearly an index-up gesture —
+            // MediaPipe sometimes drops 1-2 finger landmarks and we don't
+            // want orbit to flicker off mid-gesture.
+            const treatAsPalm = palmOK || (!oneUp && (performance.now() - st.palmDirAt) < 600 && st.palmDir != null);
+
+            if (treatAsPalm) {
               const dir = palmDirection(cx, cy);
-              if (dir !== st.palmDir) {
-                if (dir) emitPhrase();
-                st.palmDir = dir;
+              const effDir = dir ?? st.palmDir; // grace: reuse last dir inside deadzone
+              if (effDir !== st.palmDir) {
+                if (effDir) emitPhrase();
+                st.palmDir = effDir;
               }
+              if (effDir) st.palmDirAt = performance.now();
               // Continuous orbit rates (radians / second)
               const SPEED = 1.1;
-              if (dir === 'left')   azRate  = +SPEED;
-              if (dir === 'right')  azRate  = -SPEED;
-              if (dir === 'top')    polRate = +SPEED;
-              if (dir === 'bottom') polRate = -SPEED;
+              if (effDir === 'left')   azRate  = +SPEED;
+              if (effDir === 'right')  azRate  = -SPEED;
+              if (effDir === 'top')    polRate = +SPEED;
+              if (effDir === 'bottom') polRate = -SPEED;
 
               const hx = (1 - cx) * W, hy = cy * H;
               ctx.strokeStyle = '#5fffaf';
               ctx.lineWidth = 3;
               ctx.beginPath(); ctx.arc(hx, hy, 36, 0, Math.PI * 2); ctx.stroke();
-              if (dir) {
+              if (effDir) {
                 ctx.fillStyle = '#5fffaf';
                 ctx.font = 'bold 28px ui-monospace, monospace';
                 ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                const glyph = dir === 'left' ? '←' : dir === 'right' ? '→' : dir === 'top' ? '↑' : '↓';
+                const glyph = effDir === 'left' ? '←' : effDir === 'right' ? '→' : effDir === 'top' ? '↑' : '↓';
                 ctx.fillText(glyph, hx, hy);
               }
             } else {
