@@ -106,7 +106,6 @@ const FaceTerrain = () => {
         const W = (c.width = v.videoWidth || 1280);
         const H = (c.height = v.videoHeight || 720);
 
-        const composite = (results: any) => {
         // Internal processing resolution (downscaled for speed).
         const PW = 480;
         const PH = Math.round((PW * H) / W);
