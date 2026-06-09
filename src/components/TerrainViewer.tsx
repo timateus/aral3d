@@ -598,9 +598,12 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
     <Canvas
       camera={{ position: [0, 18, 8], fov: 50, near: 0.1, far: 1000 }}
       className="w-full h-full"
-      gl={{ antialias: true, toneMapping: 3, preserveDrawingBuffer: true }}
+      gl={{ antialias: true, toneMapping: 3, preserveDrawingBuffer: true, alpha: true }}
     >
       <SceneBackground />
+      <FaceModeTransparentClear />
+      <FaceGestureController orbitRef={orbitRef} />
+
 
       <ambientLight intensity={0.75} />
       <hemisphereLight args={['#cfe6ff', '#3a3a4a', 0.55]} />
