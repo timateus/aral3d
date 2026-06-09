@@ -122,8 +122,13 @@ export function useGamepad() {
         }
 
         const [rxIdx, ryIdx] = (meta.__padRightAxes as [number, number]) ?? [2, 3];
-        const rightX = applyDeadzone(axisValue(active, rxIdx));
-        const rightY = applyDeadzone(axisValue(active, ryIdx));
+        const swap = !!(globalThis as any).__padSwapRightXY;
+        const rawRX = applyDeadzone(axisValue(active, swap ? ryIdx : rxIdx));
+        const rawRY = applyDeadzone(axisValue(active, swap ? rxIdx : ryIdx));
+        const invX = (globalThis as any).__padInvertRX ? -1 : 1;
+        const invY = (globalThis as any).__padInvertRY ? -1 : 1;
+        const rightX = rawRX * invX;
+        const rightY = rawRY * invY;
 
         const b = active.buttons;
         const next: GamepadState = {
