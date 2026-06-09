@@ -83,7 +83,7 @@ const Sun3D = ({ timeRef, regionFog }: { timeRef: React.MutableRefObject<number>
   );
 };
 
-// Sapling growth + canal flood tick
+// Sapling growth + canal flood + water-flow tick
 const WorldTicker = ({ world, saplingsRef, regionWaterBlocks, onWorldMutated }: {
   world: VoxelWorld;
   saplingsRef: React.MutableRefObject<SaplingTracker>;
@@ -91,18 +91,51 @@ const WorldTicker = ({ world, saplingsRef, regionWaterBlocks, onWorldMutated }: 
   onWorldMutated: () => void;
 }) => {
   const last = useRef(0);
+  const lastFlow = useRef(0);
   useFrame((state) => {
     const now = state.clock.elapsedTime * 1000;
-    if (now - last.current < 1000) return;
-    last.current = now;
     let dirty = false;
-    if (saplingsRef.current.tick(world, performance.now())) dirty = true;
-    const mature = saplingsRef.current.countMature();
-    if (mature > 0) dispatchMissionEvent({ type: 'mature-saxaul', count: mature });
+    if (now - lastFlow.current > 700) {
+      lastFlow.current = now;
+      if (tickWaterFlow(world, 60) > 0) dirty = true;
+    }
+    if (now - last.current >= 1000) {
+      last.current = now;
+      if (saplingsRef.current.tick(world, performance.now())) dirty = true;
+      const mature = saplingsRef.current.countMature();
+      if (mature > 0) dispatchMissionEvent({ type: 'mature-saxaul', count: mature });
+    }
     if (dirty) onWorldMutated();
   });
   return null;
 };
+
+// Zoom controller: listens to 'voxel:zoom' events from VoxelPlayer (R2/L2) and
+// adjusts perspective camera FOV smoothly.
+const ZoomController = () => {
+  const { camera } = useThree();
+  const targetFov = useRef<number>((camera as THREE.PerspectiveCamera).fov ?? 75);
+  useEffect(() => {
+    const onZoom = (e: Event) => {
+      const { delta } = (e as CustomEvent<{ delta: number }>).detail;
+      // delta>0 means R2 pressed = zoom in (lower fov)
+      targetFov.current = Math.max(28, Math.min(95, targetFov.current - delta * 30));
+    };
+    window.addEventListener('voxel:zoom', onZoom);
+    return () => window.removeEventListener('voxel:zoom', onZoom);
+  }, []);
+  useFrame(() => {
+    const cam = camera as THREE.PerspectiveCamera;
+    if (!cam.isPerspectiveCamera) return;
+    const next = cam.fov + (targetFov.current - cam.fov) * 0.18;
+    if (Math.abs(next - cam.fov) > 0.05) {
+      cam.fov = next;
+      cam.updateProjectionMatrix();
+    }
+  });
+  return null;
+};
+
 
 const VoxelPage = () => {
   const [region, setRegion] = useState<RegionKey>('khorezm');
