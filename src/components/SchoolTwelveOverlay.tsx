@@ -10,6 +10,7 @@ import studentsCraftAsset from '@/assets/kegeyli-students-craft.png.asset.json';
 interface Props {
   onExit: () => void;
   onPrev?: () => void;
+  onNext?: () => void;
   onToggleAutoWalk: () => void;
   autoWalking: boolean;
   distanceMeters: number;
