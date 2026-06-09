@@ -35,7 +35,7 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
   const itemsRef = useRef(items);
   const heldRef = useRef(false);
   const { stateRef: gpRef } = useGamepad();
-  const prevBumpers = useRef({ lb: false, rb: false });
+  const prevBumpers = useRef({ lb: false, rb: false, back: false, start: false });
   const kbMouseHeld = useRef(false);
 
   useEffect(() => { selectedRef.current = selected; }, [selected]);
