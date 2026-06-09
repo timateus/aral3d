@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, Sparkles, Printer, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Sparkles, Printer, ChevronRight, Share2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import QRCode from 'qrcode';
 import { supabase } from '@/integrations/supabase/client';
