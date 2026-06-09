@@ -196,28 +196,37 @@ const FaceCameraBackground = () => {
 
             st.twoHandMode = null;
 
-            if (isOpenPalm(lm)) {
+            const palmOK = isOpenPalm(lm);
+            const oneUp = isOneFingerUp(lm);
+            // Treat hand-as-palm if it's NOT clearly an index-up gesture —
+            // MediaPipe sometimes drops 1-2 finger landmarks and we don't
+            // want orbit to flicker off mid-gesture.
+            const treatAsPalm = palmOK || (!oneUp && (performance.now() - st.palmDirAt) < 600 && st.palmDir != null);
+
+            if (treatAsPalm) {
               const dir = palmDirection(cx, cy);
-              if (dir !== st.palmDir) {
-                if (dir) emitPhrase();
-                st.palmDir = dir;
+              const effDir = dir ?? st.palmDir; // grace: reuse last dir inside deadzone
+              if (effDir !== st.palmDir) {
+                if (effDir) emitPhrase();
+                st.palmDir = effDir;
               }
+              if (effDir) st.palmDirAt = performance.now();
               // Continuous orbit rates (radians / second)
               const SPEED = 1.1;
-              if (dir === 'left')   azRate  = +SPEED;
-              if (dir === 'right')  azRate  = -SPEED;
-              if (dir === 'top')    polRate = +SPEED;
-              if (dir === 'bottom') polRate = -SPEED;
+              if (effDir === 'left')   azRate  = +SPEED;
+              if (effDir === 'right')  azRate  = -SPEED;
+              if (effDir === 'top')    polRate = +SPEED;
+              if (effDir === 'bottom') polRate = -SPEED;
 
               const hx = (1 - cx) * W, hy = cy * H;
               ctx.strokeStyle = '#5fffaf';
               ctx.lineWidth = 3;
               ctx.beginPath(); ctx.arc(hx, hy, 36, 0, Math.PI * 2); ctx.stroke();
-              if (dir) {
+              if (effDir) {
                 ctx.fillStyle = '#5fffaf';
                 ctx.font = 'bold 28px ui-monospace, monospace';
                 ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                const glyph = dir === 'left' ? '←' : dir === 'right' ? '→' : dir === 'top' ? '↑' : '↓';
+                const glyph = effDir === 'left' ? '←' : effDir === 'right' ? '→' : effDir === 'top' ? '↑' : '↓';
                 ctx.fillText(glyph, hx, hy);
               }
             } else {
