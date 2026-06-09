@@ -20,6 +20,8 @@ interface Props {
   consumeSelected: () => BlockId | null;
   onLockChange?: (locked: boolean) => void;
   playerRef?: React.MutableRefObject<{ x: number; z: number; yaw: number }>;
+  canAct?: () => boolean;
+  onActionConsumed?: (kind: 'break' | 'place') => void;
 }
 
 const GRAVITY = 22;
@@ -30,7 +32,7 @@ const EYE_HEIGHT = 1.6;
 const PLAYER_RADIUS = 0.3;
 const REACH = 8;
 
-const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consumeSelected, onLockChange, playerRef }: Props) => {
+const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consumeSelected, onLockChange, playerRef, canAct, onActionConsumed }: Props) => {
   const { camera, gl } = useThree();
   const velocity = useRef(new THREE.Vector3());
   const onGround = useRef(false);
@@ -39,6 +41,9 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
   const lastClickTime = useRef(0);
   const gp = useGamepad();
   const lastGpClick = useRef({ break: false, place: false, jump: false });
+  // Hold-to-repeat: after holding the button > HOLD_MS, fire every REPEAT_MS.
+  const holdRef = useRef<{ break: number | null; place: number | null }>({ break: null, place: null });
+  const lastRepeatRef = useRef<{ break: number; place: number }>({ break: 0, place: 0 });
 
   // Spawn at world center, on top of terrain.
   useEffect(() => {
@@ -106,6 +111,7 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
   }, [camera, world]);
 
   const doBreak = useCallback(() => {
+    if (canAct && !canAct()) return;
     // Let mobs (camels, sheep, etc.) handle left-click first if the crosshair is on them.
     const dir = new THREE.Vector3();
     camera.getWorldDirection(dir);
@@ -121,11 +127,13 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
     if (removed && removed !== 'air') {
       onMined(removed);
       dispatchMissionEvent({ type: 'mine', block: removed });
+      onActionConsumed?.('break');
       onWorldMutated();
     }
-  }, [camera, pickColumn, world, onMined, onWorldMutated]);
+  }, [camera, pickColumn, world, onMined, onWorldMutated, canAct, onActionConsumed]);
 
   const doPlace = useCallback(() => {
+    if (canAct && !canAct()) return;
     const block = getSelectedBlock();
     if (!block) return;
     const hit = pickColumn();
@@ -136,13 +144,17 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
     if (ok) {
       consumeSelected();
       dispatchMissionEvent({ type: 'place', block });
+      onActionConsumed?.('place');
+      if (block === 'salt') {
+        window.dispatchEvent(new CustomEvent('voxel:salt-placed', { detail: { i: hit.i, j: hit.j } }));
+      }
       if (block === 'sapling' && (surfaceBlock === 'sand' || surfaceBlock === 'salt')) {
         dispatchMissionEvent({ type: 'plant-sapling' });
         window.dispatchEvent(new CustomEvent('voxel:sapling-planted', { detail: { i: hit.i, j: hit.j } }));
       }
       onWorldMutated();
     }
-  }, [pickColumn, world, getSelectedBlock, consumeSelected, onWorldMutated]);
+  }, [pickColumn, world, getSelectedBlock, consumeSelected, onWorldMutated, canAct, onActionConsumed]);
 
   // F = interact (drink/eat)
   useEffect(() => {
@@ -170,23 +182,28 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
     return () => window.removeEventListener('voxel:interact', onInteract);
   }, [pickColumn, world]);
 
-  // Click handlers (need pointer lock)
+  // Mouse click handlers (need pointer lock). Hold > 2s to auto-repeat.
   useEffect(() => {
     const canvas = gl.domElement;
-    const onClick = (e: MouseEvent) => {
+    const onDown = (e: MouseEvent) => {
       if (!lockedRef.current) return;
-      // Throttle rapid clicks
       const now = performance.now();
       if (now - lastClickTime.current < 80) return;
       lastClickTime.current = now;
-      if (e.button === 0) doBreak();
-      else if (e.button === 2) doPlace();
+      if (e.button === 0) { doBreak(); holdRef.current.break = now; lastRepeatRef.current.break = now; }
+      else if (e.button === 2) { doPlace(); holdRef.current.place = now; lastRepeatRef.current.place = now; }
+    };
+    const onUp = (e: MouseEvent) => {
+      if (e.button === 0) holdRef.current.break = null;
+      if (e.button === 2) holdRef.current.place = null;
     };
     const onContext = (e: Event) => { e.preventDefault(); };
-    canvas.addEventListener('mousedown', onClick);
+    canvas.addEventListener('mousedown', onDown);
+    window.addEventListener('mouseup', onUp);
     canvas.addEventListener('contextmenu', onContext);
     return () => {
-      canvas.removeEventListener('mousedown', onClick);
+      canvas.removeEventListener('mousedown', onDown);
+      window.removeEventListener('mouseup', onUp);
       canvas.removeEventListener('contextmenu', onContext);
     };
   }, [gl, doBreak, doPlace]);
@@ -242,7 +259,7 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
 
     if (moveDir.lengthSq() > 0) moveDir.normalize();
 
-    const sprint = keys.current['ShiftLeft'] || keys.current['ShiftRight'] || gs.buttons.lb || touchInput.sprint;
+    const sprint = keys.current['ShiftLeft'] || keys.current['ShiftRight'] || gs.buttons.x || touchInput.sprint;
     const speed = WALK_SPEED * (sprint ? SPRINT_MULT : 1);
 
     // Camera-relative basis (XZ plane only)
@@ -311,14 +328,38 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
 
     pos.set(nx, ny, nz);
 
-    // Gamepad button-edge actions
+    // Gamepad button-edge actions: RB = break, LB = place. RT/LT drive zoom.
     if (gs.connected) {
-      const rtPressed = gs.buttons.rt > 0.5;
-      const ltPressed = gs.buttons.lt > 0.5;
-      if (rtPressed && !lastGpClick.current.break) doBreak();
-      if (ltPressed && !lastGpClick.current.place) doPlace();
-      lastGpClick.current.break = rtPressed;
-      lastGpClick.current.place = ltPressed;
+      const rbPressed = gs.buttons.rb;
+      const lbPressed = gs.buttons.lb;
+      const nowMs = performance.now();
+      if (rbPressed && !lastGpClick.current.break) { doBreak(); holdRef.current.break = nowMs; lastRepeatRef.current.break = nowMs; }
+      if (!rbPressed && lastGpClick.current.break) holdRef.current.break = null;
+      if (lbPressed && !lastGpClick.current.place) { doPlace(); holdRef.current.place = nowMs; lastRepeatRef.current.place = nowMs; }
+      if (!lbPressed && lastGpClick.current.place) holdRef.current.place = null;
+      lastGpClick.current.break = rbPressed;
+      lastGpClick.current.place = lbPressed;
+
+      // R2/L2 zoom: dispatch a delta to the parent each frame while held.
+      const rt = gs.buttons.rt, lt = gs.buttons.lt;
+      if (rt > 0.1 || lt > 0.1) {
+        const zoomDelta = (rt - lt) * dt * 1.8;
+        window.dispatchEvent(new CustomEvent('voxel:zoom', { detail: { delta: zoomDelta } }));
+      }
+    }
+
+    // Hold-to-repeat (2s hold → repeat every 250ms) for mouse and gamepad
+    const HOLD_MS = 2000, REPEAT_MS = 250;
+    const tNow = performance.now();
+    if (holdRef.current.break != null && tNow - holdRef.current.break > HOLD_MS &&
+        tNow - lastRepeatRef.current.break > REPEAT_MS) {
+      doBreak();
+      lastRepeatRef.current.break = tNow;
+    }
+    if (holdRef.current.place != null && tNow - holdRef.current.place > HOLD_MS &&
+        tNow - lastRepeatRef.current.place > REPEAT_MS) {
+      doPlace();
+      lastRepeatRef.current.place = tNow;
     }
 
     // Publish position for minimap / external HUDs

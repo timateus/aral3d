@@ -26,6 +26,16 @@ const Fox = ({ world, count = 6 }: { world: VoxelWorld; count?: number }) => {
       arr.push({ x: (i - halfW) + 0.5, z: (j - halfD) + 0.5, vx: 0, vz: 0 });
     }
     states.current = arr;
+    const onSalt = (e: Event) => {
+      const { i, j } = (e as CustomEvent<{ i: number; j: number }>).detail;
+      const sx = (i - halfW) + 0.5, sz = (j - halfD) + 0.5;
+      states.current = states.current.filter((s) => {
+        const dx = s.x - sx, dz = s.z - sz;
+        return dx*dx + dz*dz >= 25;
+      });
+    };
+    window.addEventListener('voxel:salt-placed', onSalt);
+    return () => window.removeEventListener('voxel:salt-placed', onSalt);
   }, [world, count]);
 
   const tmpMat = useMemo(() => new THREE.Matrix4(), []);

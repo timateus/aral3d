@@ -28,8 +28,10 @@ import VoxelAutopilot from '@/components/voxel/VoxelAutopilot';
 import { initAudio, playSfx, startAmbient, stopAmbient, setMuted, isMuted } from '@/lib/voxel/voxel-audio';
 import { createSaplingTracker, type SaplingTracker } from '@/lib/voxel/saxaul';
 import { floodFillCanal } from '@/lib/voxel/water-fill';
+import { tickWaterFlow } from '@/lib/voxel/water-flow';
 import { STRUCTURES, placeStructure } from '@/lib/voxel/structures';
 import type { BlockId } from '@/lib/voxel/block-types';
+import { useThree } from '@react-three/fiber';
 
 type RegionKey = 'khorezm' | 'aral';
 
@@ -81,7 +83,7 @@ const Sun3D = ({ timeRef, regionFog }: { timeRef: React.MutableRefObject<number>
   );
 };
 
-// Sapling growth + canal flood tick
+// Sapling growth + canal flood + water-flow tick
 const WorldTicker = ({ world, saplingsRef, regionWaterBlocks, onWorldMutated }: {
   world: VoxelWorld;
   saplingsRef: React.MutableRefObject<SaplingTracker>;
@@ -89,18 +91,51 @@ const WorldTicker = ({ world, saplingsRef, regionWaterBlocks, onWorldMutated }: 
   onWorldMutated: () => void;
 }) => {
   const last = useRef(0);
+  const lastFlow = useRef(0);
   useFrame((state) => {
     const now = state.clock.elapsedTime * 1000;
-    if (now - last.current < 1000) return;
-    last.current = now;
     let dirty = false;
-    if (saplingsRef.current.tick(world, performance.now())) dirty = true;
-    const mature = saplingsRef.current.countMature();
-    if (mature > 0) dispatchMissionEvent({ type: 'mature-saxaul', count: mature });
+    if (now - lastFlow.current > 700) {
+      lastFlow.current = now;
+      if (tickWaterFlow(world, 60) > 0) dirty = true;
+    }
+    if (now - last.current >= 1000) {
+      last.current = now;
+      if (saplingsRef.current.tick(world, performance.now())) dirty = true;
+      const mature = saplingsRef.current.countMature();
+      if (mature > 0) dispatchMissionEvent({ type: 'mature-saxaul', count: mature });
+    }
     if (dirty) onWorldMutated();
   });
   return null;
 };
+
+// Zoom controller: listens to 'voxel:zoom' events from VoxelPlayer (R2/L2) and
+// adjusts perspective camera FOV smoothly.
+const ZoomController = () => {
+  const { camera } = useThree();
+  const targetFov = useRef<number>((camera as THREE.PerspectiveCamera).fov ?? 75);
+  useEffect(() => {
+    const onZoom = (e: Event) => {
+      const { delta } = (e as CustomEvent<{ delta: number }>).detail;
+      // delta>0 means R2 pressed = zoom in (lower fov)
+      targetFov.current = Math.max(28, Math.min(95, targetFov.current - delta * 30));
+    };
+    window.addEventListener('voxel:zoom', onZoom);
+    return () => window.removeEventListener('voxel:zoom', onZoom);
+  }, []);
+  useFrame(() => {
+    const cam = camera as THREE.PerspectiveCamera;
+    if (!cam.isPerspectiveCamera) return;
+    const next = cam.fov + (targetFov.current - cam.fov) * 0.18;
+    if (Math.abs(next - cam.fov) > 0.05) {
+      cam.fov = next;
+      cam.updateProjectionMatrix();
+    }
+  });
+  return null;
+};
+
 
 const VoxelPage = () => {
   const [region, setRegion] = useState<RegionKey>('khorezm');
@@ -113,6 +148,18 @@ const VoxelPage = () => {
   const [questOpen, setQuestOpen] = useState(false);
   const [muted, setMutedState] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
+  const ACTION_LIMIT = 50;
+  const [actionsLeft, setActionsLeft] = useState<number>(() => {
+    try { const v = parseInt(localStorage.getItem('voxel_actions_left_v1') ?? '', 10); return Number.isFinite(v) ? v : ACTION_LIMIT; } catch { return ACTION_LIMIT; }
+  });
+  const actionsRef = useRef(actionsLeft);
+  actionsRef.current = actionsLeft;
+  useEffect(() => { try { localStorage.setItem('voxel_actions_left_v1', String(actionsLeft)); } catch {} }, [actionsLeft]);
+  const canAct = useCallback(() => actionsRef.current > 0, []);
+  const onActionConsumed = useCallback((_kind: 'break' | 'place') => {
+    setActionsLeft((n) => Math.max(0, n - 1));
+  }, []);
+  const resetActions = useCallback(() => setActionsLeft(ACTION_LIMIT), []);
   const inv = useVoxelInventory();
   const stats = useVoxelStats();
   useVoxelMissions(); // mount the listener
@@ -452,13 +499,37 @@ const VoxelPage = () => {
             consumeSelected={consumeSelected}
             onLockChange={setLocked}
             playerRef={playerRef}
+            canAct={canAct}
+            onActionConsumed={onActionConsumed}
           />
+          <ZoomController />
           <VoxelAutopilot world={world} active={demoMode} onBuild={onDemoBuild} />
         </Canvas>
       )}
 
       {world && <VoxelMinimap world={world} playerRef={playerRef} version={version} label={`Map · ${cfg.label}`} />}
       {world && <VoxelPlaceTags world={world} playerRef={playerRef} region={region} />}
+
+      {world && (
+        <div className="fixed top-3 right-3 z-50 flex items-center gap-1.5">
+          <div className={`px-3 py-1.5 border text-[10px] uppercase tracking-widest font-mono ${
+            actionsLeft === 0
+              ? 'bg-red-900/70 border-red-300 text-red-100 animate-pulse'
+              : actionsLeft <= 10
+                ? 'bg-amber-900/70 border-amber-300 text-amber-100'
+                : 'bg-black/60 border-white/20 text-white/80'
+          }`}>
+            Actions {actionsLeft}/{ACTION_LIMIT}
+          </div>
+          <button
+            onClick={resetActions}
+            className="px-2 py-1.5 bg-black/60 border border-white/20 hover:bg-white/10 text-[10px] uppercase tracking-widest"
+            title="Reset action counter"
+          >
+            reset
+          </button>
+        </div>
+      )}
 
       <VoxelHUD locked={locked} onOpenInventory={() => setInvOpen(o => !o)} />
       <VoxelTouchControls />
