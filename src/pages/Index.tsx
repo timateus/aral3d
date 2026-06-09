@@ -222,7 +222,10 @@ const Index = () => {
   const [geoMarkers, setGeoMarkers] = useState<import('@/components/GeoFeatures').GeoGuessrMarkerSet | null>(null);
   const [placeMode, setPlaceMode] = useState(false);
   const [schoolMode, setSchoolMode] = useState(false);
-  const [placedItems, setPlacedItems] = useState<import('@/lib/map-builder-items').PlacedItem[]>([]);
+  const [placedItems, setPlacedItems] = useState<import('@/lib/map-builder-items').PlacedItem[]>(
+    () => loadState<import('@/lib/map-builder-items').PlacedItem[]>('placed-items', [])
+  );
+  useEffect(() => { saveState('placed-items', placedItems); }, [placedItems]);
   const [schoolAutoWalking, setSchoolAutoWalking] = useState(false);
   const [schoolDistanceMeters, setSchoolDistanceMeters] = useState(0);
   const [schoolArrived, setSchoolArrived] = useState(false);
