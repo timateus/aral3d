@@ -224,9 +224,12 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
       groundY += blockCount * CUBE_SIZE;
       firstPersonBridge.player = ll;
       if (thirdPerson && firstPersonBridge.school.active && firstPersonBridge.school.target) {
-        const dx = ll.lon - firstPersonBridge.school.target.lon;
-        const dy = ll.lat - firstPersonBridge.school.target.lat;
-        if (!firstPersonBridge.school.arrived && Math.hypot(dx, dy) < 0.004) {
+        const t = firstPersonBridge.school.target;
+        // Convert ~0.01° lat → ~1.1km tolerance; lon scaled by cos(lat) so a
+        // degree-distance check is closer to true meters near 42°N.
+        const dLat = ll.lat - t.lat;
+        const dLon = (ll.lon - t.lon) * Math.cos((t.lat * Math.PI) / 180);
+        if (!firstPersonBridge.school.arrived && Math.hypot(dLat, dLon) < 0.012) {
           firstPersonBridge.school.arrived = true;
           firstPersonBridge.school.autoWalk = false;
         }
