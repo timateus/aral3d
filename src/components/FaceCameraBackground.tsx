@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { FACE_PHRASES } from '@/lib/face-phrases';
+import { faceModeBridge } from '@/lib/face-mode-bridge';
 
 // Level 7 — Face as Infrastructure.
 // Camera = background. MediaPipe Hands runs and dispatches `face:gesture`
