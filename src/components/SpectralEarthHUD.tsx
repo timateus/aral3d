@@ -97,8 +97,13 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
     };
   }, [randomSeed]);
 
-  const line1 = 'maps are not neutral, fixed, or purely scientific';
-  const line2 = 'make it strange, unstable, playful, open to interpretation';
+  const { line1, line2 } = useMemo(() => {
+    const s = randomSeed || Date.now();
+    const i1 = Math.floor(Math.abs(Math.sin(s * 12.9898 + 78.233)) * FACE_PHRASES.length) % FACE_PHRASES.length;
+    let i2 = Math.floor(Math.abs(Math.sin(s * 39.346 + 11.135)) * FACE_PHRASES.length) % FACE_PHRASES.length;
+    if (i2 === i1) i2 = (i2 + 1) % FACE_PHRASES.length;
+    return { line1: FACE_PHRASES[i1], line2: FACE_PHRASES[i2] };
+  }, [randomSeed]);
 
   // Color each word from terrain stops
   const colorize = (text: string, offset: number) =>
