@@ -573,7 +573,11 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
               : 'bg-black/60 border-white/15 text-white/90'
         }`}
       >
-        <span>Actions {actionsLeft}/{ACTION_LIMIT}</span>
+        {isOut ? (
+          <span className="font-semibold tracking-wide">next person's turn maybe?</span>
+        ) : (
+          <span>Actions {actionsLeft}/{ACTION_LIMIT}</span>
+        )}
         <button
           onClick={resetActions}
           className="ml-1 px-2 py-0.5 text-[10px] uppercase tracking-widest border border-white/30 rounded hover:bg-white/10"
