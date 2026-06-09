@@ -226,7 +226,7 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
       if (thirdPerson && firstPersonBridge.school.active && firstPersonBridge.school.target) {
         const dx = ll.lon - firstPersonBridge.school.target.lon;
         const dy = ll.lat - firstPersonBridge.school.target.lat;
-        if (!firstPersonBridge.school.arrived && Math.hypot(dx, dy) < 0.12) {
+        if (!firstPersonBridge.school.arrived && Math.hypot(dx, dy) < 0.004) {
           firstPersonBridge.school.arrived = true;
           firstPersonBridge.school.autoWalk = false;
         }

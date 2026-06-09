@@ -324,6 +324,26 @@ const Index = () => {
     prevSchoolRef.current = schoolMode;
   }, [schoolMode]);
 
+  // Poll bridge for school distance/arrival while in school mode.
+  useEffect(() => {
+    if (!schoolMode) return;
+    const interval = window.setInterval(() => {
+      const p = firstPersonBridge.player;
+      const t = firstPersonBridge.school.target;
+      if (!p || !t) return;
+      const R = 6371000;
+      const dLat = (t.lat - p.lat) * Math.PI / 180;
+      const dLon = (t.lon - p.lon) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 +
+        Math.cos(p.lat * Math.PI / 180) * Math.cos(t.lat * Math.PI / 180) *
+        Math.sin(dLon / 2) ** 2;
+      const meters = 2 * R * Math.asin(Math.sqrt(a));
+      setSchoolDistanceMeters(meters);
+      if (firstPersonBridge.school.arrived) setSchoolArrived(true);
+    }, 200);
+    return () => window.clearInterval(interval);
+  }, [schoolMode]);
+
 
 
   // One-shot randomizer for Spectral Earth — palette, exaggeration, camera, zoom, typography.
@@ -1308,9 +1328,11 @@ const Index = () => {
       firstPersonBridge.school.arrived = false;
       firstPersonBridge.school.dialogOpen = false;
       firstPersonBridge.school.target = schoolTarget;
+      firstPersonBridge.school.start = schoolStart;
       setSchoolAutoWalking(false);
       setSchoolArrived(false);
       setSchoolDialogOpen(false);
+      setSchoolDistanceMeters(0);
     }
   }, [schoolTarget, setTerrainMode, setVisualMode]);
 
@@ -1375,7 +1397,8 @@ const Index = () => {
             riverFlyover={riverFlyover}
             onRiverFlyoverDone={() => setRiverFlyover(false)}
             riverInflow={currentRiverInflow}
-            userLocation={userLocation}
+            userLocation={schoolMode ? schoolTarget : userLocation}
+            showCityMarkers={!levelIntro}
             inspectorEnabled={showInspector}
             damToolActive={damToolActive}
             onDamPlace={handleRaiseTerrainClick}

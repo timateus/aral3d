@@ -1,4 +1,5 @@
-import { ArrowLeft, ExternalLink, Film, Navigation2 } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowLeft, ExternalLink, Film, Navigation2, X } from 'lucide-react';
 import { sfx } from '@/lib/ui-sfx';
 import schoolFrontAsset from '@/assets/kegeyli-school-front.png.asset.json';
 import classroomOneAsset from '@/assets/kegeyli-classroom-1.png.asset.json';
@@ -31,6 +32,7 @@ const SchoolTwelveOverlay = ({
   dialogOpen,
   onDialogOpen,
 }: Props) => {
+  const [lightbox, setLightbox] = useState<null | { src: string; alt: string }>(null);
   return (
     <>
       <div className="absolute top-5 left-5 z-[80] flex gap-2" data-hud>
@@ -92,10 +94,15 @@ const SchoolTwelveOverlay = ({
           <div className="mb-3 text-[10px] font-mono uppercase tracking-[0.35em] text-white/45">school photos</div>
           <div className="grid grid-cols-3 gap-2">
             {photos.map((photo) => (
-              <div key={photo.src} className="space-y-1">
-                <img src={photo.src} alt={photo.alt} className="aspect-square w-full object-cover border border-white/15" loading="lazy" />
-                <div className="text-[8px] font-mono uppercase tracking-[0.22em] text-white/45 text-center">{photo.label}</div>
-              </div>
+              <button
+                key={photo.src}
+                type="button"
+                onClick={() => { sfx.make(); setLightbox({ src: photo.src, alt: photo.alt }); }}
+                className="group space-y-1 text-left"
+              >
+                <img src={photo.src} alt={photo.alt} className="aspect-square w-full object-cover border border-white/15 transition-transform group-hover:scale-[1.02] group-hover:border-amber-300/45" loading="lazy" />
+                <div className="text-[8px] font-mono uppercase tracking-[0.22em] text-white/45 text-center group-hover:text-white/80">{photo.label}</div>
+              </button>
             ))}
           </div>
         </div>
@@ -180,6 +187,29 @@ const SchoolTwelveOverlay = ({
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-[95] flex items-center justify-center bg-black/85 backdrop-blur-sm p-6"
+          data-hud
+          onClick={() => setLightbox(null)}
+        >
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setLightbox(null); }}
+            className="absolute top-5 right-5 flex h-10 w-10 items-center justify-center border border-white/20 bg-black/70 text-white hover:bg-black"
+            aria-label="Close photo"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          <img
+            src={lightbox.src}
+            alt={lightbox.alt}
+            className="max-h-[90vh] max-w-[92vw] object-contain border border-white/15 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
       )}
     </>
