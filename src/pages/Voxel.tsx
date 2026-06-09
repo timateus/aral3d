@@ -32,6 +32,7 @@ import { tickWaterFlow } from '@/lib/voxel/water-flow';
 import { STRUCTURES, placeStructure } from '@/lib/voxel/structures';
 import type { BlockId } from '@/lib/voxel/block-types';
 import { useThree } from '@react-three/fiber';
+import { loadWorldDiff, saveWorldDiff, applyDiff, snapshotColumn, type WorldDiff } from '@/lib/voxel/world-persistence';
 
 type RegionKey = 'khorezm' | 'aral';
 
@@ -136,6 +137,36 @@ const ZoomController = () => {
   return null;
 };
 
+// Top-down view toggle: when active, lifts the camera high above the player
+// and points it straight down. Re-press to return to first-person.
+const TopDownController = ({ playerRef }: { playerRef: React.MutableRefObject<{ x: number; z: number; yaw: number }> }) => {
+  const { camera } = useThree();
+  const active = useRef(false);
+  const saved = useRef<{ pos: THREE.Vector3; quat: THREE.Quaternion } | null>(null);
+  useEffect(() => {
+    const onToggle = () => {
+      if (!active.current) {
+        saved.current = { pos: camera.position.clone(), quat: camera.quaternion.clone() };
+        active.current = true;
+      } else {
+        if (saved.current) {
+          camera.position.copy(saved.current.pos);
+          camera.quaternion.copy(saved.current.quat);
+        }
+        active.current = false;
+      }
+    };
+    window.addEventListener('voxel:toggle-topdown', onToggle);
+    return () => window.removeEventListener('voxel:toggle-topdown', onToggle);
+  }, [camera]);
+  useFrame(() => {
+    if (!active.current) return;
+    camera.position.set(playerRef.current.x, 80, playerRef.current.z);
+    camera.lookAt(playerRef.current.x, 0, playerRef.current.z);
+  });
+  return null;
+};
+
 
 const VoxelPage = () => {
   const [region, setRegion] = useState<RegionKey>('khorezm');
@@ -149,17 +180,18 @@ const VoxelPage = () => {
   const [muted, setMutedState] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
   const ACTION_LIMIT = 50;
-  const [actionsLeft, setActionsLeft] = useState<number>(() => {
-    try { const v = parseInt(localStorage.getItem('voxel_actions_left_v1') ?? '', 10); return Number.isFinite(v) ? v : ACTION_LIMIT; } catch { return ACTION_LIMIT; }
-  });
+  // Action budget is per visit to the level: starts at 50 every time the page mounts,
+  // and only PLACING blocks decrements it. Breaking is free. Reset happens on unmount.
+  const [actionsLeft, setActionsLeft] = useState<number>(ACTION_LIMIT);
   const actionsRef = useRef(actionsLeft);
   actionsRef.current = actionsLeft;
-  useEffect(() => { try { localStorage.setItem('voxel_actions_left_v1', String(actionsLeft)); } catch {} }, [actionsLeft]);
   const canAct = useCallback(() => actionsRef.current > 0, []);
-  const onActionConsumed = useCallback((_kind: 'break' | 'place') => {
+  const onActionConsumed = useCallback((kind: 'break' | 'place') => {
+    if (kind !== 'place') return; // breaking is free
     setActionsLeft((n) => Math.max(0, n - 1));
   }, []);
-  const resetActions = useCallback(() => setActionsLeft(ACTION_LIMIT), []);
+  // Reset on unmount (i.e., when the user exits the level).
+  useEffect(() => () => { try { localStorage.removeItem('voxel_actions_left_v1'); } catch {} }, []);
   const inv = useVoxelInventory();
   const stats = useVoxelStats();
   useVoxelMissions(); // mount the listener
@@ -183,14 +215,38 @@ const VoxelPage = () => {
 
   const world: VoxelWorld | null = useMemo(() => {
     if (!terrain) return null;
-    return buildVoxelWorld(terrain, {
+    const w = buildVoxelWorld(terrain, {
       targetWidth: 160,
       targetDepth: 160,
       blockHeightMeters: 4,
       verticalExaggeration: 2.5,
       waterLevelMeters: REGIONS[region].waterLevel,
     });
+    // Re-apply any saved per-column mutations from previous visits.
+    const diff = loadWorldDiff(region);
+    if (diff) applyDiff(w, diff);
+    return w;
   }, [terrain, region]);
+
+  // Persistence: collect dirty columns and write them to localStorage (debounced).
+  const diffRef = useRef<WorldDiff>({ cols: {} });
+  const saveTimer = useRef<number | null>(null);
+  useEffect(() => {
+    diffRef.current = loadWorldDiff(region) ?? { cols: {} };
+  }, [region]);
+  useEffect(() => {
+    if (!world) return;
+    const onDirty = (e: Event) => {
+      const { i, j } = (e as CustomEvent<{ i: number; j: number }>).detail;
+      diffRef.current.cols[`${i},${j}`] = snapshotColumn(world, i, j);
+      if (saveTimer.current != null) window.clearTimeout(saveTimer.current);
+      saveTimer.current = window.setTimeout(() => {
+        saveWorldDiff(region, diffRef.current);
+      }, 400);
+    };
+    window.addEventListener('voxel:column-dirty', onDirty);
+    return () => window.removeEventListener('voxel:column-dirty', onDirty);
+  }, [world, region]);
 
   // The water-level expressed in voxel block-y.
   const waterLevelBlocks = useMemo(() => {
@@ -312,13 +368,16 @@ const VoxelPage = () => {
     };
     const onToggleQ = () => setQuestOpen(o => !o);
     const onToggleB = () => setBuildOpen(o => !o);
+    const onToggleI = () => setInvOpen(o => !o);
     window.addEventListener('keydown', onKey);
     window.addEventListener('voxel:toggle-quests', onToggleQ);
     window.addEventListener('voxel:toggle-build', onToggleB);
+    window.addEventListener('voxel:toggle-inventory', onToggleI);
     return () => {
       window.removeEventListener('keydown', onKey);
       window.removeEventListener('voxel:toggle-quests', onToggleQ);
       window.removeEventListener('voxel:toggle-build', onToggleB);
+      window.removeEventListener('voxel:toggle-inventory', onToggleI);
     };
   }, []);
 
@@ -503,6 +562,7 @@ const VoxelPage = () => {
             onActionConsumed={onActionConsumed}
           />
           <ZoomController />
+          <TopDownController playerRef={playerRef} />
           <VoxelAutopilot world={world} active={demoMode} onBuild={onDemoBuild} />
         </Canvas>
       )}
@@ -521,13 +581,6 @@ const VoxelPage = () => {
           }`}>
             Actions {actionsLeft}/{ACTION_LIMIT}
           </div>
-          <button
-            onClick={resetActions}
-            className="px-2 py-1.5 bg-black/60 border border-white/20 hover:bg-white/10 text-[10px] uppercase tracking-widest"
-            title="Reset action counter"
-          >
-            reset
-          </button>
         </div>
       )}
 
