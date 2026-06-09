@@ -154,7 +154,7 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
     };
     const onWheel = (e: WheelEvent) => {
       if (!thirdPerson) return;
-      camDistRef.current = THREE.MathUtils.clamp(camDistRef.current + e.deltaY * 0.002, 0.25, 3.5);
+      camDistRef.current = THREE.MathUtils.clamp(camDistRef.current + e.deltaY * 0.002, 0.25, 7);
     };
     el.addEventListener('click', onClick);
     window.addEventListener('mousemove', onMove);
