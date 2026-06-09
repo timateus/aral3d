@@ -1326,6 +1326,9 @@ const Index = () => {
       setSimCompleted(false);
     }
     if (level === 6) {
+      // School sits at lat 42.757, lon 59.56 — only fits inside the Khorezm
+      // region. Force-switch so the marker and walk surface are valid.
+      setTerrainRegion('khorezm');
       firstPersonBridge.school.active = true;
       firstPersonBridge.school.autoWalk = false;
       firstPersonBridge.school.arrived = false;
