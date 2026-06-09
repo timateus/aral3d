@@ -47,21 +47,20 @@ function pairScore(active: Gamepad, pair: [number, number]): number {
   return Math.hypot(axisValue(active, pair[0]), axisValue(active, pair[1]));
 }
 
-function selectRightStickAxes(active: Gamepad, current?: [number, number]) {
-  const standard: [number, number] = [2, 3];
-  const validCurrent = current && RIGHT_STICK_PAIRS.some(([x, y]) => x === current[0] && y === current[1]) ? current : undefined;
-  if (pairScore(active, standard) > 0.08) return standard;
+function selectRightStickAxes(active: Gamepad, current?: [number, number]): [number, number] {
+  // Standard mapping is fully specified by the W3C Gamepad spec:
+  // axis 2 = right-stick X, axis 3 = right-stick Y. Always trust it.
+  if (active.mapping === 'standard') return [2, 3];
 
-  let best: [number, number] = validCurrent ?? standard;
-  let bestScore = validCurrent ? pairScore(active, validCurrent) : 0;
+  // Non-standard: we can only guess pair-of-axes, NOT which member is X vs Y.
+  // Stick with the first pair that has energy; user can flip via the
+  // window.__padSwapRightXY override (toggled from a HUD button) when wrong.
+  const validCurrent = current && RIGHT_STICK_PAIRS.some(([x, y]) => x === current[0] && y === current[1]) ? current : undefined;
+  if (validCurrent && pairScore(active, validCurrent) > 0.08) return validCurrent;
   for (const pair of RIGHT_STICK_PAIRS) {
-    const score = pairScore(active, pair);
-    if (score > bestScore + 0.12) {
-      bestScore = score;
-      best = pair;
-    }
+    if (pairScore(active, pair) > 0.12) return pair;
   }
-  return best;
+  return validCurrent ?? [2, 3];
 }
 
 export function useGamepad() {
