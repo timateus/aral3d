@@ -286,10 +286,7 @@ const Index = () => {
       setLevelIntro({
         n: 4,
         name: 'Satellite GeoGuessr',
-        instructions: [
-          'A satellite image will appear. Pin it on the terrain.',
-          'Closer guesses score higher. You have 60 seconds per round.',
-        ],
+        instructions: ['Where was this photo taken?'],
       });
     }
     prevGeoRef.current = geoMode;
