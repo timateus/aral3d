@@ -36,7 +36,7 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
   const itemsRef = useRef(items);
   const heldRef = useRef(false);
   const { stateRef: gpRef } = useGamepad();
-  const prevBumpers = useRef({ lb: false, rb: false, back: false, start: false, a: false, b: false });
+  const prevBumpers = useRef({ lb: false, rb: false, back: false, start: false, a: false, b: false, x: false });
   const kbMouseHeld = useRef(false);
 
   const requestNav = (dir: 'prev' | 'next') => {
