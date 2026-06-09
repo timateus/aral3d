@@ -562,6 +562,7 @@ const VoxelPage = () => {
             onActionConsumed={onActionConsumed}
           />
           <ZoomController />
+          <TopDownController playerRef={playerRef} />
           <VoxelAutopilot world={world} active={demoMode} onBuild={onDemoBuild} />
         </Canvas>
       )}
