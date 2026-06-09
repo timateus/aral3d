@@ -275,11 +275,8 @@ const Index = () => {
     if (simMode && !prevSimRef.current) {
       setLevelIntro({
         n: 3,
-        name: 'Hydraulic Sandbox',
-        instructions: [
-          'Pour water and raise dams across Khorezm.',
-          'Aim with the camera. Sculpt the basin yourself.',
-        ],
+        name: 'follow the slope of the terrain',
+        instructions: [],
       });
     }
     prevSimRef.current = simMode;
