@@ -72,7 +72,7 @@ const CITIES: City[] = [
   { name: 'Aral', lat: 46.790, lon: 61.660 },
   { name: 'Kungrad', lat: 43.005, lon: 58.690 },
   { name: 'Chimbay', lat: 42.930, lon: 59.770 },
-  { name: 'Takhtakupir', lat: 43.015, lon: 59.826 },
+  
   { name: 'Qazaly', lat: 45.763, lon: 62.110 },
   { name: 'Urgench', lat: 41.550, lon: 60.633 },
   { name: 'Khiva', lat: 41.379, lon: 60.356 },
@@ -545,7 +545,7 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
           <LakeMarker key={lake.id} lake={lake} pos={pos} radius={radius} />
         );
       })}
-      {userLocation && (() => {
+      {userLocation && !firstPersonBridge.school.dialogOpen && (() => {
         const pos = geoToMeshPos(userLocation.lat, userLocation.lon, bounds, terrain, exaggeration, meshWidth, meshHeight);
         if (!pos) return null;
         const isSchool = firstPersonBridge.school.active;
