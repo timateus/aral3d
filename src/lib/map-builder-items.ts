@@ -57,7 +57,10 @@ export interface PlacedItem {
   stack?: number;
   /** Optional simulation age (ticks). */
   age?: number;
+  /** ms timestamp when created — used for grow-in animations (fish reproduction). */
+  bornAt?: number;
 }
+
 
 export function getItemDef(t: MapBuilderItemId): MapBuilderItem {
   return MAP_BUILDER_ITEMS.find((i) => i.id === t) ?? MAP_BUILDER_ITEMS[0];

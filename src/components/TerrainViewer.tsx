@@ -594,7 +594,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
               {showWaterways && <WaterwaysLayer terrain={terrain} exaggeration={exaggeration} typeFilter={waterwayTypeFilter || 'all'} traceMode={!!waterwayTraceMode} clearTraceSignal={waterwayClearTraceSignal || 0} />}
               <WaterPlaygroundOverlay terrain={terrain} exaggeration={exaggeration} active={!!waterPlaygroundActive} />
               {waterPlaygroundActive && <NoahsArk terrain={terrain} exaggeration={exaggeration} waterLevel={waterLevel} />}
-              {placedItems && placedItems.length > 0 && (
+              {placedItems !== null && placedItems !== undefined && (
                 <MapPlacementOverlay terrain={terrain} exaggeration={exaggeration} items={placedItems} />
               )}
             </>

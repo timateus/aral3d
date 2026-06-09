@@ -1,9 +1,44 @@
-import { useMemo, useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useMemo, useRef, useEffect } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { TerrainData } from '@/lib/geotiff-loader';
 import { geoToMeshPos } from './GeoFeatures';
 import { PlacedItem, getItemDef, MapBuilderItemId, CUBE_SIZE } from '@/lib/map-builder-items';
+
+// Listens to Level 5 zoom/top-down events from MapBuilderHUD and tweens FOV.
+// Top-down = bird's-eye proxy via wide FOV (95). Default first-person = 50.
+function Level5ZoomController() {
+  const { camera } = useThree();
+  const targetFov = useRef<number>((camera as THREE.PerspectiveCamera).fov ?? 50);
+  const topDown = useRef(false);
+  useEffect(() => {
+    const onZoom = (e: Event) => {
+      const { delta } = (e as CustomEvent<{ delta: number }>).detail;
+      targetFov.current = Math.max(28, Math.min(95, targetFov.current - delta * 30));
+    };
+    const onTop = () => {
+      topDown.current = !topDown.current;
+      targetFov.current = topDown.current ? 95 : 50;
+    };
+    window.addEventListener('level5:zoom', onZoom);
+    window.addEventListener('level5:topdown', onTop);
+    return () => {
+      window.removeEventListener('level5:zoom', onZoom);
+      window.removeEventListener('level5:topdown', onTop);
+    };
+  }, []);
+  useFrame(() => {
+    const cam = camera as THREE.PerspectiveCamera;
+    if (!cam.isPerspectiveCamera) return;
+    const next = cam.fov + (targetFov.current - cam.fov) * 0.18;
+    if (Math.abs(next - cam.fov) > 0.05) {
+      cam.fov = next;
+      cam.updateProjectionMatrix();
+    }
+  });
+  return null;
+}
+
 
 interface Props {
   terrain: TerrainData;
@@ -200,7 +235,7 @@ function CreatureBody({ type }: { type: MapBuilderItemId }) {
   );
 }
 
-function Creature({ type }: { type: MapBuilderItemId }) {
+function Creature({ type, bornAt }: { type: MapBuilderItemId; bornAt?: number }) {
   const ref = useRef<THREE.Group>(null);
   const seed = useMemo(() => Math.random() * 1000, []);
   const radius = type === 'fish' ? 0.25 : 0.35;
@@ -215,6 +250,12 @@ function Creature({ type }: { type: MapBuilderItemId }) {
       : Math.abs(Math.sin(t * 4)) * 0.015;
     const yaw = Math.atan2(-Math.sin(t * 0.9) * 0.9 * radius, -Math.sin(t) * radius);
     ref.current.rotation.y = yaw;
+    // Grow-in over 2s for newborn fish (bornAt set by sim reproduction).
+    if (bornAt) {
+      const age = (performance.now() - bornAt) / 2000;
+      const s = Math.min(1, Math.max(0.15, age));
+      ref.current.scale.setScalar(s);
+    }
   });
   return (
     <group ref={ref}>
@@ -243,6 +284,7 @@ const MapPlacementOverlay = ({ terrain, exaggeration, items }: Props) => {
 
   return (
     <group>
+      <Level5ZoomController />
       {positioned.map(({ it, pos }) => {
         const def = getItemDef(it.type);
         const stack = it.stack ?? 0;
@@ -255,12 +297,13 @@ const MapPlacementOverlay = ({ terrain, exaggeration, items }: Props) => {
                 ? <Flower />
                 : def.kind === 'block'
                   ? <BlockCube type={it.type} />
-                  : <Creature type={it.type} />}
+                  : <Creature type={it.type} bornAt={it.bornAt} />}
           </group>
         );
       })}
     </group>
   );
 };
+
 
 export default MapPlacementOverlay;

@@ -28,11 +28,8 @@ import VoxelAutopilot from '@/components/voxel/VoxelAutopilot';
 import { initAudio, playSfx, startAmbient, stopAmbient, setMuted, isMuted } from '@/lib/voxel/voxel-audio';
 import { createSaplingTracker, type SaplingTracker } from '@/lib/voxel/saxaul';
 import { floodFillCanal } from '@/lib/voxel/water-fill';
-import { tickWaterFlow } from '@/lib/voxel/water-flow';
 import { STRUCTURES, placeStructure } from '@/lib/voxel/structures';
 import type { BlockId } from '@/lib/voxel/block-types';
-import { useThree } from '@react-three/fiber';
-import { loadWorldDiff, saveWorldDiff, applyDiff, snapshotColumn, type WorldDiff } from '@/lib/voxel/world-persistence';
 
 type RegionKey = 'khorezm' | 'aral';
 
@@ -84,85 +81,21 @@ const Sun3D = ({ timeRef, regionFog }: { timeRef: React.MutableRefObject<number>
   );
 };
 
-// Sapling growth + canal flood + water-flow tick
-const WorldTicker = ({ world, saplingsRef, regionWaterBlocks, onWorldMutated }: {
+// Sapling growth tick
+const WorldTicker = ({ world, saplingsRef, onWorldMutated }: {
   world: VoxelWorld;
   saplingsRef: React.MutableRefObject<SaplingTracker>;
-  regionWaterBlocks: number;
   onWorldMutated: () => void;
 }) => {
   const last = useRef(0);
-  const lastFlow = useRef(0);
   useFrame((state) => {
     const now = state.clock.elapsedTime * 1000;
-    let dirty = false;
-    if (now - lastFlow.current > 700) {
-      lastFlow.current = now;
-      if (tickWaterFlow(world, 60) > 0) dirty = true;
-    }
     if (now - last.current >= 1000) {
       last.current = now;
-      if (saplingsRef.current.tick(world, performance.now())) dirty = true;
+      if (saplingsRef.current.tick(world, performance.now())) onWorldMutated();
       const mature = saplingsRef.current.countMature();
       if (mature > 0) dispatchMissionEvent({ type: 'mature-saxaul', count: mature });
     }
-    if (dirty) onWorldMutated();
-  });
-  return null;
-};
-
-// Zoom controller: listens to 'voxel:zoom' events from VoxelPlayer (R2/L2) and
-// adjusts perspective camera FOV smoothly.
-const ZoomController = () => {
-  const { camera } = useThree();
-  const targetFov = useRef<number>((camera as THREE.PerspectiveCamera).fov ?? 75);
-  useEffect(() => {
-    const onZoom = (e: Event) => {
-      const { delta } = (e as CustomEvent<{ delta: number }>).detail;
-      // delta>0 means R2 pressed = zoom in (lower fov)
-      targetFov.current = Math.max(28, Math.min(95, targetFov.current - delta * 30));
-    };
-    window.addEventListener('voxel:zoom', onZoom);
-    return () => window.removeEventListener('voxel:zoom', onZoom);
-  }, []);
-  useFrame(() => {
-    const cam = camera as THREE.PerspectiveCamera;
-    if (!cam.isPerspectiveCamera) return;
-    const next = cam.fov + (targetFov.current - cam.fov) * 0.18;
-    if (Math.abs(next - cam.fov) > 0.05) {
-      cam.fov = next;
-      cam.updateProjectionMatrix();
-    }
-  });
-  return null;
-};
-
-// Top-down view toggle: when active, lifts the camera high above the player
-// and points it straight down. Re-press to return to first-person.
-const TopDownController = ({ playerRef }: { playerRef: React.MutableRefObject<{ x: number; z: number; yaw: number }> }) => {
-  const { camera } = useThree();
-  const active = useRef(false);
-  const saved = useRef<{ pos: THREE.Vector3; quat: THREE.Quaternion } | null>(null);
-  useEffect(() => {
-    const onToggle = () => {
-      if (!active.current) {
-        saved.current = { pos: camera.position.clone(), quat: camera.quaternion.clone() };
-        active.current = true;
-      } else {
-        if (saved.current) {
-          camera.position.copy(saved.current.pos);
-          camera.quaternion.copy(saved.current.quat);
-        }
-        active.current = false;
-      }
-    };
-    window.addEventListener('voxel:toggle-topdown', onToggle);
-    return () => window.removeEventListener('voxel:toggle-topdown', onToggle);
-  }, [camera]);
-  useFrame(() => {
-    if (!active.current) return;
-    camera.position.set(playerRef.current.x, 80, playerRef.current.z);
-    camera.lookAt(playerRef.current.x, 0, playerRef.current.z);
   });
   return null;
 };
@@ -179,19 +112,7 @@ const VoxelPage = () => {
   const [questOpen, setQuestOpen] = useState(false);
   const [muted, setMutedState] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
-  const ACTION_LIMIT = 50;
-  // Action budget is per visit to the level: starts at 50 every time the page mounts,
-  // and only PLACING blocks decrements it. Breaking is free. Reset happens on unmount.
-  const [actionsLeft, setActionsLeft] = useState<number>(ACTION_LIMIT);
-  const actionsRef = useRef(actionsLeft);
-  actionsRef.current = actionsLeft;
-  const canAct = useCallback(() => actionsRef.current > 0, []);
-  const onActionConsumed = useCallback((kind: 'break' | 'place') => {
-    if (kind !== 'place') return; // breaking is free
-    setActionsLeft((n) => Math.max(0, n - 1));
-  }, []);
-  // Reset on unmount (i.e., when the user exits the level).
-  useEffect(() => () => { try { localStorage.removeItem('voxel_actions_left_v1'); } catch {} }, []);
+
   const inv = useVoxelInventory();
   const stats = useVoxelStats();
   useVoxelMissions(); // mount the listener
@@ -222,31 +143,10 @@ const VoxelPage = () => {
       verticalExaggeration: 2.5,
       waterLevelMeters: REGIONS[region].waterLevel,
     });
-    // Re-apply any saved per-column mutations from previous visits.
-    const diff = loadWorldDiff(region);
-    if (diff) applyDiff(w, diff);
     return w;
   }, [terrain, region]);
 
-  // Persistence: collect dirty columns and write them to localStorage (debounced).
-  const diffRef = useRef<WorldDiff>({ cols: {} });
-  const saveTimer = useRef<number | null>(null);
-  useEffect(() => {
-    diffRef.current = loadWorldDiff(region) ?? { cols: {} };
-  }, [region]);
-  useEffect(() => {
-    if (!world) return;
-    const onDirty = (e: Event) => {
-      const { i, j } = (e as CustomEvent<{ i: number; j: number }>).detail;
-      diffRef.current.cols[`${i},${j}`] = snapshotColumn(world, i, j);
-      if (saveTimer.current != null) window.clearTimeout(saveTimer.current);
-      saveTimer.current = window.setTimeout(() => {
-        saveWorldDiff(region, diffRef.current);
-      }, 400);
-    };
-    window.addEventListener('voxel:column-dirty', onDirty);
-    return () => window.removeEventListener('voxel:column-dirty', onDirty);
-  }, [world, region]);
+
 
   // The water-level expressed in voxel block-y.
   const waterLevelBlocks = useMemo(() => {
@@ -541,7 +441,7 @@ const VoxelPage = () => {
           <fog attach="fog" args={cfg.fog} />
 
           <Sun3D timeRef={timeRef} regionFog={cfg.fog} />
-          <WorldTicker world={world} saplingsRef={saplingsRef} regionWaterBlocks={waterLevelBlocks} onWorldMutated={onWorldMutated} />
+          <WorldTicker world={world} saplingsRef={saplingsRef} onWorldMutated={onWorldMutated} />
 
           <VoxelTerrain world={world} version={version} />
           <Camels world={world} count={12} onMilked={onMilked} />
@@ -558,11 +458,7 @@ const VoxelPage = () => {
             consumeSelected={consumeSelected}
             onLockChange={setLocked}
             playerRef={playerRef}
-            canAct={canAct}
-            onActionConsumed={onActionConsumed}
           />
-          <ZoomController />
-          <TopDownController playerRef={playerRef} />
           <VoxelAutopilot world={world} active={demoMode} onBuild={onDemoBuild} />
         </Canvas>
       )}
@@ -570,19 +466,7 @@ const VoxelPage = () => {
       {world && <VoxelMinimap world={world} playerRef={playerRef} version={version} label={`Map · ${cfg.label}`} />}
       {world && <VoxelPlaceTags world={world} playerRef={playerRef} region={region} />}
 
-      {world && (
-        <div className="fixed top-3 right-3 z-50 flex items-center gap-1.5">
-          <div className={`px-3 py-1.5 border text-[10px] uppercase tracking-widest font-mono ${
-            actionsLeft === 0
-              ? 'bg-red-900/70 border-red-300 text-red-100 animate-pulse'
-              : actionsLeft <= 10
-                ? 'bg-amber-900/70 border-amber-300 text-amber-100'
-                : 'bg-black/60 border-white/20 text-white/80'
-          }`}>
-            Actions {actionsLeft}/{ACTION_LIMIT}
-          </div>
-        </div>
-      )}
+
 
       <VoxelHUD locked={locked} onOpenInventory={() => setInvOpen(o => !o)} />
       <VoxelTouchControls />

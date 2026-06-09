@@ -64,23 +64,12 @@ const Sheep = ({ world, count = 8, onShear }: Props) => {
       }
       if (best >= 0) { handled.value = true; onShear?.(); }
     };
-    const onSalt = (e: Event) => {
-      const halfW = world.width / 2, halfD = world.depth / 2;
-      const { i, j } = (e as CustomEvent<{ i: number; j: number }>).detail;
-      const sx = (i - halfW) + 0.5, sz = (j - halfD) + 0.5;
-      for (const s of states.current) {
-        if (!s.alive) continue;
-        const dx = s.x - sx, dz = s.z - sz;
-        if (dx*dx + dz*dz < 25) s.alive = false;
-      }
-    };
     window.addEventListener('voxel:left-click', onClick);
-    window.addEventListener('voxel:salt-placed', onSalt);
     return () => {
       window.removeEventListener('voxel:left-click', onClick);
-      window.removeEventListener('voxel:salt-placed', onSalt);
     };
   }, [onShear, world]);
+
 
   const tmpMat = useMemo(() => new THREE.Matrix4(), []);
   const tmpQuat = useMemo(() => new THREE.Quaternion(), []);
