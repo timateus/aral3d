@@ -301,6 +301,9 @@ const FaceCameraBackground = () => {
       cancelled = true;
       try { handsRef.current?.close?.(); } catch {}
       stream?.getTracks().forEach((t) => t.stop());
+      faceModeBridge.intent.azimuthRate = 0;
+      faceModeBridge.intent.polarRate = 0;
+      faceModeBridge.intent.zoomRate = 0;
     };
   }, []);
 
