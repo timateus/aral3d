@@ -253,7 +253,7 @@ const Index = () => {
   const prevSimRef = useRef(false);
   const prevGeoRef = useRef(false);
   useEffect(() => {
-    if (spectralMode && !prevSpectralRef.current) {
+    if (spectralMode && !faceMode && !prevSpectralRef.current) {
       setLevelIntro({
         n: 1,
         name: 'Choose your character',
@@ -263,7 +263,21 @@ const Index = () => {
       });
     }
     prevSpectralRef.current = spectralMode;
-  }, [spectralMode]);
+  }, [spectralMode, faceMode]);
+  const prevFaceRef = useRef(false);
+  useEffect(() => {
+    if (faceMode && !prevFaceRef.current) {
+      setLevelIntro({
+        n: 7,
+        name: 'Face as Infrastructure',
+        instructions: [
+          'The terrain is projected onto your face.',
+          'Move it with the gamepad — your silhouette becomes the map.',
+        ],
+      });
+    }
+    prevFaceRef.current = faceMode;
+  }, [faceMode]);
   useEffect(() => {
     if (ministryMode && !prevMinistryRef.current) {
       setLevelIntro({
