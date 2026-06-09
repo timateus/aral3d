@@ -1308,9 +1308,11 @@ const Index = () => {
       firstPersonBridge.school.arrived = false;
       firstPersonBridge.school.dialogOpen = false;
       firstPersonBridge.school.target = schoolTarget;
+      firstPersonBridge.school.start = schoolStart;
       setSchoolAutoWalking(false);
       setSchoolArrived(false);
       setSchoolDialogOpen(false);
+      setSchoolDistanceMeters(0);
     }
   }, [schoolTarget, setTerrainMode, setVisualMode]);
 
