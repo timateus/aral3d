@@ -230,6 +230,29 @@ type LandingView = 'main' | 'artifacts';
 const IntroOverlay = ({ onStart, onGuidedTour, onReading, onCanalTour, onAgmarTour, onObjectSelect, onStartGame, onQuadrants, onSandbox, onTraceCanals, onDustStorm, onLife, onFountains, onSpectral, onMinistry }: IntroOverlayProps) => {
   const [view, setView] = useState<LandingView>('main');
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const { stateRef: gpRef } = useGamepad();
+
+  // Gamepad: X / A on the landing page triggers Play (Choose your character).
+  // B returns from the artifacts subview to main.
+  useEffect(() => {
+    let raf = 0;
+    const tick = () => {
+      const s = gpRef.current;
+      if (s.connected) {
+        if (view === 'main') {
+          if (consumeGamepadButton('x_intro', s.buttons.x) || consumeGamepadButton('a_intro', s.buttons.a)) {
+            (onSpectral ?? onStartGame)?.();
+          }
+        } else if (view === 'artifacts') {
+          if (consumeGamepadButton('b_intro_back', s.buttons.b)) setView('main');
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, onSpectral, onStartGame]);
 
   // Dispatch auto-rotate event for the background 3D map
   useEffect(() => {
