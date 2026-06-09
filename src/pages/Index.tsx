@@ -328,21 +328,44 @@ const Index = () => {
   // Poll bridge for school distance/arrival while in school mode.
   useEffect(() => {
     if (!schoolMode) return;
+    let prevX = false;
     const interval = window.setInterval(() => {
       const p = firstPersonBridge.player;
       const t = firstPersonBridge.school.target;
-      if (!p || !t) return;
-      const R = 6371000;
-      const dLat = (t.lat - p.lat) * Math.PI / 180;
-      const dLon = (t.lon - p.lon) * Math.PI / 180;
-      const a = Math.sin(dLat / 2) ** 2 +
-        Math.cos(p.lat * Math.PI / 180) * Math.cos(t.lat * Math.PI / 180) *
-        Math.sin(dLon / 2) ** 2;
-      const meters = 2 * R * Math.asin(Math.sqrt(a));
-      setSchoolDistanceMeters(meters);
+      if (p && t) {
+        const R = 6371000;
+        const dLat = (t.lat - p.lat) * Math.PI / 180;
+        const dLon = (t.lon - p.lon) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) ** 2 +
+          Math.cos(p.lat * Math.PI / 180) * Math.cos(t.lat * Math.PI / 180) *
+          Math.sin(dLon / 2) ** 2;
+        const meters = 2 * R * Math.asin(Math.sqrt(a));
+        setSchoolDistanceMeters(meters);
+      }
       if (firstPersonBridge.school.arrived) setSchoolArrived(true);
-    }, 200);
-    return () => window.clearInterval(interval);
+      // Gamepad X (or keyboard X) opens the student dialog once arrived.
+      const pads = navigator.getGamepads?.() || [];
+      let xDown = false;
+      for (const pad of pads) {
+        if (pad && pad.buttons[2]?.pressed) { xDown = true; break; }
+      }
+      if (xDown && !prevX && firstPersonBridge.school.arrived && !firstPersonBridge.school.dialogOpen) {
+        firstPersonBridge.school.dialogOpen = true;
+        setSchoolDialogOpen(true);
+      }
+      prevX = xDown;
+    }, 120);
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.key === 'x' || e.key === 'X') && firstPersonBridge.school.arrived && !firstPersonBridge.school.dialogOpen) {
+        firstPersonBridge.school.dialogOpen = true;
+        setSchoolDialogOpen(true);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener('keydown', onKey);
+    };
   }, [schoolMode]);
 
 
