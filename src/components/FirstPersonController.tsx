@@ -166,9 +166,10 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mousedown', onDown);
       window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('wheel', onWheel);
       if (document.pointerLockElement === el) document.exitPointerLock?.();
     };
-  }, [active, gl]);
+  }, [active, gl, thirdPerson]);
 
   useFrame((_, dt) => {
     if (!active) return;
