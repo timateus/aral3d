@@ -340,7 +340,7 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
 
       <button
         data-hud
-        onClick={() => { sfx.navPrev(); onPrev(); }}
+        onClick={() => requestNav('prev')}
         className="fixed top-4 left-4 z-40 px-3 py-1.5 rounded-md bg-black/60 backdrop-blur-md border border-white/15 text-white/90 font-mono text-[11px] hover:bg-black/80"
       >← Prev</button>
       <button
@@ -351,7 +351,7 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
       {onNext && (
         <button
           data-hud
-          onClick={() => { sfx.navNext(); onNext(); }}
+          onClick={() => requestNav('next')}
           aria-label="next level"
           className="fixed right-2 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center justify-center text-white/85 hover:text-white"
           title="Next level: Kegeyli School 12"
@@ -359,6 +359,34 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
           <svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
           <span className="mt-1 px-2 py-0.5 text-[10px] font-mono border border-white/40 rounded">→ Level 6</span>
         </button>
+      )}
+
+      {/* Confirm leave-level popup */}
+      {confirmNav && (
+        <div data-hud className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="max-w-sm w-full mx-4 p-5 rounded-md border border-white/20 bg-zinc-900 text-white font-mono">
+            <div className="text-xs uppercase tracking-[0.25em] text-white/50 mb-2">leave level?</div>
+            <div className="text-sm mb-4 leading-relaxed">
+              You have <span className="text-white font-bold">{items.length}</span> placed items.
+              Going to the {confirmNav === 'next' ? 'next' : 'previous'} level will clear your build.
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => { setConfirmNav(null); sfx.exit?.(); }}
+                className="px-3 py-1.5 text-[11px] uppercase tracking-wider rounded border border-white/30 hover:bg-white/10"
+              >Stay <span className="ml-1 px-1 border border-white/40 rounded text-[9px]">{remapPadLabel('B').text}</span></button>
+              <button
+                onClick={() => {
+                  const dir = confirmNav;
+                  setConfirmNav(null);
+                  sfx[dir === 'prev' ? 'navPrev' : 'navNext']?.();
+                  if (dir === 'prev') onPrev(); else onNext?.();
+                }}
+                className="px-3 py-1.5 text-[11px] uppercase tracking-wider rounded border border-amber-300 bg-amber-300 text-black hover:brightness-110"
+              >Leave <span className="ml-1 px-1 border border-black/60 rounded text-[9px]">{remapPadLabel('A').text}</span></button>
+            </div>
+          </div>
+        </div>
       )}
 
 
