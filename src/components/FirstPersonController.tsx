@@ -273,12 +273,17 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
           );
         }
       }
-      // Pulled-back over-the-shoulder zoom so the avatar billboard is fully visible.
-      const camDist = 1.1;
+      // Pulled-back over-the-shoulder zoom; RT zooms out, LT zooms in.
+      if (gp.connected) {
+        const dz = (gp.buttons.rt - gp.buttons.lt) * dt * 1.2;
+        camDistRef.current = THREE.MathUtils.clamp(camDistRef.current + dz, 0.25, 3.5);
+      }
+      const camDist = camDistRef.current;
       const camOffsetX = Math.sin(yaw.current) * camDist;
       const camOffsetZ = Math.cos(yaw.current) * camDist;
-      camera.position.set(pos.current.x + camOffsetX, pos.current.y + 0.55, pos.current.z + camOffsetZ);
-      camera.lookAt(pos.current.x, pos.current.y + 0.15, pos.current.z);
+      const camY = pos.current.y + 0.25 + camDist * 0.35;
+      camera.position.set(pos.current.x + camOffsetX, camY, pos.current.z + camOffsetZ);
+      camera.lookAt(pos.current.x, pos.current.y + 0.1, pos.current.z);
     } else {
       camera.position.copy(pos.current);
       const quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(pitch.current, yaw.current, 0, 'YXZ'));
