@@ -34,7 +34,10 @@ const FLAMMABLE: MapBuilderItemId[] = ['seed', 'plant', 'flower', 'saxaul', 'ree
 
 const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: Props) => {
   const [selected, setSelected] = useState<MapBuilderItemId>('water');
-  const [items, setItems] = useState<PlacedItem[]>([]);
+  // Hydrate from the same key Index.tsx uses so blocks persist across exits.
+  const [items, setItems] = useState<PlacedItem[]>(() =>
+    loadState<PlacedItem[]>('placed-items', [])
+  );
   const [confirmNav, setConfirmNav] = useState<null | 'prev' | 'next'>(null);
   const [actionsLeft, setActionsLeft] = useState<number>(() => loadState<number>(ACTIONS_KEY, ACTION_LIMIT));
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -62,10 +65,17 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
   useEffect(() => { actionsRef.current = actionsLeft; saveState(ACTIONS_KEY, actionsLeft); }, [actionsLeft]);
 
   // 50-action budget resets when leaving Level 5 (component unmount). Placed
-  // items themselves persist (handled by parent via saveState('placed-items')).
+  // items themselves persist (loaded from 'placed-items' on mount above).
   useEffect(() => () => {
     try { localStorage.removeItem('aral3d:v1:' + ACTIONS_KEY); } catch {}
   }, []);
+
+  // Opening the picker needs the cursor — release pointer lock so clicks land.
+  useEffect(() => {
+    if (pickerOpen && document.pointerLockElement) {
+      try { (document as any).exitPointerLock?.(); } catch {}
+    }
+  }, [pickerOpen]);
 
   const requestNav = (dir: 'prev' | 'next') => {
     sfx[dir === 'prev' ? 'navPrev' : 'navNext']?.();
