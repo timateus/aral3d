@@ -242,10 +242,12 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
         avatarRef.current.position.set(pos.current.x, pos.current.y + 0.05, pos.current.z);
         avatarRef.current.rotation.y = yaw.current;
       }
-      const camOffsetX = Math.sin(yaw.current) * 1.0;
-      const camOffsetZ = Math.cos(yaw.current) * 1.0;
-      camera.position.set(pos.current.x + camOffsetX, pos.current.y + 0.55, pos.current.z + camOffsetZ);
-      camera.lookAt(pos.current.x, pos.current.y + 0.1, pos.current.z);
+      // Tight over-the-shoulder zoom so the avatar feels close to the camera.
+      const camDist = 0.42;
+      const camOffsetX = Math.sin(yaw.current) * camDist;
+      const camOffsetZ = Math.cos(yaw.current) * camDist;
+      camera.position.set(pos.current.x + camOffsetX, pos.current.y + 0.28, pos.current.z + camOffsetZ);
+      camera.lookAt(pos.current.x, pos.current.y + 0.05, pos.current.z);
     } else {
       camera.position.copy(pos.current);
       const quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(pitch.current, yaw.current, 0, 'YXZ'));
