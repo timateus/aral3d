@@ -1,9 +1,44 @@
-import { useMemo, useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useMemo, useRef, useEffect } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { TerrainData } from '@/lib/geotiff-loader';
 import { geoToMeshPos } from './GeoFeatures';
 import { PlacedItem, getItemDef, MapBuilderItemId, CUBE_SIZE } from '@/lib/map-builder-items';
+
+// Listens to Level 5 zoom/top-down events from MapBuilderHUD and tweens FOV.
+// Top-down = bird's-eye proxy via wide FOV (95). Default first-person = 50.
+function Level5ZoomController() {
+  const { camera } = useThree();
+  const targetFov = useRef<number>((camera as THREE.PerspectiveCamera).fov ?? 50);
+  const topDown = useRef(false);
+  useEffect(() => {
+    const onZoom = (e: Event) => {
+      const { delta } = (e as CustomEvent<{ delta: number }>).detail;
+      targetFov.current = Math.max(28, Math.min(95, targetFov.current - delta * 30));
+    };
+    const onTop = () => {
+      topDown.current = !topDown.current;
+      targetFov.current = topDown.current ? 95 : 50;
+    };
+    window.addEventListener('level5:zoom', onZoom);
+    window.addEventListener('level5:topdown', onTop);
+    return () => {
+      window.removeEventListener('level5:zoom', onZoom);
+      window.removeEventListener('level5:topdown', onTop);
+    };
+  }, []);
+  useFrame(() => {
+    const cam = camera as THREE.PerspectiveCamera;
+    if (!cam.isPerspectiveCamera) return;
+    const next = cam.fov + (targetFov.current - cam.fov) * 0.18;
+    if (Math.abs(next - cam.fov) > 0.05) {
+      cam.fov = next;
+      cam.updateProjectionMatrix();
+    }
+  });
+  return null;
+}
+
 
 interface Props {
   terrain: TerrainData;
