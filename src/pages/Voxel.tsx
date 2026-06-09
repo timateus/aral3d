@@ -149,17 +149,18 @@ const VoxelPage = () => {
   const [muted, setMutedState] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
   const ACTION_LIMIT = 50;
-  const [actionsLeft, setActionsLeft] = useState<number>(() => {
-    try { const v = parseInt(localStorage.getItem('voxel_actions_left_v1') ?? '', 10); return Number.isFinite(v) ? v : ACTION_LIMIT; } catch { return ACTION_LIMIT; }
-  });
+  // Action budget is per visit to the level: starts at 50 every time the page mounts,
+  // and only PLACING blocks decrements it. Breaking is free. Reset happens on unmount.
+  const [actionsLeft, setActionsLeft] = useState<number>(ACTION_LIMIT);
   const actionsRef = useRef(actionsLeft);
   actionsRef.current = actionsLeft;
-  useEffect(() => { try { localStorage.setItem('voxel_actions_left_v1', String(actionsLeft)); } catch {} }, [actionsLeft]);
   const canAct = useCallback(() => actionsRef.current > 0, []);
-  const onActionConsumed = useCallback((_kind: 'break' | 'place') => {
+  const onActionConsumed = useCallback((kind: 'break' | 'place') => {
+    if (kind !== 'place') return; // breaking is free
     setActionsLeft((n) => Math.max(0, n - 1));
   }, []);
-  const resetActions = useCallback(() => setActionsLeft(ACTION_LIMIT), []);
+  // Reset on unmount (i.e., when the user exits the level).
+  useEffect(() => () => { try { localStorage.removeItem('voxel_actions_left_v1'); } catch {} }, []);
   const inv = useVoxelInventory();
   const stats = useVoxelStats();
   useVoxelMissions(); // mount the listener
