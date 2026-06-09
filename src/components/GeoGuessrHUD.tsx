@@ -4,6 +4,9 @@ import { useDesignerScheme } from '@/lib/visual-mode';
 import { useTerrainMode } from '@/hooks/useTerrainMode';
 import { sfx } from '@/lib/ui-sfx';
 import { consumeGamepadButton } from '@/lib/gamepad-dedupe';
+import { supabase } from '@/integrations/supabase/client';
+import { getPlayerName } from '@/lib/game-persistence';
+import { BarChart, Bar, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import {
   GEO_LOCATIONS,
   haversineKm,
