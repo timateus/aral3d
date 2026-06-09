@@ -88,6 +88,37 @@ const GeoGuessrHUD = ({ onExit, onPrev, onNext, getAimLatLon, getLatLonAtScreen,
   const done = idx >= GEO_LOCATIONS.length;
   const totalScore = useMemo(() => history.reduce((s, g) => s + g.score, 0), [history]);
 
+  // Leaderboard: submit own score once on done, then poll top scores.
+  const playerName = useMemo(() => getPlayerName(), []);
+  const [leaderboard, setLeaderboard] = useState<Array<{ id: string; player_name: string; score: number; created_at: string }>>([]);
+  const [myEntryId, setMyEntryId] = useState<string | null>(null);
+  const submittedRef = useRef(false);
+
+  useEffect(() => {
+    if (!done || submittedRef.current) return;
+    submittedRef.current = true;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('geoguessr_scores')
+          .insert({ player_name: playerName, score: totalScore, rounds: GEO_LOCATIONS.length })
+          .select('id')
+          .single();
+        if (!error && data) setMyEntryId(data.id);
+      } catch { /* ignore */ }
+      // Fetch top scores.
+      try {
+        const { data } = await supabase
+          .from('geoguessr_scores')
+          .select('id, player_name, score, created_at')
+          .order('score', { ascending: false })
+          .limit(20);
+        if (data) setLeaderboard(data as typeof leaderboard);
+      } catch { /* ignore */ }
+    })();
+  }, [done, totalScore, playerName]);
+
+
   // Refs so the gamepad poll loop never resets and doesn't re-fire on stale presses
   const guessRef = useRef<Guess | null>(null);
   const doneRef = useRef(false);
