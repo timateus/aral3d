@@ -111,7 +111,7 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
   }, [camera, world]);
 
   const doBreak = useCallback(() => {
-    if (canAct && !canAct()) return;
+    // Breaking does NOT consume the action budget — only placing does.
     // Let mobs (camels, sheep, etc.) handle left-click first if the crosshair is on them.
     const dir = new THREE.Vector3();
     camera.getWorldDirection(dir);
@@ -128,12 +128,13 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
       onMined(removed);
       dispatchMissionEvent({ type: 'mine', block: removed });
       onActionConsumed?.('break');
+      window.dispatchEvent(new CustomEvent('voxel:column-dirty', { detail: { i: hit.i, j: hit.j } }));
       onWorldMutated();
     }
-  }, [camera, pickColumn, world, onMined, onWorldMutated, canAct, onActionConsumed]);
+  }, [camera, pickColumn, world, onMined, onWorldMutated, onActionConsumed]);
 
   const doPlace = useCallback(() => {
-    if (canAct && !canAct()) return;
+    if (canAct && !canAct()) return; // place is the action that's capped
     const block = getSelectedBlock();
     if (!block) return;
     const hit = pickColumn();
@@ -145,6 +146,7 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
       consumeSelected();
       dispatchMissionEvent({ type: 'place', block });
       onActionConsumed?.('place');
+      window.dispatchEvent(new CustomEvent('voxel:column-dirty', { detail: { i: hit.i, j: hit.j } }));
       if (block === 'salt') {
         window.dispatchEvent(new CustomEvent('voxel:salt-placed', { detail: { i: hit.i, j: hit.j } }));
       }
