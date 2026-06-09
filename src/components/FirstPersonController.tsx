@@ -229,7 +229,7 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
         // degree-distance check is closer to true meters near 42°N.
         const dLat = ll.lat - t.lat;
         const dLon = (ll.lon - t.lon) * Math.cos((t.lat * Math.PI) / 180);
-        if (!firstPersonBridge.school.arrived && Math.hypot(dLat, dLon) < 0.012) {
+        if (!firstPersonBridge.school.arrived && Math.hypot(dLat, dLon) < 0.45) {
           firstPersonBridge.school.arrived = true;
           firstPersonBridge.school.autoWalk = false;
         }
@@ -240,14 +240,14 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
     if (thirdPerson) {
       if (avatarRef.current) {
         avatarRef.current.position.set(pos.current.x, pos.current.y + 0.05, pos.current.z);
-        avatarRef.current.rotation.y = yaw.current;
+        avatarRef.current.rotation.y = Math.atan2(camera.position.x - pos.current.x, camera.position.z - pos.current.z);
       }
-      // Tight over-the-shoulder zoom so the avatar feels close to the camera.
-      const camDist = 0.42;
+      // Pulled-back over-the-shoulder zoom so the avatar billboard is fully visible.
+      const camDist = 1.1;
       const camOffsetX = Math.sin(yaw.current) * camDist;
       const camOffsetZ = Math.cos(yaw.current) * camDist;
-      camera.position.set(pos.current.x + camOffsetX, pos.current.y + 0.28, pos.current.z + camOffsetZ);
-      camera.lookAt(pos.current.x, pos.current.y + 0.05, pos.current.z);
+      camera.position.set(pos.current.x + camOffsetX, pos.current.y + 0.55, pos.current.z + camOffsetZ);
+      camera.lookAt(pos.current.x, pos.current.y + 0.15, pos.current.z);
     } else {
       camera.position.copy(pos.current);
       const quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(pitch.current, yaw.current, 0, 'YXZ'));
