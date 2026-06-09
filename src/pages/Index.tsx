@@ -1370,6 +1370,24 @@ const Index = () => {
     }
   }, [schoolTarget, schoolStart, setTerrainMode, setVisualMode, setTerrainRegion]);
 
+  // Deep-link: ?level=N (1..6) jumps straight into a game level on first mount.
+  const didDeepLinkRef = useRef(false);
+  useEffect(() => {
+    if (didDeepLinkRef.current) return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const n = parseInt(params.get('level') ?? '', 10);
+      if (n >= 1 && n <= 6) {
+        didDeepLinkRef.current = true;
+        enterGameLevel(n);
+        params.delete('level');
+        const qs = params.toString();
+        window.history.replaceState({}, '', window.location.pathname + (qs ? `?${qs}` : ''));
+      }
+    } catch { /* ignore */ }
+  }, [enterGameLevel]);
+
+
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
