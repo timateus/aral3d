@@ -380,6 +380,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
         >
           <Printer className="w-3 h-3" style={{ color: stops[0] }} />
           Print Earth
+          <PadHint label="B" color={stops[0]} bg={bgColor} />
         </button>
       </div>
 
