@@ -446,6 +446,19 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
           Print Earth
           <PadHint label="B" color={stops[0]} bg={bgColor} />
         </button>
+        <button
+          onClick={() => { sfx.make(); handleShare(); }}
+          className="group flex items-center gap-2 px-3 py-2 text-[11px] font-medium font-mono uppercase tracking-[0.18em] backdrop-blur-md transition-all hover:brightness-110"
+          style={{
+            border: `1px solid ${stops[3 % stops.length]}`,
+            background: bgColor,
+            color: inkColor,
+          }}
+          title="Share this view to Instagram"
+        >
+          <Share2 className="w-3 h-3" style={{ color: stops[3 % stops.length] }} />
+          Share to IG
+        </button>
       </div>
 
       {/* Edge right nav — same bare style as Level 2 */}
