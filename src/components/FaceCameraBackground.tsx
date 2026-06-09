@@ -1,16 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
+import { FACE_PHRASES } from '@/lib/face-phrases';
 
 // Level 7 — Face as Infrastructure.
 // Camera = background. MediaPipe Hands runs and dispatches `face:gesture`
 // events consumed by FaceGestureController inside the R3F canvas.
 //
-// Gestures (smoothed, two-handed):
-//   • one hand pan      → orbit (azimuth/polar deltas, heavily smoothed + deadzone)
-//   • two hands         → distance between hand centers controls zoom
-//   • one finger up     → reveal a random "data layer" info card while held
+// Gestures (continuous while held):
+//   • open palm LEFT/RIGHT/TOP/BOTTOM    → keep rotating in that direction
+//   • two hands close together (🙏 pray) → keep zooming IN
+//   • two hands apart (spread)           → keep zooming OUT
+//   • index finger ☝ up                  → reveal a random data-layer card
 //
-// Significant gesture transitions trigger a `face:phrase` event with random
-// typography (consumed by the page-level FacePhraseLayer).
+// Significant mode changes trigger a `face:phrase` event with a phrase
+// from the curated water-logy manifesto (rendered Level-1 style).
 
 declare global { interface Window { Hands?: any } }
 
@@ -35,51 +37,57 @@ interface GestureDetail {
   handCount: number;
 }
 
-// Phrases shown on the screen when modes change.
-const PHRASES_HANDS_LOST = ['no hands', 'show me your hands', 'where did you go', 'lift a hand'];
-const PHRASES_ONE_HAND   = ['orbit the terrain', 'pan to look around', 'one hand · navigate', 'face as infrastructure'];
-const PHRASES_TWO_HANDS  = ['spread to zoom', 'two-hand zoom engaged', 'pinch the world', 'pull the horizon'];
-const PHRASES_FINGER_UP  = ['reading the land', 'data layer revealed', 'one finger · one truth', 'the map speaks'];
-
-const FONT_FAMILIES = [
-  '"Times New Roman", serif',
-  '"Georgia", serif',
-  '"Courier New", monospace',
-  '"Impact", sans-serif',
-  '"Helvetica Neue", Arial, sans-serif',
-  '"Brush Script MT", cursive',
-  '"Trebuchet MS", sans-serif',
-  '"Palatino", serif',
-  '"Verdana", sans-serif',
-  '"Lucida Console", monospace',
-];
-const PHRASE_COLORS = ['#ffffff', '#5fffaf', '#ff5577', '#ffd166', '#5bc0ff', '#c084fc', '#fb923c'];
-
-function emitPhrase(text: string) {
-  const detail = {
-    text,
-    font: FONT_FAMILIES[Math.floor(Math.random() * FONT_FAMILIES.length)],
-    color: PHRASE_COLORS[Math.floor(Math.random() * PHRASE_COLORS.length)],
-    size: 28 + Math.floor(Math.random() * 64),
-    weight: ['300','400','700','900'][Math.floor(Math.random()*4)],
-    italic: Math.random() < 0.35,
-    transform: (['uppercase','lowercase','none'] as const)[Math.floor(Math.random()*3)],
-    x: 0.1 + Math.random() * 0.7,
-    y: 0.15 + Math.random() * 0.6,
-    rotate: (Math.random() - 0.5) * 16,
-  };
-  window.dispatchEvent(new CustomEvent('face:phrase', { detail }));
+// Cycle through manifesto phrases sequentially (random start)
+let phraseCursor = Math.floor(Math.random() * FACE_PHRASES.length);
+let lastPhraseAt = 0;
+function emitPhrase(minGapMs = 1200) {
+  const now = performance.now();
+  if (now - lastPhraseAt < minGapMs) return;
+  lastPhraseAt = now;
+  phraseCursor = (phraseCursor + 1) % FACE_PHRASES.length;
+  window.dispatchEvent(new CustomEvent('face:phrase', { detail: { text: FACE_PHRASES[phraseCursor] } }));
 }
 
-// Detect "one finger up": index extended, middle/ring/pinky folded.
+// --- Hand-shape detectors --------------------------------------------------
+function isFingerExt(lm: any[], tip: number, pip: number) {
+  return lm[tip].y < lm[pip].y - 0.015;
+}
+function isFingerFold(lm: any[], tip: number, pip: number) {
+  return lm[tip].y > lm[pip].y - 0.005;
+}
+function isOpenPalm(lm: any[]): boolean {
+  if (!lm || lm.length < 21) return false;
+  return (
+    isFingerExt(lm, 8, 6)  &&
+    isFingerExt(lm, 12, 10) &&
+    isFingerExt(lm, 16, 14) &&
+    isFingerExt(lm, 20, 18)
+  );
+}
 function isOneFingerUp(lm: any[]): boolean {
   if (!lm || lm.length < 21) return false;
-  // y is inverted in image coords (0 = top). "Extended" = tip above PIP joint.
-  const indexExt  = lm[8].y  < lm[6].y  - 0.02;
-  const midFold   = lm[12].y > lm[10].y - 0.005;
-  const ringFold  = lm[16].y > lm[14].y - 0.005;
-  const pinkyFold = lm[20].y > lm[18].y - 0.005;
-  return indexExt && midFold && ringFold && pinkyFold;
+  return (
+    isFingerExt(lm, 8, 6) &&
+    isFingerFold(lm, 12, 10) &&
+    isFingerFold(lm, 16, 14) &&
+    isFingerFold(lm, 20, 18)
+  );
+}
+
+type PalmDir = 'left' | 'right' | 'top' | 'bottom' | null;
+function palmDirection(cx: number, cy: number): PalmDir {
+  // cx, cy in [0,1] (image space — selfieMode already flipped)
+  const dx = cx - 0.5;
+  const dy = cy - 0.5;
+  const T = 0.12; // deadzone around center
+  if (Math.abs(dx) < T && Math.abs(dy) < T) return null;
+  if (Math.abs(dx) > Math.abs(dy)) {
+    // selfieMode is on so image-x already matches viewer-x. But the user
+    // sees a MIRRORED feed: their physical-left hand appears on screen-right.
+    // We want "palm on the LEFT side of the screen → rotate LEFT".
+    return dx < 0 ? 'left' : 'right';
+  }
+  return dy < 0 ? 'top' : 'bottom';
 }
 
 const FaceCameraBackground = () => {
@@ -90,16 +98,10 @@ const FaceCameraBackground = () => {
   const [error, setError] = useState<string | null>(null);
 
   const stateRef = useRef({
-    // smoothed hand center
-    smX: 0.5, smY: 0.5,
-    // smoothed two-hand spread
-    smSpread: 0.3,
-    haveSmooth: false,
-    haveSpread: false,
-    // mode tracking
     lastHandCount: 0,
+    palmDir: null as PalmDir,
+    twoHandMode: null as null | 'in' | 'out',
     fingerUpActive: false,
-    fingerUpStart: 0,
   });
 
   useEffect(() => {
@@ -139,107 +141,125 @@ const FaceCameraBackground = () => {
           const ctx = ov.getContext('2d')!;
           ctx.clearRect(0, 0, W, H);
 
-          const hands = (results.multiHandLandmarks ?? []) as any[][];
+          const handLms = (results.multiHandLandmarks ?? []) as any[][];
           const st = stateRef.current;
-          const count = hands.length;
-
-          // ---- Mode-change phrases ----
-          if (count !== st.lastHandCount) {
-            if (count === 0) emitPhrase(PHRASES_HANDS_LOST[Math.floor(Math.random()*PHRASES_HANDS_LOST.length)]);
-            else if (count === 1) emitPhrase(PHRASES_ONE_HAND[Math.floor(Math.random()*PHRASES_ONE_HAND.length)]);
-            else if (count >= 2) emitPhrase(PHRASES_TWO_HANDS[Math.floor(Math.random()*PHRASES_TWO_HANDS.length)]);
-            st.lastHandCount = count;
-          }
+          const count = handLms.length;
 
           let azimuthDelta = 0, polarDelta = 0, zoomDelta = 0;
 
-          if (count >= 1) {
-            // ---- Hand centers ----
-            const centers = hands.map((lm) => ({
-              x: (lm[0].x + lm[9].x) / 2,
-              y: (lm[0].y + lm[9].y) / 2,
-            }));
+          // ---- TWO HANDS: pray vs spread → continuous zoom ----
+          if (count >= 2) {
+            const c0 = { x: (handLms[0][0].x + handLms[0][9].x) / 2, y: (handLms[0][0].y + handLms[0][9].y) / 2 };
+            const c1 = { x: (handLms[1][0].x + handLms[1][9].x) / 2, y: (handLms[1][0].y + handLms[1][9].y) / 2 };
+            const spread = Math.hypot(c1.x - c0.x, c1.y - c0.y);
+            const NEAR = 0.18, FAR = 0.38;
+            let mode: 'in' | 'out' | null = null;
+            if (spread < NEAR) mode = 'in';
+            else if (spread > FAR) mode = 'out';
 
-            // ---- ORBIT from primary hand (heavily smoothed + deadzone) ----
-            const primary = centers[0];
-            const ALPHA = 0.18; // low-pass filter — smaller = smoother (was effectively 1.0)
-            if (!st.haveSmooth) { st.smX = primary.x; st.smY = primary.y; st.haveSmooth = true; }
-            const targetX = st.smX + (primary.x - st.smX) * ALPHA;
-            const targetY = st.smY + (primary.y - st.smY) * ALPHA;
-            const rawDx = targetX - st.smX;
-            const rawDy = targetY - st.smY;
-            const DEADZONE = 0.002;
-            const dxApplied = Math.abs(rawDx) < DEADZONE ? 0 : rawDx;
-            const dyApplied = Math.abs(rawDy) < DEADZONE ? 0 : rawDy;
-            // Lower gain — was 4.0
-            azimuthDelta = -dxApplied * 1.6;
-            polarDelta = -dyApplied * 1.6;
-            st.smX = targetX; st.smY = targetY;
-
-            // ---- ZOOM from two-hand spread ----
-            if (count >= 2) {
-              const dx = centers[1].x - centers[0].x;
-              const dy = centers[1].y - centers[0].y;
-              const spread = Math.hypot(dx, dy); // normalized 0..~1.4
-              if (!st.haveSpread) { st.smSpread = spread; st.haveSpread = true; }
-              const newSpread = st.smSpread + (spread - st.smSpread) * 0.25;
-              const ds = newSpread - st.smSpread;
-              if (Math.abs(ds) > 0.003) {
-                // spread larger → zoom IN (negative distance delta)
-                zoomDelta = -ds * 60;
-              }
-              st.smSpread = newSpread;
-            } else {
-              st.haveSpread = false;
+            if (mode !== st.twoHandMode) {
+              if (mode === 'in')      emitPhrase();
+              else if (mode === 'out') emitPhrase();
+              st.twoHandMode = mode;
             }
+            // Continuous: each frame nudges zoom while held
+            if (mode === 'in')  zoomDelta = -0.6;
+            if (mode === 'out') zoomDelta =  0.6;
 
-            // ---- ONE-FINGER-UP gesture (only when single hand visible) ----
-            const fingerUp = count === 1 && isOneFingerUp(hands[0]);
-            if (fingerUp && !st.fingerUpActive) {
-              st.fingerUpActive = true;
-              st.fingerUpStart = performance.now();
-              emitPhrase(PHRASES_FINGER_UP[Math.floor(Math.random()*PHRASES_FINGER_UP.length)]);
-              window.dispatchEvent(new CustomEvent('face:fingerup', { detail: { active: true } }));
-            } else if (!fingerUp && st.fingerUpActive) {
-              st.fingerUpActive = false;
-              window.dispatchEvent(new CustomEvent('face:fingerup', { detail: { active: false } }));
-            }
-
-            // ---- Draw hand markers (mirrored back to overlay) ----
-            ctx.lineWidth = 2;
-            centers.forEach((c, i) => {
-              const px = (1 - c.x) * W;
-              const py = c.y * H;
-              ctx.strokeStyle = i === 0 ? '#5fffaf' : '#5bc0ff';
-              ctx.beginPath(); ctx.arc(px, py, 22, 0, Math.PI * 2); ctx.stroke();
-            });
-
-            // Two-hand zoom indicator: line between hands
-            if (count >= 2) {
-              const p0 = { x: (1 - centers[0].x) * W, y: centers[0].y * H };
-              const p1 = { x: (1 - centers[1].x) * W, y: centers[1].y * H };
-              ctx.strokeStyle = '#ffd166';
-              ctx.setLineDash([6, 6]);
-              ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.stroke();
-              ctx.setLineDash([]);
-            }
-
-            // Finger-up highlight
-            if (fingerUp) {
-              const tip = hands[0][8];
-              const tx = (1 - tip.x) * W;
-              const ty = tip.y * H;
-              ctx.strokeStyle = '#ff5577';
-              ctx.lineWidth = 3;
-              ctx.beginPath(); ctx.arc(tx, ty, 30, 0, Math.PI * 2); ctx.stroke();
-            }
-          } else {
-            st.haveSmooth = false;
-            st.haveSpread = false;
+            // Reset single-hand state
+            st.palmDir = null;
             if (st.fingerUpActive) {
               st.fingerUpActive = false;
               window.dispatchEvent(new CustomEvent('face:fingerup', { detail: { active: false } }));
             }
+
+            // Draw: line + label
+            const p0 = { x: (1 - c0.x) * W, y: c0.y * H };
+            const p1 = { x: (1 - c1.x) * W, y: c1.y * H };
+            ctx.strokeStyle = mode === 'in' ? '#5fffaf' : (mode === 'out' ? '#ff5577' : '#ffd166');
+            ctx.lineWidth = 3;
+            ctx.setLineDash(mode ? [] : [6, 6]);
+            ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.stroke();
+            ctx.setLineDash([]);
+            [p0, p1].forEach((p) => {
+              ctx.beginPath(); ctx.arc(p.x, p.y, 22, 0, Math.PI * 2); ctx.stroke();
+            });
+          }
+          // ---- ONE HAND: open palm → continuous orbit ----
+          else if (count === 1) {
+            const lm = handLms[0];
+            const cx = (lm[0].x + lm[9].x) / 2;
+            const cy = (lm[0].y + lm[9].y) / 2;
+
+            st.twoHandMode = null;
+
+            if (isOpenPalm(lm)) {
+              const dir = palmDirection(cx, cy);
+              if (dir !== st.palmDir) {
+                if (dir) emitPhrase();
+                st.palmDir = dir;
+              }
+              // Continuous orbit while held
+              const SPEED = 0.025;
+              if (dir === 'left')   azimuthDelta = +SPEED;
+              if (dir === 'right')  azimuthDelta = -SPEED;
+              if (dir === 'top')    polarDelta   = +SPEED;
+              if (dir === 'bottom') polarDelta   = -SPEED;
+
+              // Visual: large arrow / circle at hand
+              const hx = (1 - cx) * W, hy = cy * H;
+              ctx.strokeStyle = '#5fffaf';
+              ctx.lineWidth = 3;
+              ctx.beginPath(); ctx.arc(hx, hy, 36, 0, Math.PI * 2); ctx.stroke();
+              if (dir) {
+                ctx.fillStyle = '#5fffaf';
+                ctx.font = 'bold 28px ui-monospace, monospace';
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                const glyph = dir === 'left' ? '←' : dir === 'right' ? '→' : dir === 'top' ? '↑' : '↓';
+                ctx.fillText(glyph, hx, hy);
+              }
+            } else {
+              st.palmDir = null;
+
+              // ☝ index up — data-layer reveal
+              const fingerUp = isOneFingerUp(lm);
+              if (fingerUp && !st.fingerUpActive) {
+                st.fingerUpActive = true;
+                emitPhrase();
+                window.dispatchEvent(new CustomEvent('face:fingerup', { detail: { active: true } }));
+              } else if (!fingerUp && st.fingerUpActive) {
+                st.fingerUpActive = false;
+                window.dispatchEvent(new CustomEvent('face:fingerup', { detail: { active: false } }));
+              }
+
+              if (fingerUp) {
+                const tip = lm[8];
+                const tx = (1 - tip.x) * W, ty = tip.y * H;
+                ctx.strokeStyle = '#ff5577';
+                ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.arc(tx, ty, 30, 0, Math.PI * 2); ctx.stroke();
+              } else {
+                const hx = (1 - cx) * W, hy = cy * H;
+                ctx.strokeStyle = '#5bc0ff';
+                ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.arc(hx, hy, 22, 0, Math.PI * 2); ctx.stroke();
+              }
+            }
+          }
+          // ---- NO HANDS ----
+          else {
+            st.palmDir = null;
+            st.twoHandMode = null;
+            if (st.fingerUpActive) {
+              st.fingerUpActive = false;
+              window.dispatchEvent(new CustomEvent('face:fingerup', { detail: { active: false } }));
+            }
+          }
+
+          // Mode-change phrase when hand-count changes meaningfully
+          if (count !== st.lastHandCount) {
+            emitPhrase();
+            st.lastHandCount = count;
           }
 
           if (azimuthDelta || polarDelta || zoomDelta) {
@@ -249,13 +269,15 @@ const FaceCameraBackground = () => {
 
           // Bottom legend
           ctx.fillStyle = 'rgba(0,0,0,0.55)';
-          ctx.fillRect(16, H - 36, 360, 20);
+          ctx.fillRect(16, H - 36, 420, 20);
           ctx.fillStyle = '#fff';
           ctx.font = '11px ui-monospace, monospace';
           ctx.fillText(
-            count === 0 ? 'raise a hand · two hands to zoom · index up for layer'
-            : count === 1 ? 'one hand · orbit  (raise two hands to zoom)'
-            : 'two hands · spread to zoom out, close to zoom in',
+            count === 0 ? 'open palm L/R/T/B · two hands together to zoom in · apart to zoom out'
+            : count === 1 ? 'open palm to orbit · ☝ index up reveals a data layer'
+            : st.twoHandMode === 'in' ? '🙏 zooming in…'
+            : st.twoHandMode === 'out' ? '↔ zooming out…'
+            : 'two hands · come closer to zoom in, spread apart to zoom out',
             22, H - 22
           );
         });
@@ -304,7 +326,7 @@ const FaceCameraBackground = () => {
       >
         {error
           ? <span className="text-red-300">⚠ {error} — allow camera access</span>
-          : <>face · {status}  ·  one hand orbits · two hands zoom · index ☝ reveals a layer</>}
+          : <>face · {status} · palm orbits · 🙏 zoom in · ↔ zoom out · ☝ data layer</>}
       </div>
     </>
   );
