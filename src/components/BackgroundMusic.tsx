@@ -96,22 +96,5 @@ export default function BackgroundMusic({ active, muted: controlledMuted, onMute
     try { localStorage.setItem('bg-music-muted', muted ? '1' : '0'); } catch {}
   }, [muted]);
 
-  if (!active) return null;
-
-  return (
-    <button
-      onClick={() => setMuted((m) => !m)}
-      aria-label={muted ? 'unmute music' : 'mute music'}
-      className="fixed bottom-5 right-5 z-[80] flex items-center gap-2 px-3 py-2 text-[10px] font-mono uppercase tracking-[0.25em] backdrop-blur-md hover:brightness-125 transition-all"
-      style={{
-        color: tint,
-        border: `1.5px solid ${tint}`,
-        background: 'rgba(0,0,0,0.45)',
-      }}
-      title={muted ? 'Music off' : 'Music on'}
-    >
-      {muted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
-      {muted ? 'sound off' : 'sound on'}
-    </button>
-  );
+  return null;
 }
