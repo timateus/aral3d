@@ -34,6 +34,18 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
   const keys = useRef<Record<string, boolean>>({});
   const prevTrigger = useRef(false);
   const avatarRef = useRef<THREE.Group>(null);
+  const npcRef = useRef<THREE.Group>(null);
+
+  const playerTex = useMemo(() => {
+    const t = new THREE.TextureLoader().load(classroomOne.url);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }, []);
+  const npcTex = useMemo(() => {
+    const t = new THREE.TextureLoader().load(schoolFront.url);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }, []);
 
   const meshWidth = 10;
   const meshHeight = 10 * (terrain.height / terrain.width);
