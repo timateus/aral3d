@@ -283,8 +283,18 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
           setSelected(PALETTE_ITEMS[(i - 1 + PALETTE_ITEMS.length) % PALETTE_ITEMS.length].id);
           sfx.click();
         }
+        if (gp.buttons.back && !prevBumpers.current.back) {
+          sfx.navPrev();
+          onPrev();
+        }
+        if (gp.buttons.start && !prevBumpers.current.start && onNext) {
+          sfx.navNext();
+          onNext();
+        }
         prevBumpers.current.lb = gp.buttons.lb;
         prevBumpers.current.rb = gp.buttons.rb;
+        prevBumpers.current.back = gp.buttons.back;
+        prevBumpers.current.start = gp.buttons.start;
       }
       raf = requestAnimationFrame(loop);
     };
