@@ -40,7 +40,7 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
   const lockedRef = useRef(false);
   const lastClickTime = useRef(0);
   const gp = useGamepad();
-  const lastGpClick = useRef({ break: false, place: false, jump: false });
+  const lastGpClick = useRef({ break: false, place: false, jump: false, inv: false, topdown: false });
   // Hold-to-repeat: after holding the button > HOLD_MS, fire every REPEAT_MS.
   const holdRef = useRef<{ break: number | null; place: number | null }>({ break: null, place: null });
   const lastRepeatRef = useRef<{ break: number; place: number }>({ break: 0, place: 0 });
@@ -261,7 +261,8 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
 
     if (moveDir.lengthSq() > 0) moveDir.normalize();
 
-    const sprint = keys.current['ShiftLeft'] || keys.current['ShiftRight'] || gs.buttons.x || touchInput.sprint;
+    // Sprint via keyboard shift (face buttons are remapped to actions).
+    const sprint = keys.current['ShiftLeft'] || keys.current['ShiftRight'] || touchInput.sprint;
     const speed = WALK_SPEED * (sprint ? SPRINT_MULT : 1);
 
     // Camera-relative basis (XZ plane only)
@@ -273,7 +274,8 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
     velocity.current.z = (tmpRight.z * moveDir.x + tmpForward.z * -moveDir.z) * speed;
 
     // Jump
-    const jumpPressed = keys.current['Space'] || gs.buttons.a || touchInput.jumpQueued;
+    // Jump via Space or LB (A is repurposed for top-down view).
+    const jumpPressed = keys.current['Space'] || gs.buttons.lb || touchInput.jumpQueued;
     if (touchInput.jumpQueued) touchInput.jumpQueued = false;
     if (jumpPressed && onGround.current) {
       velocity.current.y = JUMP_V;
@@ -330,17 +332,28 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
 
     pos.set(nx, ny, nz);
 
-    // Gamepad button-edge actions: RB = break, LB = place. RT/LT drive zoom.
+    // Gamepad face-button remap:
+    //   1 (A) = top-down zoom-out toggle
+    //   2 (B) = destroy (break)
+    //   3 (X) = build  (place)
+    //   4 (Y) = choose material (toggle inventory)
+    // RB/LB still trigger break/place as legacy shoulder shortcuts; RT/LT keep zoom.
     if (gs.connected) {
-      const rbPressed = gs.buttons.rb;
-      const lbPressed = gs.buttons.lb;
+      const breakPressed = gs.buttons.b || gs.buttons.rb;
+      const placePressed = gs.buttons.x || gs.buttons.lb;
+      const invPressed   = gs.buttons.y;
+      const topPressed   = gs.buttons.a;
       const nowMs = performance.now();
-      if (rbPressed && !lastGpClick.current.break) { doBreak(); holdRef.current.break = nowMs; lastRepeatRef.current.break = nowMs; }
-      if (!rbPressed && lastGpClick.current.break) holdRef.current.break = null;
-      if (lbPressed && !lastGpClick.current.place) { doPlace(); holdRef.current.place = nowMs; lastRepeatRef.current.place = nowMs; }
-      if (!lbPressed && lastGpClick.current.place) holdRef.current.place = null;
-      lastGpClick.current.break = rbPressed;
-      lastGpClick.current.place = lbPressed;
+      if (breakPressed && !lastGpClick.current.break) { doBreak(); holdRef.current.break = nowMs; lastRepeatRef.current.break = nowMs; }
+      if (!breakPressed && lastGpClick.current.break) holdRef.current.break = null;
+      if (placePressed && !lastGpClick.current.place) { doPlace(); holdRef.current.place = nowMs; lastRepeatRef.current.place = nowMs; }
+      if (!placePressed && lastGpClick.current.place) holdRef.current.place = null;
+      if (invPressed && !lastGpClick.current.inv) window.dispatchEvent(new CustomEvent('voxel:toggle-inventory'));
+      if (topPressed && !lastGpClick.current.topdown) window.dispatchEvent(new CustomEvent('voxel:toggle-topdown'));
+      lastGpClick.current.break = breakPressed;
+      lastGpClick.current.place = placePressed;
+      lastGpClick.current.inv = invPressed;
+      lastGpClick.current.topdown = topPressed;
 
       // R2/L2 zoom: dispatch a delta to the parent each frame while held.
       const rt = gs.buttons.rt, lt = gs.buttons.lt;
