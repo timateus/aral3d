@@ -5,8 +5,8 @@ import { TerrainData } from '@/lib/geotiff-loader';
 import { useGamepad } from '@/hooks/useGamepad';
 import { firstPersonBridge } from '@/lib/first-person-bridge';
 import { cellKey, getItemDef, CUBE_SIZE } from '@/lib/map-builder-items';
-import classroomOne from '@/assets/kegeyli-classroom-1.png.asset.json';
-import schoolFront from '@/assets/kegeyli-school-front.png.asset.json';
+import characterCat from '@/assets/character-cat.png.asset.json';
+import characterGiraffe from '@/assets/character-giraffe.png.asset.json';
 
 interface Props {
   active: boolean;
@@ -37,12 +37,12 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
   const npcRef = useRef<THREE.Group>(null);
 
   const playerTex = useMemo(() => {
-    const t = new THREE.TextureLoader().load(classroomOne.url);
+    const t = new THREE.TextureLoader().load(characterCat.url);
     t.colorSpace = THREE.SRGBColorSpace;
     return t;
   }, []);
   const npcTex = useMemo(() => {
-    const t = new THREE.TextureLoader().load(schoolFront.url);
+    const t = new THREE.TextureLoader().load(characterGiraffe.url);
     t.colorSpace = THREE.SRGBColorSpace;
     return t;
   }, []);
