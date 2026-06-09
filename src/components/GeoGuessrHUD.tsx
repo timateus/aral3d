@@ -570,9 +570,26 @@ const GeoGuessrHUD = ({ onExit, onPrev, onNext, getAimLatLon, getLatLonAtScreen,
         </button>
       )}
 
-      {done && (
+      {done && (() => {
+        // Build chart data with my live score injected if backend hasn't returned my row yet.
+        const board = leaderboard.length
+          ? leaderboard
+          : [{ id: 'local', player_name: playerName, score: totalScore, created_at: new Date().toISOString() }];
+        const hasMine = board.some((b) => b.id === myEntryId);
+        const merged = hasMine
+          ? board
+          : [...board, { id: 'local', player_name: playerName, score: totalScore, created_at: new Date().toISOString() }]
+              .sort((a, b) => b.score - a.score)
+              .slice(0, 20);
+        const myRank = merged.findIndex((b) => b.id === myEntryId || b.id === 'local') + 1;
+        const chartData = merged.map((b, i) => ({
+          name: `#${i + 1} ${b.player_name}`.slice(0, 18),
+          score: b.score,
+          isMe: b.id === myEntryId || b.id === 'local',
+        }));
+        return (
         <div
-          className="fixed top-20 right-6 bottom-6 z-50 font-mono w-[360px] flex flex-col"
+          className="fixed top-20 right-6 bottom-6 z-50 font-mono w-[460px] flex flex-col"
           style={{
             background: bgColor,
             color: inkColor,
@@ -590,9 +607,44 @@ const GeoGuessrHUD = ({ onExit, onPrev, onNext, getAimLatLon, getLatLonAtScreen,
             <div className="text-[10px] opacity-60 text-center">
               / {GEO_LOCATIONS.length * 5000} · pins on the map
             </div>
+            {myRank > 0 && (
+              <div className="mt-2 text-[11px] uppercase tracking-[0.3em] text-center" style={{ color: accent }}>
+                you are <span className="font-bold">#{myRank}</span> · playing as {playerName}
+              </div>
+            )}
+          </div>
+
+          <div className="px-3 pt-3 pb-2" style={{ borderBottom: `1px solid ${inkColor}22` }}>
+            <div className="text-[10px] uppercase tracking-[0.4em] opacity-70 mb-2 px-2">top 20 plays</div>
+            <div style={{ width: '100%', height: Math.max(160, chartData.length * 16) }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} layout="vertical" margin={{ top: 2, right: 32, left: 8, bottom: 2 }}>
+                  <XAxis type="number" hide />
+                  <YAxis
+                    dataKey="name"
+                    type="category"
+                    width={130}
+                    tick={{ fill: inkColor, fontSize: 9, fontFamily: 'monospace' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    cursor={{ fill: `${inkColor}10` }}
+                    contentStyle={{ background: bgColor, border: `1px solid ${inkColor}55`, color: inkColor, fontSize: 11 }}
+                    formatter={(v: number) => [v.toLocaleString(), 'score']}
+                  />
+                  <Bar dataKey="score" radius={[0, 2, 2, 0]} label={{ position: 'right', fill: inkColor, fontSize: 9, formatter: (v: number) => v.toLocaleString() }}>
+                    {chartData.map((d, i) => (
+                      <Cell key={i} fill={d.isMe ? accent : inkColor} fillOpacity={d.isMe ? 1 : 0.35} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
 
           <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
+            <div className="text-[10px] uppercase tracking-[0.4em] opacity-70 mb-1 px-1">your rounds</div>
             {history.map((g, i) => (
               <div
                 key={i}
@@ -619,6 +671,7 @@ const GeoGuessrHUD = ({ onExit, onPrev, onNext, getAimLatLon, getLatLonAtScreen,
               </div>
             ))}
           </div>
+
 
           <div className="flex justify-center gap-2 px-3 py-3" style={{ borderTop: `1px solid ${inkColor}22` }}>
             <button
