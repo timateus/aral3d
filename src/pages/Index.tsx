@@ -425,7 +425,9 @@ const Index = () => {
   const [hideTerrainSurface, setHideTerrainSurface] = useState<boolean>(false);
   // Start ~7km south of the school so the tiny avatar has a meaningful walk
   // but doesn't have to traverse the whole map.
-  const schoolStart = useMemo(() => ({ lat: 42.695, lon: 59.5618668 }), []);
+  // Start at the NE corner of the Khorezm region so the walk to the school
+  // (which sits at the far west edge) is a real journey.
+  const schoolStart = useMemo(() => ({ lat: 42.95, lon: 62.2 }), []);
   const schoolTarget = useMemo(() => ({ lat: 42.7574883, lon: 59.5618668 }), []);
 
   // Lifted data panel state
