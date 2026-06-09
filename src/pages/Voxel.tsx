@@ -137,6 +137,36 @@ const ZoomController = () => {
   return null;
 };
 
+// Top-down view toggle: when active, lifts the camera high above the player
+// and points it straight down. Re-press to return to first-person.
+const TopDownController = ({ playerRef }: { playerRef: React.MutableRefObject<{ x: number; z: number; yaw: number }> }) => {
+  const { camera } = useThree();
+  const active = useRef(false);
+  const saved = useRef<{ pos: THREE.Vector3; quat: THREE.Quaternion } | null>(null);
+  useEffect(() => {
+    const onToggle = () => {
+      if (!active.current) {
+        saved.current = { pos: camera.position.clone(), quat: camera.quaternion.clone() };
+        active.current = true;
+      } else {
+        if (saved.current) {
+          camera.position.copy(saved.current.pos);
+          camera.quaternion.copy(saved.current.quat);
+        }
+        active.current = false;
+      }
+    };
+    window.addEventListener('voxel:toggle-topdown', onToggle);
+    return () => window.removeEventListener('voxel:toggle-topdown', onToggle);
+  }, [camera]);
+  useFrame(() => {
+    if (!active.current) return;
+    camera.position.set(playerRef.current.x, 80, playerRef.current.z);
+    camera.lookAt(playerRef.current.x, 0, playerRef.current.z);
+  });
+  return null;
+};
+
 
 const VoxelPage = () => {
   const [region, setRegion] = useState<RegionKey>('khorezm');
