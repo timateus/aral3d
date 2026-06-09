@@ -309,17 +309,17 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
     <>
       <group ref={avatarRef}>
         <mesh>
-          <planeGeometry args={[0.42, 0.56]} />
-          <meshBasicMaterial map={playerTex} transparent toneMapped={false} side={THREE.DoubleSide} />
+          <planeGeometry args={[0.5, 0.75]} />
+          <meshBasicMaterial map={playerTex} transparent toneMapped={false} side={THREE.DoubleSide} alphaTest={0.05} />
         </mesh>
-        <pointLight color="#f0c674" intensity={0.35} distance={0.8} />
+        <pointLight color="#3b82f6" intensity={0.45} distance={1.0} />
       </group>
       <group ref={npcRef}>
         <mesh>
-          <planeGeometry args={[0.52, 0.7]} />
-          <meshBasicMaterial map={npcTex} transparent toneMapped={false} side={THREE.DoubleSide} />
+          <planeGeometry args={[0.55, 0.82]} />
+          <meshBasicMaterial map={npcTex} transparent toneMapped={false} side={THREE.DoubleSide} alphaTest={0.05} />
         </mesh>
-        <pointLight color="#8ec8e8" intensity={0.4} distance={1.2} />
+        <pointLight color="#f48fb1" intensity={0.5} distance={1.4} />
       </group>
     </>
   );
