@@ -11,6 +11,7 @@ import {
 import { firstPersonBridge } from '@/lib/first-person-bridge';
 import { sfx } from '@/lib/ui-sfx';
 import { useGamepad } from '@/hooks/useGamepad';
+import { remapPadLabel } from '@/lib/pad-labels';
 
 interface Props {
   onExit: () => void;
