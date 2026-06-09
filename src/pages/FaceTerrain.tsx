@@ -48,25 +48,28 @@ function drawGrid(ctx: CanvasRenderingContext2D, w: number, h: number) {
   ctx.fillRect(0, 0, w, h);
 }
 
-// Build a vertical topographic-style gradient (water -> sand -> grass -> rock -> snow).
-let terrainGradient: HTMLCanvasElement | null = null;
-function getTerrainGradient(h: number) {
-  if (terrainGradient && terrainGradient.height === h) return terrainGradient;
-  const c = document.createElement('canvas');
-  c.width = 8;
-  c.height = h;
-  const ctx = c.getContext('2d')!;
-  const g = ctx.createLinearGradient(0, 0, 0, h);
-  g.addColorStop(0.0, '#f4f4f6'); // snow
-  g.addColorStop(0.18, '#8a8275'); // rock
-  g.addColorStop(0.45, '#4f6b3a'); // grass / saxaul
-  g.addColorStop(0.72, '#d9c389'); // sand
-  g.addColorStop(0.92, '#2b6cb0'); // water
-  g.addColorStop(1.0, '#0b3b73'); // deep
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, 8, h);
-  terrainGradient = c;
-  return c;
+// 6-stop topographic ramp sampled at any t in [0,1].
+const RAMP: [number, [number, number, number]][] = [
+  [0.00, [11, 59, 115]],   // deep water
+  [0.22, [43, 108, 176]],  // water
+  [0.42, [217, 195, 137]], // sand
+  [0.62, [79, 107, 58]],   // grass / saxaul
+  [0.82, [138, 130, 117]], // rock
+  [1.00, [244, 244, 246]], // snow
+];
+function rampColor(t: number, out: [number, number, number]) {
+  if (t <= 0) { const c = RAMP[0][1]; out[0]=c[0]; out[1]=c[1]; out[2]=c[2]; return; }
+  if (t >= 1) { const c = RAMP[RAMP.length-1][1]; out[0]=c[0]; out[1]=c[1]; out[2]=c[2]; return; }
+  for (let i = 1; i < RAMP.length; i++) {
+    if (t <= RAMP[i][0]) {
+      const a = RAMP[i-1], b = RAMP[i];
+      const k = (t - a[0]) / (b[0] - a[0]);
+      out[0] = a[1][0] + (b[1][0] - a[1][0]) * k;
+      out[1] = a[1][1] + (b[1][1] - a[1][1]) * k;
+      out[2] = a[1][2] + (b[1][2] - a[1][2]) * k;
+      return;
+    }
+  }
 }
 
 const FaceTerrain = () => {
@@ -103,64 +106,90 @@ const FaceTerrain = () => {
         const W = (c.width = v.videoWidth || 1280);
         const H = (c.height = v.videoHeight || 720);
 
+        // Internal processing resolution (downscaled for speed).
+        const PW = 480;
+        const PH = Math.round((PW * H) / W);
+        const procPerson = document.createElement('canvas');
+        procPerson.width = PW; procPerson.height = PH;
+        const ppctx = procPerson.getContext('2d')!;
+        const procMask = document.createElement('canvas');
+        procMask.width = PW; procMask.height = PH;
+        const pmctx = procMask.getContext('2d')!;
+        const terrainOut = document.createElement('canvas');
+        terrainOut.width = PW; terrainOut.height = PH;
+        const toctx = terrainOut.getContext('2d')!;
+        const terrainImage = toctx.createImageData(PW, PH);
+
         const composite = (results: any) => {
-          // 1) grid background
+          // 1) grid background (full res)
           drawGrid(ctx, W, H);
 
-          // 2) cut person from camera using the segmentation mask
-          //    person canvas = video * mask
-          const personCanvas = document.createElement('canvas');
-          personCanvas.width = W;
-          personCanvas.height = H;
-          const pctx = personCanvas.getContext('2d')!;
-          // mirror so it feels like a mirror
-          pctx.save();
-          pctx.translate(W, 0);
-          pctx.scale(-1, 1);
-          pctx.drawImage(results.image ?? v, 0, 0, W, H);
-          pctx.restore();
-          pctx.globalCompositeOperation = 'destination-in';
-          pctx.save();
-          pctx.translate(W, 0);
-          pctx.scale(-1, 1);
-          pctx.drawImage(results.segmentationMask, 0, 0, W, H);
-          pctx.restore();
+          // 2) Render mirrored video + mirrored mask into small proc canvases.
+          ppctx.save(); ppctx.translate(PW, 0); ppctx.scale(-1, 1);
+          ppctx.drawImage(results.image ?? v, 0, 0, PW, PH);
+          ppctx.restore();
+          pmctx.clearRect(0, 0, PW, PH);
+          pmctx.save(); pmctx.translate(PW, 0); pmctx.scale(-1, 1);
+          pmctx.drawImage(results.segmentationMask, 0, 0, PW, PH);
+          pmctx.restore();
 
-          // 3) draw the person on top of the grid
-          ctx.drawImage(personCanvas, 0, 0);
+          const personPx = ppctx.getImageData(0, 0, PW, PH).data;
+          const maskPx = pmctx.getImageData(0, 0, PW, PH).data;
+          const out = terrainImage.data;
 
-          // 4) terrain gradient overlay — clipped to the person silhouette
-          const overlay = document.createElement('canvas');
-          overlay.width = W;
-          overlay.height = H;
-          const octx = overlay.getContext('2d')!;
-          octx.drawImage(getTerrainGradient(H), 0, 0, W, H);
-          octx.globalCompositeOperation = 'destination-in';
-          octx.save();
-          octx.translate(W, 0);
-          octx.scale(-1, 1);
-          octx.drawImage(results.segmentationMask, 0, 0, W, H);
-          octx.restore();
-
-          ctx.globalCompositeOperation = 'multiply';
-          ctx.globalAlpha = 0.85;
-          ctx.drawImage(overlay, 0, 0);
-          ctx.globalAlpha = 1;
-          ctx.globalCompositeOperation = 'source-over';
-
-          // 5) subtle contour rings on top of the silhouette
-          ctx.save();
-          ctx.globalCompositeOperation = 'source-atop';
-          ctx.strokeStyle = 'rgba(255,255,255,0.18)';
-          ctx.lineWidth = 1;
-          const tNow = performance.now() / 1000;
-          for (let i = 0; i < 14; i++) {
-            const y = ((i / 14) * H + (tNow * 20) % (H / 14)) % H;
-            ctx.beginPath();
-            ctx.moveTo(0, y);
-            ctx.lineTo(W, y);
-            ctx.stroke();
+          // 3) Build terrain pixels from luminance heightmap.
+          //    height = blurred luminance of person; alpha = segmentation mask.
+          //    Contour lines drawn every 1/12 of the height range.
+          const lum = new Float32Array(PW * PH);
+          for (let i = 0; i < PW * PH; i++) {
+            const r = personPx[i * 4], g = personPx[i * 4 + 1], b = personPx[i * 4 + 2];
+            lum[i] = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
           }
+          const rgb: [number, number, number] = [0, 0, 0];
+          const CONTOURS = 12;
+          for (let y = 0; y < PH; y++) {
+            for (let x = 0; x < PW; x++) {
+              const i = y * PW + x;
+              const a = maskPx[i * 4 + 3]; // mask alpha
+              if (a < 24) {
+                out[i * 4] = 0; out[i * 4 + 1] = 0; out[i * 4 + 2] = 0; out[i * 4 + 3] = 0;
+                continue;
+              }
+              const h = lum[i];
+              rampColor(h, rgb);
+
+              // simple hillshade from x-derivative
+              const xl = x > 0 ? lum[i - 1] : h;
+              const xr = x < PW - 1 ? lum[i + 1] : h;
+              const slope = (xr - xl) * 2.2; // -1..1ish
+              const shade = 1 + slope * 0.55;
+
+              // hard contour bands every 1/CONTOURS
+              const band = h * CONTOURS;
+              const frac = band - Math.floor(band);
+              const isContour = frac < 0.06 || frac > 0.94;
+              const cmul = isContour ? 0.35 : 1.0;
+
+              out[i * 4]     = Math.max(0, Math.min(255, rgb[0] * shade * cmul));
+              out[i * 4 + 1] = Math.max(0, Math.min(255, rgb[1] * shade * cmul));
+              out[i * 4 + 2] = Math.max(0, Math.min(255, rgb[2] * shade * cmul));
+              out[i * 4 + 3] = a;
+            }
+          }
+          toctx.putImageData(terrainImage, 0, 0);
+
+          // 4) Stamp the terrain person onto the grid at full res (opaque).
+          ctx.imageSmoothingEnabled = true;
+          ctx.drawImage(terrainOut, 0, 0, W, H);
+
+          // 5) Outline ring around silhouette so the body reads against the grid.
+          ctx.save();
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+          ctx.lineWidth = 2;
+          ctx.shadowColor = 'rgba(0,0,0,0.7)';
+          ctx.shadowBlur = 8;
+          ctx.drawImage(terrainOut, 0, 0, W, H); // re-draw to bake shadow halo
           ctx.restore();
         };
 
@@ -212,18 +241,29 @@ const FaceTerrain = () => {
 
       <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-3 px-4 py-2 rounded-md bg-black/60 backdrop-blur-md border border-white/15">
         <span className="text-white/90 text-[11px] tracking-wider uppercase">
-          Face Terrain · MediaPipe
+          Level 7 · Face as Infrastructure
         </span>
         <span className="text-white/40 text-[10px]">
-          camera in · background grid · terrain painted onto you
+          mediapipe segmentation · grid backdrop · terrain projected onto you
         </span>
       </div>
 
       <Link
+        to="/?level=6"
+        className="absolute top-4 left-4 px-3 py-1.5 rounded-md bg-black/60 backdrop-blur-md border border-white/15 text-white/90 text-[11px] hover:bg-black/80"
+      >← Prev</Link>
+      <Link
         to="/"
         className="absolute top-4 right-4 px-3 py-1.5 rounded-md bg-black/60 backdrop-blur-md border border-white/15 text-white/90 text-[11px] hover:bg-black/80"
+      >Exit</Link>
+      <Link
+        to="/?level=1"
+        aria-label="next level"
+        className="absolute right-2 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center justify-center text-white/85 hover:text-white"
+        title="Back to start"
       >
-        Exit
+        <svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+        <span className="mt-1 px-2 py-0.5 text-[10px] font-mono border border-white/40 rounded">→ restart</span>
       </Link>
 
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-md bg-black/60 backdrop-blur-md border border-white/15 text-white/70 text-[11px]">

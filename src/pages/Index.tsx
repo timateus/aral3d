@@ -1315,6 +1315,11 @@ const Index = () => {
   const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode && !dustMode && !traceMode && !lifeMode && !spectralMode && !ministryMode && !simMode && !geoMode && !placeMode && !schoolMode;
 
   const enterGameLevel = useCallback((level: number) => {
+    if (level === 7) {
+      // Level 7 — Face as Infrastructure (MediaPipe camera level) lives at /face.
+      window.location.assign('/face');
+      return;
+    }
     setStarted(true);
     setSpectralMode(level === 1);
     setMinistryMode(level === 2);
@@ -1371,7 +1376,7 @@ const Index = () => {
     try {
       const params = new URLSearchParams(window.location.search);
       const n = parseInt(params.get('level') ?? '', 10);
-      if (n >= 1 && n <= 6) {
+      if (n >= 1 && n <= 7) {
         didDeepLinkRef.current = true;
         enterGameLevel(n);
         params.delete('level');
@@ -1807,7 +1812,7 @@ const Index = () => {
             firstPersonBridge.school.active = false;
           }}
           onPrev={() => enterGameLevel(5)}
-          onNext={() => enterGameLevel(1)}
+          onNext={() => enterGameLevel(7)}
           onToggleAutoWalk={() => {
             const next = !schoolAutoWalking;
             setSchoolAutoWalking(next);
@@ -1834,7 +1839,7 @@ const Index = () => {
           instructions={levelIntro.instructions}
           onBegin={() => setLevelIntro(null)}
           onPrev={levelIntro.n > 1 ? () => enterGameLevel(levelIntro.n - 1) : undefined}
-          onNext={levelIntro.n < 6 ? () => enterGameLevel(levelIntro.n + 1) : undefined}
+          onNext={levelIntro.n < 7 ? () => enterGameLevel(levelIntro.n + 1) : undefined}
         />
       )}
 
