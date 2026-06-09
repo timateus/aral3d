@@ -1315,6 +1315,11 @@ const Index = () => {
   const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode && !dustMode && !traceMode && !lifeMode && !spectralMode && !ministryMode && !simMode && !geoMode && !placeMode && !schoolMode;
 
   const enterGameLevel = useCallback((level: number) => {
+    if (level === 7) {
+      // Level 7 — Face as Infrastructure (MediaPipe camera level) lives at /face.
+      window.location.assign('/face');
+      return;
+    }
     setStarted(true);
     setSpectralMode(level === 1);
     setMinistryMode(level === 2);
