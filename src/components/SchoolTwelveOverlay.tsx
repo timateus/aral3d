@@ -112,77 +112,90 @@ const SchoolTwelveOverlay = ({
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[80]" data-hud>
           <button
             onClick={() => { sfx.make(); onDialogOpen(true); }}
-            className="px-6 py-4 border border-amber-300/45 bg-black/80 text-white backdrop-blur-md text-sm font-mono uppercase tracking-[0.3em] hover:bg-black"
+            className="px-7 py-4 rounded-full border-4 border-pink-300 bg-gradient-to-r from-pink-400 via-amber-300 to-sky-400 text-white text-base font-bold tracking-wide shadow-[0_8px_0_rgba(0,0,0,0.25)] hover:scale-105 active:translate-y-1 active:shadow-[0_4px_0_rgba(0,0,0,0.25)] transition-all animate-pulse"
           >
-            talk to the student · X
+            💬 talk to the student · press X
           </button>
         </div>
       )}
 
       {dialogOpen && (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 backdrop-blur-sm" data-hud onClick={() => onDialogOpen(false)}>
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-gradient-to-br from-indigo-950/80 via-pink-900/60 to-amber-900/60 backdrop-blur-md p-6" data-hud onClick={() => onDialogOpen(false)}>
           <div
-            className="w-[min(760px,92vw)] border border-white/15 bg-[#0a0d12] text-white shadow-2xl"
+            className="w-[min(760px,94vw)] rounded-[36px] bg-gradient-to-br from-cream via-amber-50 to-pink-100 text-slate-900 shadow-[0_24px_0_rgba(0,0,0,0.25)] border-4 border-slate-900 overflow-hidden relative"
+            style={{ backgroundColor: '#fffaf0' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="grid md:grid-cols-[1.15fr_0.85fr]">
-              <div className="p-6 md:p-8 border-b md:border-b-0 md:border-r border-white/10">
-                <div className="text-[10px] font-mono uppercase tracking-[0.4em] text-amber-300/70">school 12 · kegeyli</div>
-                <h2 className="mt-3 text-3xl font-light tracking-[0.04em]">Welcome to our school</h2>
-                <p className="mt-4 text-sm leading-6 text-white/68 max-w-md">
-                  Explore student-made worlds, or come back later for the film screening once it is uploaded.
+            {/* Doodle border accents */}
+            <div className="absolute -top-4 -left-4 w-16 h-16 rounded-full bg-pink-300 border-4 border-slate-900" />
+            <div className="absolute -top-3 -right-6 w-12 h-12 rounded-full bg-amber-300 border-4 border-slate-900" />
+            <div className="absolute -bottom-5 left-12 w-10 h-10 rounded-full bg-sky-300 border-4 border-slate-900" />
+            <div className="absolute -bottom-4 -right-4 w-20 h-20 rounded-full bg-emerald-300 border-4 border-slate-900" />
+
+            <div className="grid md:grid-cols-[1.1fr_0.9fr] relative">
+              <div className="p-7 md:p-9">
+                <div className="inline-block px-3 py-1 rounded-full bg-pink-400 text-white text-[11px] font-black uppercase tracking-wider border-2 border-slate-900">
+                  ✏️ school 12 · kegeyli
+                </div>
+                <h2 className="mt-4 text-4xl font-black tracking-tight text-slate-900 leading-tight">
+                  Welcome to <span className="text-pink-500">our school!</span>
+                </h2>
+                <p className="mt-4 text-base leading-7 text-slate-700">
+                  Hi! 🎨 Try worlds the kids built, or come back later for the film screening.
                 </p>
                 <div className="mt-6 space-y-3">
                   <a
                     href="https://qilqalicity.lovable.app"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex items-center justify-between border border-white/15 bg-white/5 px-4 py-4 hover:bg-white/10 hover:border-amber-300/40 transition-colors"
+                    className="group flex items-center justify-between rounded-2xl border-[3px] border-slate-900 bg-sky-200 px-5 py-4 hover:bg-sky-300 transition-all hover:-translate-y-0.5 shadow-[0_5px_0_rgba(15,23,42,1)] hover:shadow-[0_7px_0_rgba(15,23,42,1)]"
                   >
                     <div>
-                      <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-amber-200/70">play game</div>
-                      <div className="mt-1 text-lg font-light">Qilqali City</div>
-                      <div className="text-xs text-white/45">qilqalicity.lovable.app</div>
+                      <div className="text-[10px] font-black uppercase tracking-wider text-sky-900">🎮 play game</div>
+                      <div className="mt-1 text-xl font-extrabold text-slate-900">Qilqali City</div>
+                      <div className="text-xs text-slate-700">qilqalicity.lovable.app</div>
                     </div>
-                    <ExternalLink className="h-4 w-4 text-amber-200 group-hover:translate-x-0.5 transition-transform" />
+                    <ExternalLink className="h-5 w-5 text-slate-900 group-hover:translate-x-1 transition-transform" />
                   </a>
                   <a
                     href="https://roar-and-guard.lovable.app"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex items-center justify-between border border-white/15 bg-white/5 px-4 py-4 hover:bg-white/10 hover:border-amber-300/40 transition-colors"
+                    className="group flex items-center justify-between rounded-2xl border-[3px] border-slate-900 bg-amber-200 px-5 py-4 hover:bg-amber-300 transition-all hover:-translate-y-0.5 shadow-[0_5px_0_rgba(15,23,42,1)] hover:shadow-[0_7px_0_rgba(15,23,42,1)]"
                   >
                     <div>
-                      <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-amber-200/70">play game</div>
-                      <div className="mt-1 text-lg font-light">Roar &amp; Guard</div>
-                      <div className="text-xs text-white/45">roar-and-guard.lovable.app</div>
+                      <div className="text-[10px] font-black uppercase tracking-wider text-amber-900">🦁 play game</div>
+                      <div className="mt-1 text-xl font-extrabold text-slate-900">Roar &amp; Guard</div>
+                      <div className="text-xs text-slate-700">roar-and-guard.lovable.app</div>
                     </div>
-                    <ExternalLink className="h-4 w-4 text-amber-200 group-hover:translate-x-0.5 transition-transform" />
+                    <ExternalLink className="h-5 w-5 text-slate-900 group-hover:translate-x-1 transition-transform" />
                   </a>
-                  <div className="flex items-center justify-between border border-white/10 bg-white/[0.03] px-4 py-4 opacity-70">
+                  <div className="flex items-center justify-between rounded-2xl border-[3px] border-dashed border-slate-400 bg-white/60 px-5 py-4">
                     <div>
-                      <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-white/45">film</div>
-                      <div className="mt-1 text-lg font-light">Watch the school film</div>
-                      <div className="text-xs text-white/40">coming soon</div>
+                      <div className="text-[10px] font-black uppercase tracking-wider text-slate-500">🎬 film</div>
+                      <div className="mt-1 text-xl font-extrabold text-slate-500">Watch the school film</div>
+                      <div className="text-xs text-slate-400">coming soon ✨</div>
                     </div>
-                    <Film className="h-4 w-4 text-white/40" />
+                    <Film className="h-5 w-5 text-slate-400" />
                   </div>
                 </div>
               </div>
 
-              <div className="p-4 md:p-6 bg-white/[0.03]">
+              <div className="p-5 md:p-7 bg-gradient-to-br from-pink-100 to-amber-100 border-l-4 border-slate-900 border-dashed">
                 <img
                   src={schoolFrontAsset.url}
                   alt="Students standing in front of School 12 in Kegeyli"
-                  className="w-full aspect-[4/5] object-cover border border-white/10"
+                  className="w-full aspect-[4/5] object-cover rounded-2xl border-[3px] border-slate-900 shadow-[0_6px_0_rgba(15,23,42,1)]"
                   loading="lazy"
                 />
-                <div className="mt-4 text-[10px] font-mono uppercase tracking-[0.35em] text-white/45">school 12 community</div>
+                <div className="mt-4 text-center text-[11px] font-black uppercase tracking-wider text-pink-600">
+                  🌟 school 12 community 🌟
+                </div>
                 <button
                   onClick={() => onDialogOpen(false)}
-                  className="mt-6 w-full border border-white/15 px-4 py-3 text-[10px] font-mono uppercase tracking-[0.3em] text-white/70 hover:bg-white/5 hover:text-white transition-colors"
+                  className="mt-5 w-full rounded-full border-[3px] border-slate-900 bg-white px-4 py-3 text-sm font-black uppercase tracking-wide text-slate-900 hover:bg-pink-200 transition-colors shadow-[0_4px_0_rgba(15,23,42,1)] hover:shadow-[0_6px_0_rgba(15,23,42,1)] hover:-translate-y-0.5"
                 >
-                  close
+                  ✌️ bye!
                 </button>
               </div>
             </div>
