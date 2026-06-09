@@ -308,7 +308,7 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
       {/* Top bar */}
       <div data-hud className="fixed top-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-4 py-2 rounded-md bg-black/60 backdrop-blur-md border border-white/15">
         <span className="text-white/90 font-mono text-[11px] tracking-wider uppercase">Level 5 · Sandspiel Builder</span>
-        <span className="text-white/40 font-mono text-[10px]">WASD walk · X / click to drop in front · seed + water blooms · lava burns · oil pump leaks oil</span>
+        <span className="text-white/40 font-mono text-[10px]">WASD walk · X / click to drop · [ ] palette · Back/Start = prev/next level</span>
       </div>
 
       <button
