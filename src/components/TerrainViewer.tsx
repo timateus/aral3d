@@ -1,4 +1,6 @@
 import { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle, Suspense, useMemo } from 'react';
+import * as THREE from 'three';
+import { faceModeBridge } from '@/lib/face-mode-bridge';
 import AgmarProposalMarkers from './AgmarProposalMarkers';
 import GroundwaterLayer from './GroundwaterLayer';
 import SalinityLayer from './SalinityLayer';
