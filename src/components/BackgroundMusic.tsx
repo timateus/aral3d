@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { Volume2, VolumeX } from 'lucide-react';
 import track1 from '@/assets/Kobyz_Kachapuri.mp3.asset.json';
 import track2 from '@/assets/Kobyz_Kachapuri_1.mp3.asset.json';
 import track3 from '@/assets/Kobyz_Lullwater.mp3.asset.json';
@@ -8,21 +7,33 @@ const TRACKS = [track1.url, track2.url, track3.url];
 
 interface Props {
   active: boolean;
+  muted?: boolean;
+  onMutedChange?: (muted: boolean) => void;
   tint?: string;
 }
 
 /**
  * Cross-level ambient music player.
  * - Picks a random track on `active` true, advances to the next when one ends.
- * - Floating bottom-right mute toggle.
+ * - Floating bottom-right mute toggle (only when not controlled externally).
  * - Volume gently fades on mount and on unmount.
  */
-export default function BackgroundMusic({ active, tint = '#ffffff' }: Props) {
+export default function BackgroundMusic({ active, muted: controlledMuted, onMutedChange, tint = '#ffffff' }: Props) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const idxRef = useRef<number>(Math.floor(Math.random() * TRACKS.length));
-  const [muted, setMuted] = useState<boolean>(() => {
+  const [internalMuted, setInternalMuted] = useState<boolean>(() => {
     try { return localStorage.getItem('bg-music-muted') === '1'; } catch { return false; }
   });
+
+  const isControlled = controlledMuted !== undefined;
+  const muted = isControlled ? controlledMuted : internalMuted;
+  const setMuted = (v: boolean) => {
+    if (isControlled) {
+      onMutedChange?.(v);
+    } else {
+      setInternalMuted(v);
+    }
+  };
 
   // Lazy-create audio element
   useEffect(() => {
