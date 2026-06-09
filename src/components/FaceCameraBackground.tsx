@@ -168,18 +168,15 @@ const FaceCameraBackground = () => {
 
   return (
     <>
-      {/* Background camera — full screen, mirrored, behind the R3F canvas */}
+      {/* Background camera — full screen, mirrored, BEHIND the R3F canvas.
+          Use negative z so the page wrapper background paints above it only if
+          opaque; we also strip the wrapper bg below when face mode is on. */}
       <video
         ref={videoRef}
         playsInline
         muted
         className="fixed inset-0 w-full h-full object-cover -scale-x-100"
         style={{ zIndex: 0 }}
-      />
-      {/* Soft vignette so the terrain reads on top */}
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{ zIndex: 1, background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.55) 100%)' }}
       />
       {/* Gesture HUD overlay (crosshair + pinch bar) — non-interactive */}
       <canvas
