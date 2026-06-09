@@ -444,7 +444,7 @@ const IntroOverlay = ({ onStart, onGuidedTour, onReading, onCanalTour, onAgmarTo
                 { label: 'Learn', desc: 'Ag-MAR water tech', onClick: () => onAgmarTour?.() },
                 { label: 'Walk', desc: 'History & canals', onClick: onGuidedTour },
                 { label: 'Compare', desc: 'Four views', onClick: () => onQuadrants?.() },
-                { label: 'Spectral', desc: 'Color-wild Earth', onClick: () => onSpectral?.() },
+                { label: 'Character', desc: 'Choose your character', onClick: () => onSpectral?.() },
                 { label: 'Sandbox', desc: 'Drop elements', onClick: () => onSandbox?.() },
                 { label: 'Trace', desc: 'Follow canals', onClick: () => onTraceCanals?.() },
                 { label: 'Dust', desc: 'Particle wind', onClick: () => onDustStorm?.() },
