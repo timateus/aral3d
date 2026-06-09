@@ -94,10 +94,15 @@ const SchoolTwelveOverlay = ({
           <div className="mb-3 text-[10px] font-mono uppercase tracking-[0.35em] text-white/45">school photos</div>
           <div className="grid grid-cols-3 gap-2">
             {photos.map((photo) => (
-              <div key={photo.src} className="space-y-1">
-                <img src={photo.src} alt={photo.alt} className="aspect-square w-full object-cover border border-white/15" loading="lazy" />
-                <div className="text-[8px] font-mono uppercase tracking-[0.22em] text-white/45 text-center">{photo.label}</div>
-              </div>
+              <button
+                key={photo.src}
+                type="button"
+                onClick={() => { sfx.make(); setLightbox({ src: photo.src, alt: photo.alt }); }}
+                className="group space-y-1 text-left"
+              >
+                <img src={photo.src} alt={photo.alt} className="aspect-square w-full object-cover border border-white/15 transition-transform group-hover:scale-[1.02] group-hover:border-amber-300/45" loading="lazy" />
+                <div className="text-[8px] font-mono uppercase tracking-[0.22em] text-white/45 text-center group-hover:text-white/80">{photo.label}</div>
+              </button>
             ))}
           </div>
         </div>
