@@ -12,44 +12,46 @@ import { firstPersonBridge } from '@/lib/first-person-bridge';
 import { sfx } from '@/lib/ui-sfx';
 import { useGamepad } from '@/hooks/useGamepad';
 import { remapPadLabel } from '@/lib/pad-labels';
+import { loadState, saveState } from '@/lib/game-persistence';
 
 interface Props {
   onExit: () => void;
   onPrev: () => void;
   onNext?: () => void;
-  /** Optional override; defaults to the "in-front-of-camera" aim from FPC. */
   getAimLatLon?: () => { lat: number; lon: number } | null;
   onItemsChange: (items: PlacedItem[]) => void;
 }
 
-
 let _uid = 0;
 const nextId = () => `pl-${++_uid}-${Date.now().toString(36)}`;
-const PLACE_INTERVAL_MS = 140;
 const SIM_TICK_MS = 220;
+const HOLD_MS = 2000;
+const REPEAT_MS = 250;
+const ACTION_LIMIT = 50;
+const ACTIONS_KEY = 'level5-actions';
+const SALT_KILL_RADIUS_CELLS = 5;
 const FLAMMABLE: MapBuilderItemId[] = ['seed', 'plant', 'flower', 'saxaul', 'reed', 'oil'];
 
 const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: Props) => {
   const [selected, setSelected] = useState<MapBuilderItemId>('water');
   const [items, setItems] = useState<PlacedItem[]>([]);
   const [confirmNav, setConfirmNav] = useState<null | 'prev' | 'next'>(null);
+  const [actionsLeft, setActionsLeft] = useState<number>(() => loadState<number>(ACTIONS_KEY, ACTION_LIMIT));
+  const [pickerOpen, setPickerOpen] = useState(false);
+
   const selectedRef = useRef(selected);
   const itemsRef = useRef(items);
-  const heldRef = useRef(false);
+  const actionsRef = useRef(actionsLeft);
   const { stateRef: gpRef } = useGamepad();
-  const prevBumpers = useRef({ lb: false, rb: false, back: false, start: false, a: false, b: false, x: false });
-  const kbMouseHeld = useRef(false);
+  const prevPad = useRef({ lb: false, rb: false, back: false, start: false, a: false, b: false, x: false, y: false, dl: false, dr: false });
 
-  const requestNav = (dir: 'prev' | 'next') => {
-    // If nothing built yet, no need to confirm.
-    if (itemsRef.current.length === 0) {
-      sfx[dir === 'prev' ? 'navPrev' : 'navNext']?.();
-      if (dir === 'prev') onPrev();
-      else onNext?.();
-      return;
-    }
-    setConfirmNav(dir);
-  };
+  // Hold-to-repeat for place + remove. After 2s of continuous hold, fire every 250ms.
+  const heldPlace = useRef<{ start: number | null; last: number }>({ start: null, last: 0 });
+  const heldRemove = useRef<{ start: number | null; last: number }>({ start: null, last: 0 });
+
+  // Fish reproduction bookkeeping.
+  const lastFishSpawn = useRef(0);
+  const fishCapRef = useRef(6);
 
   useEffect(() => { selectedRef.current = selected; }, [selected]);
   useEffect(() => {
@@ -57,6 +59,19 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
     firstPersonBridge.placedItems = items;
     onItemsChange(items);
   }, [items, onItemsChange]);
+  useEffect(() => { actionsRef.current = actionsLeft; saveState(ACTIONS_KEY, actionsLeft); }, [actionsLeft]);
+
+  // 50-action budget resets when leaving Level 5 (component unmount). Placed
+  // items themselves persist (handled by parent via saveState('placed-items')).
+  useEffect(() => () => {
+    try { localStorage.removeItem('aral3d:v1:' + ACTIONS_KEY); } catch {}
+  }, []);
+
+  const requestNav = (dir: 'prev' | 'next') => {
+    sfx[dir === 'prev' ? 'navPrev' : 'navNext']?.();
+    if (dir === 'prev') onPrev();
+    else onNext?.();
+  };
 
   const readAim = (): { lat: number; lon: number } | null => {
     if (getAimLatLon) {
@@ -66,7 +81,9 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
     return firstPersonBridge.aim;
   };
 
+  // PLACE: decrements action budget. Blocked at 0.
   const place = () => {
+    if (actionsRef.current <= 0) return;
     const ll = readAim();
     if (!ll) return;
     const snapped = snapLatLon(ll.lat, ll.lon);
@@ -75,17 +92,49 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
     const stack = def.kind === 'block'
       ? itemsRef.current.filter((it) => getItemDef(it.type).kind === 'block' && cellKey(it.lat, it.lon) === key).length
       : 0;
-    setItems((prev) => [...prev, { id: nextId(), type: selectedRef.current, lat: snapped.lat, lon: snapped.lon, stack }]);
+    const newItem: PlacedItem = {
+      id: nextId(),
+      type: selectedRef.current,
+      lat: snapped.lat,
+      lon: snapped.lon,
+      stack,
+    };
+
+    setItems((prev) => {
+      let next = [...prev, newItem];
+      // Salt kills nearby camels + fish (within 5 cells).
+      if (newItem.type === 'salt') {
+        const r = SALT_KILL_RADIUS_CELLS * CELL_DEG;
+        const r2 = r * r;
+        next = next.filter((it) => {
+          if (it.type !== 'camel' && it.type !== 'fish') return true;
+          const dlat = it.lat - newItem.lat;
+          const dlon = it.lon - newItem.lon;
+          return dlat * dlat + dlon * dlon > r2;
+        });
+      }
+      // Track fish cap = 3× current fish population at user-placement time.
+      if (newItem.type === 'fish') {
+        const fishCount = next.filter((x) => x.type === 'fish').length;
+        fishCapRef.current = Math.max(fishCapRef.current, fishCount * 3, 6);
+      }
+      return next;
+    });
+    setActionsLeft((n) => Math.max(0, n - 1));
   };
 
-  // Continuous-place loop while held
-  useEffect(() => {
-    const t = setInterval(() => { if (heldRef.current) place(); }, PLACE_INTERVAL_MS);
-    return () => clearInterval(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // REMOVE: pops the most recent item (free — does not consume action budget).
+  const remove = () => {
+    setItems((prev) => (prev.length === 0 ? prev : prev.slice(0, -1)));
+    sfx.exit?.();
+  };
 
-  // ----- Sandspiel-style simulation tick (intense) -----
+  const resetActions = () => {
+    setActionsLeft(ACTION_LIMIT);
+    sfx.click?.();
+  };
+
+  // ----- Sandspiel-style simulation tick (intense) + water flow + fish breed -----
   useEffect(() => {
     const tick = setInterval(() => {
       setItems((prev) => {
@@ -126,7 +175,6 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
         };
 
         for (const it of prev) {
-          // SEED → bloom into PLANT next to water
           if (it.type === 'seed') {
             if (hasType(it.lat, it.lon, 'water')) {
               next.push({ ...it, type: 'plant', age: 0 });
@@ -134,7 +182,6 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
             }
             next.push(it); continue;
           }
-          // PLANT → grow age, occasionally spawn FLOWER neighbors, spread to dirt
           if (it.type === 'plant') {
             const age = (it.age ?? 0) + 1;
             if (Math.random() < 0.35) {
@@ -142,7 +189,6 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
               const [dla, dlo] = dirs[Math.floor(Math.random() * 4)];
               const nlat = Math.round((it.lat + dla) / CELL_DEG) * CELL_DEG;
               const nlon = Math.round((it.lon + dlo) / CELL_DEG) * CELL_DEG;
-              const n = neighborsOf(nlat - dla, nlon - dlo);
               const occupied = cells.get(cellKey(nlat, nlon))?.some((x) => getItemDef(x.type).kind === 'block');
               if (!occupied && hasType(it.lat, it.lon, 'water')) {
                 placeBlock(Math.random() < 0.5 ? 'flower' : 'plant', nlat, nlon);
@@ -154,7 +200,6 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
             }
             next.push({ ...it, age }); continue;
           }
-          // LAVA → spawn FIRE on flammable neighbors, decay to sand
           if (it.type === 'lava') {
             for (const n of neighborsOf(it.lat, it.lon)) {
               if (FLAMMABLE.includes(n.type)) {
@@ -167,7 +212,6 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
             else next.push({ ...it, age });
             continue;
           }
-          // FIRE → spread to flammable neighbors, short lifetime, leaves smoke
           if (it.type === 'fire') {
             for (const n of neighborsOf(it.lat, it.lon)) {
               if (FLAMMABLE.includes(n.type) && Math.random() < 0.6) {
@@ -183,7 +227,6 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
             else next.push({ ...it, age });
             continue;
           }
-          // SMOKE → fades
           if (it.type === 'smoke') {
             const age = (it.age ?? 0) + 1;
             if (age >= 5) { removed.add(it.id); continue; }
@@ -192,7 +235,65 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
           next.push(it);
         }
 
-        // WATER cells: occasionally spawn fish
+        // -------- WATER HYDRAULIC FLOW --------
+        // For each cell, count its stack (height). If the top block is water and
+        // a 4-neighbor cell's stack is ≥2 lower, move one water block onto it.
+        const stackOfRaw = new Map<string, PlacedItem[]>();
+        for (const it of [...next, ...additions]) {
+          if (removed.has(it.id)) continue;
+          if (getItemDef(it.type).kind !== 'block') continue;
+          const k = cellKey(it.lat, it.lon);
+          let arr = stackOfRaw.get(k);
+          if (!arr) { arr = []; stackOfRaw.set(k, arr); }
+          arr.push(it);
+        }
+        const stackKeys = Array.from(stackOfRaw.keys());
+        // Shuffle to avoid directional bias.
+        for (let s = stackKeys.length - 1; s > 0; s--) {
+          const r = Math.floor(Math.random() * (s + 1));
+          [stackKeys[s], stackKeys[r]] = [stackKeys[r], stackKeys[s]];
+        }
+        const flowMoves = new Map<string, number>(); // id -> targetK lookup not needed; we mutate inline
+        for (const k of stackKeys) {
+          const arr = stackOfRaw.get(k)!;
+          if (arr.length === 0) continue;
+          const top = arr[arr.length - 1];
+          if (top.type !== 'water') continue;
+          const [latStr, lonStr] = k.split('|');
+          const lat = parseFloat(latStr);
+          const lon = parseFloat(lonStr);
+          const dirs = [[-CELL_DEG, 0], [CELL_DEG, 0], [0, -CELL_DEG], [0, CELL_DEG]];
+          let bestK: string | null = null;
+          let bestH = arr.length;
+          let bestLat = lat;
+          let bestLon = lon;
+          for (const [dla, dlo] of dirs) {
+            const nlat = Math.round((lat + dla) / CELL_DEG) * CELL_DEG;
+            const nlon = Math.round((lon + dlo) / CELL_DEG) * CELL_DEG;
+            const nk = cellKey(nlat, nlon);
+            const nh = (stackOfRaw.get(nk)?.length) ?? 0;
+            if (arr.length - nh < 2) continue;
+            if (nh < bestH) { bestH = nh; bestK = nk; bestLat = nlat; bestLon = nlon; }
+          }
+          if (!bestK) continue;
+          // Move: remove top water from this cell, add a fresh water block at neighbor.
+          removed.add(top.id);
+          arr.pop();
+          const newWater: PlacedItem = {
+            id: nextId(),
+            type: 'water',
+            lat: bestLat,
+            lon: bestLon,
+            stack: bestH,
+          };
+          additions.push(newWater);
+          let dst = stackOfRaw.get(bestK);
+          if (!dst) { dst = []; stackOfRaw.set(bestK, dst); }
+          dst.push(newWater);
+          flowMoves.set(top.id, 1);
+        }
+
+        // Water cells: occasionally spawn fish (existing behavior).
         const waterCells = prev.filter((x) => x.type === 'water');
         for (const w of waterCells) {
           if (Math.random() < 0.04) {
@@ -201,7 +302,26 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
           }
         }
 
-        // Oil pumps expel oil into a random adjacent cell each tick
+        // FISH REPRODUCTION — every ~5s spawn one new fish next to a random fish.
+        const nowMs = performance.now();
+        if (nowMs - lastFishSpawn.current >= 5000) {
+          lastFishSpawn.current = nowMs;
+          const fishList = [...next, ...additions].filter((x) => !removed.has(x.id) && x.type === 'fish');
+          if (fishList.length > 0 && fishList.length < fishCapRef.current) {
+            const parent = fishList[Math.floor(Math.random() * fishList.length)];
+            const dirs = [[-CELL_DEG, 0], [CELL_DEG, 0], [0, -CELL_DEG], [0, CELL_DEG]];
+            const [dla, dlo] = dirs[Math.floor(Math.random() * 4)];
+            additions.push({
+              id: nextId(),
+              type: 'fish',
+              lat: Math.round((parent.lat + dla) / CELL_DEG) * CELL_DEG,
+              lon: Math.round((parent.lon + dlo) / CELL_DEG) * CELL_DEG,
+              bornAt: nowMs,
+            });
+          }
+        }
+
+        // Oil pumps expel oil each tick.
         for (const it of prev) {
           if (it.type !== 'oilpump') continue;
           const dirs = [-CELL_DEG, 0, CELL_DEG];
@@ -219,7 +339,30 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
     return () => clearInterval(tick);
   }, []);
 
-  // Keyboard handlers
+  // Hold-to-repeat loop (rAF): first action immediate on press; after 2s of
+  // continuous hold, repeat every 250ms. Driven by heldPlace/heldRemove refs.
+  useEffect(() => {
+    let raf = 0;
+    const loop = () => {
+      const now = performance.now();
+      const h = heldPlace.current;
+      if (h.start != null && now - h.start > HOLD_MS && now - h.last > REPEAT_MS) {
+        place();
+        h.last = now;
+      }
+      const r = heldRemove.current;
+      if (r.start != null && now - r.start > HOLD_MS && now - r.last > REPEAT_MS) {
+        remove();
+        r.last = now;
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Keyboard
   useEffect(() => {
     const dn = (e: KeyboardEvent) => {
       if (e.repeat) return;
@@ -227,19 +370,25 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
       if (t && /input|textarea|select/i.test(t.tagName)) return;
       if (e.key === 'x' || e.key === 'X') {
         e.preventDefault();
-        if (!heldRef.current) place();
-        heldRef.current = true;
-        kbMouseHeld.current = true;
+        if (heldPlace.current.start == null) {
+          place();
+          heldPlace.current.start = performance.now();
+          heldPlace.current.last = performance.now();
+        }
+      } else if (e.key === 'z' || e.key === 'Z' || e.key === 'Backspace') {
+        e.preventDefault();
+        if (heldRemove.current.start == null) {
+          remove();
+          heldRemove.current.start = performance.now();
+          heldRemove.current.last = performance.now();
+        }
       } else if (e.key >= '1' && e.key <= '9') {
         const idx = parseInt(e.key, 10) - 1;
         if (PALETTE_ITEMS[idx]) { setSelected(PALETTE_ITEMS[idx].id); sfx.click(); }
       } else if (e.key === '0' && PALETTE_ITEMS[9]) {
         setSelected(PALETTE_ITEMS[9].id); sfx.click();
-      } else if (e.key === 'z' || e.key === 'Z' || e.key === 'Backspace') {
-        e.preventDefault();
-        setItems((prev) => prev.slice(0, -1));
-        sfx.exit?.();
       } else if (e.key === 'Escape') {
+        if (pickerOpen) { setPickerOpen(false); return; }
         if (document.pointerLockElement) (document as any).exitPointerLock?.();
         else onExit();
       } else if (e.key === '[' || e.key === ',') {
@@ -253,90 +402,131 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
       }
     };
     const up = (e: KeyboardEvent) => {
-      if (e.key === 'x' || e.key === 'X') {
-        heldRef.current = false;
-        kbMouseHeld.current = false;
-      }
+      if (e.key === 'x' || e.key === 'X') heldPlace.current.start = null;
+      if (e.key === 'z' || e.key === 'Z' || e.key === 'Backspace') heldRemove.current.start = null;
     };
     const md = (e: MouseEvent) => {
       const t = e.target as HTMLElement | null;
       if (t && t.closest('[data-hud], button, a, input, select, textarea')) return;
-      if (e.button === 0) { if (!heldRef.current) place(); heldRef.current = true; kbMouseHeld.current = true; }
+      if (e.button === 0) {
+        if (heldPlace.current.start == null) {
+          place();
+          heldPlace.current.start = performance.now();
+          heldPlace.current.last = performance.now();
+        }
+      } else if (e.button === 2) {
+        if (heldRemove.current.start == null) {
+          remove();
+          heldRemove.current.start = performance.now();
+          heldRemove.current.last = performance.now();
+        }
+      }
     };
-    const mu = (e: MouseEvent) => { if (e.button === 0) { heldRef.current = false; kbMouseHeld.current = false; } };
+    const mu = (e: MouseEvent) => {
+      if (e.button === 0) heldPlace.current.start = null;
+      if (e.button === 2) heldRemove.current.start = null;
+    };
+    const mc = (e: Event) => { e.preventDefault(); };
     window.addEventListener('keydown', dn);
     window.addEventListener('keyup', up);
     window.addEventListener('mousedown', md);
     window.addEventListener('mouseup', mu);
+    window.addEventListener('contextmenu', mc);
     return () => {
       window.removeEventListener('keydown', dn);
       window.removeEventListener('keyup', up);
       window.removeEventListener('mousedown', md);
       window.removeEventListener('mouseup', mu);
+      window.removeEventListener('contextmenu', mc);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [pickerOpen]);
 
-  // Gamepad polling loop
+  // Gamepad polling
+  // 4 (Y) = open material picker, 3 (X) = build, 2 (B) = destroy, 1 (A) = top-down view.
+  // RB / LB mirror build / destroy. RT / LT = zoom. dpad L/R cycles palette.
+  // Back / Start = prev / next level.
   useEffect(() => {
     let raf = 0;
     const loop = () => {
       const gp = gpRef.current;
       if (gp.connected) {
-        if (confirmNav) {
-          // While confirm popup is open: A/X = confirm, B = cancel.
-          if ((gp.buttons.a && !prevBumpers.current.a) || (gp.buttons.x && !prevBumpers.current.x)) {
-            const dir = confirmNav;
-            setConfirmNav(null);
-            sfx[dir === 'prev' ? 'navPrev' : 'navNext']?.();
-            if (dir === 'prev') onPrev(); else onNext?.();
-          } else if (gp.buttons.b && !prevBumpers.current.b) {
-            setConfirmNav(null);
-            sfx.exit?.();
-          }
-          prevBumpers.current.a = gp.buttons.a;
-          prevBumpers.current.b = gp.buttons.b;
-          prevBumpers.current.x = gp.buttons.x;
-          prevBumpers.current.back = gp.buttons.back;
-          prevBumpers.current.start = gp.buttons.start;
-        } else {
-          const padHeld = gp.buttons.x || gp.buttons.a || gp.buttons.rt > 0.4;
-          if (padHeld && !heldRef.current && !kbMouseHeld.current) place();
-          heldRef.current = kbMouseHeld.current || padHeld;
-          if (gp.buttons.rb && !prevBumpers.current.rb) {
-            const i = PALETTE_ITEMS.findIndex((x) => x.id === selectedRef.current);
-            setSelected(PALETTE_ITEMS[(i + 1) % PALETTE_ITEMS.length].id);
-            sfx.click();
-          }
-          if (gp.buttons.lb && !prevBumpers.current.lb) {
-            const i = PALETTE_ITEMS.findIndex((x) => x.id === selectedRef.current);
-            setSelected(PALETTE_ITEMS[(i - 1 + PALETTE_ITEMS.length) % PALETTE_ITEMS.length].id);
-            sfx.click();
-          }
-          if (gp.buttons.back && !prevBumpers.current.back) requestNav('prev');
-          if (gp.buttons.start && !prevBumpers.current.start && onNext) requestNav('next');
-          prevBumpers.current.a = gp.buttons.a;
-          prevBumpers.current.b = gp.buttons.b;
-          prevBumpers.current.x = (gp.buttons as any).x ?? false;
-          prevBumpers.current.lb = gp.buttons.lb;
-          prevBumpers.current.rb = gp.buttons.rb;
-          prevBumpers.current.back = gp.buttons.back;
-          prevBumpers.current.start = gp.buttons.start;
+        const buttons: any = gp.buttons;
+        const aP = !!buttons.a, bP = !!buttons.b, xP = !!buttons.x, yP = !!buttons.y;
+        const lbP = !!buttons.lb, rbP = !!buttons.rb;
+        const backP = !!buttons.back, startP = !!buttons.start;
+        const dlP = !!buttons.dpadLeft, drP = !!buttons.dpadRight;
+
+        // Build (X or RB) hold-to-repeat
+        const buildHeld = xP || rbP;
+        if (buildHeld && heldPlace.current.start == null) {
+          place();
+          heldPlace.current.start = performance.now();
+          heldPlace.current.last = performance.now();
+        } else if (!buildHeld && heldPlace.current.start != null) {
+          heldPlace.current.start = null;
         }
+        // Destroy (B or LB) hold-to-repeat
+        const destroyHeld = bP || lbP;
+        if (destroyHeld && heldRemove.current.start == null) {
+          remove();
+          heldRemove.current.start = performance.now();
+          heldRemove.current.last = performance.now();
+        } else if (!destroyHeld && heldRemove.current.start != null) {
+          heldRemove.current.start = null;
+        }
+
+        // Y rising edge: toggle material picker
+        if (yP && !prevPad.current.y) { setPickerOpen((o) => !o); sfx.click?.(); }
+        // A rising edge: top-down view toggle
+        if (aP && !prevPad.current.a) {
+          window.dispatchEvent(new CustomEvent('level5:topdown'));
+          sfx.click?.();
+        }
+        // dpad palette cycle
+        if (drP && !prevPad.current.dr) {
+          const i = PALETTE_ITEMS.findIndex((x) => x.id === selectedRef.current);
+          setSelected(PALETTE_ITEMS[(i + 1) % PALETTE_ITEMS.length].id);
+          sfx.click();
+        }
+        if (dlP && !prevPad.current.dl) {
+          const i = PALETTE_ITEMS.findIndex((x) => x.id === selectedRef.current);
+          setSelected(PALETTE_ITEMS[(i - 1 + PALETTE_ITEMS.length) % PALETTE_ITEMS.length].id);
+          sfx.click();
+        }
+        if (backP && !prevPad.current.back) requestNav('prev');
+        if (startP && !prevPad.current.start && onNext) requestNav('next');
+
+        // Triggers: RT / LT zoom
+        const rt = (buttons.rt as number) ?? 0;
+        const lt = (buttons.lt as number) ?? 0;
+        if (rt > 0.1 || lt > 0.1) {
+          const delta = (rt - lt) * 0.06;
+          window.dispatchEvent(new CustomEvent('level5:zoom', { detail: { delta } }));
+        }
+
+        prevPad.current.a = aP; prevPad.current.b = bP; prevPad.current.x = xP; prevPad.current.y = yP;
+        prevPad.current.lb = lbP; prevPad.current.rb = rbP;
+        prevPad.current.back = backP; prevPad.current.start = startP;
+        prevPad.current.dl = dlP; prevPad.current.dr = drP;
       }
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [confirmNav]);
+  }, []);
+
+  // ----------------------------- UI -----------------------------
+  const isOut = actionsLeft === 0;
+  const isLow = actionsLeft > 0 && actionsLeft <= 10;
 
   return (
     <>
       {/* Top bar */}
       <div data-hud className="fixed top-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-4 py-2 rounded-md bg-black/60 backdrop-blur-md border border-white/15">
         <span className="text-white/90 font-mono text-[11px] tracking-wider uppercase">Level 5 · Sandspiel Builder</span>
-        <span className="text-white/40 font-mono text-[10px]">WASD walk · X / click to drop · [ ] palette · Back/Start = prev/next level</span>
+        <span className="text-white/40 font-mono text-[10px]">WASD walk · X build · Z remove · Y picker · A top-down · R2/L2 zoom</span>
       </div>
 
       <button
@@ -362,36 +552,25 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
         </button>
       )}
 
-      {/* Confirm leave-level popup */}
-      {confirmNav && (
-        <div data-hud className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-sm">
-          <div className="max-w-sm w-full mx-4 p-5 rounded-md border border-white/20 bg-zinc-900 text-white font-mono">
-            <div className="text-xs uppercase tracking-[0.25em] text-white/50 mb-2">leave level?</div>
-            <div className="text-sm mb-4 leading-relaxed">
-              You have <span className="text-white font-bold">{items.length}</span> placed items.
-              Going to the {confirmNav === 'next' ? 'next' : 'previous'} level will clear your build.
-            </div>
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={() => { setConfirmNav(null); sfx.exit?.(); }}
-                className="px-3 py-1.5 text-[11px] uppercase tracking-wider rounded border border-white/30 hover:bg-white/10"
-              >Stay <span className="ml-1 px-1 border border-white/40 rounded text-[9px]">{remapPadLabel('B').text}</span></button>
-              <button
-                onClick={() => {
-                  const dir = confirmNav;
-                  setConfirmNav(null);
-                  sfx[dir === 'prev' ? 'navPrev' : 'navNext']?.();
-                  if (dir === 'prev') onPrev(); else onNext?.();
-                }}
-                className="px-3 py-1.5 text-[11px] uppercase tracking-wider rounded border border-amber-300 bg-amber-300 text-black hover:brightness-110"
-              >Leave <span className="ml-1 px-1 border border-black/60 rounded text-[9px]">{remapPadLabel('A').text}</span></button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Action budget pill (top-right, below Exit) */}
+      <div
+        data-hud
+        className={`fixed top-16 right-4 z-40 flex items-center gap-2 px-3 py-1.5 rounded-md backdrop-blur-md border font-mono text-[11px] ${
+          isOut
+            ? 'bg-red-900/70 border-red-300 text-red-100 animate-pulse'
+            : isLow
+              ? 'bg-amber-900/70 border-amber-300 text-amber-100'
+              : 'bg-black/60 border-white/15 text-white/90'
+        }`}
+      >
+        <span>Actions {actionsLeft}/{ACTION_LIMIT}</span>
+        <button
+          onClick={resetActions}
+          className="ml-1 px-2 py-0.5 text-[10px] uppercase tracking-widest border border-white/30 rounded hover:bg-white/10"
+        >Reset</button>
+      </div>
 
-
-      <div data-hud className="fixed top-16 right-4 z-40 px-3 py-1.5 rounded-md bg-black/60 backdrop-blur-md border border-white/15 text-white/90 font-mono text-[11px]">
+      <div data-hud className="fixed top-28 right-4 z-40 px-3 py-1.5 rounded-md bg-black/60 backdrop-blur-md border border-white/15 text-white/90 font-mono text-[11px]">
         Placed: <span className="text-white">{items.length}</span>
         {items.length > 0 && (
           <button onClick={() => { setItems([]); sfx.exit?.(); }} className="ml-3 underline text-white/60 hover:text-white">clear</button>
@@ -406,25 +585,45 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
             <button
               key={it.id}
               onClick={() => { setSelected(it.id); sfx.click(); }}
-              className={`flex flex-col items-center justify-center w-14 h-16 rounded-md border-2 transition-all ${
-                isSel ? 'border-white bg-white/15 scale-105' : 'border-white/15 bg-black/30 hover:border-white/40'
+              className={`flex flex-col items-center justify-center w-12 h-14 rounded border text-[18px] transition-all ${
+                isSel
+                  ? 'bg-white text-black border-white scale-110 shadow-lg'
+                  : 'bg-black/40 text-white border-white/20 hover:bg-white/10'
               }`}
-              title={`${it.label} (${i < 9 ? i + 1 : 0})`}
+              title={`${it.label} (${i + 1})`}
             >
-              <div
-                className="w-7 h-7 rounded-sm border border-white/30"
-                style={{ background: it.color, boxShadow: `0 0 8px ${it.color}66` }}
-              />
-              <div className="text-[9px] mt-1 font-mono text-white/80 uppercase tracking-wider">{it.label}</div>
-              <div className="text-[8px] font-mono text-white/40">{i < 9 ? i + 1 : 0}</div>
+              <span>{it.emoji}</span>
+              <span className="text-[8px] mt-0.5 uppercase tracking-wider opacity-70">{i + 1}</span>
             </button>
           );
         })}
       </div>
 
-      <div data-hud className="fixed bottom-28 left-1/2 -translate-x-1/2 z-40 px-3 py-1 rounded-md bg-black/60 backdrop-blur-md border border-white/15 text-white font-mono text-[11px]">
-        Placing: <span className="uppercase tracking-wider">{getItemDef(selected).label}</span>
-      </div>
+      {/* Material picker overlay (Y on gamepad) */}
+      {pickerOpen && (
+        <div data-hud className="fixed inset-0 z-[110] flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={() => setPickerOpen(false)}>
+          <div className="p-5 rounded-md border border-white/20 bg-zinc-900 text-white font-mono max-w-md" onClick={(e) => e.stopPropagation()}>
+            <div className="text-xs uppercase tracking-[0.25em] text-white/50 mb-3">Choose material</div>
+            <div className="grid grid-cols-5 gap-2">
+              {PALETTE_ITEMS.map((it) => (
+                <button
+                  key={it.id}
+                  onClick={() => { setSelected(it.id); setPickerOpen(false); sfx.click(); }}
+                  className={`flex flex-col items-center justify-center w-16 h-16 rounded border text-[22px] ${
+                    selected === it.id ? 'bg-white text-black border-white' : 'bg-black/40 text-white border-white/20 hover:bg-white/10'
+                  }`}
+                >
+                  <span>{it.emoji}</span>
+                  <span className="text-[8px] mt-0.5 uppercase opacity-70">{it.label}</span>
+                </button>
+              ))}
+            </div>
+            <div className="text-[10px] text-white/40 mt-3 text-right">
+              Press <span className="px-1 border border-white/30 rounded">{remapPadLabel('Y').text}</span> or Esc to close
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
