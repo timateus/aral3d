@@ -334,7 +334,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
       <div className="absolute top-6 left-1/2 -translate-x-1/2 z-40 text-center pointer-events-none">
         <div className="text-[10px] font-mono uppercase tracking-[0.4em] text-foreground/50">level 1</div>
         <h1 className="text-2xl font-extralight tracking-[0.4em] uppercase text-foreground/90 drop-shadow">
-          Spectral Earth
+          Choose your character
         </h1>
         <div className="mt-2 h-px w-16 mx-auto bg-foreground/30" />
       </div>
