@@ -23,14 +23,17 @@ function bgIsLight(hex: string): boolean {
   return 0.299 * r + 0.587 * g + 0.114 * b > 0.55;
 }
 
+import { remapPadLabel } from '@/lib/pad-labels';
 function PadHint({ label, bg }: { label: string; bg: string }) {
-  const ink = bgIsLight(bg) ? '#0a0a0a' : '#ffffff';
+  const remapped = remapPadLabel(label);
+  const chipBg = remapped.bg ?? bg;
+  const ink = bgIsLight(chipBg) ? '#0a0a0a' : '#ffffff';
   return (
     <span
       className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-mono font-bold leading-none rounded ml-2"
-      style={{ border: `1.5px solid ${ink}`, color: ink, background: bg, minWidth: 18 }}
+      style={{ border: `1.5px solid ${ink}`, color: ink, background: chipBg, minWidth: 18 }}
     >
-      {label}
+      {remapped.text}
     </span>
   );
 }
