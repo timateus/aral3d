@@ -1,10 +1,12 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { TerrainData } from '@/lib/geotiff-loader';
 import { useGamepad } from '@/hooks/useGamepad';
 import { firstPersonBridge } from '@/lib/first-person-bridge';
 import { cellKey, getItemDef, CUBE_SIZE } from '@/lib/map-builder-items';
+import classroomOne from '@/assets/kegeyli-classroom-1.png.asset.json';
+import schoolFront from '@/assets/kegeyli-school-front.png.asset.json';
 
 interface Props {
   active: boolean;
