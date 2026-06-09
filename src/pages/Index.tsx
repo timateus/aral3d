@@ -16,12 +16,12 @@ import SpectralEarthHUD from '@/components/SpectralEarthHUD';
 import MinistryHUD from '@/components/MinistryHUD';
 import WaterSimHUD from '@/components/WaterSimHUD';
 import GeoGuessrHUD from '@/components/GeoGuessrHUD';
-import BackgroundMusic from '@/components/BackgroundMusic';
+import SettingsGear from '@/components/SettingsGear';
 import LevelIntroSplash from '@/components/LevelIntroSplash';
 import MapBuilderHUD from '@/components/MapBuilderHUD';
 import SchoolTwelveOverlay from '@/components/SchoolTwelveOverlay';
 import SchoolPlaceOverlay from '@/components/SchoolPlaceOverlay';
-import GamepadStickFix from '@/components/GamepadStickFix';
+
 
 import { applyRandomSpectralPalette } from '@/lib/visual-mode';
 import CharacterSelect from '@/components/CharacterSelect';
