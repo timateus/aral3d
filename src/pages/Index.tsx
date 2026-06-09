@@ -1785,7 +1785,7 @@ const Index = () => {
         <MapBuilderHUD
           onExit={() => {
             setPlaceMode(false);
-            setPlacedItems([]);
+            // NOTE: do NOT clear placedItems — placed blocks must persist across visits.
             setStarted(false);
             setVisualMode(ministryPrevVisualRef.current);
           }}
