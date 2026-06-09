@@ -522,13 +522,6 @@ const VoxelPage = () => {
           }`}>
             Actions {actionsLeft}/{ACTION_LIMIT}
           </div>
-          <button
-            onClick={resetActions}
-            className="px-2 py-1.5 bg-black/60 border border-white/20 hover:bg-white/10 text-[10px] uppercase tracking-widest"
-            title="Reset action counter"
-          >
-            reset
-          </button>
         </div>
       )}
 
