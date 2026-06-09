@@ -48,25 +48,28 @@ function drawGrid(ctx: CanvasRenderingContext2D, w: number, h: number) {
   ctx.fillRect(0, 0, w, h);
 }
 
-// Build a vertical topographic-style gradient (water -> sand -> grass -> rock -> snow).
-let terrainGradient: HTMLCanvasElement | null = null;
-function getTerrainGradient(h: number) {
-  if (terrainGradient && terrainGradient.height === h) return terrainGradient;
-  const c = document.createElement('canvas');
-  c.width = 8;
-  c.height = h;
-  const ctx = c.getContext('2d')!;
-  const g = ctx.createLinearGradient(0, 0, 0, h);
-  g.addColorStop(0.0, '#f4f4f6'); // snow
-  g.addColorStop(0.18, '#8a8275'); // rock
-  g.addColorStop(0.45, '#4f6b3a'); // grass / saxaul
-  g.addColorStop(0.72, '#d9c389'); // sand
-  g.addColorStop(0.92, '#2b6cb0'); // water
-  g.addColorStop(1.0, '#0b3b73'); // deep
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, 8, h);
-  terrainGradient = c;
-  return c;
+// 6-stop topographic ramp sampled at any t in [0,1].
+const RAMP: [number, [number, number, number]][] = [
+  [0.00, [11, 59, 115]],   // deep water
+  [0.22, [43, 108, 176]],  // water
+  [0.42, [217, 195, 137]], // sand
+  [0.62, [79, 107, 58]],   // grass / saxaul
+  [0.82, [138, 130, 117]], // rock
+  [1.00, [244, 244, 246]], // snow
+];
+function rampColor(t: number, out: [number, number, number]) {
+  if (t <= 0) { const c = RAMP[0][1]; out[0]=c[0]; out[1]=c[1]; out[2]=c[2]; return; }
+  if (t >= 1) { const c = RAMP[RAMP.length-1][1]; out[0]=c[0]; out[1]=c[1]; out[2]=c[2]; return; }
+  for (let i = 1; i < RAMP.length; i++) {
+    if (t <= RAMP[i][0]) {
+      const a = RAMP[i-1], b = RAMP[i];
+      const k = (t - a[0]) / (b[0] - a[0]);
+      out[0] = a[1][0] + (b[1][0] - a[1][0]) * k;
+      out[1] = a[1][1] + (b[1][1] - a[1][1]) * k;
+      out[2] = a[1][2] + (b[1][2] - a[1][2]) * k;
+      return;
+    }
+  }
 }
 
 const FaceTerrain = () => {
