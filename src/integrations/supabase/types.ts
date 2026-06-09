@@ -14,7 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      geoguessr_scores: {
+        Row: {
+          created_at: string
+          id: string
+          player_name: string
+          rounds: number
+          score: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          player_name?: string
+          rounds: number
+          score: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          player_name?: string
+          rounds?: number
+          score?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
