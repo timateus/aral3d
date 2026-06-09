@@ -6,6 +6,7 @@ import { useDesignerScheme } from '@/lib/visual-mode';
 import { sfx } from '@/lib/ui-sfx';
 import { useGamepad } from '@/hooks/useGamepad';
 import { consumeGamepadButton } from '@/lib/gamepad-dedupe';
+import { remapPadLabel } from '@/lib/pad-labels';
 
 
 function bgIsLight(hex: string): boolean {
