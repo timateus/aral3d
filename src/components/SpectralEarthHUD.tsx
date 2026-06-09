@@ -257,6 +257,70 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
     w.document.close();
   };
 
+  // Capture current canvas, ask for IG handle, then share to Instagram.
+  // Pragmatic flow (no Meta API approval): on mobile we use the Web Share API
+  // to hand the image off to the Instagram app with a prefilled caption that
+  // @-tags the user (so when they post, the handle is in the caption — they
+  // can also add it as a collaborator in IG's composer). On desktop we
+  // download the PNG, copy the caption to clipboard, and open instagram.com.
+  const handleShare = async () => {
+    const canvas = document.querySelector('canvas') as HTMLCanvasElement | null;
+    if (!canvas) return;
+    const stored = (() => { try { return localStorage.getItem('ig-handle') || ''; } catch { return ''; } })();
+    const raw = window.prompt(
+      'Your Instagram username (we’ll tag you in the caption and invite you as a collaborator):',
+      stored,
+    );
+    if (raw == null) return;
+    const handle = raw.trim().replace(/^@+/, '').replace(/[^A-Za-z0-9._]/g, '');
+    if (!handle) return;
+    try { localStorage.setItem('ig-handle', handle); } catch {}
+
+    const blob: Blob = await new Promise((res) =>
+      canvas.toBlob((b) => res(b as Blob), 'image/png', 0.95)!
+    );
+    const file = new File([blob], `spectral-earth-${Date.now()}.png`, { type: 'image/png' });
+    const caption =
+      `made at Aral School 2026 — collab with @${handle}\n` +
+      `#aralschool #spectralearth #aralsea #cartography #mapsarenotneutral`;
+
+    // 1) Mobile: native share sheet (Instagram appears as a target).
+    const nav: any = navigator;
+    if (nav.canShare?.({ files: [file] })) {
+      try {
+        await nav.share({ files: [file], text: caption, title: 'Spectral Earth' });
+        return;
+      } catch (e) {
+        // user cancelled or share failed → fall through to desktop fallback
+        console.warn('[share] navigator.share failed', e);
+      }
+    }
+
+    // 2) Desktop fallback: download image + copy caption + open Instagram.
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `spectral-earth-${handle}.png`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    try { await navigator.clipboard.writeText(caption); } catch {}
+    // Open Instagram create flow on web. IG's web composer doesn't accept
+    // file uploads directly, but the user can paste the caption (already on
+    // clipboard) and drop the just-downloaded PNG, then add @handle as a
+    // collaborator from the IG share dialog.
+    window.open('https://www.instagram.com/?next=%2Fcreate%2Fstyle%2F', '_blank', 'noopener');
+    setTimeout(() => {
+      alert(
+        `Image downloaded and caption copied to clipboard.\n\n` +
+        `In Instagram:\n• New post → drop the image → paste caption\n` +
+        `• On the share screen, tap "Tag people" → "Invite collaborator" → @${handle}\n` +
+        `• For Stories: + → Story → pick the image → tag @${handle}`
+      );
+    }, 250);
+  };
+
 
   // Gamepad: X = misbehave, B = print, RB = next level.
   useEffect(() => {
