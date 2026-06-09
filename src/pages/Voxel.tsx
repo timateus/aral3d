@@ -148,6 +148,18 @@ const VoxelPage = () => {
   const [questOpen, setQuestOpen] = useState(false);
   const [muted, setMutedState] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
+  const ACTION_LIMIT = 50;
+  const [actionsLeft, setActionsLeft] = useState<number>(() => {
+    try { const v = parseInt(localStorage.getItem('voxel_actions_left_v1') ?? '', 10); return Number.isFinite(v) ? v : ACTION_LIMIT; } catch { return ACTION_LIMIT; }
+  });
+  const actionsRef = useRef(actionsLeft);
+  actionsRef.current = actionsLeft;
+  useEffect(() => { try { localStorage.setItem('voxel_actions_left_v1', String(actionsLeft)); } catch {} }, [actionsLeft]);
+  const canAct = useCallback(() => actionsRef.current > 0, []);
+  const onActionConsumed = useCallback((_kind: 'break' | 'place') => {
+    setActionsLeft((n) => Math.max(0, n - 1));
+  }, []);
+  const resetActions = useCallback(() => setActionsLeft(ACTION_LIMIT), []);
   const inv = useVoxelInventory();
   const stats = useVoxelStats();
   useVoxelMissions(); // mount the listener
