@@ -22,7 +22,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/voxel" element={<VoxelPage />} />
           <Route path="/share/:id" element={<SharePage />} />
-          <Route path="/face" element={<FaceTerrain />} />
+          
 
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
