@@ -157,7 +157,7 @@ const WaterSimHUD = ({
           }}
         >
           {(() => {
-            const text = 'do you feel the wetness of water?';
+            const text = 'where does water want to go?';
             return text.split(/(\s+)/).map((tok, i) => {
               if (/^\s+$/.test(tok)) return <span key={i}>{tok}</span>;
               const c = stops[i % stops.length];
@@ -171,7 +171,7 @@ const WaterSimHUD = ({
       <div className="absolute top-6 left-1/2 -translate-x-1/2 z-40 text-center pointer-events-none">
         <div className="text-[10px] font-mono uppercase tracking-[0.4em] text-white/40">level 3</div>
         <h1 className="text-2xl font-extralight tracking-[0.4em] uppercase text-white/90">
-          Hydraulic Sandbox
+          FLOW
         </h1>
       </div>
 

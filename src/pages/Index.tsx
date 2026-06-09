@@ -275,11 +275,8 @@ const Index = () => {
     if (simMode && !prevSimRef.current) {
       setLevelIntro({
         n: 3,
-        name: 'Hydraulic Sandbox',
-        instructions: [
-          'Pour water and raise dams across Khorezm.',
-          'Aim with the camera. Sculpt the basin yourself.',
-        ],
+        name: 'follow the slope of the terrain',
+        instructions: [],
       });
     }
     prevSimRef.current = simMode;
@@ -1351,6 +1348,9 @@ const Index = () => {
       setFlowSpeed(20);
       setFlowWaterAmount(20);
       setSimCompleted(false);
+      // FLOW level: show Khorezm + the lower Amu Darya basin all the way up to the Aral.
+      setTerrainCustomBounds({ minLon: 57.5, maxLon: 62.5, minLat: 40.8, maxLat: 47.5 });
+      setTerrainRegion('custom');
     }
     if (level === 6) {
       // School sits at lat 42.757, lon 59.56 — only fits inside the Khorezm

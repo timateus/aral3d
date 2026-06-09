@@ -216,8 +216,8 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
   });
   const [panelOpen, setPanelOpen] = useState(false);
 
-  // Next level is unlocked only after the sea is drained below -4m.
-  const canNext = waterLevel < -4;
+  // Next level is unlocked only after the sea is drained below 12m.
+  const canNext = waterLevel < 12;
 
   // Gamepad controls — X (button 2) lowers water, O/B (button 1) raises it,
   // held continuously. LB/RB navigate levels. Right stick stays free for camera.
@@ -264,8 +264,8 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         }
         const lb = !!pad.buttons[4]?.pressed;
         const rb = !!pad.buttons[5]?.pressed;
-        if (consumeGamepadButton('x', xBtn) && onNext && waterLevelRef.current < -4) { sfx.navNext(); onNext(); }
-        if (consumeGamepadButton('rb', rb) && onNext && waterLevelRef.current < -4) { sfx.navNext(); onNext(); }
+        if (consumeGamepadButton('x', xBtn) && onNext && waterLevelRef.current < 12) { sfx.navNext(); onNext(); }
+        if (consumeGamepadButton('rb', rb) && onNext && waterLevelRef.current < 12) { sfx.navNext(); onNext(); }
         if (consumeGamepadButton('lb', lb) && onPrev) { sfx.navPrev(); onPrev(); }
       }
       raf = requestAnimationFrame(tick);
@@ -282,9 +282,9 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
       if (t && /input|textarea|select/i.test(t.tagName)) return;
       if (e.key === 'ArrowLeft' && onPrev) {
         e.preventDefault(); sfx.navPrev(); onPrev();
-      } else if (e.key === 'ArrowRight' && onNext && waterLevelRef.current < -4) {
+      } else if (e.key === 'ArrowRight' && onNext && waterLevelRef.current < 12) {
         e.preventDefault(); sfx.navNext(); onNext();
-      } else if ((e.key === 'Enter' || e.key === ' ' || e.key === 'x' || e.key === 'X') && onNext && waterLevelRef.current < -4) {
+      } else if ((e.key === 'Enter' || e.key === ' ' || e.key === 'x' || e.key === 'X') && onNext && waterLevelRef.current < 12) {
         e.preventDefault(); sfx.navNext(); onNext();
       } else if (e.key === 'ArrowDown') {
         e.preventDefault();
@@ -378,7 +378,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         onClick={() => { if (onNext && canNext) { sfx.navNext(); onNext(); } }}
         disabled={!onNext || !canNext}
         aria-label="next level"
-        title={canNext ? 'next level' : 'Drain below -4m to continue'}
+        title={canNext ? 'next level' : 'Drain below 12m to continue'}
         className="fixed right-2 top-1/2 -translate-y-1/2 z-[70] flex flex-col items-center justify-center bg-transparent hover:opacity-70 transition-opacity disabled:opacity-20 disabled:cursor-not-allowed"
         style={{ color: arrowColor, filter: `drop-shadow(0 0 10px ${bgColor})` }}
       >
@@ -386,7 +386,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         <PadHint label="RB" color={arrowColor} bg={bgColor} />
         {!canNext && (
           <div className="mt-2 text-[9px] font-mono uppercase tracking-[0.2em] text-center max-w-[120px] leading-tight" style={{ color: arrowColor, opacity: 0.85 }}>
-            drain below<br/>-4m
+            drain below<br/>12m
           </div>
         )}
       </button>
@@ -509,11 +509,11 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
                 boxShadow: `0 -8px 24px ${waterColor}77`,
               }}
             />
-            {/* Drain unlock marker (< -4m) */}
+            {/* Drain unlock marker (< 12m) */}
             <div
               className="absolute left-0 right-0 pointer-events-none"
               style={{
-                top: `${(1 - (-4 - MIN) / (MAX - MIN)) * 100}%`,
+                top: `${(1 - (12 - MIN) / (MAX - MIN)) * 100}%`,
                 borderTop: `2px dashed ${waterColor}`,
                 opacity: 0.9,
               }}
@@ -526,7 +526,6 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
             style={{
               top: `${(1 - (waterLevel - MIN) / (MAX - MIN)) * 100}%`,
               transform: 'translate(-50%, -50%)',
-              transition: 'top 60ms linear',
             }}
           >
             <div
