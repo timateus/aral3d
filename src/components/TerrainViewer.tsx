@@ -119,6 +119,7 @@ interface TerrainViewerProps {
   onRiverFlyoverDone?: () => void;
   riverInflow?: number;
   userLocation?: { lat: number; lon: number } | null;
+  showCityMarkers?: boolean;
   inspectorEnabled?: boolean;
   damToolActive?: boolean;
   onDamPlace?: (row: number, col: number) => void;
