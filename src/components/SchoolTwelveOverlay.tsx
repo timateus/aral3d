@@ -33,6 +33,7 @@ const SchoolTwelveOverlay = ({
   onDialogOpen,
 }: Props) => {
   const [lightbox, setLightbox] = useState<null | { src: string; alt: string }>(null);
+  return (
     <>
       <div className="absolute top-5 left-5 z-[80] flex gap-2" data-hud>
         <button
