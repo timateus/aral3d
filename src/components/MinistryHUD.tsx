@@ -526,7 +526,6 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
             style={{
               top: `${(1 - (waterLevel - MIN) / (MAX - MIN)) * 100}%`,
               transform: 'translate(-50%, -50%)',
-              transition: 'top 60ms linear',
             }}
           >
             <div
