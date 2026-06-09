@@ -1795,6 +1795,7 @@ const Index = () => {
             firstPersonBridge.school.active = false;
           }}
           onPrev={() => enterGameLevel(5)}
+          onNext={() => enterGameLevel(1)}
           onToggleAutoWalk={() => {
             const next = !schoolAutoWalking;
             setSchoolAutoWalking(next);
