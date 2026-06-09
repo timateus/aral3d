@@ -241,18 +241,29 @@ const FaceTerrain = () => {
 
       <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-3 px-4 py-2 rounded-md bg-black/60 backdrop-blur-md border border-white/15">
         <span className="text-white/90 text-[11px] tracking-wider uppercase">
-          Face Terrain · MediaPipe
+          Level 7 · Face as Infrastructure
         </span>
         <span className="text-white/40 text-[10px]">
-          camera in · background grid · terrain painted onto you
+          mediapipe segmentation · grid backdrop · terrain projected onto you
         </span>
       </div>
 
       <Link
+        to="/?level=6"
+        className="absolute top-4 left-4 px-3 py-1.5 rounded-md bg-black/60 backdrop-blur-md border border-white/15 text-white/90 text-[11px] hover:bg-black/80"
+      >← Prev</Link>
+      <Link
         to="/"
         className="absolute top-4 right-4 px-3 py-1.5 rounded-md bg-black/60 backdrop-blur-md border border-white/15 text-white/90 text-[11px] hover:bg-black/80"
+      >Exit</Link>
+      <Link
+        to="/?level=1"
+        aria-label="next level"
+        className="absolute right-2 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center justify-center text-white/85 hover:text-white"
+        title="Back to start"
       >
-        Exit
+        <svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+        <span className="mt-1 px-2 py-0.5 text-[10px] font-mono border border-white/40 rounded">→ restart</span>
       </Link>
 
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-md bg-black/60 backdrop-blur-md border border-white/15 text-white/70 text-[11px]">
