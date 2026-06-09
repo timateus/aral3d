@@ -62,7 +62,7 @@ export const FacePhraseLayer = () => {
   ), [scheme]);
 
   const [phrase, setPhrase] = useState<ShownPhrase | null>(null);
-  const [layer, setLayer] = useState<{ name: string; desc: string } | null>(null);
+  const [layer, setLayer] = useState<{ key: string; name: string; desc: string } | null>(null);
 
   useEffect(() => {
     let idCounter = 0;
