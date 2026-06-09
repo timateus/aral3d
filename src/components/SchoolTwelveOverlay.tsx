@@ -40,8 +40,17 @@ const MENU_ITEMS: MenuItem[] = [
   { label: 'Exit', sub: 'back to the map', action: 'close' },
 ];
 
-const HEADING_FONT = '"Trebuchet MS", "Comic Sans MS", "Inter", system-ui, sans-serif';
-const BODY_FONT = '"Georgia", "Trebuchet MS", serif';
+const HEADING_FONT = '"Marker Felt", "Comic Sans MS", "Chalkboard SE", "Trebuchet MS", system-ui, sans-serif';
+const BODY_FONT = '"Comic Sans MS", "Marker Felt", "Chalkboard SE", "Trebuchet MS", sans-serif';
+const MENU_FONT = '"Comic Sans MS", "Marker Felt", "Chalkboard SE", system-ui, sans-serif';
+
+// Bright candy palette for menu items — rotates across the list.
+const ITEM_COLORS = [
+  { bg: '#ff4fb8', border: '#ff4fb8', ink: '#fff7ff' }, // hot pink
+  { bg: '#ffd23f', border: '#ffd23f', ink: '#2a1a00' }, // bright yellow
+  { bg: '#3ee0a0', border: '#3ee0a0', ink: '#062a18' }, // mint
+  { bg: '#9b6dff', border: '#9b6dff', ink: '#fffaff' }, // purple
+];
 
 const SchoolDialog = ({ onClose }: { onClose: () => void }) => {
   const [sel, setSel] = useState(0);
@@ -156,34 +165,67 @@ const SchoolDialog = ({ onClose }: { onClose: () => void }) => {
     <div
       className="fixed inset-0 z-[90] flex items-center justify-center p-6 animate-in fade-in duration-300"
       data-hud
-      style={{ background: '#06080e' }}
+      style={{
+        background:
+          'radial-gradient(ellipse at 30% 20%, rgba(255,79,184,0.35), transparent 55%),' +
+          'radial-gradient(ellipse at 80% 80%, rgba(62,224,160,0.30), transparent 55%),' +
+          'radial-gradient(ellipse at 70% 10%, rgba(255,210,63,0.25), transparent 55%),' +
+          'rgba(8,12,28,0.55)',
+        backdropFilter: 'blur(10px)',
+      }}
       onClick={onClose}
     >
       <div
-        className="w-[min(900px,94vw)] border-2 border-white/50 bg-white/5 rounded-sm overflow-hidden text-white"
+        className="w-[min(900px,94vw)] rounded-3xl overflow-hidden text-white relative"
+        style={{
+          background: 'rgba(255,255,255,0.10)',
+          backdropFilter: 'blur(18px)',
+          WebkitBackdropFilter: 'blur(18px)',
+          border: '3px solid rgba(255,255,255,0.55)',
+          boxShadow: '0 20px 80px rgba(255,79,184,0.35), 0 10px 40px rgba(0,0,0,0.45)',
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="grid md:grid-cols-[1.05fr_0.95fr]">
           <div className="p-8 md:p-10">
-            <div className="text-[11px] font-mono uppercase tracking-[0.5em] text-white/55 mb-4">
-              level 6 · school 12 · kegeyli
+            <div
+              className="text-[12px] uppercase tracking-[0.4em] mb-4"
+              style={{ fontFamily: MENU_FONT, color: '#ffd23f' }}
+            >
+              ★ school 12 · kegeyli ★
             </div>
             <h2
-              className="font-black tracking-[0.06em] uppercase text-white mb-5"
-              style={{ fontFamily: HEADING_FONT, fontSize: 'clamp(36px,5.2vw,64px)', lineHeight: 0.95, textShadow: '0 10px 40px rgba(0,0,0,0.6)' }}
+              className="mb-5"
+              style={{
+                fontFamily: HEADING_FONT,
+                fontSize: 'clamp(38px,5.6vw,70px)',
+                lineHeight: 0.95,
+                color: '#fff7ff',
+                textShadow:
+                  '0 0 24px rgba(255,79,184,0.6), 3px 3px 0 #ff4fb8, 6px 6px 0 rgba(0,0,0,0.35)',
+                transform: 'rotate(-1.5deg)',
+                display: 'inline-block',
+              }}
             >
               Play the games we made!
             </h2>
             <p
-              className="italic text-white/90 leading-snug mb-7"
-              style={{ fontFamily: BODY_FONT, fontSize: 'clamp(16px,1.5vw,22px)' }}
+              className="leading-snug mb-7"
+              style={{
+                fontFamily: BODY_FONT,
+                fontSize: 'clamp(16px,1.55vw,22px)',
+                color: '#fffbea',
+                textShadow: '0 2px 12px rgba(0,0,0,0.5)',
+              }}
             >
-              Worlds built by students of School 12 — pick one and explore.
+              Worlds built by students of School 12 — pick one and explore!
             </p>
 
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {items.map((it, i) => {
                 const active = i === sel;
+                const c = ITEM_COLORS[i % ITEM_COLORS.length];
+                const tilt = (i % 2 === 0 ? -1 : 1) * (active ? 0 : 0.8);
                 return (
                   <li key={it.label}>
                     <button
@@ -191,36 +233,56 @@ const SchoolDialog = ({ onClose }: { onClose: () => void }) => {
                       disabled={it.disabled}
                       onMouseEnter={() => !it.disabled && setSel(i)}
                       onClick={() => activate(i)}
-                      className={`w-full flex items-center justify-between px-5 py-4 border-2 rounded-sm text-left transition-colors ${
-                        it.disabled
-                          ? 'border-white/15 bg-white/[0.02] text-white/35 cursor-not-allowed'
-                          : active
-                            ? 'text-white'
-                            : 'text-white hover:bg-white/10'
+                      className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl text-left transition-all duration-150 ${
+                        it.disabled ? 'cursor-not-allowed' : 'hover:-translate-y-0.5'
                       }`}
                       style={
                         it.disabled
-                          ? undefined
+                          ? {
+                              background: 'rgba(255,255,255,0.06)',
+                              border: '2px dashed rgba(255,255,255,0.25)',
+                              color: 'rgba(255,255,255,0.4)',
+                              transform: `rotate(${tilt}deg)`,
+                            }
                           : active
-                            ? { background: '#3b82f6', borderColor: '#3b82f6' }
-                            : { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.4)' }
+                            ? {
+                                background: c.bg,
+                                border: `3px solid ${c.border}`,
+                                color: c.ink,
+                                transform: 'scale(1.02) rotate(0deg)',
+                                boxShadow: `0 10px 30px ${c.bg}66, 0 0 0 4px rgba(255,255,255,0.25)`,
+                              }
+                            : {
+                                background: 'rgba(255,255,255,0.10)',
+                                border: `3px solid ${c.border}`,
+                                color: '#fff7ff',
+                                transform: `rotate(${tilt}deg)`,
+                                boxShadow: `0 6px 18px ${c.bg}33`,
+                              }
                       }
                     >
                       <div>
                         <div
-                          className="font-black uppercase tracking-[0.05em]"
-                          style={{ fontFamily: HEADING_FONT, fontSize: 'clamp(18px,1.8vw,24px)' }}
+                          style={{
+                            fontFamily: MENU_FONT,
+                            fontSize: 'clamp(20px,2vw,28px)',
+                            fontWeight: 700,
+                            letterSpacing: '0.01em',
+                          }}
                         >
                           {it.label}
                         </div>
-                        <div className="text-[11px] font-mono uppercase tracking-[0.3em] opacity-75 mt-1">
+                        <div
+                          className="text-[12px] mt-1 opacity-80"
+                          style={{ fontFamily: MENU_FONT }}
+                        >
                           {it.sub}
                         </div>
                       </div>
                       {it.action === 'close' ? (
-                        <X className="w-5 h-5" />
+                        <X className="w-6 h-6" />
                       ) : (
-                        <ExternalLink className="w-5 h-5" />
+                        <ExternalLink className="w-6 h-6" />
                       )}
                     </button>
                   </li>
@@ -228,27 +290,48 @@ const SchoolDialog = ({ onClose }: { onClose: () => void }) => {
               })}
             </ul>
 
-            <div className="mt-7 flex items-center gap-3 text-[11px] font-mono uppercase tracking-[0.35em] text-white/70">
-              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full border-2 border-white/70">▲▼</span>
+            <div
+              className="mt-7 flex items-center gap-3 text-[12px]"
+              style={{ fontFamily: MENU_FONT, color: '#fffbea' }}
+            >
+              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full border-2 border-white/80">▲▼</span>
               <span>navigate</span>
-              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full border-2 border-white text-white" style={{ background: '#3b82f6' }}>3</span>
+              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full border-2 border-white text-white font-bold" style={{ background: '#3b82f6' }}>3</span>
               <span>select</span>
-              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full border-2 border-white text-white" style={{ background: '#ef4444' }}>2</span>
+              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full border-2 border-white text-white font-bold" style={{ background: '#ef4444' }}>2</span>
               <span>exit</span>
             </div>
           </div>
 
-          <div className="p-6 md:p-8 border-l border-white/15 bg-black/40">
+          <div
+            className="p-6 md:p-8 flex flex-col"
+            style={{
+              background: 'rgba(255,255,255,0.06)',
+              borderLeft: '2px dashed rgba(255,255,255,0.35)',
+            }}
+          >
             <img
               src={studentsCraftAsset.url}
               alt="School 12 students with their hand-painted water-wheel project"
-              className="w-full aspect-[3/4] object-cover border-2 border-white/30 rounded-sm"
+              className="w-full aspect-[3/4] object-cover rounded-2xl"
+              style={{
+                border: '4px solid #ffd23f',
+                boxShadow: '0 12px 40px rgba(255,210,63,0.4)',
+                transform: 'rotate(1deg)',
+              }}
               loading="lazy"
             />
             <div
-              className="mt-4 text-[10px] font-mono uppercase tracking-[0.4em] text-center text-white/60"
+              className="mt-4 text-center"
+              style={{
+                fontFamily: HEADING_FONT,
+                fontSize: 14,
+                color: '#3ee0a0',
+                textShadow: '0 2px 8px rgba(0,0,0,0.4)',
+                transform: 'rotate(-1deg)',
+              }}
             >
-              students of school 12
+              ✿ students of school 12 ✿
             </div>
           </div>
         </div>
