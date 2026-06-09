@@ -31,12 +31,24 @@ const FLAMMABLE: MapBuilderItemId[] = ['seed', 'plant', 'flower', 'saxaul', 'ree
 const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: Props) => {
   const [selected, setSelected] = useState<MapBuilderItemId>('water');
   const [items, setItems] = useState<PlacedItem[]>([]);
+  const [confirmNav, setConfirmNav] = useState<null | 'prev' | 'next'>(null);
   const selectedRef = useRef(selected);
   const itemsRef = useRef(items);
   const heldRef = useRef(false);
   const { stateRef: gpRef } = useGamepad();
-  const prevBumpers = useRef({ lb: false, rb: false, back: false, start: false });
+  const prevBumpers = useRef({ lb: false, rb: false, back: false, start: false, a: false, b: false });
   const kbMouseHeld = useRef(false);
+
+  const requestNav = (dir: 'prev' | 'next') => {
+    // If nothing built yet, no need to confirm.
+    if (itemsRef.current.length === 0) {
+      sfx[dir === 'prev' ? 'navPrev' : 'navNext']?.();
+      if (dir === 'prev') onPrev();
+      else onNext?.();
+      return;
+    }
+    setConfirmNav(dir);
+  };
 
   useEffect(() => { selectedRef.current = selected; }, [selected]);
   useEffect(() => {
