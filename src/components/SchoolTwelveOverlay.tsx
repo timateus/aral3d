@@ -10,6 +10,7 @@ import studentsCraftAsset from '@/assets/kegeyli-students-craft.png.asset.json';
 interface Props {
   onExit: () => void;
   onPrev?: () => void;
+  onNext?: () => void;
   onToggleAutoWalk: () => void;
   autoWalking: boolean;
   distanceMeters: number;
@@ -260,6 +261,7 @@ const SchoolDialog = ({ onClose }: { onClose: () => void }) => {
 const SchoolTwelveOverlay = ({
   onExit,
   onPrev,
+  onNext,
   onToggleAutoWalk,
   autoWalking,
   distanceMeters,
@@ -283,6 +285,14 @@ const SchoolTwelveOverlay = ({
             className="flex items-center gap-2 px-3 py-2 text-[10px] font-mono uppercase tracking-[0.3em] bg-black/75 border border-white/15 text-white hover:bg-black/90 transition-colors"
           >
             ← prev · LB
+          </button>
+        )}
+        {onNext && (
+          <button
+            onClick={() => { sfx.navNext(); onNext(); }}
+            className="flex items-center gap-2 px-3 py-2 text-[10px] font-mono uppercase tracking-[0.3em] bg-black/75 border border-white/15 text-white hover:bg-black/90 transition-colors"
+          >
+            next · RB →
           </button>
         )}
       </div>

@@ -63,6 +63,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { useGamepad } from '@/hooks/useGamepad';
 import { firstPersonBridge } from '@/lib/first-person-bridge';
+import { loadState, saveState } from '@/lib/game-persistence';
 
 function GamepadIndicator({ btnBase }: { btnBase: string }) {
   const { connected, padId } = useGamepad();
@@ -222,7 +223,10 @@ const Index = () => {
   const [geoMarkers, setGeoMarkers] = useState<import('@/components/GeoFeatures').GeoGuessrMarkerSet | null>(null);
   const [placeMode, setPlaceMode] = useState(false);
   const [schoolMode, setSchoolMode] = useState(false);
-  const [placedItems, setPlacedItems] = useState<import('@/lib/map-builder-items').PlacedItem[]>([]);
+  const [placedItems, setPlacedItems] = useState<import('@/lib/map-builder-items').PlacedItem[]>(
+    () => loadState<import('@/lib/map-builder-items').PlacedItem[]>('placed-items', [])
+  );
+  useEffect(() => { saveState('placed-items', placedItems); }, [placedItems]);
   const [schoolAutoWalking, setSchoolAutoWalking] = useState(false);
   const [schoolDistanceMeters, setSchoolDistanceMeters] = useState(0);
   const [schoolArrived, setSchoolArrived] = useState(false);
@@ -1366,6 +1370,24 @@ const Index = () => {
     }
   }, [schoolTarget, schoolStart, setTerrainMode, setVisualMode, setTerrainRegion]);
 
+  // Deep-link: ?level=N (1..6) jumps straight into a game level on first mount.
+  const didDeepLinkRef = useRef(false);
+  useEffect(() => {
+    if (didDeepLinkRef.current) return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const n = parseInt(params.get('level') ?? '', 10);
+      if (n >= 1 && n <= 6) {
+        didDeepLinkRef.current = true;
+        enterGameLevel(n);
+        params.delete('level');
+        const qs = params.toString();
+        window.history.replaceState({}, '', window.location.pathname + (qs ? `?${qs}` : ''));
+      }
+    } catch { /* ignore */ }
+  }, [enterGameLevel]);
+
+
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
@@ -1791,6 +1813,7 @@ const Index = () => {
             firstPersonBridge.school.active = false;
           }}
           onPrev={() => enterGameLevel(5)}
+          onNext={() => enterGameLevel(1)}
           onToggleAutoWalk={() => {
             const next = !schoolAutoWalking;
             setSchoolAutoWalking(next);

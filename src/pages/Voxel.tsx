@@ -353,12 +353,28 @@ const VoxelPage = () => {
 
   return (
     <div className="fixed inset-0 bg-[#0c0f14] text-white font-mono">
-      <Link
-        to="/"
-        className="fixed top-3 left-3 z-50 flex items-center gap-1.5 px-3 py-1.5 bg-black/60 border border-white/20 text-[10px] uppercase tracking-widest hover:bg-white/10 transition-colors"
-      >
-        <ArrowLeft className="w-3 h-3" /> Exit Survive
-      </Link>
+      <div className="fixed top-3 left-3 z-50 flex items-center gap-1.5">
+        <Link
+          to="/"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-black/60 border border-white/20 text-[10px] uppercase tracking-widest hover:bg-white/10 transition-colors"
+        >
+          <ArrowLeft className="w-3 h-3" /> Exit Survive
+        </Link>
+        <Link
+          to="/?level=6"
+          className="px-3 py-1.5 bg-black/60 border border-white/20 text-[10px] uppercase tracking-widest hover:bg-white/10 transition-colors"
+          title="Previous level: Kegeyli School 12"
+        >
+          ← prev · L6
+        </Link>
+        <Link
+          to="/?level=1"
+          className="px-3 py-1.5 bg-black/60 border border-white/20 text-[10px] uppercase tracking-widest hover:bg-white/10 transition-colors"
+          title="Next level: Choose your character"
+        >
+          next · L1 →
+        </Link>
+      </div>
 
       <div className="fixed top-3 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1">
         <div className="flex bg-black/60 border border-white/20">

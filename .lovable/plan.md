@@ -1,29 +1,67 @@
-## Plan
+## 1. Prev / Next buttons on Kegeyli (L6) and Minebox (Voxel)
 
-Fix the layer toggle “restart” at the source: the 3D canvas currently stays mounted, but adding certain layers can still rebuild the terrain object and/or re-run the intro camera logic, which looks like Explore mode restarting.
+**Kegeyli — `SchoolTwelveOverlay.tsx`**
+- Add `onNext?` prop alongside existing `onPrev`.
+- Render a matching "next ·  RB" button next to the existing "← prev · LB" pill in the top-left HUD strip.
+- In `Index.tsx`, wire `onNext={() => enterGameLevel(1)}` (cycles back to L1, since L6 is the last; show button always so behavior matches "buttons to go to next and previous").
 
-### Changes to make
+**Minebox (`/voxel` page)**
+- Voxel lives outside the level flow, so navigation goes back into `Index.tsx`:
+  - `prev` → navigate to `/?level=6` (Kegeyli).
+  - `next` → navigate to `/?level=1` (Choose your character).
+- Add two pill buttons next to the existing "Exit Survive" link in `Voxel.tsx`.
+- `Index.tsx` reads `?level=N` on mount and calls `enterGameLevel(N)` so the deep-link works.
 
-1. **Make the intro camera animation run only once per app session**
-   - Replace the local `CameraAnimator` mount-only `hasStarted` state with a module-level/session guard.
-   - When Explore is already started from the URL or after the first start, toggling layers/remounting scene children will not replay the intro flight.
+## 2. Persist game state across reloads
 
-2. **Preserve camera + orbit target across layer/terrain updates**
-   - Store the latest camera position and `OrbitControls` target in refs outside the animated camera component.
-   - When the scene re-renders because a layer is added, restore the current view instead of resetting to `[0,18,8]` / intro target.
+Add a tiny `src/lib/game-persistence.ts` helper that wraps `localStorage` with versioned JSON keys.
 
-3. **Cache merged terrain outputs, not just raw GeoTIFFs**
-   - Add a small memo/cache around `mergeTerrains` and `mergeExpandTerrains` results in `Index.tsx` or `terrain-merger.ts`.
-   - This prevents toggles like Khorezm/watershed/terrain-extension from constructing a brand-new terrain object unnecessarily and forcing expensive geometry rebuilds.
+Persist:
+- **L2 Great Water Level** — `waterLevel` + `waterLevelManual`.
+- **L3 FLOW** — `flowSpeed`, `flowWaterAmount`, `simCompleted`.
+- **L4 GeoGuessr** — current `idx`, `history`, `timeLeft` (so a refresh resumes the run).
+- **L5 Map Builder** — full `placedItems` array (already in state; just save/restore on mount).
+- **L6 Kegeyli** — `schoolArrived`, `schoolDialogOpen` so returning users skip the walk.
+- **Voxel** — inventory + stats already use hooks; extend `useVoxelInventory` and `useVoxelStats` to read/write localStorage (they already hold the only mutable state; missions stay derived).
 
-4. **Keep heavy overlay loading from blanking the map**
-   - Ensure data overlays mount independently and use existing cached data where available.
-   - Do not clear parent terrain state when overlays load or fail.
+A single `clearGameState()` is exposed for future "reset" UI but not wired into the UI in this pass.
 
-5. **Verify with the actual bug path**
-   - Test starting Explore, moving the camera, toggling several layers (`rivers`, `water extent`, `21st basin`, `landcover`, `Khorezm/watershed`), and confirm the camera does not jump or replay the intro.
+## 3. GeoGuessr leaderboard (Lovable Cloud)
 
-### Technical notes
+**Schema (migration)**
+```sql
+CREATE TABLE public.geoguessr_scores (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  player_name text NOT NULL DEFAULT 'anon',
+  score integer NOT NULL,
+  rounds integer NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+GRANT SELECT, INSERT ON public.geoguessr_scores TO anon, authenticated;
+GRANT ALL ON public.geoguessr_scores TO service_role;
+ALTER TABLE public.geoguessr_scores ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "anyone can read scores" ON public.geoguessr_scores FOR SELECT USING (true);
+CREATE POLICY "anyone can post a score"  ON public.geoguessr_scores FOR INSERT WITH CHECK (true);
+```
+(Anon read/insert is intentional — there's no auth and the game is a public toy.)
 
-- Primary files to edit: `src/components/TerrainViewer.tsx`, `src/pages/Index.tsx`, and possibly `src/lib/terrain-merger.ts`.
-- The previous GeoTIFF cache helped with re-fetching, but this issue appears to be camera/scene reinitialization plus merged-terrain object churn, not just raw DEM loading.
+**Client**
+- On finishing the run (`done` becomes true), POST the totalScore + rounds to `geoguessr_scores`. Player name is auto-generated like `player-7a3b` and stored in `localStorage` so the same browser keeps its name.
+- Fetch top 20 scores with Tanstack Query and render a horizontal bar chart (Recharts) in the existing right-side "final score" panel: each bar = a run, the current player's bar highlighted in `accent`, others in `inkColor` with 30% opacity. Rank label on the left, score on the right.
+- Show the player's rank ("you are #4 of 87") above the chart.
+
+## Files touched
+
+- new: `src/lib/game-persistence.ts`
+- new: `supabase/migrations/<ts>_geoguessr_scores.sql`
+- edited: `src/pages/Index.tsx` — query-param level deep-link, wire `onNext` on L6, persistence hooks for L2/L3/L5/L6.
+- edited: `src/pages/Voxel.tsx` — prev/next pill buttons.
+- edited: `src/components/SchoolTwelveOverlay.tsx` — `onNext` prop + next button.
+- edited: `src/components/GeoGuessrHUD.tsx` — score submit + leaderboard chart.
+- edited: `src/hooks/useVoxelInventory.ts`, `src/hooks/useVoxelStats.ts` — persistence.
+
+## Out of scope
+
+- No auth — leaderboard is anonymous on purpose.
+- No "clear save" UI; the helper exists but isn't surfaced.
+- Map Builder already had prev/next buttons, so we don't touch its UI.
