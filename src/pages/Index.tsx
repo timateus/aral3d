@@ -21,6 +21,7 @@ import LevelIntroSplash from '@/components/LevelIntroSplash';
 import MapBuilderHUD from '@/components/MapBuilderHUD';
 import SchoolTwelveOverlay from '@/components/SchoolTwelveOverlay';
 import SchoolPlaceOverlay from '@/components/SchoolPlaceOverlay';
+import FaceProjectionOverlay from '@/components/FaceProjectionOverlay';
 
 
 import { applyRandomSpectralPalette } from '@/lib/visual-mode';
@@ -223,6 +224,7 @@ const Index = () => {
   const [geoMarkers, setGeoMarkers] = useState<import('@/components/GeoFeatures').GeoGuessrMarkerSet | null>(null);
   const [placeMode, setPlaceMode] = useState(false);
   const [schoolMode, setSchoolMode] = useState(false);
+  const [faceMode, setFaceMode] = useState(false);
   const [placedItems, setPlacedItems] = useState<import('@/lib/map-builder-items').PlacedItem[]>(
     () => loadState<import('@/lib/map-builder-items').PlacedItem[]>('placed-items', [])
   );
@@ -251,7 +253,7 @@ const Index = () => {
   const prevSimRef = useRef(false);
   const prevGeoRef = useRef(false);
   useEffect(() => {
-    if (spectralMode && !prevSpectralRef.current) {
+    if (spectralMode && !faceMode && !prevSpectralRef.current) {
       setLevelIntro({
         n: 1,
         name: 'Choose your character',
@@ -261,7 +263,21 @@ const Index = () => {
       });
     }
     prevSpectralRef.current = spectralMode;
-  }, [spectralMode]);
+  }, [spectralMode, faceMode]);
+  const prevFaceRef = useRef(false);
+  useEffect(() => {
+    if (faceMode && !prevFaceRef.current) {
+      setLevelIntro({
+        n: 7,
+        name: 'Face as Infrastructure',
+        instructions: [
+          'The terrain is projected onto your face.',
+          'Move it with the gamepad — your silhouette becomes the map.',
+        ],
+      });
+    }
+    prevFaceRef.current = faceMode;
+  }, [faceMode]);
   useEffect(() => {
     if (ministryMode && !prevMinistryRef.current) {
       setLevelIntro({
@@ -1315,13 +1331,11 @@ const Index = () => {
   const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode && !dustMode && !traceMode && !lifeMode && !spectralMode && !ministryMode && !simMode && !geoMode && !placeMode && !schoolMode;
 
   const enterGameLevel = useCallback((level: number) => {
-    if (level === 7) {
-      // Level 7 — Face as Infrastructure (MediaPipe camera level) lives at /face.
-      window.location.assign('/face');
-      return;
-    }
     setStarted(true);
-    setSpectralMode(level === 1);
+    // Level 7 reuses Level 1's terrain scene + gamepad controls, but pipes the
+    // rendered terrain through the MediaPipe face overlay (FaceProjectionOverlay).
+    setSpectralMode(level === 1 || level === 7);
+    setFaceMode(level === 7);
     setMinistryMode(level === 2);
     setSimMode(level === 3);
     setGeoMode(level === 4);
@@ -1331,7 +1345,7 @@ const Index = () => {
     setShowWaterExtent(false);
     setShowKhorezm(level >= 3 && level <= 6);
     setTerrainMode('classic');
-    if (level >= 1 && level <= 6) setVisualMode('designer');
+    if (level >= 1 && level <= 7) setVisualMode('designer');
     setWaterFlowActive(level === 3);
     setFlowAnimating(level === 3);
     if (level !== 6) {
@@ -1664,7 +1678,7 @@ const Index = () => {
 
       {fountainsMode && <FountainsOfNukus onClose={() => setFountainsMode(false)} />}
 
-      {spectralMode && (
+      {spectralMode && !faceMode && (
         <SpectralEarthHUD
           onExit={() => {
             setSpectralMode(false);
@@ -1680,6 +1694,43 @@ const Index = () => {
             enterGameLevel(2);
           }}
         />
+      )}
+
+      {faceMode && (
+        <>
+          <FaceProjectionOverlay />
+          {/* Level 7 HUD — mirrors the other levels' top strip + prev/next pills */}
+          <div data-hud className="fixed top-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-4 py-2 rounded-md bg-black/60 backdrop-blur-md border border-white/15">
+            <span className="text-white/90 font-mono text-[11px] tracking-wider uppercase">Level 7 · Face as Infrastructure</span>
+            <span className="text-white/40 font-mono text-[10px]">gamepad sticks move the terrain · projected onto you</span>
+          </div>
+          <button
+            data-hud
+            onClick={() => enterGameLevel(6)}
+            className="fixed top-4 left-4 z-40 px-3 py-1.5 rounded-md bg-black/60 backdrop-blur-md border border-white/15 text-white/90 font-mono text-[11px] hover:bg-black/80"
+          >← Prev</button>
+          <button
+            data-hud
+            onClick={() => {
+              setFaceMode(false);
+              setSpectralMode(false);
+              setStarted(false);
+              setVisualMode(spectralPrevModeRef.current);
+              setExaggeration(spectralPrevExaggerationRef.current);
+            }}
+            className="fixed top-4 right-4 z-40 px-3 py-1.5 rounded-md bg-black/60 backdrop-blur-md border border-white/15 text-white/90 font-mono text-[11px] hover:bg-black/80"
+          >Exit</button>
+          <button
+            data-hud
+            onClick={() => enterGameLevel(1)}
+            aria-label="next level"
+            className="fixed right-2 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center justify-center text-white/85 hover:text-white"
+            title="Back to Level 1"
+          >
+            <svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+            <span className="mt-1 px-2 py-0.5 text-[10px] font-mono border border-white/40 rounded">→ Level 1</span>
+          </button>
+        </>
       )}
 
       {ministryMode && (
