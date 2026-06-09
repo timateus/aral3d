@@ -1346,7 +1346,7 @@ const Index = () => {
       setFlowWaterAmount(20);
       setSimCompleted(false);
       // FLOW level: show Khorezm + the lower Amu Darya basin all the way up to the Aral.
-      setTerrainCustomBounds({ minLon: 57.5, maxLon: 62.5, minLat: 40.8, maxLat: 47.5 });
+      setTerrainCustomBounds({ minLon: 57.5, maxLon: 75, minLat: 36.5, maxLat: 47.5 });
       setTerrainRegion('custom');
     }
     if (level === 6) {
