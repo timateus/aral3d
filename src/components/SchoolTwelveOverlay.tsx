@@ -154,29 +154,30 @@ const SchoolDialog = ({ onClose }: { onClose: () => void }) => {
     <div
       className="fixed inset-0 z-[90] flex items-center justify-center p-6"
       data-hud
-      style={{ background: 'rgba(6,8,14,0.92)' }}
+      style={{ background: 'rgba(13,17,23,0.94)' }}
       onClick={onClose}
     >
       <div
-        className="w-[min(820px,94vw)] border-2 border-white/55 bg-[#06080e] text-white relative rounded-sm overflow-hidden"
+        className="w-[min(820px,94vw)] border-2 bg-[#0d1117] text-white relative rounded-sm overflow-hidden"
+        style={{ borderColor: '#8ec8e8' }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="grid md:grid-cols-[1.1fr_0.9fr]">
-          <div className="p-8 md:p-10">
-            <div className="text-sm font-mono uppercase tracking-[0.5em] text-white/55 mb-3">
+          <div className="p-8 md:p-10" style={{ background: 'linear-gradient(180deg,#0d1117,#10192a)' }}>
+            <div className="text-sm font-mono uppercase tracking-[0.5em] mb-3" style={{ color: '#8ec8e8' }}>
               school 12 · kegeyli
             </div>
             <h2
               className="font-black tracking-[0.04em] uppercase text-white mb-5"
               style={{ fontFamily: HEADING_FONT, fontSize: 'clamp(34px,5vw,58px)', lineHeight: 0.95 }}
             >
-              Welcome to our school
+              Play the games we made!
             </h2>
             <p
-              className="italic text-white/85 leading-snug mb-6"
+              className="italic text-white/80 leading-snug mb-6"
               style={{ fontFamily: BODY_FONT, fontSize: 'clamp(15px,1.4vw,20px)' }}
             >
-              Try worlds the students built, or come back for the film screening soon.
+              Worlds built by students of School 12 — pick one and explore.
             </p>
 
             <ul className="space-y-2">
@@ -193,9 +194,16 @@ const SchoolDialog = ({ onClose }: { onClose: () => void }) => {
                         it.disabled
                           ? 'border-white/15 bg-white/[0.02] text-white/35 cursor-not-allowed'
                           : active
-                            ? 'border-white bg-white text-[#06080e]'
-                            : 'border-white/40 bg-white/5 text-white hover:bg-white/10'
+                            ? 'text-[#0d1117]'
+                            : 'text-white hover:bg-white/5'
                       }`}
+                      style={
+                        it.disabled
+                          ? undefined
+                          : active
+                            ? { background: '#8ec8e8', borderColor: '#8ec8e8' }
+                            : { background: 'rgba(142,200,232,0.06)', borderColor: 'rgba(142,200,232,0.4)' }
+                      }
                     >
                       <div>
                         <div
@@ -219,25 +227,26 @@ const SchoolDialog = ({ onClose }: { onClose: () => void }) => {
               })}
             </ul>
 
-            <div className="mt-6 flex items-center gap-3 text-[11px] font-mono uppercase tracking-[0.35em] text-white/55">
-              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full border border-white/55">▲▼</span>
+            <div className="mt-6 flex items-center gap-3 text-[11px] font-mono uppercase tracking-[0.35em]" style={{ color: '#8ec8e8' }}>
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full border" style={{ borderColor: '#8ec8e8' }}>▲▼</span>
               <span>navigate</span>
-              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full border border-white/55">A/X</span>
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full border text-white" style={{ borderColor: '#8ec8e8', background: '#3b82f6' }}>3</span>
               <span>select</span>
-              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full border border-white/55">B</span>
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full border text-white" style={{ borderColor: '#8ec8e8', background: '#ef4444' }}>2</span>
               <span>exit</span>
             </div>
           </div>
 
-          <div className="p-6 md:p-8 bg-black/40 border-l border-white/10">
+          <div className="p-6 md:p-8 border-l" style={{ background: '#08101c', borderColor: 'rgba(142,200,232,0.18)' }}>
             <img
-              src={schoolFrontAsset.url}
-              alt="Students standing in front of School 12 in Kegeyli"
-              className="w-full aspect-[4/5] object-cover border border-white/20 rounded-sm"
+              src={classroomOneAsset.url}
+              alt="Students gathered in a classroom at School 12"
+              className="w-full aspect-[4/5] object-cover border rounded-sm"
+              style={{ borderColor: 'rgba(142,200,232,0.35)' }}
               loading="lazy"
             />
-            <div className="mt-4 text-[10px] font-mono uppercase tracking-[0.4em] text-white/55 text-center">
-              school 12 community
+            <div className="mt-4 text-[10px] font-mono uppercase tracking-[0.4em] text-center" style={{ color: '#8ec8e8' }}>
+              school 12 · classroom
             </div>
           </div>
         </div>

@@ -134,8 +134,11 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
           ))}
         </div>
         <div className="inline-flex items-center gap-4 px-7 py-4 border-2 border-white/50 bg-white/5 rounded-sm">
-          <span className="inline-flex items-center justify-center w-10 h-10 text-sm font-mono font-bold rounded-full border-2 border-white text-white">
-            X
+          <span
+            className="inline-flex items-center justify-center w-10 h-10 text-sm font-mono font-bold rounded-full border-2 border-white text-white"
+            style={{ background: '#3b82f6' }}
+          >
+            3
           </span>
           <span className="text-sm font-mono uppercase tracking-[0.4em] text-white/90">
             or RB · press to begin

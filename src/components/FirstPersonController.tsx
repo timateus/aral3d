@@ -35,7 +35,7 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
   const prevTrigger = useRef(false);
   const avatarRef = useRef<THREE.Group>(null);
   const npcRef = useRef<THREE.Group>(null);
-  const camDistRef = useRef(0.9);
+  const camDistRef = useRef(1.8);
 
   const playerTex = useMemo(() => {
     const t = new THREE.TextureLoader().load(characterCat.url);
@@ -154,7 +154,7 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
     };
     const onWheel = (e: WheelEvent) => {
       if (!thirdPerson) return;
-      camDistRef.current = THREE.MathUtils.clamp(camDistRef.current + e.deltaY * 0.002, 0.25, 3.5);
+      camDistRef.current = THREE.MathUtils.clamp(camDistRef.current + e.deltaY * 0.002, 0.25, 7);
     };
     el.addEventListener('click', onClick);
     window.addEventListener('mousemove', onMove);
@@ -282,7 +282,7 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
       // Pulled-back over-the-shoulder zoom; RT zooms out, LT zooms in.
       if (gp.connected) {
         const dz = (gp.buttons.rt - gp.buttons.lt) * dt * 1.2;
-        camDistRef.current = THREE.MathUtils.clamp(camDistRef.current + dz, 0.25, 3.5);
+        camDistRef.current = THREE.MathUtils.clamp(camDistRef.current + dz, 0.25, 7);
       }
       const camDist = camDistRef.current;
       const camOffsetX = Math.sin(yaw.current) * camDist;
