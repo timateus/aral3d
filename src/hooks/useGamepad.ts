@@ -102,8 +102,19 @@ export function useGamepad() {
 
     const tick = () => {
       const pads = navigator.getGamepads?.() ?? [];
+      // Merge all connected pads so user can grab any controller and play.
+      // Pick whichever pad has the most input "energy" this frame as the active
+      // one, but OR all button presses so any pad can press a button.
+      const allPads: Gamepad[] = [];
+      for (const p of pads) { if (p) allPads.push(p); }
       let active: Gamepad | null = null;
-      for (const p of pads) { if (p) { active = p; break; } }
+      let bestEnergy = -1;
+      for (const p of allPads) {
+        let e = 0;
+        for (const a of p.axes) e += Math.abs(a ?? 0);
+        for (const b of p.buttons) e += (b?.value ?? 0) + (b?.pressed ? 0.5 : 0);
+        if (e > bestEnergy) { bestEnergy = e; active = p; }
+      }
       if (active) {
         const meta = globalThis as any;
         if (meta.__padIdLogged !== active.id) {
