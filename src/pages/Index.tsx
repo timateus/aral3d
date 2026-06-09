@@ -1839,7 +1839,7 @@ const Index = () => {
           instructions={levelIntro.instructions}
           onBegin={() => setLevelIntro(null)}
           onPrev={levelIntro.n > 1 ? () => enterGameLevel(levelIntro.n - 1) : undefined}
-          onNext={levelIntro.n < 6 ? () => enterGameLevel(levelIntro.n + 1) : undefined}
+          onNext={levelIntro.n < 7 ? () => enterGameLevel(levelIntro.n + 1) : undefined}
         />
       )}
 
