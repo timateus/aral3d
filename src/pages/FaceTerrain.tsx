@@ -107,63 +107,90 @@ const FaceTerrain = () => {
         const H = (c.height = v.videoHeight || 720);
 
         const composite = (results: any) => {
-          // 1) grid background
+        // Internal processing resolution (downscaled for speed).
+        const PW = 480;
+        const PH = Math.round((PW * H) / W);
+        const procPerson = document.createElement('canvas');
+        procPerson.width = PW; procPerson.height = PH;
+        const ppctx = procPerson.getContext('2d')!;
+        const procMask = document.createElement('canvas');
+        procMask.width = PW; procMask.height = PH;
+        const pmctx = procMask.getContext('2d')!;
+        const terrainOut = document.createElement('canvas');
+        terrainOut.width = PW; terrainOut.height = PH;
+        const toctx = terrainOut.getContext('2d')!;
+        const terrainImage = toctx.createImageData(PW, PH);
+
+        const composite = (results: any) => {
+          // 1) grid background (full res)
           drawGrid(ctx, W, H);
 
-          // 2) cut person from camera using the segmentation mask
-          //    person canvas = video * mask
-          const personCanvas = document.createElement('canvas');
-          personCanvas.width = W;
-          personCanvas.height = H;
-          const pctx = personCanvas.getContext('2d')!;
-          // mirror so it feels like a mirror
-          pctx.save();
-          pctx.translate(W, 0);
-          pctx.scale(-1, 1);
-          pctx.drawImage(results.image ?? v, 0, 0, W, H);
-          pctx.restore();
-          pctx.globalCompositeOperation = 'destination-in';
-          pctx.save();
-          pctx.translate(W, 0);
-          pctx.scale(-1, 1);
-          pctx.drawImage(results.segmentationMask, 0, 0, W, H);
-          pctx.restore();
+          // 2) Render mirrored video + mirrored mask into small proc canvases.
+          ppctx.save(); ppctx.translate(PW, 0); ppctx.scale(-1, 1);
+          ppctx.drawImage(results.image ?? v, 0, 0, PW, PH);
+          ppctx.restore();
+          pmctx.clearRect(0, 0, PW, PH);
+          pmctx.save(); pmctx.translate(PW, 0); pmctx.scale(-1, 1);
+          pmctx.drawImage(results.segmentationMask, 0, 0, PW, PH);
+          pmctx.restore();
 
-          // 3) draw the person on top of the grid
-          ctx.drawImage(personCanvas, 0, 0);
+          const personPx = ppctx.getImageData(0, 0, PW, PH).data;
+          const maskPx = pmctx.getImageData(0, 0, PW, PH).data;
+          const out = terrainImage.data;
 
-          // 4) terrain gradient overlay — clipped to the person silhouette
-          const overlay = document.createElement('canvas');
-          overlay.width = W;
-          overlay.height = H;
-          const octx = overlay.getContext('2d')!;
-          octx.drawImage(getTerrainGradient(H), 0, 0, W, H);
-          octx.globalCompositeOperation = 'destination-in';
-          octx.save();
-          octx.translate(W, 0);
-          octx.scale(-1, 1);
-          octx.drawImage(results.segmentationMask, 0, 0, W, H);
-          octx.restore();
-
-          ctx.globalCompositeOperation = 'multiply';
-          ctx.globalAlpha = 0.85;
-          ctx.drawImage(overlay, 0, 0);
-          ctx.globalAlpha = 1;
-          ctx.globalCompositeOperation = 'source-over';
-
-          // 5) subtle contour rings on top of the silhouette
-          ctx.save();
-          ctx.globalCompositeOperation = 'source-atop';
-          ctx.strokeStyle = 'rgba(255,255,255,0.18)';
-          ctx.lineWidth = 1;
-          const tNow = performance.now() / 1000;
-          for (let i = 0; i < 14; i++) {
-            const y = ((i / 14) * H + (tNow * 20) % (H / 14)) % H;
-            ctx.beginPath();
-            ctx.moveTo(0, y);
-            ctx.lineTo(W, y);
-            ctx.stroke();
+          // 3) Build terrain pixels from luminance heightmap.
+          //    height = blurred luminance of person; alpha = segmentation mask.
+          //    Contour lines drawn every 1/12 of the height range.
+          const lum = new Float32Array(PW * PH);
+          for (let i = 0; i < PW * PH; i++) {
+            const r = personPx[i * 4], g = personPx[i * 4 + 1], b = personPx[i * 4 + 2];
+            lum[i] = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
           }
+          const rgb: [number, number, number] = [0, 0, 0];
+          const CONTOURS = 12;
+          for (let y = 0; y < PH; y++) {
+            for (let x = 0; x < PW; x++) {
+              const i = y * PW + x;
+              const a = maskPx[i * 4 + 3]; // mask alpha
+              if (a < 24) {
+                out[i * 4] = 0; out[i * 4 + 1] = 0; out[i * 4 + 2] = 0; out[i * 4 + 3] = 0;
+                continue;
+              }
+              const h = lum[i];
+              rampColor(h, rgb);
+
+              // simple hillshade from x-derivative
+              const xl = x > 0 ? lum[i - 1] : h;
+              const xr = x < PW - 1 ? lum[i + 1] : h;
+              const slope = (xr - xl) * 2.2; // -1..1ish
+              const shade = 1 + slope * 0.55;
+
+              // hard contour bands every 1/CONTOURS
+              const band = h * CONTOURS;
+              const frac = band - Math.floor(band);
+              const isContour = frac < 0.06 || frac > 0.94;
+              const cmul = isContour ? 0.35 : 1.0;
+
+              out[i * 4]     = Math.max(0, Math.min(255, rgb[0] * shade * cmul));
+              out[i * 4 + 1] = Math.max(0, Math.min(255, rgb[1] * shade * cmul));
+              out[i * 4 + 2] = Math.max(0, Math.min(255, rgb[2] * shade * cmul));
+              out[i * 4 + 3] = a;
+            }
+          }
+          toctx.putImageData(terrainImage, 0, 0);
+
+          // 4) Stamp the terrain person onto the grid at full res (opaque).
+          ctx.imageSmoothingEnabled = true;
+          ctx.drawImage(terrainOut, 0, 0, W, H);
+
+          // 5) Outline ring around silhouette so the body reads against the grid.
+          ctx.save();
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+          ctx.lineWidth = 2;
+          ctx.shadowColor = 'rgba(0,0,0,0.7)';
+          ctx.shadowBlur = 8;
+          ctx.drawImage(terrainOut, 0, 0, W, H); // re-draw to bake shadow halo
           ctx.restore();
         };
 
