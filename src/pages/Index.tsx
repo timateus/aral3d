@@ -1375,7 +1375,8 @@ const Index = () => {
             riverFlyover={riverFlyover}
             onRiverFlyoverDone={() => setRiverFlyover(false)}
             riverInflow={currentRiverInflow}
-            userLocation={userLocation}
+            userLocation={schoolMode ? schoolTarget : userLocation}
+            showCityMarkers={!levelIntro}
             inspectorEnabled={showInspector}
             damToolActive={damToolActive}
             onDamPlace={handleRaiseTerrainClick}
