@@ -63,6 +63,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { useGamepad } from '@/hooks/useGamepad';
 import { firstPersonBridge } from '@/lib/first-person-bridge';
+import { loadState, saveState } from '@/lib/game-persistence';
 
 function GamepadIndicator({ btnBase }: { btnBase: string }) {
   const { connected, padId } = useGamepad();
