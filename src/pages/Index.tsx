@@ -21,7 +21,8 @@ import LevelIntroSplash from '@/components/LevelIntroSplash';
 import MapBuilderHUD from '@/components/MapBuilderHUD';
 import SchoolTwelveOverlay from '@/components/SchoolTwelveOverlay';
 import SchoolPlaceOverlay from '@/components/SchoolPlaceOverlay';
-import FaceProjectionOverlay from '@/components/FaceProjectionOverlay';
+import FaceCameraBackground from '@/components/FaceCameraBackground';
+import { faceModeBridge } from '@/lib/face-mode-bridge';
 
 
 import { applyRandomSpectralPalette } from '@/lib/visual-mode';
