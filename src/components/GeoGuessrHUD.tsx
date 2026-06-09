@@ -699,7 +699,9 @@ const GeoGuessrHUD = ({ onExit, onPrev, onNext, getAimLatLon, getLatLonAtScreen,
             </button>
           </div>
         </div>
-      )}
+        );
+      })()}
+
 
       {/* Help bottom-right */}
       {!done && (
