@@ -1,10 +1,12 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { TerrainData } from '@/lib/geotiff-loader';
 import { useGamepad } from '@/hooks/useGamepad';
 import { firstPersonBridge } from '@/lib/first-person-bridge';
 import { cellKey, getItemDef, CUBE_SIZE } from '@/lib/map-builder-items';
+import classroomOne from '@/assets/kegeyli-classroom-1.png.asset.json';
+import schoolFront from '@/assets/kegeyli-school-front.png.asset.json';
 
 interface Props {
   active: boolean;
@@ -32,6 +34,18 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
   const keys = useRef<Record<string, boolean>>({});
   const prevTrigger = useRef(false);
   const avatarRef = useRef<THREE.Group>(null);
+  const npcRef = useRef<THREE.Group>(null);
+
+  const playerTex = useMemo(() => {
+    const t = new THREE.TextureLoader().load(classroomOne.url);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }, []);
+  const npcTex = useMemo(() => {
+    const t = new THREE.TextureLoader().load(schoolFront.url);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }, []);
 
   const meshWidth = 10;
   const meshHeight = 10 * (terrain.height / terrain.width);
@@ -229,7 +243,7 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
         // degree-distance check is closer to true meters near 42°N.
         const dLat = ll.lat - t.lat;
         const dLon = (ll.lon - t.lon) * Math.cos((t.lat * Math.PI) / 180);
-        if (!firstPersonBridge.school.arrived && Math.hypot(dLat, dLon) < 0.012) {
+        if (!firstPersonBridge.school.arrived && Math.hypot(dLat, dLon) < 0.45) {
           firstPersonBridge.school.arrived = true;
           firstPersonBridge.school.autoWalk = false;
         }
@@ -239,15 +253,31 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
 
     if (thirdPerson) {
       if (avatarRef.current) {
-        avatarRef.current.position.set(pos.current.x, pos.current.y + 0.05, pos.current.z);
-        avatarRef.current.rotation.y = yaw.current;
+        avatarRef.current.position.set(pos.current.x, pos.current.y + 0.18, pos.current.z);
+        // Billboard: always face the camera.
+        avatarRef.current.rotation.y = Math.atan2(
+          camera.position.x - pos.current.x,
+          camera.position.z - pos.current.z
+        );
       }
-      // Tight over-the-shoulder zoom so the avatar feels close to the camera.
-      const camDist = 0.42;
+      if (npcRef.current && firstPersonBridge.school.target) {
+        const t = firstPersonBridge.school.target;
+        const tw = latLonToWorldXZ(t.lat, t.lon);
+        if (tw) {
+          const ny = sampleHeight(tw.x, tw.z) + 0.22;
+          npcRef.current.position.set(tw.x, ny, tw.z);
+          npcRef.current.rotation.y = Math.atan2(
+            camera.position.x - tw.x,
+            camera.position.z - tw.z
+          );
+        }
+      }
+      // Pulled-back over-the-shoulder zoom so the avatar billboard is fully visible.
+      const camDist = 1.1;
       const camOffsetX = Math.sin(yaw.current) * camDist;
       const camOffsetZ = Math.cos(yaw.current) * camDist;
-      camera.position.set(pos.current.x + camOffsetX, pos.current.y + 0.28, pos.current.z + camOffsetZ);
-      camera.lookAt(pos.current.x, pos.current.y + 0.05, pos.current.z);
+      camera.position.set(pos.current.x + camOffsetX, pos.current.y + 0.55, pos.current.z + camOffsetZ);
+      camera.lookAt(pos.current.x, pos.current.y + 0.15, pos.current.z);
     } else {
       camera.position.copy(pos.current);
       const quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(pitch.current, yaw.current, 0, 'YXZ'));
@@ -276,16 +306,22 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
   if (!thirdPerson) return null;
 
   return (
-    <group ref={avatarRef} scale={0.55}>
-      <mesh position={[0, 0.12, 0]}>
-        <sphereGeometry args={[0.12, 16, 16]} />
-        <meshStandardMaterial color="#f0c674" emissive="#f0c674" emissiveIntensity={0.28} />
-      </mesh>
-      <mesh position={[-0.04, 0.14, -0.1]}><sphereGeometry args={[0.022, 8, 8]} /><meshStandardMaterial color="#111827" /></mesh>
-      <mesh position={[0.04, 0.14, -0.1]}><sphereGeometry args={[0.022, 8, 8]} /><meshStandardMaterial color="#111827" /></mesh>
-      <mesh position={[0, 0.23, 0]}><coneGeometry args={[0.06, 0.1, 8]} /><meshStandardMaterial color="#8ec8e8" /></mesh>
-      <pointLight color="#f0c674" intensity={0.35} distance={0.8} />
-    </group>
+    <>
+      <group ref={avatarRef}>
+        <mesh>
+          <planeGeometry args={[0.42, 0.56]} />
+          <meshBasicMaterial map={playerTex} transparent toneMapped={false} side={THREE.DoubleSide} />
+        </mesh>
+        <pointLight color="#f0c674" intensity={0.35} distance={0.8} />
+      </group>
+      <group ref={npcRef}>
+        <mesh>
+          <planeGeometry args={[0.52, 0.7]} />
+          <meshBasicMaterial map={npcTex} transparent toneMapped={false} side={THREE.DoubleSide} />
+        </mesh>
+        <pointLight color="#8ec8e8" intensity={0.4} distance={1.2} />
+      </group>
+    </>
   );
 };
 

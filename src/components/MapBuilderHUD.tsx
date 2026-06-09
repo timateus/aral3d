@@ -35,7 +35,7 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
   const itemsRef = useRef(items);
   const heldRef = useRef(false);
   const { stateRef: gpRef } = useGamepad();
-  const prevBumpers = useRef({ lb: false, rb: false });
+  const prevBumpers = useRef({ lb: false, rb: false, back: false, start: false });
   const kbMouseHeld = useRef(false);
 
   useEffect(() => { selectedRef.current = selected; }, [selected]);
@@ -283,8 +283,18 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
           setSelected(PALETTE_ITEMS[(i - 1 + PALETTE_ITEMS.length) % PALETTE_ITEMS.length].id);
           sfx.click();
         }
+        if (gp.buttons.back && !prevBumpers.current.back) {
+          sfx.navPrev();
+          onPrev();
+        }
+        if (gp.buttons.start && !prevBumpers.current.start && onNext) {
+          sfx.navNext();
+          onNext();
+        }
         prevBumpers.current.lb = gp.buttons.lb;
         prevBumpers.current.rb = gp.buttons.rb;
+        prevBumpers.current.back = gp.buttons.back;
+        prevBumpers.current.start = gp.buttons.start;
       }
       raf = requestAnimationFrame(loop);
     };
@@ -298,7 +308,7 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
       {/* Top bar */}
       <div data-hud className="fixed top-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-4 py-2 rounded-md bg-black/60 backdrop-blur-md border border-white/15">
         <span className="text-white/90 font-mono text-[11px] tracking-wider uppercase">Level 5 · Sandspiel Builder</span>
-        <span className="text-white/40 font-mono text-[10px]">WASD walk · X / click to drop in front · seed + water blooms · lava burns · oil pump leaks oil</span>
+        <span className="text-white/40 font-mono text-[10px]">WASD walk · X / click to drop · [ ] palette · Back/Start = prev/next level</span>
       </div>
 
       <button
