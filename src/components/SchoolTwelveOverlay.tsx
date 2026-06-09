@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowLeft, ExternalLink, Film, Navigation2, X } from 'lucide-react';
 import { sfx } from '@/lib/ui-sfx';
+import { consumeGamepadButton } from '@/lib/gamepad-dedupe';
 import schoolFrontAsset from '@/assets/kegeyli-school-front.png.asset.json';
 import classroomOneAsset from '@/assets/kegeyli-classroom-1.png.asset.json';
 import classroomTwoAsset from '@/assets/kegeyli-classroom-2.png.asset.json';
