@@ -499,13 +499,37 @@ const VoxelPage = () => {
             consumeSelected={consumeSelected}
             onLockChange={setLocked}
             playerRef={playerRef}
+            canAct={canAct}
+            onActionConsumed={onActionConsumed}
           />
+          <ZoomController />
           <VoxelAutopilot world={world} active={demoMode} onBuild={onDemoBuild} />
         </Canvas>
       )}
 
       {world && <VoxelMinimap world={world} playerRef={playerRef} version={version} label={`Map · ${cfg.label}`} />}
       {world && <VoxelPlaceTags world={world} playerRef={playerRef} region={region} />}
+
+      {world && (
+        <div className="fixed top-3 right-3 z-50 flex items-center gap-1.5">
+          <div className={`px-3 py-1.5 border text-[10px] uppercase tracking-widest font-mono ${
+            actionsLeft === 0
+              ? 'bg-red-900/70 border-red-300 text-red-100 animate-pulse'
+              : actionsLeft <= 10
+                ? 'bg-amber-900/70 border-amber-300 text-amber-100'
+                : 'bg-black/60 border-white/20 text-white/80'
+          }`}>
+            Actions {actionsLeft}/{ACTION_LIMIT}
+          </div>
+          <button
+            onClick={resetActions}
+            className="px-2 py-1.5 bg-black/60 border border-white/20 hover:bg-white/10 text-[10px] uppercase tracking-widest"
+            title="Reset action counter"
+          >
+            reset
+          </button>
+        </div>
+      )}
 
       <VoxelHUD locked={locked} onOpenInventory={() => setInvOpen(o => !o)} />
       <VoxelTouchControls />
