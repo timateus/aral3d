@@ -257,69 +257,97 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
     w.document.close();
   };
 
-  // Capture current canvas, ask for IG handle, then share to Instagram.
-  // Pragmatic flow (no Meta API approval): on mobile we use the Web Share API
-  // to hand the image off to the Instagram app with a prefilled caption that
-  // @-tags the user (so when they post, the handle is in the caption — they
-  // can also add it as a collaborator in IG's composer). On desktop we
-  // download the PNG, copy the caption to clipboard, and open instagram.com.
+  // Post current view directly to YOUR Instagram via the share-to-instagram
+  // edge function (uses INSTAGRAM_ACCESS_TOKEN + INSTAGRAM_USER_ID secrets).
   const handleShare = async () => {
     const canvas = document.querySelector('canvas') as HTMLCanvasElement | null;
     if (!canvas) return;
-    const stored = (() => { try { return localStorage.getItem('ig-handle') || ''; } catch { return ''; } })();
-    const raw = window.prompt(
-      'Your Instagram username (we’ll tag you in the caption and invite you as a collaborator):',
-      stored,
-    );
-    if (raw == null) return;
-    const handle = raw.trim().replace(/^@+/, '').replace(/[^A-Za-z0-9._]/g, '');
-    if (!handle) return;
-    try { localStorage.setItem('ig-handle', handle); } catch {}
 
-    const blob: Blob = await new Promise((res) =>
-      canvas.toBlob((b) => res(b as Blob), 'image/png', 0.95)!
-    );
-    const file = new File([blob], `spectral-earth-${Date.now()}.png`, { type: 'image/png' });
+    // Composite manifesto text on top of the map (same as Print) so the IG
+    // post matches what's on screen.
+    const W = canvas.width;
+    const H = canvas.height;
+    const out = document.createElement('canvas');
+    out.width = W; out.height = H;
+    const ctx = out.getContext('2d')!;
+    ctx.drawImage(canvas, 0, 0);
+
+    const drawColorized = (
+      text: string, offset: number, y: number, fontPx: number,
+      fontFamily: string, weight: string, italic: string, transform: string, tracking: number,
+    ) => {
+      const display = transform === 'uppercase' ? text.toUpperCase()
+        : transform === 'lowercase' ? text.toLowerCase() : text;
+      ctx.textBaseline = 'top';
+      const tokens = display.split(/(\s+)/);
+      const measure = (px: number) => {
+        ctx.font = `${italic === 'italic' ? 'italic ' : ''}${weight} ${px}px ${fontFamily}`;
+        const track = tracking * px;
+        return tokens.reduce((sum, tok) => sum + (tok ? ctx.measureText(tok).width + track * tok.length : 0), 0);
+      };
+      const maxWidth = W * 0.88;
+      let actualPx = fontPx;
+      let total = measure(actualPx);
+      if (total > maxWidth) {
+        actualPx = Math.max(14, Math.floor(actualPx * (maxWidth / total)));
+        total = measure(actualPx);
+      }
+      const trackPx = tracking * actualPx;
+      let x = (W - total) / 2;
+      let idx = 0;
+      for (const tok of tokens) {
+        if (!tok) continue;
+        if (/^\s+$/.test(tok)) { x += ctx.measureText(tok).width + trackPx * tok.length; continue; }
+        ctx.fillStyle = stops[(idx + offset) % stops.length];
+        ctx.shadowColor = 'rgba(0,0,0,0.65)';
+        ctx.shadowBlur = Math.max(4, actualPx * 0.12);
+        ctx.fillText(tok, x, y);
+        ctx.shadowBlur = 0;
+        x += ctx.measureText(tok).width + trackPx * tok.length;
+        idx++;
+      }
+      return y + actualPx * 1.15;
+    };
+    const f1 = Math.round(W * 0.036);
+    const f2 = Math.round(W * 0.021);
+    const blockH = f1 * 1.15 + f2 * 1.15 + f1 * 0.5;
+    let y = (H - blockH) / 2;
+    y = drawColorized(line1, 0, y, f1, style.font1, style.weight1, style.style1, style.case1, style.tracking1);
+    y += f1 * 0.35;
+    drawColorized(line2, 3, y, f2, style.font2, style.weight2, style.style2, style.case2, style.tracking2);
+
+    const dataUrl = out.toDataURL('image/png');
     const caption =
-      `made at Aral School 2026 — collab with @${handle}\n` +
+      `made at Aral School 2026\n` +
       `#aralschool #spectralearth #aralsea #cartography #mapsarenotneutral`;
 
-    // 1) Mobile: native share sheet (Instagram appears as a target).
-    const nav: any = navigator;
-    if (nav.canShare?.({ files: [file] })) {
-      try {
-        await nav.share({ files: [file], text: caption, title: 'Spectral Earth' });
-        return;
-      } catch (e) {
-        // user cancelled or share failed → fall through to desktop fallback
-        console.warn('[share] navigator.share failed', e);
-      }
-    }
+    const btn = document.activeElement as HTMLElement | null;
+    btn?.blur();
+    // Lightweight inline toast
+    const toast = document.createElement('div');
+    toast.textContent = 'Posting to Instagram…';
+    toast.style.cssText = `position:fixed;left:50%;bottom:120px;transform:translateX(-50%);z-index:9999;padding:10px 16px;background:${bgColor};color:${inkColor};border:2px solid ${stops[2 % stops.length]};font-family:"Courier New",monospace;font-size:12px;letter-spacing:0.18em;text-transform:uppercase;`;
+    document.body.appendChild(toast);
 
-    // 2) Desktop fallback: download image + copy caption + open Instagram.
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `spectral-earth-${handle}.png`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 4000);
-    try { await navigator.clipboard.writeText(caption); } catch {}
-    // Open Instagram create flow on web. IG's web composer doesn't accept
-    // file uploads directly, but the user can paste the caption (already on
-    // clipboard) and drop the just-downloaded PNG, then add @handle as a
-    // collaborator from the IG share dialog.
-    window.open('https://www.instagram.com/?next=%2Fcreate%2Fstyle%2F', '_blank', 'noopener');
-    setTimeout(() => {
-      alert(
-        `Image downloaded and caption copied to clipboard.\n\n` +
-        `In Instagram:\n• New post → drop the image → paste caption\n` +
-        `• On the share screen, tap "Tag people" → "Invite collaborator" → @${handle}\n` +
-        `• For Stories: + → Story → pick the image → tag @${handle}`
-      );
-    }, 250);
+    try {
+      const { data, error } = await supabase.functions.invoke('share-to-instagram', {
+        body: { imageBase64: dataUrl, caption },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const permalink = (data as any)?.permalink;
+      toast.innerHTML = permalink
+        ? `Posted! <a href="${permalink}" target="_blank" style="color:${stops[0]};text-decoration:underline;">View on Instagram</a>`
+        : 'Posted to Instagram.';
+      setTimeout(() => toast.remove(), 6000);
+    } catch (e: any) {
+      console.error('[share] failed', e);
+      toast.textContent = `Share failed: ${e?.message ?? 'unknown'}`;
+      toast.style.borderColor = '#ff4444';
+      setTimeout(() => toast.remove(), 6000);
+    }
   };
+
 
 
   // Gamepad: X = misbehave, B = print, RB = next level.
