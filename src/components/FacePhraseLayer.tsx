@@ -39,19 +39,18 @@ interface ShownPhrase {
 }
 
 // Data-layer card shown while ☝ index-finger gesture is held.
-const LAYERS = [
-  { name: 'Canals',           desc: 'Soviet-era irrigation channels that bled the Aral Sea dry — over 40,000 km cut through cotton fields.' },
-  { name: 'Demographics',     desc: 'Karakalpakstan holds ~1.9M people; out-migration from the shore rose sharply after the 1990s collapse.' },
-  { name: 'Schools (TDS)',    desc: 'Schools colour-coded by Total Dissolved Solids. Green = safe; red = above WHO salinity limits.' },
-  { name: 'Groundwater',      desc: 'Pillar height = depth to water table. Salinity follows the receding sea — the aquifer is now brackish.' },
-  { name: 'Salinity',         desc: 'Soil salinity along the former seabed. Wind lifts the salt into dust storms reaching 500 km inland.' },
-  { name: 'Population Density', desc: 'Hex-binned counts. Density clusters along the Amu Darya; the desiccated north is nearly empty.' },
-  { name: 'Landcover',        desc: 'Cropland, bare soil, sparse vegetation. The Aralkum is the youngest desert on Earth — born 1960–2010.' },
-  { name: 'Rivers & Waterways', desc: 'Stream thickness scales with order and inflow. The Amu Darya rarely reaches the sea anymore.' },
-  { name: 'Historical Basins', desc: '13th, 19th, and 21st century shorelines. The sea has retreated and advanced — but never this fast.' },
-  { name: 'Maternal Mortality', desc: 'Per 100k live births. Elevated rates linked to salinity, anemia, and contaminated water.' },
-  { name: 'Sewage Coverage',  desc: 'Share of households connected to sanitation. Coverage drops sharply outside Nukus.' },
-  { name: 'Migration',        desc: 'Net arrivals vs. emigrants. The Aral shore has lost more than 100,000 residents since 1991.' },
+// `key` matches the toggle handled by Index.tsx (face:layer event).
+const LAYERS: { key: string; name: string; desc: string }[] = [
+  { key: 'salinity',     name: 'Salinity',           desc: 'Soil salinity along the former seabed. Wind lifts the salt into dust storms reaching 500 km inland.' },
+  { key: 'landcover',    name: 'Landcover',          desc: 'Cropland, bare soil, sparse vegetation. The Aralkum is the youngest desert on Earth — born 1960–2010.' },
+  { key: 'waterways',    name: 'Rivers & Waterways', desc: 'Stream thickness scales with order and inflow. The Amu Darya rarely reaches the sea anymore.' },
+  { key: 'schools',      name: 'Schools (TDS)',      desc: 'Schools coloured by Total Dissolved Solids. Green = safe; red = above WHO salinity limits.' },
+  { key: 'groundwater',  name: 'Groundwater',        desc: 'Pillar height = depth to water table. Salinity follows the receding sea — the aquifer is now brackish.' },
+  { key: 'popDensity',   name: 'Population Density', desc: 'Hex-binned counts. Density clusters along the Amu Darya; the desiccated north is nearly empty.' },
+  { key: 'choropleth',   name: 'Demographics',       desc: 'District-level choropleth. Out-migration from the shore rose sharply after the 1990s collapse.' },
+  { key: 'migration',    name: 'Migration',          desc: 'Net arrivals vs. emigrants. The Aral shore has lost more than 100,000 residents since 1991.' },
+  { key: 'basin13',      name: '13th-century Basin', desc: 'Medieval shoreline. The sea has retreated and advanced before — but never this fast.' },
+  { key: 'basin19',      name: '19th-century Basin', desc: 'Pre-Soviet extent, when the Aral was the world\'s 4th-largest lake.' },
 ];
 
 export const FacePhraseLayer = () => {
