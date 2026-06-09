@@ -258,13 +258,14 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
   };
 
 
-  // Gamepad: X = make it misbehave, LB = prev level, RB = next level.
+  // Gamepad: X = misbehave, B = print, RB = next level.
   useEffect(() => {
     let raf = 0;
     const tick = () => {
       const s = stateRef.current;
       if (s.connected) {
         if (consumeGamepadButton('x', s.buttons.x)) { sfx.make(); onRandomize(); }
+        if (consumeGamepadButton('b', s.buttons.b)) { sfx.make(); handlePrint(); }
         if (consumeGamepadButton('rb', s.buttons.rb) && onNext) { sfx.navNext(); onNext(); }
       }
       raf = requestAnimationFrame(tick);
@@ -281,6 +282,8 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
       if (t && /input|textarea|select/i.test(t.tagName)) return;
       if (e.key === ' ' || e.key === 'Enter' || e.key === 'x' || e.key === 'X') {
         e.preventDefault(); sfx.make(); onRandomize();
+      } else if (e.key === 'b' || e.key === 'B') {
+        e.preventDefault(); sfx.make(); handlePrint();
       } else if (e.key === 'ArrowRight' && onNext) {
         e.preventDefault(); sfx.navNext(); onNext();
       }
