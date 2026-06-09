@@ -6,6 +6,7 @@ import { useDesignerScheme } from '@/lib/visual-mode';
 import { sfx } from '@/lib/ui-sfx';
 import { useGamepad } from '@/hooks/useGamepad';
 import { consumeGamepadButton } from '@/lib/gamepad-dedupe';
+import { remapPadLabel } from '@/lib/pad-labels';
 
 
 function bgIsLight(hex: string): boolean {
@@ -18,18 +19,20 @@ function bgIsLight(hex: string): boolean {
 }
 
 function PadHint({ label, color, bg }: { label: string; color: string; bg: string }) {
-  const ink = bgIsLight(bg) ? '#0a0a0a' : '#ffffff';
+  const remapped = remapPadLabel(label);
+  const chipBg = remapped.bg ?? bg;
+  const ink = bgIsLight(chipBg) ? '#0a0a0a' : '#ffffff';
   return (
     <span
       className="ml-2 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-mono font-bold leading-none rounded"
       style={{
         border: `1.5px solid ${ink}`,
         color: ink,
-        background: bg,
+        background: chipBg,
         minWidth: 18,
       }}
     >
-      {label}
+      {remapped.text}
     </span>
   );
 }
@@ -255,13 +258,14 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
   };
 
 
-  // Gamepad: X = make it misbehave, LB = prev level, RB = next level.
+  // Gamepad: X = misbehave, B = print, RB = next level.
   useEffect(() => {
     let raf = 0;
     const tick = () => {
       const s = stateRef.current;
       if (s.connected) {
         if (consumeGamepadButton('x', s.buttons.x)) { sfx.make(); onRandomize(); }
+        if (consumeGamepadButton('b', s.buttons.b)) { sfx.make(); handlePrint(); }
         if (consumeGamepadButton('rb', s.buttons.rb) && onNext) { sfx.navNext(); onNext(); }
       }
       raf = requestAnimationFrame(tick);
@@ -278,6 +282,8 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
       if (t && /input|textarea|select/i.test(t.tagName)) return;
       if (e.key === ' ' || e.key === 'Enter' || e.key === 'x' || e.key === 'X') {
         e.preventDefault(); sfx.make(); onRandomize();
+      } else if (e.key === 'b' || e.key === 'B') {
+        e.preventDefault(); sfx.make(); handlePrint();
       } else if (e.key === 'ArrowRight' && onNext) {
         e.preventDefault(); sfx.navNext(); onNext();
       }
@@ -328,7 +334,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
       <div className="absolute top-6 left-1/2 -translate-x-1/2 z-40 text-center pointer-events-none">
         <div className="text-[10px] font-mono uppercase tracking-[0.4em] text-foreground/50">level 1</div>
         <h1 className="text-2xl font-extralight tracking-[0.4em] uppercase text-foreground/90 drop-shadow">
-          Spectral Earth
+          Choose your character
         </h1>
         <div className="mt-2 h-px w-16 mx-auto bg-foreground/30" />
       </div>
@@ -374,6 +380,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
         >
           <Printer className="w-3 h-3" style={{ color: stops[0] }} />
           Print Earth
+          <PadHint label="B" color={stops[0]} bg={bgColor} />
         </button>
       </div>
 

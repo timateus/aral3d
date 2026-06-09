@@ -102,8 +102,19 @@ export function useGamepad() {
 
     const tick = () => {
       const pads = navigator.getGamepads?.() ?? [];
+      // Merge all connected pads so user can grab any controller and play.
+      // Pick whichever pad has the most input "energy" this frame as the active
+      // one, but OR all button presses so any pad can press a button.
+      const allPads: Gamepad[] = [];
+      for (const p of pads) { if (p) allPads.push(p); }
       let active: Gamepad | null = null;
-      for (const p of pads) { if (p) { active = p; break; } }
+      let bestEnergy = -1;
+      for (const p of allPads) {
+        let e = 0;
+        for (const a of p.axes) e += Math.abs(a ?? 0);
+        for (const b of p.buttons) e += (b?.value ?? 0) + (b?.pressed ? 0.5 : 0);
+        if (e > bestEnergy) { bestEnergy = e; active = p; }
+      }
       if (active) {
         const meta = globalThis as any;
         if (meta.__padIdLogged !== active.id) {
@@ -111,8 +122,18 @@ export function useGamepad() {
           console.log(`[pad] connected id="${active.id}" mapping=${active.mapping} axes=${active.axes.length} buttons=${active.buttons.length}`);
         }
 
-        const lx = applyDeadzone(axisValue(active, 0));
-        const ly = applyDeadzone(axisValue(active, 1));
+        // Merge axes across pads: pick the largest-magnitude value per axis
+        // so either controller can drive the map identically.
+        const mergedAxis = (idx: number) => {
+          let best = 0;
+          for (const p of allPads) {
+            const v = axisValue(p, idx);
+            if (Math.abs(v) > Math.abs(best)) best = v;
+          }
+          return best;
+        };
+        const lx = applyDeadzone(mergedAxis(0));
+        const ly = applyDeadzone(mergedAxis(1));
 
         if (!meta.__padRightAxes || meta.__padRightAxesId !== active.id) {
           meta.__padRightAxes = selectRightStickAxes(active);
@@ -123,33 +144,35 @@ export function useGamepad() {
 
         const [rxIdx, ryIdx] = (meta.__padRightAxes as [number, number]) ?? [2, 3];
         const swap = !!(globalThis as any).__padSwapRightXY;
-        const rawRX = applyDeadzone(axisValue(active, swap ? ryIdx : rxIdx));
-        const rawRY = applyDeadzone(axisValue(active, swap ? rxIdx : ryIdx));
+        const rawRX = applyDeadzone(mergedAxis(swap ? ryIdx : rxIdx));
+        const rawRY = applyDeadzone(mergedAxis(swap ? rxIdx : ryIdx));
         const invX = (globalThis as any).__padInvertRX ? -1 : 1;
         const invY = (globalThis as any).__padInvertRY ? -1 : 1;
         const rightX = rawRX * invX;
         const rightY = rawRY * invY;
 
-        const b = active.buttons;
+        // OR pressed state and MAX trigger value across every connected pad.
+        const anyPressed = (idx: number) => allPads.some((p) => !!p.buttons[idx]?.pressed);
+        const maxVal = (idx: number) => allPads.reduce((m, p) => Math.max(m, p.buttons[idx]?.value ?? 0), 0);
         const next: GamepadState = {
           connected: true,
           leftStick: { x: lx, y: ly },
           rightStick: { x: rightX, y: rightY },
           buttons: {
-            a: !!b[0]?.pressed,
-            b: !!b[1]?.pressed,
-            x: !!b[2]?.pressed,
-            y: !!b[3]?.pressed,
-            lb: !!b[4]?.pressed,
-            rb: !!b[5]?.pressed,
-            lt: b[6]?.value ?? 0,
-            rt: b[7]?.value ?? 0,
-            back: !!b[8]?.pressed,
-            start: !!b[9]?.pressed,
-            up: !!b[12]?.pressed,
-            down: !!b[13]?.pressed,
-            left: !!b[14]?.pressed,
-            right: !!b[15]?.pressed,
+            a: anyPressed(0),
+            b: anyPressed(1),
+            x: anyPressed(2),
+            y: anyPressed(3),
+            lb: anyPressed(4),
+            rb: anyPressed(5),
+            lt: maxVal(6),
+            rt: maxVal(7),
+            back: anyPressed(8),
+            start: anyPressed(9),
+            up: anyPressed(12),
+            down: anyPressed(13),
+            left: anyPressed(14),
+            right: anyPressed(15),
           },
         };
 

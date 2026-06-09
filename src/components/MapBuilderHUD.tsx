@@ -11,6 +11,7 @@ import {
 import { firstPersonBridge } from '@/lib/first-person-bridge';
 import { sfx } from '@/lib/ui-sfx';
 import { useGamepad } from '@/hooks/useGamepad';
+import { remapPadLabel } from '@/lib/pad-labels';
 
 interface Props {
   onExit: () => void;
@@ -31,12 +32,24 @@ const FLAMMABLE: MapBuilderItemId[] = ['seed', 'plant', 'flower', 'saxaul', 'ree
 const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: Props) => {
   const [selected, setSelected] = useState<MapBuilderItemId>('water');
   const [items, setItems] = useState<PlacedItem[]>([]);
+  const [confirmNav, setConfirmNav] = useState<null | 'prev' | 'next'>(null);
   const selectedRef = useRef(selected);
   const itemsRef = useRef(items);
   const heldRef = useRef(false);
   const { stateRef: gpRef } = useGamepad();
-  const prevBumpers = useRef({ lb: false, rb: false, back: false, start: false });
+  const prevBumpers = useRef({ lb: false, rb: false, back: false, start: false, a: false, b: false, x: false });
   const kbMouseHeld = useRef(false);
+
+  const requestNav = (dir: 'prev' | 'next') => {
+    // If nothing built yet, no need to confirm.
+    if (itemsRef.current.length === 0) {
+      sfx[dir === 'prev' ? 'navPrev' : 'navNext']?.();
+      if (dir === 'prev') onPrev();
+      else onNext?.();
+      return;
+    }
+    setConfirmNav(dir);
+  };
 
   useEffect(() => { selectedRef.current = selected; }, [selected]);
   useEffect(() => {
@@ -270,38 +283,53 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
     const loop = () => {
       const gp = gpRef.current;
       if (gp.connected) {
-        const padHeld = gp.buttons.x || gp.buttons.a || gp.buttons.rt > 0.4;
-        if (padHeld && !heldRef.current && !kbMouseHeld.current) place();
-        heldRef.current = kbMouseHeld.current || padHeld;
-        if (gp.buttons.rb && !prevBumpers.current.rb) {
-          const i = PALETTE_ITEMS.findIndex((x) => x.id === selectedRef.current);
-          setSelected(PALETTE_ITEMS[(i + 1) % PALETTE_ITEMS.length].id);
-          sfx.click();
+        if (confirmNav) {
+          // While confirm popup is open: A/X = confirm, B = cancel.
+          if ((gp.buttons.a && !prevBumpers.current.a) || (gp.buttons.x && !prevBumpers.current.x)) {
+            const dir = confirmNav;
+            setConfirmNav(null);
+            sfx[dir === 'prev' ? 'navPrev' : 'navNext']?.();
+            if (dir === 'prev') onPrev(); else onNext?.();
+          } else if (gp.buttons.b && !prevBumpers.current.b) {
+            setConfirmNav(null);
+            sfx.exit?.();
+          }
+          prevBumpers.current.a = gp.buttons.a;
+          prevBumpers.current.b = gp.buttons.b;
+          prevBumpers.current.x = gp.buttons.x;
+          prevBumpers.current.back = gp.buttons.back;
+          prevBumpers.current.start = gp.buttons.start;
+        } else {
+          const padHeld = gp.buttons.x || gp.buttons.a || gp.buttons.rt > 0.4;
+          if (padHeld && !heldRef.current && !kbMouseHeld.current) place();
+          heldRef.current = kbMouseHeld.current || padHeld;
+          if (gp.buttons.rb && !prevBumpers.current.rb) {
+            const i = PALETTE_ITEMS.findIndex((x) => x.id === selectedRef.current);
+            setSelected(PALETTE_ITEMS[(i + 1) % PALETTE_ITEMS.length].id);
+            sfx.click();
+          }
+          if (gp.buttons.lb && !prevBumpers.current.lb) {
+            const i = PALETTE_ITEMS.findIndex((x) => x.id === selectedRef.current);
+            setSelected(PALETTE_ITEMS[(i - 1 + PALETTE_ITEMS.length) % PALETTE_ITEMS.length].id);
+            sfx.click();
+          }
+          if (gp.buttons.back && !prevBumpers.current.back) requestNav('prev');
+          if (gp.buttons.start && !prevBumpers.current.start && onNext) requestNav('next');
+          prevBumpers.current.a = gp.buttons.a;
+          prevBumpers.current.b = gp.buttons.b;
+          prevBumpers.current.x = (gp.buttons as any).x ?? false;
+          prevBumpers.current.lb = gp.buttons.lb;
+          prevBumpers.current.rb = gp.buttons.rb;
+          prevBumpers.current.back = gp.buttons.back;
+          prevBumpers.current.start = gp.buttons.start;
         }
-        if (gp.buttons.lb && !prevBumpers.current.lb) {
-          const i = PALETTE_ITEMS.findIndex((x) => x.id === selectedRef.current);
-          setSelected(PALETTE_ITEMS[(i - 1 + PALETTE_ITEMS.length) % PALETTE_ITEMS.length].id);
-          sfx.click();
-        }
-        if (gp.buttons.back && !prevBumpers.current.back) {
-          sfx.navPrev();
-          onPrev();
-        }
-        if (gp.buttons.start && !prevBumpers.current.start && onNext) {
-          sfx.navNext();
-          onNext();
-        }
-        prevBumpers.current.lb = gp.buttons.lb;
-        prevBumpers.current.rb = gp.buttons.rb;
-        prevBumpers.current.back = gp.buttons.back;
-        prevBumpers.current.start = gp.buttons.start;
       }
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [confirmNav]);
 
   return (
     <>
@@ -313,7 +341,7 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
 
       <button
         data-hud
-        onClick={() => { sfx.navPrev(); onPrev(); }}
+        onClick={() => requestNav('prev')}
         className="fixed top-4 left-4 z-40 px-3 py-1.5 rounded-md bg-black/60 backdrop-blur-md border border-white/15 text-white/90 font-mono text-[11px] hover:bg-black/80"
       >← Prev</button>
       <button
@@ -324,7 +352,7 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
       {onNext && (
         <button
           data-hud
-          onClick={() => { sfx.navNext(); onNext(); }}
+          onClick={() => requestNav('next')}
           aria-label="next level"
           className="fixed right-2 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center justify-center text-white/85 hover:text-white"
           title="Next level: Kegeyli School 12"
@@ -332,6 +360,34 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
           <svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
           <span className="mt-1 px-2 py-0.5 text-[10px] font-mono border border-white/40 rounded">→ Level 6</span>
         </button>
+      )}
+
+      {/* Confirm leave-level popup */}
+      {confirmNav && (
+        <div data-hud className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="max-w-sm w-full mx-4 p-5 rounded-md border border-white/20 bg-zinc-900 text-white font-mono">
+            <div className="text-xs uppercase tracking-[0.25em] text-white/50 mb-2">leave level?</div>
+            <div className="text-sm mb-4 leading-relaxed">
+              You have <span className="text-white font-bold">{items.length}</span> placed items.
+              Going to the {confirmNav === 'next' ? 'next' : 'previous'} level will clear your build.
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => { setConfirmNav(null); sfx.exit?.(); }}
+                className="px-3 py-1.5 text-[11px] uppercase tracking-wider rounded border border-white/30 hover:bg-white/10"
+              >Stay <span className="ml-1 px-1 border border-white/40 rounded text-[9px]">{remapPadLabel('B').text}</span></button>
+              <button
+                onClick={() => {
+                  const dir = confirmNav;
+                  setConfirmNav(null);
+                  sfx[dir === 'prev' ? 'navPrev' : 'navNext']?.();
+                  if (dir === 'prev') onPrev(); else onNext?.();
+                }}
+                className="px-3 py-1.5 text-[11px] uppercase tracking-wider rounded border border-amber-300 bg-amber-300 text-black hover:brightness-110"
+              >Leave <span className="ml-1 px-1 border border-black/60 rounded text-[9px]">{remapPadLabel('A').text}</span></button>
+            </div>
+          </div>
+        </div>
       )}
 
 

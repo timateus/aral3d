@@ -250,7 +250,7 @@ const Index = () => {
     if (spectralMode && !prevSpectralRef.current) {
       setLevelIntro({
         n: 1,
-        name: 'Spectral Earth',
+        name: 'Choose your character',
         instructions: [
           'All maps are wrong, but some are useful',
         ],

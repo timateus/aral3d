@@ -3,6 +3,9 @@ import { ArrowRight } from 'lucide-react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useGLTF, OrbitControls, Environment } from '@react-three/drei';
 import * as THREE from 'three';
+import { useGamepad } from '@/hooks/useGamepad';
+import { consumeGamepadButton } from '@/lib/gamepad-dedupe';
+import { remapPadLabel } from '@/lib/pad-labels';
 
 interface LibraryItem {
   id: string;
@@ -227,6 +230,29 @@ type LandingView = 'main' | 'artifacts';
 const IntroOverlay = ({ onStart, onGuidedTour, onReading, onCanalTour, onAgmarTour, onObjectSelect, onStartGame, onQuadrants, onSandbox, onTraceCanals, onDustStorm, onLife, onFountains, onSpectral, onMinistry }: IntroOverlayProps) => {
   const [view, setView] = useState<LandingView>('main');
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const { stateRef: gpRef } = useGamepad();
+
+  // Gamepad: X / A on the landing page triggers Play (Choose your character).
+  // B returns from the artifacts subview to main.
+  useEffect(() => {
+    let raf = 0;
+    const tick = () => {
+      const s = gpRef.current;
+      if (s.connected) {
+        if (view === 'main') {
+          if (consumeGamepadButton('x_intro', s.buttons.x) || consumeGamepadButton('a_intro', s.buttons.a)) {
+            (onSpectral ?? onStartGame)?.();
+          }
+        } else if (view === 'artifacts') {
+          if (consumeGamepadButton('b_intro_back', s.buttons.b)) setView('main');
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, onSpectral, onStartGame]);
 
   // Dispatch auto-rotate event for the background 3D map
   useEffect(() => {
@@ -377,10 +403,17 @@ const IntroOverlay = ({ onStart, onGuidedTour, onReading, onCanalTour, onAgmarTo
               <div>
                 <p className="text-3xl font-semibold text-foreground tracking-wide mb-2">Play</p>
                 <p className="text-sm text-foreground/50 leading-relaxed">
-                  Spectral Earth, Ministry of Sea, Water Sim, GeoGuessr & more
+                  Choose your character, Ministry of Sea, Water Sim, GeoGuessr & more
                 </p>
               </div>
-              <ArrowRight className="w-8 h-8 text-foreground/20 group-hover:text-primary/60 transition-all duration-300 group-hover:translate-x-2" />
+              <div className="flex items-center gap-3">
+                <span
+                  className="hidden sm:inline-flex items-center justify-center px-2 py-1 text-[11px] font-mono font-bold leading-none rounded border-2"
+                  style={{ background: '#3b82f6', color: '#fff', borderColor: '#fff' }}
+                  title="Press X on controller"
+                >{remapPadLabel('X').text}</span>
+                <ArrowRight className="w-8 h-8 text-foreground/20 group-hover:text-primary/60 transition-all duration-300 group-hover:translate-x-2" />
+              </div>
             </div>
           </button>
 
@@ -411,7 +444,7 @@ const IntroOverlay = ({ onStart, onGuidedTour, onReading, onCanalTour, onAgmarTo
                 { label: 'Learn', desc: 'Ag-MAR water tech', onClick: () => onAgmarTour?.() },
                 { label: 'Walk', desc: 'History & canals', onClick: onGuidedTour },
                 { label: 'Compare', desc: 'Four views', onClick: () => onQuadrants?.() },
-                { label: 'Spectral', desc: 'Color-wild Earth', onClick: () => onSpectral?.() },
+                { label: 'Character', desc: 'Choose your character', onClick: () => onSpectral?.() },
                 { label: 'Sandbox', desc: 'Drop elements', onClick: () => onSandbox?.() },
                 { label: 'Trace', desc: 'Follow canals', onClick: () => onTraceCanals?.() },
                 { label: 'Dust', desc: 'Particle wind', onClick: () => onDustStorm?.() },
