@@ -89,34 +89,29 @@ function FaceModeTransparentClear() {
   return null;
 }
 
-/* ── Level 7: hand-gesture controller. Listens for `face:gesture` and
-   orbits the OrbitControls camera around its target. ── */
+/* ── Level 7: hand-gesture controller. Polls faceModeBridge.intent on
+   EVERY frame so palm-orbit and pray/spread-zoom are smooth & continuous
+   (MediaPipe results fire ~15 Hz which felt "stuck"). ── */
 function FaceGestureController({ orbitRef }: { orbitRef: React.MutableRefObject<any> }) {
   const { camera } = useThree();
-  useEffect(() => {
-    const handler = (e: Event) => {
-      if (!faceModeBridge.active) return;
-      const oc = orbitRef.current;
-      if (!oc) return;
-      const d = (e as CustomEvent).detail as {
-        azimuthDelta: number; polarDelta: number; zoomDelta: number; handCount: number;
-      };
-      if (!d || (d.handCount ?? 0) < 1) return;
-      // Orbit around target by adjusting spherical coords.
-      const target = oc.target as THREE.Vector3;
-      const offset = camera.position.clone().sub(target);
-      const sph = new THREE.Spherical().setFromVector3(offset);
-      sph.theta -= d.azimuthDelta;
-      sph.phi = Math.max(0.15, Math.min(Math.PI - 0.15, sph.phi - d.polarDelta));
-      sph.radius = Math.max(3, Math.min(80, sph.radius + d.zoomDelta));
-      offset.setFromSpherical(sph);
-      camera.position.copy(target).add(offset);
-      camera.lookAt(target);
-      oc.update?.();
-    };
-    window.addEventListener('face:gesture', handler);
-    return () => window.removeEventListener('face:gesture', handler);
-  }, [camera, orbitRef]);
+  useFrame((_, delta) => {
+    if (!faceModeBridge.active) return;
+    const oc = orbitRef.current;
+    if (!oc) return;
+    const i = faceModeBridge.intent;
+    if (!i.azimuthRate && !i.polarRate && !i.zoomRate) return;
+    const dt = Math.min(delta, 0.05);
+    const target = oc.target as THREE.Vector3;
+    const offset = camera.position.clone().sub(target);
+    const sph = new THREE.Spherical().setFromVector3(offset);
+    sph.theta  -= i.azimuthRate * dt;
+    sph.phi     = Math.max(0.15, Math.min(Math.PI - 0.15, sph.phi - i.polarRate * dt));
+    sph.radius  = Math.max(3, Math.min(80, sph.radius + i.zoomRate * dt));
+    offset.setFromSpherical(sph);
+    camera.position.copy(target).add(offset);
+    camera.lookAt(target);
+    oc.update?.();
+  });
   return null;
 }
 
