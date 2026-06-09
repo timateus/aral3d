@@ -423,7 +423,9 @@ const Index = () => {
   const [contourInterval, setContourInterval] = useState<number>(25);
   const [vectorInterval, setVectorInterval] = useState<number>(50);
   const [hideTerrainSurface, setHideTerrainSurface] = useState<boolean>(false);
-  const schoolStart = useMemo(() => ({ lat: 42.462, lon: 59.603 }), []);
+  // Start ~7km south of the school so the tiny avatar has a meaningful walk
+  // but doesn't have to traverse the whole map.
+  const schoolStart = useMemo(() => ({ lat: 42.695, lon: 59.5618668 }), []);
   const schoolTarget = useMemo(() => ({ lat: 42.7574883, lon: 59.5618668 }), []);
 
   // Lifted data panel state
