@@ -185,14 +185,38 @@ const VoxelPage = () => {
 
   const world: VoxelWorld | null = useMemo(() => {
     if (!terrain) return null;
-    return buildVoxelWorld(terrain, {
+    const w = buildVoxelWorld(terrain, {
       targetWidth: 160,
       targetDepth: 160,
       blockHeightMeters: 4,
       verticalExaggeration: 2.5,
       waterLevelMeters: REGIONS[region].waterLevel,
     });
+    // Re-apply any saved per-column mutations from previous visits.
+    const diff = loadWorldDiff(region);
+    if (diff) applyDiff(w, diff);
+    return w;
   }, [terrain, region]);
+
+  // Persistence: collect dirty columns and write them to localStorage (debounced).
+  const diffRef = useRef<WorldDiff>({ cols: {} });
+  const saveTimer = useRef<number | null>(null);
+  useEffect(() => {
+    diffRef.current = loadWorldDiff(region) ?? { cols: {} };
+  }, [region]);
+  useEffect(() => {
+    if (!world) return;
+    const onDirty = (e: Event) => {
+      const { i, j } = (e as CustomEvent<{ i: number; j: number }>).detail;
+      diffRef.current.cols[`${i},${j}`] = snapshotColumn(world, i, j);
+      if (saveTimer.current != null) window.clearTimeout(saveTimer.current);
+      saveTimer.current = window.setTimeout(() => {
+        saveWorldDiff(region, diffRef.current);
+      }, 400);
+    };
+    window.addEventListener('voxel:column-dirty', onDirty);
+    return () => window.removeEventListener('voxel:column-dirty', onDirty);
+  }, [world, region]);
 
   // The water-level expressed in voxel block-y.
   const waterLevelBlocks = useMemo(() => {
