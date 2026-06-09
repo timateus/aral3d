@@ -338,13 +338,16 @@ const VoxelPage = () => {
     };
     const onToggleQ = () => setQuestOpen(o => !o);
     const onToggleB = () => setBuildOpen(o => !o);
+    const onToggleI = () => setInvOpen(o => !o);
     window.addEventListener('keydown', onKey);
     window.addEventListener('voxel:toggle-quests', onToggleQ);
     window.addEventListener('voxel:toggle-build', onToggleB);
+    window.addEventListener('voxel:toggle-inventory', onToggleI);
     return () => {
       window.removeEventListener('keydown', onKey);
       window.removeEventListener('voxel:toggle-quests', onToggleQ);
       window.removeEventListener('voxel:toggle-build', onToggleB);
+      window.removeEventListener('voxel:toggle-inventory', onToggleI);
     };
   }, []);
 
