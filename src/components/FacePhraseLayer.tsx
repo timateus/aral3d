@@ -88,8 +88,17 @@ export const FacePhraseLayer = () => {
     };
     const onFingerUp = (e: Event) => {
       const { active } = (e as CustomEvent).detail;
-      if (active) setLayer(LAYERS[Math.floor(Math.random() * LAYERS.length)]);
-      else setLayer(null);
+      if (active) {
+        const next = LAYERS[Math.floor(Math.random() * LAYERS.length)];
+        setLayer(next);
+        // Tell Index.tsx to actually show the layer on the terrain.
+        window.dispatchEvent(new CustomEvent('face:layer', { detail: { key: next.key, active: true } }));
+      } else {
+        setLayer((cur) => {
+          if (cur) window.dispatchEvent(new CustomEvent('face:layer', { detail: { key: cur.key, active: false } }));
+          return null;
+        });
+      }
     };
     window.addEventListener('face:phrase', onPhrase);
     window.addEventListener('face:fingerup', onFingerUp);
