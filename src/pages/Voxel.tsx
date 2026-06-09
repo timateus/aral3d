@@ -32,6 +32,7 @@ import { tickWaterFlow } from '@/lib/voxel/water-flow';
 import { STRUCTURES, placeStructure } from '@/lib/voxel/structures';
 import type { BlockId } from '@/lib/voxel/block-types';
 import { useThree } from '@react-three/fiber';
+import { loadWorldDiff, saveWorldDiff, applyDiff, snapshotColumn, type WorldDiff } from '@/lib/voxel/world-persistence';
 
 type RegionKey = 'khorezm' | 'aral';
 
