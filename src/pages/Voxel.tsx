@@ -81,85 +81,21 @@ const Sun3D = ({ timeRef, regionFog }: { timeRef: React.MutableRefObject<number>
   );
 };
 
-// Sapling growth + canal flood + water-flow tick
-const WorldTicker = ({ world, saplingsRef, regionWaterBlocks, onWorldMutated }: {
+// Sapling growth tick
+const WorldTicker = ({ world, saplingsRef, onWorldMutated }: {
   world: VoxelWorld;
   saplingsRef: React.MutableRefObject<SaplingTracker>;
-  regionWaterBlocks: number;
   onWorldMutated: () => void;
 }) => {
   const last = useRef(0);
-  const lastFlow = useRef(0);
   useFrame((state) => {
     const now = state.clock.elapsedTime * 1000;
-    let dirty = false;
-    if (now - lastFlow.current > 700) {
-      lastFlow.current = now;
-      if (tickWaterFlow(world, 60) > 0) dirty = true;
-    }
     if (now - last.current >= 1000) {
       last.current = now;
-      if (saplingsRef.current.tick(world, performance.now())) dirty = true;
+      if (saplingsRef.current.tick(world, performance.now())) onWorldMutated();
       const mature = saplingsRef.current.countMature();
       if (mature > 0) dispatchMissionEvent({ type: 'mature-saxaul', count: mature });
     }
-    if (dirty) onWorldMutated();
-  });
-  return null;
-};
-
-// Zoom controller: listens to 'voxel:zoom' events from VoxelPlayer (R2/L2) and
-// adjusts perspective camera FOV smoothly.
-const ZoomController = () => {
-  const { camera } = useThree();
-  const targetFov = useRef<number>((camera as THREE.PerspectiveCamera).fov ?? 75);
-  useEffect(() => {
-    const onZoom = (e: Event) => {
-      const { delta } = (e as CustomEvent<{ delta: number }>).detail;
-      // delta>0 means R2 pressed = zoom in (lower fov)
-      targetFov.current = Math.max(28, Math.min(95, targetFov.current - delta * 30));
-    };
-    window.addEventListener('voxel:zoom', onZoom);
-    return () => window.removeEventListener('voxel:zoom', onZoom);
-  }, []);
-  useFrame(() => {
-    const cam = camera as THREE.PerspectiveCamera;
-    if (!cam.isPerspectiveCamera) return;
-    const next = cam.fov + (targetFov.current - cam.fov) * 0.18;
-    if (Math.abs(next - cam.fov) > 0.05) {
-      cam.fov = next;
-      cam.updateProjectionMatrix();
-    }
-  });
-  return null;
-};
-
-// Top-down view toggle: when active, lifts the camera high above the player
-// and points it straight down. Re-press to return to first-person.
-const TopDownController = ({ playerRef }: { playerRef: React.MutableRefObject<{ x: number; z: number; yaw: number }> }) => {
-  const { camera } = useThree();
-  const active = useRef(false);
-  const saved = useRef<{ pos: THREE.Vector3; quat: THREE.Quaternion } | null>(null);
-  useEffect(() => {
-    const onToggle = () => {
-      if (!active.current) {
-        saved.current = { pos: camera.position.clone(), quat: camera.quaternion.clone() };
-        active.current = true;
-      } else {
-        if (saved.current) {
-          camera.position.copy(saved.current.pos);
-          camera.quaternion.copy(saved.current.quat);
-        }
-        active.current = false;
-      }
-    };
-    window.addEventListener('voxel:toggle-topdown', onToggle);
-    return () => window.removeEventListener('voxel:toggle-topdown', onToggle);
-  }, [camera]);
-  useFrame(() => {
-    if (!active.current) return;
-    camera.position.set(playerRef.current.x, 80, playerRef.current.z);
-    camera.lookAt(playerRef.current.x, 0, playerRef.current.z);
   });
   return null;
 };
