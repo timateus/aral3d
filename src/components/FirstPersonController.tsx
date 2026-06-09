@@ -35,6 +35,7 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
   const prevTrigger = useRef(false);
   const avatarRef = useRef<THREE.Group>(null);
   const npcRef = useRef<THREE.Group>(null);
+  const camDistRef = useRef(0.9);
 
   const playerTex = useMemo(() => {
     const t = new THREE.TextureLoader().load(characterCat.url);
@@ -151,18 +152,24 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
     const onUp = (e: MouseEvent) => {
       if (e.button === 0) keys.current.__mouse = false;
     };
+    const onWheel = (e: WheelEvent) => {
+      if (!thirdPerson) return;
+      camDistRef.current = THREE.MathUtils.clamp(camDistRef.current + e.deltaY * 0.002, 0.25, 3.5);
+    };
     el.addEventListener('click', onClick);
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mousedown', onDown);
     window.addEventListener('mouseup', onUp);
+    window.addEventListener('wheel', onWheel, { passive: true });
     return () => {
       el.removeEventListener('click', onClick);
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mousedown', onDown);
       window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('wheel', onWheel);
       if (document.pointerLockElement === el) document.exitPointerLock?.();
     };
-  }, [active, gl]);
+  }, [active, gl, thirdPerson]);
 
   useFrame((_, dt) => {
     if (!active) return;
@@ -253,7 +260,7 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
 
     if (thirdPerson) {
       if (avatarRef.current) {
-        avatarRef.current.position.set(pos.current.x, pos.current.y + 0.18, pos.current.z);
+        avatarRef.current.position.set(pos.current.x, pos.current.y - EYE_HEIGHT + 0.165, pos.current.z);
         // Billboard: always face the camera.
         avatarRef.current.rotation.y = Math.atan2(
           camera.position.x - pos.current.x,
@@ -264,7 +271,7 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
         const t = firstPersonBridge.school.target;
         const tw = latLonToWorldXZ(t.lat, t.lon);
         if (tw) {
-          const ny = sampleHeight(tw.x, tw.z) + 0.22;
+          const ny = sampleHeight(tw.x, tw.z) + 0.195;
           npcRef.current.position.set(tw.x, ny, tw.z);
           npcRef.current.rotation.y = Math.atan2(
             camera.position.x - tw.x,
@@ -272,12 +279,17 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
           );
         }
       }
-      // Pulled-back over-the-shoulder zoom so the avatar billboard is fully visible.
-      const camDist = 1.1;
+      // Pulled-back over-the-shoulder zoom; RT zooms out, LT zooms in.
+      if (gp.connected) {
+        const dz = (gp.buttons.rt - gp.buttons.lt) * dt * 1.2;
+        camDistRef.current = THREE.MathUtils.clamp(camDistRef.current + dz, 0.25, 3.5);
+      }
+      const camDist = camDistRef.current;
       const camOffsetX = Math.sin(yaw.current) * camDist;
       const camOffsetZ = Math.cos(yaw.current) * camDist;
-      camera.position.set(pos.current.x + camOffsetX, pos.current.y + 0.55, pos.current.z + camOffsetZ);
-      camera.lookAt(pos.current.x, pos.current.y + 0.15, pos.current.z);
+      const camY = pos.current.y + 0.25 + camDist * 0.35;
+      camera.position.set(pos.current.x + camOffsetX, camY, pos.current.z + camOffsetZ);
+      camera.lookAt(pos.current.x, pos.current.y + 0.1, pos.current.z);
     } else {
       camera.position.copy(pos.current);
       const quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(pitch.current, yaw.current, 0, 'YXZ'));
@@ -309,17 +321,17 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
     <>
       <group ref={avatarRef}>
         <mesh>
-          <planeGeometry args={[0.5, 0.75]} />
+          <planeGeometry args={[0.22, 0.33]} />
           <meshBasicMaterial map={playerTex} transparent toneMapped={false} side={THREE.DoubleSide} alphaTest={0.05} />
         </mesh>
-        <pointLight color="#3b82f6" intensity={0.45} distance={1.0} />
+        <pointLight color="#3b82f6" intensity={0.3} distance={0.6} />
       </group>
       <group ref={npcRef}>
         <mesh>
-          <planeGeometry args={[0.55, 0.82]} />
+          <planeGeometry args={[0.26, 0.39]} />
           <meshBasicMaterial map={npcTex} transparent toneMapped={false} side={THREE.DoubleSide} alphaTest={0.05} />
         </mesh>
-        <pointLight color="#f48fb1" intensity={0.5} distance={1.4} />
+        <pointLight color="#f48fb1" intensity={0.35} distance={0.9} />
       </group>
     </>
   );

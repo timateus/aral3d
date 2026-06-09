@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { ArrowLeft, ExternalLink, Film, Navigation2, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ArrowLeft, ExternalLink, Navigation2, X } from 'lucide-react';
 import { sfx } from '@/lib/ui-sfx';
+import { consumeGamepadButton } from '@/lib/gamepad-dedupe';
 import schoolFrontAsset from '@/assets/kegeyli-school-front.png.asset.json';
 import classroomOneAsset from '@/assets/kegeyli-classroom-1.png.asset.json';
 import classroomTwoAsset from '@/assets/kegeyli-classroom-2.png.asset.json';
@@ -21,6 +22,230 @@ const photos = [
   { src: classroomOneAsset.url, alt: 'Students gathered in a classroom at School 12', label: 'classroom' },
   { src: classroomTwoAsset.url, alt: 'Presentation taking place inside School 12', label: 'presentation' },
 ];
+
+interface MenuItem {
+  label: string;
+  sub: string;
+  href?: string;
+  action?: 'close';
+  disabled?: boolean;
+}
+
+const MENU_ITEMS: MenuItem[] = [
+  { label: 'Qilqali City', sub: 'qilqalicity.lovable.app', href: 'https://qilqalicity.lovable.app' },
+  { label: 'Roar & Guard', sub: 'roar-and-guard.lovable.app', href: 'https://roar-and-guard.lovable.app' },
+  { label: 'Watch the school film', sub: 'coming soon', disabled: true },
+  { label: 'Exit', sub: 'back to the map', action: 'close' },
+];
+
+const HEADING_FONT = '"Trebuchet MS", "Comic Sans MS", "Inter", system-ui, sans-serif';
+const BODY_FONT = '"Georgia", "Trebuchet MS", serif';
+
+const SchoolDialog = ({ onClose }: { onClose: () => void }) => {
+  const [sel, setSel] = useState(0);
+  const items = MENU_ITEMS;
+
+  const activate = (i: number) => {
+    const it = items[i];
+    if (!it || it.disabled) return;
+    if (it.action === 'close') { sfx.exit(); onClose(); return; }
+    if (it.href) { sfx.make(); window.open(it.href, '_blank', 'noopener,noreferrer'); }
+  };
+
+  // Keyboard navigation.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' || e.key === 'b' || e.key === 'B') { e.preventDefault(); onClose(); return; }
+      if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+        e.preventDefault();
+        setSel((s) => {
+          let n = s;
+          for (let i = 0; i < items.length; i++) {
+            n = (n + 1) % items.length;
+            if (!items[n].disabled) break;
+          }
+          sfx.navNext();
+          return n;
+        });
+      } else if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+        e.preventDefault();
+        setSel((s) => {
+          let n = s;
+          for (let i = 0; i < items.length; i++) {
+            n = (n - 1 + items.length) % items.length;
+            if (!items[n].disabled) break;
+          }
+          sfx.navPrev();
+          return n;
+        });
+      } else if (e.key === 'Enter' || e.key === ' ' || e.key === 'x' || e.key === 'X') {
+        e.preventDefault();
+        activate(sel);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
+
+  // Gamepad navigation.
+  useEffect(() => {
+    let raf = 0;
+    let axisCooldown = 0;
+    const tick = () => {
+      const pads = navigator.getGamepads?.() ?? [];
+      let pad: Gamepad | null = null;
+      for (const p of pads) { if (p) { pad = p; break; } }
+      if (pad) {
+        // D-pad
+        if (consumeGamepadButton('sd-up', !!pad.buttons[12]?.pressed, { cooldownMs: 220, ignoreBlock: true })) {
+          setSel((s) => {
+            let n = s;
+            for (let i = 0; i < items.length; i++) {
+              n = (n - 1 + items.length) % items.length;
+              if (!items[n].disabled) break;
+            }
+            sfx.navPrev();
+            return n;
+          });
+        }
+        if (consumeGamepadButton('sd-down', !!pad.buttons[13]?.pressed, { cooldownMs: 220, ignoreBlock: true })) {
+          setSel((s) => {
+            let n = s;
+            for (let i = 0; i < items.length; i++) {
+              n = (n + 1) % items.length;
+              if (!items[n].disabled) break;
+            }
+            sfx.navNext();
+            return n;
+          });
+        }
+        // Left stick Y as fallback
+        const ly = pad.axes[1] ?? 0;
+        if (axisCooldown > 0) axisCooldown--;
+        if (axisCooldown === 0 && Math.abs(ly) > 0.55) {
+          axisCooldown = 14;
+          setSel((s) => {
+            let n = s;
+            const dir = ly > 0 ? 1 : -1;
+            for (let i = 0; i < items.length; i++) {
+              n = (n + dir + items.length) % items.length;
+              if (!items[n].disabled) break;
+            }
+            sfx.navNext();
+            return n;
+          });
+        }
+        if (consumeGamepadButton('sd-a', !!pad.buttons[0]?.pressed, { cooldownMs: 350, ignoreBlock: true }) ||
+            consumeGamepadButton('sd-x', !!pad.buttons[2]?.pressed, { cooldownMs: 350, ignoreBlock: true })) {
+          activate(sel);
+        }
+        if (consumeGamepadButton('sd-b', !!pad.buttons[1]?.pressed, { cooldownMs: 350, ignoreBlock: true })) {
+          sfx.exit();
+          onClose();
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  });
+
+  return (
+    <div
+      className="fixed inset-0 z-[90] flex items-center justify-center p-6"
+      data-hud
+      style={{ background: 'rgba(6,8,14,0.92)' }}
+      onClick={onClose}
+    >
+      <div
+        className="w-[min(820px,94vw)] border-2 border-white/55 bg-[#06080e] text-white relative rounded-sm overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="grid md:grid-cols-[1.1fr_0.9fr]">
+          <div className="p-8 md:p-10">
+            <div className="text-sm font-mono uppercase tracking-[0.5em] text-white/55 mb-3">
+              school 12 · kegeyli
+            </div>
+            <h2
+              className="font-black tracking-[0.04em] uppercase text-white mb-5"
+              style={{ fontFamily: HEADING_FONT, fontSize: 'clamp(34px,5vw,58px)', lineHeight: 0.95 }}
+            >
+              Welcome to our school
+            </h2>
+            <p
+              className="italic text-white/85 leading-snug mb-6"
+              style={{ fontFamily: BODY_FONT, fontSize: 'clamp(15px,1.4vw,20px)' }}
+            >
+              Try worlds the students built, or come back for the film screening soon.
+            </p>
+
+            <ul className="space-y-2">
+              {items.map((it, i) => {
+                const active = i === sel;
+                return (
+                  <li key={it.label}>
+                    <button
+                      type="button"
+                      disabled={it.disabled}
+                      onMouseEnter={() => !it.disabled && setSel(i)}
+                      onClick={() => activate(i)}
+                      className={`w-full flex items-center justify-between px-5 py-4 border-2 rounded-sm text-left transition-colors ${
+                        it.disabled
+                          ? 'border-white/15 bg-white/[0.02] text-white/35 cursor-not-allowed'
+                          : active
+                            ? 'border-white bg-white text-[#06080e]'
+                            : 'border-white/40 bg-white/5 text-white hover:bg-white/10'
+                      }`}
+                    >
+                      <div>
+                        <div
+                          className="font-black uppercase tracking-[0.05em]"
+                          style={{ fontFamily: HEADING_FONT, fontSize: 'clamp(18px,1.8vw,24px)' }}
+                        >
+                          {it.label}
+                        </div>
+                        <div className="text-[11px] font-mono uppercase tracking-[0.3em] opacity-70 mt-1">
+                          {it.sub}
+                        </div>
+                      </div>
+                      {it.action === 'close' ? (
+                        <X className="w-5 h-5" />
+                      ) : (
+                        <ExternalLink className="w-5 h-5" />
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+
+            <div className="mt-6 flex items-center gap-3 text-[11px] font-mono uppercase tracking-[0.35em] text-white/55">
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full border border-white/55">▲▼</span>
+              <span>navigate</span>
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full border border-white/55">A/X</span>
+              <span>select</span>
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full border border-white/55">B</span>
+              <span>exit</span>
+            </div>
+          </div>
+
+          <div className="p-6 md:p-8 bg-black/40 border-l border-white/10">
+            <img
+              src={schoolFrontAsset.url}
+              alt="Students standing in front of School 12 in Kegeyli"
+              className="w-full aspect-[4/5] object-cover border border-white/20 rounded-sm"
+              loading="lazy"
+            />
+            <div className="mt-4 text-[10px] font-mono uppercase tracking-[0.4em] text-white/55 text-center">
+              school 12 community
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 
 const SchoolTwelveOverlay = ({
   onExit,
@@ -112,95 +337,16 @@ const SchoolTwelveOverlay = ({
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[80]" data-hud>
           <button
             onClick={() => { sfx.make(); onDialogOpen(true); }}
-            className="px-7 py-4 rounded-full border-4 border-pink-300 bg-gradient-to-r from-pink-400 via-amber-300 to-sky-400 text-white text-base font-bold tracking-wide shadow-[0_8px_0_rgba(0,0,0,0.25)] hover:scale-105 active:translate-y-1 active:shadow-[0_4px_0_rgba(0,0,0,0.25)] transition-all animate-pulse"
+            className="inline-flex items-center gap-4 px-7 py-4 border-2 border-white/60 bg-black/80 hover:bg-black text-white text-sm font-mono uppercase tracking-[0.4em] rounded-sm"
           >
-            💬 talk to the student · press X
+            <span className="inline-flex items-center justify-center w-9 h-9 text-sm font-mono font-bold rounded-full border-2 border-white">X</span>
+            talk to the student
           </button>
         </div>
       )}
 
       {dialogOpen && (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-gradient-to-br from-indigo-950/80 via-pink-900/60 to-amber-900/60 backdrop-blur-md p-6" data-hud onClick={() => onDialogOpen(false)}>
-          <div
-            className="w-[min(760px,94vw)] rounded-[36px] bg-gradient-to-br from-cream via-amber-50 to-pink-100 text-slate-900 shadow-[0_24px_0_rgba(0,0,0,0.25)] border-4 border-slate-900 overflow-hidden relative"
-            style={{ backgroundColor: '#fffaf0' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Doodle border accents */}
-            <div className="absolute -top-4 -left-4 w-16 h-16 rounded-full bg-pink-300 border-4 border-slate-900" />
-            <div className="absolute -top-3 -right-6 w-12 h-12 rounded-full bg-amber-300 border-4 border-slate-900" />
-            <div className="absolute -bottom-5 left-12 w-10 h-10 rounded-full bg-sky-300 border-4 border-slate-900" />
-            <div className="absolute -bottom-4 -right-4 w-20 h-20 rounded-full bg-emerald-300 border-4 border-slate-900" />
-
-            <div className="grid md:grid-cols-[1.1fr_0.9fr] relative">
-              <div className="p-7 md:p-9">
-                <div className="inline-block px-3 py-1 rounded-full bg-pink-400 text-white text-[11px] font-black uppercase tracking-wider border-2 border-slate-900">
-                  ✏️ school 12 · kegeyli
-                </div>
-                <h2 className="mt-4 text-4xl font-black tracking-tight text-slate-900 leading-tight">
-                  Welcome to <span className="text-pink-500">our school!</span>
-                </h2>
-                <p className="mt-4 text-base leading-7 text-slate-700">
-                  Hi! 🎨 Try worlds the kids built, or come back later for the film screening.
-                </p>
-                <div className="mt-6 space-y-3">
-                  <a
-                    href="https://qilqalicity.lovable.app"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group flex items-center justify-between rounded-2xl border-[3px] border-slate-900 bg-sky-200 px-5 py-4 hover:bg-sky-300 transition-all hover:-translate-y-0.5 shadow-[0_5px_0_rgba(15,23,42,1)] hover:shadow-[0_7px_0_rgba(15,23,42,1)]"
-                  >
-                    <div>
-                      <div className="text-[10px] font-black uppercase tracking-wider text-sky-900">🎮 play game</div>
-                      <div className="mt-1 text-xl font-extrabold text-slate-900">Qilqali City</div>
-                      <div className="text-xs text-slate-700">qilqalicity.lovable.app</div>
-                    </div>
-                    <ExternalLink className="h-5 w-5 text-slate-900 group-hover:translate-x-1 transition-transform" />
-                  </a>
-                  <a
-                    href="https://roar-and-guard.lovable.app"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group flex items-center justify-between rounded-2xl border-[3px] border-slate-900 bg-amber-200 px-5 py-4 hover:bg-amber-300 transition-all hover:-translate-y-0.5 shadow-[0_5px_0_rgba(15,23,42,1)] hover:shadow-[0_7px_0_rgba(15,23,42,1)]"
-                  >
-                    <div>
-                      <div className="text-[10px] font-black uppercase tracking-wider text-amber-900">🦁 play game</div>
-                      <div className="mt-1 text-xl font-extrabold text-slate-900">Roar &amp; Guard</div>
-                      <div className="text-xs text-slate-700">roar-and-guard.lovable.app</div>
-                    </div>
-                    <ExternalLink className="h-5 w-5 text-slate-900 group-hover:translate-x-1 transition-transform" />
-                  </a>
-                  <div className="flex items-center justify-between rounded-2xl border-[3px] border-dashed border-slate-400 bg-white/60 px-5 py-4">
-                    <div>
-                      <div className="text-[10px] font-black uppercase tracking-wider text-slate-500">🎬 film</div>
-                      <div className="mt-1 text-xl font-extrabold text-slate-500">Watch the school film</div>
-                      <div className="text-xs text-slate-400">coming soon ✨</div>
-                    </div>
-                    <Film className="h-5 w-5 text-slate-400" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-5 md:p-7 bg-gradient-to-br from-pink-100 to-amber-100 border-l-4 border-slate-900 border-dashed">
-                <img
-                  src={schoolFrontAsset.url}
-                  alt="Students standing in front of School 12 in Kegeyli"
-                  className="w-full aspect-[4/5] object-cover rounded-2xl border-[3px] border-slate-900 shadow-[0_6px_0_rgba(15,23,42,1)]"
-                  loading="lazy"
-                />
-                <div className="mt-4 text-center text-[11px] font-black uppercase tracking-wider text-pink-600">
-                  🌟 school 12 community 🌟
-                </div>
-                <button
-                  onClick={() => onDialogOpen(false)}
-                  className="mt-5 w-full rounded-full border-[3px] border-slate-900 bg-white px-4 py-3 text-sm font-black uppercase tracking-wide text-slate-900 hover:bg-pink-200 transition-colors shadow-[0_4px_0_rgba(15,23,42,1)] hover:shadow-[0_6px_0_rgba(15,23,42,1)] hover:-translate-y-0.5"
-                >
-                  ✌️ bye!
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <SchoolDialog onClose={() => onDialogOpen(false)} />
       )}
 
       {lightbox && (

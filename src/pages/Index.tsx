@@ -20,6 +20,7 @@ import BackgroundMusic from '@/components/BackgroundMusic';
 import LevelIntroSplash from '@/components/LevelIntroSplash';
 import MapBuilderHUD from '@/components/MapBuilderHUD';
 import SchoolTwelveOverlay from '@/components/SchoolTwelveOverlay';
+import SchoolPlaceOverlay from '@/components/SchoolPlaceOverlay';
 import GamepadStickFix from '@/components/GamepadStickFix';
 
 import { applyRandomSpectralPalette } from '@/lib/visual-mode';
@@ -1430,7 +1431,7 @@ const Index = () => {
             onRiverFlyoverDone={() => setRiverFlyover(false)}
             riverInflow={currentRiverInflow}
             userLocation={schoolMode ? schoolTarget : userLocation}
-            showCityMarkers={!levelIntro}
+            showCityMarkers={!levelIntro && !schoolDialogOpen}
             inspectorEnabled={showInspector}
             damToolActive={damToolActive}
             onDamPlace={handleRaiseTerrainClick}
@@ -1808,6 +1809,7 @@ const Index = () => {
           }}
         />
       )}
+      {schoolMode && <SchoolPlaceOverlay hidden={schoolDialogOpen} />}
 
       {/* Background music — plays during levels with a mute toggle */}
       <BackgroundMusic active={spectralMode || ministryMode || simMode || geoMode || placeMode || schoolMode} />
