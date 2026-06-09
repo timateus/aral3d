@@ -58,6 +58,9 @@ let introFlightPlayed = false;
 function SceneBackground() {
   const [mode] = useVisualMode();
   const [scheme] = useDesignerScheme();
+  // Level 7 (Face as Infrastructure) needs a transparent scene so the webcam
+  // shows through. Bail out of background + fog entirely while it's active.
+  if (faceModeBridge.active) return null;
   const isMirage = mode === 'mirage' || mode === 'designer';
   const designerBg = scheme.sceneBackground ?? scheme.background;
   const bg = mode === 'designer' ? designerBg : (isMirage ? '#faf8f4' : '#0d1117');
@@ -69,6 +72,51 @@ function SceneBackground() {
       <fog attach="fog" args={[bg, near, far]} />
     </>
   );
+}
+
+/* ── Level 7: transparent clear so the webcam background shows through ── */
+function FaceModeTransparentClear() {
+  const { gl } = useThree();
+  useEffect(() => {
+    if (!faceModeBridge.active) return;
+    const prevAlpha = gl.getClearAlpha();
+    const prevColor = new THREE.Color();
+    gl.getClearColor(prevColor);
+    gl.setClearColor(0x000000, 0);
+    return () => { gl.setClearColor(prevColor, prevAlpha); };
+  }, [gl]);
+  return null;
+}
+
+/* ── Level 7: hand-gesture controller. Listens for `face:gesture` and
+   orbits the OrbitControls camera around its target. ── */
+function FaceGestureController({ orbitRef }: { orbitRef: React.MutableRefObject<any> }) {
+  const { camera } = useThree();
+  useEffect(() => {
+    const handler = (e: Event) => {
+      if (!faceModeBridge.active) return;
+      const oc = orbitRef.current;
+      if (!oc) return;
+      const d = (e as CustomEvent).detail as {
+        azimuthDelta: number; polarDelta: number; zoomDelta: number; hasHand: boolean;
+      };
+      if (!d?.hasHand) return;
+      // Orbit around target by adjusting spherical coords.
+      const target = oc.target as THREE.Vector3;
+      const offset = camera.position.clone().sub(target);
+      const sph = new THREE.Spherical().setFromVector3(offset);
+      sph.theta -= d.azimuthDelta;
+      sph.phi = Math.max(0.15, Math.min(Math.PI - 0.15, sph.phi - d.polarDelta));
+      sph.radius = Math.max(3, Math.min(80, sph.radius + d.zoomDelta));
+      offset.setFromSpherical(sph);
+      camera.position.copy(target).add(offset);
+      camera.lookAt(target);
+      oc.update?.();
+    };
+    window.addEventListener('face:gesture', handler);
+    return () => window.removeEventListener('face:gesture', handler);
+  }, [camera, orbitRef]);
+  return null;
 }
 
 export interface TerrainViewerHandle {
