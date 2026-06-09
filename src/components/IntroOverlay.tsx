@@ -3,6 +3,9 @@ import { ArrowRight } from 'lucide-react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useGLTF, OrbitControls, Environment } from '@react-three/drei';
 import * as THREE from 'three';
+import { useGamepad } from '@/hooks/useGamepad';
+import { consumeGamepadButton } from '@/lib/gamepad-dedupe';
+import { remapPadLabel } from '@/lib/pad-labels';
 
 interface LibraryItem {
   id: string;
