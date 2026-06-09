@@ -99,9 +99,9 @@ function FaceGestureController({ orbitRef }: { orbitRef: React.MutableRefObject<
       const oc = orbitRef.current;
       if (!oc) return;
       const d = (e as CustomEvent).detail as {
-        azimuthDelta: number; polarDelta: number; zoomDelta: number; hasHand: boolean;
+        azimuthDelta: number; polarDelta: number; zoomDelta: number; handCount: number;
       };
-      if (!d?.hasHand) return;
+      if (!d || (d.handCount ?? 0) < 1) return;
       // Orbit around target by adjusting spherical coords.
       const target = oc.target as THREE.Vector3;
       const offset = camera.position.clone().sub(target);
