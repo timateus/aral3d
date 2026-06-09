@@ -282,7 +282,7 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
       // Pulled-back over-the-shoulder zoom; RT zooms out, LT zooms in.
       if (gp.connected) {
         const dz = (gp.buttons.rt - gp.buttons.lt) * dt * 1.2;
-        camDistRef.current = THREE.MathUtils.clamp(camDistRef.current + dz, 0.25, 3.5);
+        camDistRef.current = THREE.MathUtils.clamp(camDistRef.current + dz, 0.25, 7);
       }
       const camDist = camDistRef.current;
       const camOffsetX = Math.sin(yaw.current) * camDist;
