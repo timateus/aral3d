@@ -306,16 +306,22 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
   if (!thirdPerson) return null;
 
   return (
-    <group ref={avatarRef} scale={0.55}>
-      <mesh position={[0, 0.12, 0]}>
-        <sphereGeometry args={[0.12, 16, 16]} />
-        <meshStandardMaterial color="#f0c674" emissive="#f0c674" emissiveIntensity={0.28} />
-      </mesh>
-      <mesh position={[-0.04, 0.14, -0.1]}><sphereGeometry args={[0.022, 8, 8]} /><meshStandardMaterial color="#111827" /></mesh>
-      <mesh position={[0.04, 0.14, -0.1]}><sphereGeometry args={[0.022, 8, 8]} /><meshStandardMaterial color="#111827" /></mesh>
-      <mesh position={[0, 0.23, 0]}><coneGeometry args={[0.06, 0.1, 8]} /><meshStandardMaterial color="#8ec8e8" /></mesh>
-      <pointLight color="#f0c674" intensity={0.35} distance={0.8} />
-    </group>
+    <>
+      <group ref={avatarRef}>
+        <mesh>
+          <planeGeometry args={[0.42, 0.56]} />
+          <meshBasicMaterial map={playerTex} transparent toneMapped={false} side={THREE.DoubleSide} />
+        </mesh>
+        <pointLight color="#f0c674" intensity={0.35} distance={0.8} />
+      </group>
+      <group ref={npcRef}>
+        <mesh>
+          <planeGeometry args={[0.52, 0.7]} />
+          <meshBasicMaterial map={npcTex} transparent toneMapped={false} side={THREE.DoubleSide} />
+        </mesh>
+        <pointLight color="#8ec8e8" intensity={0.4} distance={1.2} />
+      </group>
+    </>
   );
 };
 
