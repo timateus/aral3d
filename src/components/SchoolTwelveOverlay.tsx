@@ -23,6 +23,230 @@ const photos = [
   { src: classroomTwoAsset.url, alt: 'Presentation taking place inside School 12', label: 'presentation' },
 ];
 
+interface MenuItem {
+  label: string;
+  sub: string;
+  href?: string;
+  action?: 'close';
+  disabled?: boolean;
+}
+
+const MENU_ITEMS: MenuItem[] = [
+  { label: 'Qilqali City', sub: 'qilqalicity.lovable.app', href: 'https://qilqalicity.lovable.app' },
+  { label: 'Roar & Guard', sub: 'roar-and-guard.lovable.app', href: 'https://roar-and-guard.lovable.app' },
+  { label: 'Watch the school film', sub: 'coming soon', disabled: true },
+  { label: 'Exit', sub: 'back to the map', action: 'close' },
+];
+
+const HEADING_FONT = '"Trebuchet MS", "Comic Sans MS", "Inter", system-ui, sans-serif';
+const BODY_FONT = '"Georgia", "Trebuchet MS", serif';
+
+const SchoolDialog = ({ onClose }: { onClose: () => void }) => {
+  const [sel, setSel] = useState(0);
+  const items = MENU_ITEMS;
+
+  const activate = (i: number) => {
+    const it = items[i];
+    if (!it || it.disabled) return;
+    if (it.action === 'close') { sfx.exit(); onClose(); return; }
+    if (it.href) { sfx.make(); window.open(it.href, '_blank', 'noopener,noreferrer'); }
+  };
+
+  // Keyboard navigation.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' || e.key === 'b' || e.key === 'B') { e.preventDefault(); onClose(); return; }
+      if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+        e.preventDefault();
+        setSel((s) => {
+          let n = s;
+          for (let i = 0; i < items.length; i++) {
+            n = (n + 1) % items.length;
+            if (!items[n].disabled) break;
+          }
+          sfx.navNext();
+          return n;
+        });
+      } else if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+        e.preventDefault();
+        setSel((s) => {
+          let n = s;
+          for (let i = 0; i < items.length; i++) {
+            n = (n - 1 + items.length) % items.length;
+            if (!items[n].disabled) break;
+          }
+          sfx.navPrev();
+          return n;
+        });
+      } else if (e.key === 'Enter' || e.key === ' ' || e.key === 'x' || e.key === 'X') {
+        e.preventDefault();
+        activate(sel);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
+
+  // Gamepad navigation.
+  useEffect(() => {
+    let raf = 0;
+    let axisCooldown = 0;
+    const tick = () => {
+      const pads = navigator.getGamepads?.() ?? [];
+      let pad: Gamepad | null = null;
+      for (const p of pads) { if (p) { pad = p; break; } }
+      if (pad) {
+        // D-pad
+        if (consumeGamepadButton('sd-up', !!pad.buttons[12]?.pressed, { cooldownMs: 220, ignoreBlock: true })) {
+          setSel((s) => {
+            let n = s;
+            for (let i = 0; i < items.length; i++) {
+              n = (n - 1 + items.length) % items.length;
+              if (!items[n].disabled) break;
+            }
+            sfx.navPrev();
+            return n;
+          });
+        }
+        if (consumeGamepadButton('sd-down', !!pad.buttons[13]?.pressed, { cooldownMs: 220, ignoreBlock: true })) {
+          setSel((s) => {
+            let n = s;
+            for (let i = 0; i < items.length; i++) {
+              n = (n + 1) % items.length;
+              if (!items[n].disabled) break;
+            }
+            sfx.navNext();
+            return n;
+          });
+        }
+        // Left stick Y as fallback
+        const ly = pad.axes[1] ?? 0;
+        if (axisCooldown > 0) axisCooldown--;
+        if (axisCooldown === 0 && Math.abs(ly) > 0.55) {
+          axisCooldown = 14;
+          setSel((s) => {
+            let n = s;
+            const dir = ly > 0 ? 1 : -1;
+            for (let i = 0; i < items.length; i++) {
+              n = (n + dir + items.length) % items.length;
+              if (!items[n].disabled) break;
+            }
+            sfx.navNext();
+            return n;
+          });
+        }
+        if (consumeGamepadButton('sd-a', !!pad.buttons[0]?.pressed, { cooldownMs: 350, ignoreBlock: true }) ||
+            consumeGamepadButton('sd-x', !!pad.buttons[2]?.pressed, { cooldownMs: 350, ignoreBlock: true })) {
+          activate(sel);
+        }
+        if (consumeGamepadButton('sd-b', !!pad.buttons[1]?.pressed, { cooldownMs: 350, ignoreBlock: true })) {
+          sfx.exit();
+          onClose();
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  });
+
+  return (
+    <div
+      className="fixed inset-0 z-[90] flex items-center justify-center p-6"
+      data-hud
+      style={{ background: 'rgba(6,8,14,0.92)' }}
+      onClick={onClose}
+    >
+      <div
+        className="w-[min(820px,94vw)] border-2 border-white/55 bg-[#06080e] text-white relative rounded-sm overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="grid md:grid-cols-[1.1fr_0.9fr]">
+          <div className="p-8 md:p-10">
+            <div className="text-sm font-mono uppercase tracking-[0.5em] text-white/55 mb-3">
+              school 12 · kegeyli
+            </div>
+            <h2
+              className="font-black tracking-[0.04em] uppercase text-white mb-5"
+              style={{ fontFamily: HEADING_FONT, fontSize: 'clamp(34px,5vw,58px)', lineHeight: 0.95 }}
+            >
+              Welcome to our school
+            </h2>
+            <p
+              className="italic text-white/85 leading-snug mb-6"
+              style={{ fontFamily: BODY_FONT, fontSize: 'clamp(15px,1.4vw,20px)' }}
+            >
+              Try worlds the students built, or come back for the film screening soon.
+            </p>
+
+            <ul className="space-y-2">
+              {items.map((it, i) => {
+                const active = i === sel;
+                return (
+                  <li key={it.label}>
+                    <button
+                      type="button"
+                      disabled={it.disabled}
+                      onMouseEnter={() => !it.disabled && setSel(i)}
+                      onClick={() => activate(i)}
+                      className={`w-full flex items-center justify-between px-5 py-4 border-2 rounded-sm text-left transition-colors ${
+                        it.disabled
+                          ? 'border-white/15 bg-white/[0.02] text-white/35 cursor-not-allowed'
+                          : active
+                            ? 'border-white bg-white text-[#06080e]'
+                            : 'border-white/40 bg-white/5 text-white hover:bg-white/10'
+                      }`}
+                    >
+                      <div>
+                        <div
+                          className="font-black uppercase tracking-[0.05em]"
+                          style={{ fontFamily: HEADING_FONT, fontSize: 'clamp(18px,1.8vw,24px)' }}
+                        >
+                          {it.label}
+                        </div>
+                        <div className="text-[11px] font-mono uppercase tracking-[0.3em] opacity-70 mt-1">
+                          {it.sub}
+                        </div>
+                      </div>
+                      {it.action === 'close' ? (
+                        <X className="w-5 h-5" />
+                      ) : (
+                        <ExternalLink className="w-5 h-5" />
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+
+            <div className="mt-6 flex items-center gap-3 text-[11px] font-mono uppercase tracking-[0.35em] text-white/55">
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full border border-white/55">▲▼</span>
+              <span>navigate</span>
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full border border-white/55">A/X</span>
+              <span>select</span>
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full border border-white/55">B</span>
+              <span>exit</span>
+            </div>
+          </div>
+
+          <div className="p-6 md:p-8 bg-black/40 border-l border-white/10">
+            <img
+              src={schoolFrontAsset.url}
+              alt="Students standing in front of School 12 in Kegeyli"
+              className="w-full aspect-[4/5] object-cover border border-white/20 rounded-sm"
+              loading="lazy"
+            />
+            <div className="mt-4 text-[10px] font-mono uppercase tracking-[0.4em] text-white/55 text-center">
+              school 12 community
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
 const SchoolTwelveOverlay = ({
   onExit,
   onPrev,
