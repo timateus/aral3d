@@ -1340,7 +1340,7 @@ const Index = () => {
       setSchoolDialogOpen(false);
       setSchoolDistanceMeters(0);
     }
-  }, [schoolTarget, setTerrainMode, setVisualMode]);
+  }, [schoolTarget, schoolStart, setTerrainMode, setVisualMode, setTerrainRegion]);
 
 
   return (
