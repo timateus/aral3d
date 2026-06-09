@@ -189,6 +189,29 @@ const SchoolTwelveOverlay = ({
           </div>
         </div>
       )}
+
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-[95] flex items-center justify-center bg-black/85 backdrop-blur-sm p-6"
+          data-hud
+          onClick={() => setLightbox(null)}
+        >
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setLightbox(null); }}
+            className="absolute top-5 right-5 flex h-10 w-10 items-center justify-center border border-white/20 bg-black/70 text-white hover:bg-black"
+            aria-label="Close photo"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          <img
+            src={lightbox.src}
+            alt={lightbox.alt}
+            className="max-h-[90vh] max-w-[92vw] object-contain border border-white/15 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </>
   );
 };
