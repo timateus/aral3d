@@ -1,4 +1,5 @@
-import { ArrowLeft, ExternalLink, Film, Navigation2 } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowLeft, ExternalLink, Film, Navigation2, X } from 'lucide-react';
 import { sfx } from '@/lib/ui-sfx';
 import schoolFrontAsset from '@/assets/kegeyli-school-front.png.asset.json';
 import classroomOneAsset from '@/assets/kegeyli-classroom-1.png.asset.json';
