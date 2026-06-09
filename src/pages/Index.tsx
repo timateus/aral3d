@@ -442,12 +442,9 @@ const Index = () => {
   const [contourInterval, setContourInterval] = useState<number>(25);
   const [vectorInterval, setVectorInterval] = useState<number>(50);
   const [hideTerrainSurface, setHideTerrainSurface] = useState<boolean>(false);
-  // Start ~7km south of the school so the tiny avatar has a meaningful walk
-  // but doesn't have to traverse the whole map.
-  // Start at the NE corner of the Khorezm region so the walk to the school
-  // (which sits at the far west edge) is a real journey.
-  // SE corner of Khorezm — farthest point from the school (which sits NW).
-  const schoolStart = useMemo(() => ({ lat: 42.95, lon: 61.0 }), []);
+  // Start at Aral city (Aralsk) — the historic Aral Sea port — so the
+  // avatar walks the length of the dried basin down to the school.
+  const schoolStart = useMemo(() => ({ lat: 46.7833, lon: 61.6667 }), []);
   const schoolTarget = useMemo(() => ({ lat: 42.7574883, lon: 59.5618668 }), []);
 
   // Lifted data panel state

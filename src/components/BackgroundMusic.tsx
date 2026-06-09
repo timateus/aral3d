@@ -24,9 +24,13 @@ export default function BackgroundMusic({ active, muted: controlledMuted, onMute
   const [internalMuted, setInternalMuted] = useState<boolean>(() => {
     try { return localStorage.getItem('bg-music-muted') === '1'; } catch { return false; }
   });
+  const [tabVisible, setTabVisible] = useState<boolean>(() =>
+    typeof document === 'undefined' ? true : !document.hidden
+  );
 
   const isControlled = controlledMuted !== undefined;
   const muted = isControlled ? controlledMuted : internalMuted;
+  const effectiveActive = active && tabVisible;
   const setMuted = (v: boolean) => {
     if (isControlled) {
       onMutedChange?.(v);
@@ -34,6 +38,21 @@ export default function BackgroundMusic({ active, muted: controlledMuted, onMute
       setInternalMuted(v);
     }
   };
+
+  // Pause music when the tab/window is hidden; resume when visible again.
+  useEffect(() => {
+    const onVis = () => setTabVisible(!document.hidden);
+    const onBlur = () => setTabVisible(false);
+    const onFocus = () => setTabVisible(!document.hidden);
+    document.addEventListener('visibilitychange', onVis);
+    window.addEventListener('blur', onBlur);
+    window.addEventListener('focus', onFocus);
+    return () => {
+      document.removeEventListener('visibilitychange', onVis);
+      window.removeEventListener('blur', onBlur);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, []);
 
   // Lazy-create audio element
   useEffect(() => {
@@ -63,7 +82,7 @@ export default function BackgroundMusic({ active, muted: controlledMuted, onMute
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
-    if (active && !muted) {
+    if (effectiveActive && !muted) {
       if (!a.src) {
         a.src = TRACKS[idxRef.current];
       }
@@ -90,7 +109,7 @@ export default function BackgroundMusic({ active, muted: controlledMuted, onMute
       }, 40);
       return () => window.clearInterval(id);
     }
-  }, [active, muted]);
+  }, [effectiveActive, muted]);
 
   useEffect(() => {
     try { localStorage.setItem('bg-music-muted', muted ? '1' : '0'); } catch {}
