@@ -403,10 +403,17 @@ const IntroOverlay = ({ onStart, onGuidedTour, onReading, onCanalTour, onAgmarTo
               <div>
                 <p className="text-3xl font-semibold text-foreground tracking-wide mb-2">Play</p>
                 <p className="text-sm text-foreground/50 leading-relaxed">
-                  Spectral Earth, Ministry of Sea, Water Sim, GeoGuessr & more
+                  Choose your character, Ministry of Sea, Water Sim, GeoGuessr & more
                 </p>
               </div>
-              <ArrowRight className="w-8 h-8 text-foreground/20 group-hover:text-primary/60 transition-all duration-300 group-hover:translate-x-2" />
+              <div className="flex items-center gap-3">
+                <span
+                  className="hidden sm:inline-flex items-center justify-center px-2 py-1 text-[11px] font-mono font-bold leading-none rounded border-2"
+                  style={{ background: '#3b82f6', color: '#fff', borderColor: '#fff' }}
+                  title="Press X on controller"
+                >{remapPadLabel('X').text}</span>
+                <ArrowRight className="w-8 h-8 text-foreground/20 group-hover:text-primary/60 transition-all duration-300 group-hover:translate-x-2" />
+              </div>
             </div>
           </button>
 
