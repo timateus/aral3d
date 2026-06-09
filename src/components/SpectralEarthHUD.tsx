@@ -324,6 +324,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
 
     const dataUrl = out.toDataURL('image/png');
     const caption =
+      `${line1}\n${line2}\n\n` +
       `made at Aral School 2026\n` +
       `#aralschool #spectralearth #aralsea #cartography #mapsarenotneutral`;
 
