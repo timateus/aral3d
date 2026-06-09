@@ -34,7 +34,10 @@ const FLAMMABLE: MapBuilderItemId[] = ['seed', 'plant', 'flower', 'saxaul', 'ree
 
 const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: Props) => {
   const [selected, setSelected] = useState<MapBuilderItemId>('water');
-  const [items, setItems] = useState<PlacedItem[]>([]);
+  // Hydrate from the same key Index.tsx uses so blocks persist across exits.
+  const [items, setItems] = useState<PlacedItem[]>(() =>
+    loadState<PlacedItem[]>('placed-items', [])
+  );
   const [confirmNav, setConfirmNav] = useState<null | 'prev' | 'next'>(null);
   const [actionsLeft, setActionsLeft] = useState<number>(() => loadState<number>(ACTIONS_KEY, ACTION_LIMIT));
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -62,10 +65,17 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
   useEffect(() => { actionsRef.current = actionsLeft; saveState(ACTIONS_KEY, actionsLeft); }, [actionsLeft]);
 
   // 50-action budget resets when leaving Level 5 (component unmount). Placed
-  // items themselves persist (handled by parent via saveState('placed-items')).
+  // items themselves persist (loaded from 'placed-items' on mount above).
   useEffect(() => () => {
     try { localStorage.removeItem('aral3d:v1:' + ACTIONS_KEY); } catch {}
   }, []);
+
+  // Opening the picker needs the cursor — release pointer lock so clicks land.
+  useEffect(() => {
+    if (pickerOpen && document.pointerLockElement) {
+      try { (document as any).exitPointerLock?.(); } catch {}
+    }
+  }, [pickerOpen]);
 
   const requestNav = (dir: 'prev' | 'next') => {
     sfx[dir === 'prev' ? 'navPrev' : 'navNext']?.();
@@ -526,7 +536,7 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
       {/* Top bar */}
       <div data-hud className="fixed top-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-4 py-2 rounded-md bg-black/60 backdrop-blur-md border border-white/15">
         <span className="text-white/90 font-mono text-[11px] tracking-wider uppercase">Level 5 · Sandspiel Builder</span>
-        <span className="text-white/40 font-mono text-[10px]">WASD walk · X build · Z remove · Y picker · A top-down · R2/L2 zoom</span>
+        <span className="text-white/40 font-mono text-[10px]">WASD walk · X build · Z remove · 1-9 material · Y picker · A top-down · R2/L2 zoom</span>
       </div>
 
       <button
@@ -563,7 +573,11 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
               : 'bg-black/60 border-white/15 text-white/90'
         }`}
       >
-        <span>Actions {actionsLeft}/{ACTION_LIMIT}</span>
+        {isOut ? (
+          <span className="font-semibold tracking-wide">next person's turn maybe?</span>
+        ) : (
+          <span>Actions {actionsLeft}/{ACTION_LIMIT}</span>
+        )}
         <button
           onClick={resetActions}
           className="ml-1 px-2 py-0.5 text-[10px] uppercase tracking-widest border border-white/30 rounded hover:bg-white/10"

@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import VoxelPage from "./pages/Voxel";
 import SharePage from "./pages/Share";
+import FaceTerrain from "./pages/FaceTerrain";
 
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/voxel" element={<VoxelPage />} />
           <Route path="/share/:id" element={<SharePage />} />
+          <Route path="/face" element={<FaceTerrain />} />
 
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
