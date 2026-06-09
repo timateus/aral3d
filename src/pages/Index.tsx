@@ -1376,7 +1376,7 @@ const Index = () => {
     try {
       const params = new URLSearchParams(window.location.search);
       const n = parseInt(params.get('level') ?? '', 10);
-      if (n >= 1 && n <= 6) {
+      if (n >= 1 && n <= 7) {
         didDeepLinkRef.current = true;
         enterGameLevel(n);
         params.delete('level');
