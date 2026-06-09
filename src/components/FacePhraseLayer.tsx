@@ -142,12 +142,12 @@ export const FacePhraseLayer = () => {
 
       {layer && (
         <div
-          className="fixed left-1/2 top-1/2 z-[44] -translate-x-1/2 -translate-y-1/2 pointer-events-none animate-scale-in"
-          style={{ maxWidth: 'min(560px, 80vw)' }}
+          className="fixed left-1/2 bottom-16 z-[44] -translate-x-1/2 pointer-events-none animate-fade-in"
+          style={{ maxWidth: 'min(640px, 88vw)' }}
         >
-          <div className="px-6 py-5 rounded-md bg-black/75 backdrop-blur-md border border-white/20">
-            <div className="text-[11px] font-mono uppercase tracking-[0.3em] text-white/60 mb-2">☝ data layer</div>
-            <div className="text-3xl font-bold text-white mb-3" style={{ fontFamily: '"Impact", sans-serif', letterSpacing: '0.02em' }}>
+          <div className="px-5 py-4 rounded-md bg-black/75 backdrop-blur-md border border-white/20">
+            <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-white/60 mb-1.5">☝ data layer</div>
+            <div className="text-2xl font-bold text-white mb-1.5" style={{ fontFamily: '"Impact", sans-serif', letterSpacing: '0.02em' }}>
               {layer.name}
             </div>
             <div className="text-sm text-white/85 leading-relaxed" style={{ fontFamily: '"Georgia", serif' }}>
