@@ -261,6 +261,7 @@ const SchoolDialog = ({ onClose }: { onClose: () => void }) => {
 const SchoolTwelveOverlay = ({
   onExit,
   onPrev,
+  onNext,
   onToggleAutoWalk,
   autoWalking,
   distanceMeters,
