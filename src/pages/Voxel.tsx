@@ -28,11 +28,8 @@ import VoxelAutopilot from '@/components/voxel/VoxelAutopilot';
 import { initAudio, playSfx, startAmbient, stopAmbient, setMuted, isMuted } from '@/lib/voxel/voxel-audio';
 import { createSaplingTracker, type SaplingTracker } from '@/lib/voxel/saxaul';
 import { floodFillCanal } from '@/lib/voxel/water-fill';
-import { tickWaterFlow } from '@/lib/voxel/water-flow';
 import { STRUCTURES, placeStructure } from '@/lib/voxel/structures';
 import type { BlockId } from '@/lib/voxel/block-types';
-import { useThree } from '@react-three/fiber';
-import { loadWorldDiff, saveWorldDiff, applyDiff, snapshotColumn, type WorldDiff } from '@/lib/voxel/world-persistence';
 
 type RegionKey = 'khorezm' | 'aral';
 
