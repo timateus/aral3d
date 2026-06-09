@@ -1785,6 +1785,7 @@ const Index = () => {
 
       {/* Background music — plays during levels with a mute toggle */}
       <BackgroundMusic active={spectralMode || ministryMode || simMode || geoMode || placeMode || schoolMode} />
+      <GamepadStickFix />
 
       {levelIntro && (
         <LevelIntroSplash
