@@ -1808,6 +1808,7 @@ const Index = () => {
           }}
         />
       )}
+      {schoolMode && <SchoolPlaceOverlay hidden={schoolDialogOpen} />}
 
       {/* Background music — plays during levels with a mute toggle */}
       <BackgroundMusic active={spectralMode || ministryMode || simMode || geoMode || placeMode || schoolMode} />
