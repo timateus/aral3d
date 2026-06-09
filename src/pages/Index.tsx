@@ -1316,13 +1316,11 @@ const Index = () => {
   const isMapExploration = started && !gameModeActive && !aryqWorldActive && !bowlWorldActive && !showObjectLibrary && !quadrantViewActive && !bodiesOfWaterMode && !agMarMode && !soapOperaMode && !canalMode && !sandboxMode && !dustMode && !traceMode && !lifeMode && !spectralMode && !ministryMode && !simMode && !geoMode && !placeMode && !schoolMode;
 
   const enterGameLevel = useCallback((level: number) => {
-    if (level === 7) {
-      // Level 7 — Face as Infrastructure (MediaPipe camera level) lives at /face.
-      window.location.assign('/face');
-      return;
-    }
     setStarted(true);
-    setSpectralMode(level === 1);
+    // Level 7 reuses Level 1's terrain scene + gamepad controls, but pipes the
+    // rendered terrain through the MediaPipe face overlay (FaceProjectionOverlay).
+    setSpectralMode(level === 1 || level === 7);
+    setFaceMode(level === 7);
     setMinistryMode(level === 2);
     setSimMode(level === 3);
     setGeoMode(level === 4);
@@ -1332,7 +1330,7 @@ const Index = () => {
     setShowWaterExtent(false);
     setShowKhorezm(level >= 3 && level <= 6);
     setTerrainMode('classic');
-    if (level >= 1 && level <= 6) setVisualMode('designer');
+    if (level >= 1 && level <= 7) setVisualMode('designer');
     setWaterFlowActive(level === 3);
     setFlowAnimating(level === 3);
     if (level !== 6) {
