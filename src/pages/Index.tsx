@@ -20,6 +20,7 @@ import BackgroundMusic from '@/components/BackgroundMusic';
 import LevelIntroSplash from '@/components/LevelIntroSplash';
 import MapBuilderHUD from '@/components/MapBuilderHUD';
 import SchoolTwelveOverlay from '@/components/SchoolTwelveOverlay';
+import SchoolPlaceOverlay from '@/components/SchoolPlaceOverlay';
 import GamepadStickFix from '@/components/GamepadStickFix';
 
 import { applyRandomSpectralPalette } from '@/lib/visual-mode';
