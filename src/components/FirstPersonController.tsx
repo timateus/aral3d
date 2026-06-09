@@ -152,10 +152,15 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
     const onUp = (e: MouseEvent) => {
       if (e.button === 0) keys.current.__mouse = false;
     };
+    const onWheel = (e: WheelEvent) => {
+      if (!thirdPerson) return;
+      camDistRef.current = THREE.MathUtils.clamp(camDistRef.current + e.deltaY * 0.002, 0.25, 3.5);
+    };
     el.addEventListener('click', onClick);
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mousedown', onDown);
     window.addEventListener('mouseup', onUp);
+    window.addEventListener('wheel', onWheel, { passive: true });
     return () => {
       el.removeEventListener('click', onClick);
       window.removeEventListener('mousemove', onMove);
