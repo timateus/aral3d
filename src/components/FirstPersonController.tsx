@@ -35,7 +35,7 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
   const prevTrigger = useRef(false);
   const avatarRef = useRef<THREE.Group>(null);
   const npcRef = useRef<THREE.Group>(null);
-  const camDistRef = useRef(0.9);
+  const camDistRef = useRef(1.8);
 
   const playerTex = useMemo(() => {
     const t = new THREE.TextureLoader().load(characterCat.url);
