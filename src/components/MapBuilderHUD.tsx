@@ -282,38 +282,53 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
     const loop = () => {
       const gp = gpRef.current;
       if (gp.connected) {
-        const padHeld = gp.buttons.x || gp.buttons.a || gp.buttons.rt > 0.4;
-        if (padHeld && !heldRef.current && !kbMouseHeld.current) place();
-        heldRef.current = kbMouseHeld.current || padHeld;
-        if (gp.buttons.rb && !prevBumpers.current.rb) {
-          const i = PALETTE_ITEMS.findIndex((x) => x.id === selectedRef.current);
-          setSelected(PALETTE_ITEMS[(i + 1) % PALETTE_ITEMS.length].id);
-          sfx.click();
+        if (confirmNav) {
+          // While confirm popup is open: A/X = confirm, B = cancel.
+          if ((gp.buttons.a && !prevBumpers.current.a) || (gp.buttons.x && !prevBumpers.current.x)) {
+            const dir = confirmNav;
+            setConfirmNav(null);
+            sfx[dir === 'prev' ? 'navPrev' : 'navNext']?.();
+            if (dir === 'prev') onPrev(); else onNext?.();
+          } else if (gp.buttons.b && !prevBumpers.current.b) {
+            setConfirmNav(null);
+            sfx.exit?.();
+          }
+          prevBumpers.current.a = gp.buttons.a;
+          prevBumpers.current.b = gp.buttons.b;
+          prevBumpers.current.x = gp.buttons.x;
+          prevBumpers.current.back = gp.buttons.back;
+          prevBumpers.current.start = gp.buttons.start;
+        } else {
+          const padHeld = gp.buttons.x || gp.buttons.a || gp.buttons.rt > 0.4;
+          if (padHeld && !heldRef.current && !kbMouseHeld.current) place();
+          heldRef.current = kbMouseHeld.current || padHeld;
+          if (gp.buttons.rb && !prevBumpers.current.rb) {
+            const i = PALETTE_ITEMS.findIndex((x) => x.id === selectedRef.current);
+            setSelected(PALETTE_ITEMS[(i + 1) % PALETTE_ITEMS.length].id);
+            sfx.click();
+          }
+          if (gp.buttons.lb && !prevBumpers.current.lb) {
+            const i = PALETTE_ITEMS.findIndex((x) => x.id === selectedRef.current);
+            setSelected(PALETTE_ITEMS[(i - 1 + PALETTE_ITEMS.length) % PALETTE_ITEMS.length].id);
+            sfx.click();
+          }
+          if (gp.buttons.back && !prevBumpers.current.back) requestNav('prev');
+          if (gp.buttons.start && !prevBumpers.current.start && onNext) requestNav('next');
+          prevBumpers.current.a = gp.buttons.a;
+          prevBumpers.current.b = gp.buttons.b;
+          prevBumpers.current.x = (gp.buttons as any).x ?? false;
+          prevBumpers.current.lb = gp.buttons.lb;
+          prevBumpers.current.rb = gp.buttons.rb;
+          prevBumpers.current.back = gp.buttons.back;
+          prevBumpers.current.start = gp.buttons.start;
         }
-        if (gp.buttons.lb && !prevBumpers.current.lb) {
-          const i = PALETTE_ITEMS.findIndex((x) => x.id === selectedRef.current);
-          setSelected(PALETTE_ITEMS[(i - 1 + PALETTE_ITEMS.length) % PALETTE_ITEMS.length].id);
-          sfx.click();
-        }
-        if (gp.buttons.back && !prevBumpers.current.back) {
-          sfx.navPrev();
-          onPrev();
-        }
-        if (gp.buttons.start && !prevBumpers.current.start && onNext) {
-          sfx.navNext();
-          onNext();
-        }
-        prevBumpers.current.lb = gp.buttons.lb;
-        prevBumpers.current.rb = gp.buttons.rb;
-        prevBumpers.current.back = gp.buttons.back;
-        prevBumpers.current.start = gp.buttons.start;
       }
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [confirmNav]);
 
   return (
     <>
