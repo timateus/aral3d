@@ -217,7 +217,7 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
   const [panelOpen, setPanelOpen] = useState(false);
 
   // Next level is unlocked only after the sea is drained below -4m.
-  const canNext = waterLevel < -4;
+  const canNext = waterLevel < 12;
 
   // Gamepad controls — X (button 2) lowers water, O/B (button 1) raises it,
   // held continuously. LB/RB navigate levels. Right stick stays free for camera.
@@ -264,8 +264,8 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
         }
         const lb = !!pad.buttons[4]?.pressed;
         const rb = !!pad.buttons[5]?.pressed;
-        if (consumeGamepadButton('x', xBtn) && onNext && waterLevelRef.current < -4) { sfx.navNext(); onNext(); }
-        if (consumeGamepadButton('rb', rb) && onNext && waterLevelRef.current < -4) { sfx.navNext(); onNext(); }
+        if (consumeGamepadButton('x', xBtn) && onNext && waterLevelRef.current < 12) { sfx.navNext(); onNext(); }
+        if (consumeGamepadButton('rb', rb) && onNext && waterLevelRef.current < 12) { sfx.navNext(); onNext(); }
         if (consumeGamepadButton('lb', lb) && onPrev) { sfx.navPrev(); onPrev(); }
       }
       raf = requestAnimationFrame(tick);
@@ -282,9 +282,9 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
       if (t && /input|textarea|select/i.test(t.tagName)) return;
       if (e.key === 'ArrowLeft' && onPrev) {
         e.preventDefault(); sfx.navPrev(); onPrev();
-      } else if (e.key === 'ArrowRight' && onNext && waterLevelRef.current < -4) {
+      } else if (e.key === 'ArrowRight' && onNext && waterLevelRef.current < 12) {
         e.preventDefault(); sfx.navNext(); onNext();
-      } else if ((e.key === 'Enter' || e.key === ' ' || e.key === 'x' || e.key === 'X') && onNext && waterLevelRef.current < -4) {
+      } else if ((e.key === 'Enter' || e.key === ' ' || e.key === 'x' || e.key === 'X') && onNext && waterLevelRef.current < 12) {
         e.preventDefault(); sfx.navNext(); onNext();
       } else if (e.key === 'ArrowDown') {
         e.preventDefault();
@@ -509,11 +509,11 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
                 boxShadow: `0 -8px 24px ${waterColor}77`,
               }}
             />
-            {/* Drain unlock marker (< -4m) */}
+            {/* Drain unlock marker (< 12m) */}
             <div
               className="absolute left-0 right-0 pointer-events-none"
               style={{
-                top: `${(1 - (-4 - MIN) / (MAX - MIN)) * 100}%`,
+                top: `${(1 - (12 - MIN) / (MAX - MIN)) * 100}%`,
                 borderTop: `2px dashed ${waterColor}`,
                 opacity: 0.9,
               }}
