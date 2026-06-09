@@ -103,6 +103,7 @@ const FaceCameraBackground = () => {
   const stateRef = useRef({
     lastHandCount: 0,
     palmDir: null as PalmDir,
+    palmDirAt: 0,           // ms timestamp of last positive palmDir
     twoHandMode: null as null | 'in' | 'out',
     fingerUpActive: false,
   });
