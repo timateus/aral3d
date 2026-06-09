@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, ExternalLink, Film, Navigation2, X } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Navigation2, X } from 'lucide-react';
 import { sfx } from '@/lib/ui-sfx';
 import { consumeGamepadButton } from '@/lib/gamepad-dedupe';
 import schoolFrontAsset from '@/assets/kegeyli-school-front.png.asset.json';
