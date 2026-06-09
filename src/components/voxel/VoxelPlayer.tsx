@@ -20,6 +20,8 @@ interface Props {
   consumeSelected: () => BlockId | null;
   onLockChange?: (locked: boolean) => void;
   playerRef?: React.MutableRefObject<{ x: number; z: number; yaw: number }>;
+  canAct?: () => boolean;
+  onActionConsumed?: (kind: 'break' | 'place') => void;
 }
 
 const GRAVITY = 22;
@@ -30,7 +32,7 @@ const EYE_HEIGHT = 1.6;
 const PLAYER_RADIUS = 0.3;
 const REACH = 8;
 
-const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consumeSelected, onLockChange, playerRef }: Props) => {
+const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consumeSelected, onLockChange, playerRef, canAct, onActionConsumed }: Props) => {
   const { camera, gl } = useThree();
   const velocity = useRef(new THREE.Vector3());
   const onGround = useRef(false);
@@ -39,6 +41,9 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
   const lastClickTime = useRef(0);
   const gp = useGamepad();
   const lastGpClick = useRef({ break: false, place: false, jump: false });
+  // Hold-to-repeat: after holding the button > HOLD_MS, fire every REPEAT_MS.
+  const holdRef = useRef<{ break: number | null; place: number | null }>({ break: null, place: null });
+  const lastRepeatRef = useRef<{ break: number; place: number }>({ break: 0, place: 0 });
 
   // Spawn at world center, on top of terrain.
   useEffect(() => {
@@ -106,6 +111,7 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
   }, [camera, world]);
 
   const doBreak = useCallback(() => {
+    if (canAct && !canAct()) return;
     // Let mobs (camels, sheep, etc.) handle left-click first if the crosshair is on them.
     const dir = new THREE.Vector3();
     camera.getWorldDirection(dir);
@@ -121,11 +127,13 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
     if (removed && removed !== 'air') {
       onMined(removed);
       dispatchMissionEvent({ type: 'mine', block: removed });
+      onActionConsumed?.('break');
       onWorldMutated();
     }
-  }, [camera, pickColumn, world, onMined, onWorldMutated]);
+  }, [camera, pickColumn, world, onMined, onWorldMutated, canAct, onActionConsumed]);
 
   const doPlace = useCallback(() => {
+    if (canAct && !canAct()) return;
     const block = getSelectedBlock();
     if (!block) return;
     const hit = pickColumn();
@@ -136,13 +144,17 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
     if (ok) {
       consumeSelected();
       dispatchMissionEvent({ type: 'place', block });
+      onActionConsumed?.('place');
+      if (block === 'salt') {
+        window.dispatchEvent(new CustomEvent('voxel:salt-placed', { detail: { i: hit.i, j: hit.j } }));
+      }
       if (block === 'sapling' && (surfaceBlock === 'sand' || surfaceBlock === 'salt')) {
         dispatchMissionEvent({ type: 'plant-sapling' });
         window.dispatchEvent(new CustomEvent('voxel:sapling-planted', { detail: { i: hit.i, j: hit.j } }));
       }
       onWorldMutated();
     }
-  }, [pickColumn, world, getSelectedBlock, consumeSelected, onWorldMutated]);
+  }, [pickColumn, world, getSelectedBlock, consumeSelected, onWorldMutated, canAct, onActionConsumed]);
 
   // F = interact (drink/eat)
   useEffect(() => {
