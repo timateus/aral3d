@@ -7,7 +7,6 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import VoxelPage from "./pages/Voxel";
 import SharePage from "./pages/Share";
-import FaceTerrain from "./pages/FaceTerrain";
 
 
 const queryClient = new QueryClient();
