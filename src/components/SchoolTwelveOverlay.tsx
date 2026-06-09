@@ -5,6 +5,7 @@ import { consumeGamepadButton } from '@/lib/gamepad-dedupe';
 import schoolFrontAsset from '@/assets/kegeyli-school-front.png.asset.json';
 import classroomOneAsset from '@/assets/kegeyli-classroom-1.png.asset.json';
 import classroomTwoAsset from '@/assets/kegeyli-classroom-2.png.asset.json';
+import studentsCraftAsset from '@/assets/kegeyli-students-craft.png.asset.json';
 
 interface Props {
   onExit: () => void;
@@ -152,30 +153,29 @@ const SchoolDialog = ({ onClose }: { onClose: () => void }) => {
 
   return (
     <div
-      className="fixed inset-0 z-[90] flex items-center justify-center p-6"
+      className="fixed inset-0 z-[90] flex items-center justify-center p-6 animate-in fade-in duration-300"
       data-hud
-      style={{ background: 'rgba(13,17,23,0.94)' }}
+      style={{ background: '#06080e' }}
       onClick={onClose}
     >
       <div
-        className="w-[min(820px,94vw)] border-2 bg-[#0d1117] text-white relative rounded-sm overflow-hidden"
-        style={{ borderColor: '#8ec8e8' }}
+        className="w-[min(900px,94vw)] border-2 border-white/50 bg-white/5 rounded-sm overflow-hidden text-white"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="grid md:grid-cols-[1.1fr_0.9fr]">
-          <div className="p-8 md:p-10" style={{ background: 'linear-gradient(180deg,#0d1117,#10192a)' }}>
-            <div className="text-sm font-mono uppercase tracking-[0.5em] mb-3" style={{ color: '#8ec8e8' }}>
-              school 12 · kegeyli
+        <div className="grid md:grid-cols-[1.05fr_0.95fr]">
+          <div className="p-8 md:p-10">
+            <div className="text-[11px] font-mono uppercase tracking-[0.5em] text-white/55 mb-4">
+              level 6 · school 12 · kegeyli
             </div>
             <h2
-              className="font-black tracking-[0.04em] uppercase text-white mb-5"
-              style={{ fontFamily: HEADING_FONT, fontSize: 'clamp(34px,5vw,58px)', lineHeight: 0.95 }}
+              className="font-black tracking-[0.06em] uppercase text-white mb-5"
+              style={{ fontFamily: HEADING_FONT, fontSize: 'clamp(36px,5.2vw,64px)', lineHeight: 0.95, textShadow: '0 10px 40px rgba(0,0,0,0.6)' }}
             >
               Play the games we made!
             </h2>
             <p
-              className="italic text-white/80 leading-snug mb-6"
-              style={{ fontFamily: BODY_FONT, fontSize: 'clamp(15px,1.4vw,20px)' }}
+              className="italic text-white/90 leading-snug mb-7"
+              style={{ fontFamily: BODY_FONT, fontSize: 'clamp(16px,1.5vw,22px)' }}
             >
               Worlds built by students of School 12 — pick one and explore.
             </p>
@@ -194,15 +194,15 @@ const SchoolDialog = ({ onClose }: { onClose: () => void }) => {
                         it.disabled
                           ? 'border-white/15 bg-white/[0.02] text-white/35 cursor-not-allowed'
                           : active
-                            ? 'text-[#0d1117]'
-                            : 'text-white hover:bg-white/5'
+                            ? 'text-white'
+                            : 'text-white hover:bg-white/10'
                       }`}
                       style={
                         it.disabled
                           ? undefined
                           : active
-                            ? { background: '#8ec8e8', borderColor: '#8ec8e8' }
-                            : { background: 'rgba(142,200,232,0.06)', borderColor: 'rgba(142,200,232,0.4)' }
+                            ? { background: '#3b82f6', borderColor: '#3b82f6' }
+                            : { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.4)' }
                       }
                     >
                       <div>
@@ -212,7 +212,7 @@ const SchoolDialog = ({ onClose }: { onClose: () => void }) => {
                         >
                           {it.label}
                         </div>
-                        <div className="text-[11px] font-mono uppercase tracking-[0.3em] opacity-70 mt-1">
+                        <div className="text-[11px] font-mono uppercase tracking-[0.3em] opacity-75 mt-1">
                           {it.sub}
                         </div>
                       </div>
@@ -227,26 +227,27 @@ const SchoolDialog = ({ onClose }: { onClose: () => void }) => {
               })}
             </ul>
 
-            <div className="mt-6 flex items-center gap-3 text-[11px] font-mono uppercase tracking-[0.35em]" style={{ color: '#8ec8e8' }}>
-              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full border" style={{ borderColor: '#8ec8e8' }}>▲▼</span>
+            <div className="mt-7 flex items-center gap-3 text-[11px] font-mono uppercase tracking-[0.35em] text-white/70">
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full border-2 border-white/70">▲▼</span>
               <span>navigate</span>
-              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full border text-white" style={{ borderColor: '#8ec8e8', background: '#3b82f6' }}>3</span>
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full border-2 border-white text-white" style={{ background: '#3b82f6' }}>3</span>
               <span>select</span>
-              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full border text-white" style={{ borderColor: '#8ec8e8', background: '#ef4444' }}>2</span>
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full border-2 border-white text-white" style={{ background: '#ef4444' }}>2</span>
               <span>exit</span>
             </div>
           </div>
 
-          <div className="p-6 md:p-8 border-l" style={{ background: '#08101c', borderColor: 'rgba(142,200,232,0.18)' }}>
+          <div className="p-6 md:p-8 border-l border-white/15 bg-black/40">
             <img
-              src={classroomOneAsset.url}
-              alt="Students gathered in a classroom at School 12"
-              className="w-full aspect-[4/5] object-cover border rounded-sm"
-              style={{ borderColor: 'rgba(142,200,232,0.35)' }}
+              src={studentsCraftAsset.url}
+              alt="School 12 students with their hand-painted water-wheel project"
+              className="w-full aspect-[3/4] object-cover border-2 border-white/30 rounded-sm"
               loading="lazy"
             />
-            <div className="mt-4 text-[10px] font-mono uppercase tracking-[0.4em] text-center" style={{ color: '#8ec8e8' }}>
-              school 12 · classroom
+            <div
+              className="mt-4 text-[10px] font-mono uppercase tracking-[0.4em] text-center text-white/60"
+            >
+              students of school 12
             </div>
           </div>
         </div>
