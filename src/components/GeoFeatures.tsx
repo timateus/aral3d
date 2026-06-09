@@ -3,6 +3,7 @@ import { Html, Line } from '@react-three/drei';
 import { TerrainData, GeoBounds } from '@/lib/geotiff-loader';
 import * as THREE from 'three';
 import { useVisualMode, useDesignerScheme } from '@/lib/visual-mode';
+import { firstPersonBridge } from '@/lib/first-person-bridge';
 
 interface CanalHighlight {
   canal: string;
