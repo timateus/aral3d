@@ -146,35 +146,34 @@ const FaceCameraBackground = () => {
           const st = stateRef.current;
           const count = handLms.length;
 
-          let azimuthDelta = 0, polarDelta = 0, zoomDelta = 0;
+          // Per-second rates written into the bridge — the gesture controller
+          // applies them every frame so motion is smooth & truly continuous.
+          let azRate = 0, polRate = 0, zoomRate = 0;
 
           // ---- TWO HANDS: pray vs spread → continuous zoom ----
           if (count >= 2) {
             const c0 = { x: (handLms[0][0].x + handLms[0][9].x) / 2, y: (handLms[0][0].y + handLms[0][9].y) / 2 };
             const c1 = { x: (handLms[1][0].x + handLms[1][9].x) / 2, y: (handLms[1][0].y + handLms[1][9].y) / 2 };
             const spread = Math.hypot(c1.x - c0.x, c1.y - c0.y);
-            const NEAR = 0.18, FAR = 0.38;
+            const NEAR = 0.22, FAR = 0.34;
             let mode: 'in' | 'out' | null = null;
             if (spread < NEAR) mode = 'in';
             else if (spread > FAR) mode = 'out';
 
             if (mode !== st.twoHandMode) {
-              if (mode === 'in')      emitPhrase();
-              else if (mode === 'out') emitPhrase();
+              if (mode) emitPhrase();
               st.twoHandMode = mode;
             }
-            // Continuous: each frame nudges zoom while held
-            if (mode === 'in')  zoomDelta = -0.6;
-            if (mode === 'out') zoomDelta =  0.6;
+            // Continuous zoom rates (units / second)
+            if (mode === 'in')  zoomRate = -14;
+            if (mode === 'out') zoomRate =  14;
 
-            // Reset single-hand state
             st.palmDir = null;
             if (st.fingerUpActive) {
               st.fingerUpActive = false;
               window.dispatchEvent(new CustomEvent('face:fingerup', { detail: { active: false } }));
             }
 
-            // Draw: line + label
             const p0 = { x: (1 - c0.x) * W, y: c0.y * H };
             const p1 = { x: (1 - c1.x) * W, y: c1.y * H };
             ctx.strokeStyle = mode === 'in' ? '#5fffaf' : (mode === 'out' ? '#ff5577' : '#ffd166');
@@ -200,14 +199,13 @@ const FaceCameraBackground = () => {
                 if (dir) emitPhrase();
                 st.palmDir = dir;
               }
-              // Continuous orbit while held
-              const SPEED = 0.025;
-              if (dir === 'left')   azimuthDelta = +SPEED;
-              if (dir === 'right')  azimuthDelta = -SPEED;
-              if (dir === 'top')    polarDelta   = +SPEED;
-              if (dir === 'bottom') polarDelta   = -SPEED;
+              // Continuous orbit rates (radians / second)
+              const SPEED = 1.1;
+              if (dir === 'left')   azRate  = +SPEED;
+              if (dir === 'right')  azRate  = -SPEED;
+              if (dir === 'top')    polRate = +SPEED;
+              if (dir === 'bottom') polRate = -SPEED;
 
-              // Visual: large arrow / circle at hand
               const hx = (1 - cx) * W, hy = cy * H;
               ctx.strokeStyle = '#5fffaf';
               ctx.lineWidth = 3;
@@ -222,7 +220,6 @@ const FaceCameraBackground = () => {
             } else {
               st.palmDir = null;
 
-              // ☝ index up — data-layer reveal
               const fingerUp = isOneFingerUp(lm);
               if (fingerUp && !st.fingerUpActive) {
                 st.fingerUpActive = true;
@@ -257,16 +254,16 @@ const FaceCameraBackground = () => {
             }
           }
 
-          // Mode-change phrase when hand-count changes meaningfully
           if (count !== st.lastHandCount) {
             emitPhrase();
             st.lastHandCount = count;
           }
 
-          if (azimuthDelta || polarDelta || zoomDelta) {
-            const detail: GestureDetail = { azimuthDelta, polarDelta, zoomDelta, handCount: count };
-            window.dispatchEvent(new CustomEvent('face:gesture', { detail }));
-          }
+          // Publish current intent — controller polls every frame.
+          faceModeBridge.intent.azimuthRate = azRate;
+          faceModeBridge.intent.polarRate   = polRate;
+          faceModeBridge.intent.zoomRate    = zoomRate;
+
 
           // Bottom legend
           ctx.fillStyle = 'rgba(0,0,0,0.55)';
