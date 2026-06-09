@@ -299,12 +299,9 @@ const Index = () => {
     if (placeMode && !prevPlaceRef.current) {
       setLevelIntro({
         n: 5,
-        name: 'Map Builder',
+        name: "Let's play some minecraft?",
         instructions: [
-          'Walk the surface in first person — WASD or left stick.',
-          'Mouse / right stick to look. Click the screen to capture the mouse.',
-          'Hold X / A / left-mouse to continuously place the selected item.',
-          'Number keys 1–9 (or LB/RB) switch the palette. Z undoes the last placement.',
+          "Remember that everything has it's limits.",
         ],
       });
     }
@@ -450,7 +447,7 @@ const Index = () => {
   // Start at the NE corner of the Khorezm region so the walk to the school
   // (which sits at the far west edge) is a real journey.
   // SE corner of Khorezm — farthest point from the school (which sits NW).
-  const schoolStart = useMemo(() => ({ lat: 40.85, lon: 62.45 }), []);
+  const schoolStart = useMemo(() => ({ lat: 42.95, lon: 61.0 }), []);
   const schoolTarget = useMemo(() => ({ lat: 42.7574883, lon: 59.5618668 }), []);
 
   // Lifted data panel state
