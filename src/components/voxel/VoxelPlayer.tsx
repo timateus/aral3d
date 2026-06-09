@@ -182,23 +182,28 @@ const VoxelPlayer = ({ world, onWorldMutated, onMined, getSelectedBlock, consume
     return () => window.removeEventListener('voxel:interact', onInteract);
   }, [pickColumn, world]);
 
-  // Click handlers (need pointer lock)
+  // Mouse click handlers (need pointer lock). Hold > 2s to auto-repeat.
   useEffect(() => {
     const canvas = gl.domElement;
-    const onClick = (e: MouseEvent) => {
+    const onDown = (e: MouseEvent) => {
       if (!lockedRef.current) return;
-      // Throttle rapid clicks
       const now = performance.now();
       if (now - lastClickTime.current < 80) return;
       lastClickTime.current = now;
-      if (e.button === 0) doBreak();
-      else if (e.button === 2) doPlace();
+      if (e.button === 0) { doBreak(); holdRef.current.break = now; lastRepeatRef.current.break = now; }
+      else if (e.button === 2) { doPlace(); holdRef.current.place = now; lastRepeatRef.current.place = now; }
+    };
+    const onUp = (e: MouseEvent) => {
+      if (e.button === 0) holdRef.current.break = null;
+      if (e.button === 2) holdRef.current.place = null;
     };
     const onContext = (e: Event) => { e.preventDefault(); };
-    canvas.addEventListener('mousedown', onClick);
+    canvas.addEventListener('mousedown', onDown);
+    window.addEventListener('mouseup', onUp);
     canvas.addEventListener('contextmenu', onContext);
     return () => {
-      canvas.removeEventListener('mousedown', onClick);
+      canvas.removeEventListener('mousedown', onDown);
+      window.removeEventListener('mouseup', onUp);
       canvas.removeEventListener('contextmenu', onContext);
     };
   }, [gl, doBreak, doPlace]);
