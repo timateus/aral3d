@@ -1405,9 +1405,9 @@ const Index = () => {
 
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-background">
+    <div className={`relative w-screen h-screen overflow-hidden ${faceMode ? '' : 'bg-background'}`}>
       {/* 3D Viewer */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0" style={faceMode ? { zIndex: 10 } : undefined}>
         {terrain && (
           <TerrainViewer
             ref={viewerRef}
