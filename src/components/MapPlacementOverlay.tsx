@@ -235,7 +235,7 @@ function CreatureBody({ type }: { type: MapBuilderItemId }) {
   );
 }
 
-function Creature({ type }: { type: MapBuilderItemId }) {
+function Creature({ type, bornAt }: { type: MapBuilderItemId; bornAt?: number }) {
   const ref = useRef<THREE.Group>(null);
   const seed = useMemo(() => Math.random() * 1000, []);
   const radius = type === 'fish' ? 0.25 : 0.35;
@@ -250,6 +250,12 @@ function Creature({ type }: { type: MapBuilderItemId }) {
       : Math.abs(Math.sin(t * 4)) * 0.015;
     const yaw = Math.atan2(-Math.sin(t * 0.9) * 0.9 * radius, -Math.sin(t) * radius);
     ref.current.rotation.y = yaw;
+    // Grow-in over 2s for newborn fish (bornAt set by sim reproduction).
+    if (bornAt) {
+      const age = (performance.now() - bornAt) / 2000;
+      const s = Math.min(1, Math.max(0.15, age));
+      ref.current.scale.setScalar(s);
+    }
   });
   return (
     <group ref={ref}>
@@ -278,6 +284,7 @@ const MapPlacementOverlay = ({ terrain, exaggeration, items }: Props) => {
 
   return (
     <group>
+      <Level5ZoomController />
       {positioned.map(({ it, pos }) => {
         const def = getItemDef(it.type);
         const stack = it.stack ?? 0;
@@ -290,12 +297,13 @@ const MapPlacementOverlay = ({ terrain, exaggeration, items }: Props) => {
                 ? <Flower />
                 : def.kind === 'block'
                   ? <BlockCube type={it.type} />
-                  : <Creature type={it.type} />}
+                  : <Creature type={it.type} bornAt={it.bornAt} />}
           </group>
         );
       })}
     </group>
   );
 };
+
 
 export default MapPlacementOverlay;
