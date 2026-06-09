@@ -265,6 +265,7 @@ const Index = () => {
     }
     prevSpectralRef.current = spectralMode;
   }, [spectralMode, faceMode]);
+  useEffect(() => { faceModeBridge.active = faceMode; }, [faceMode]);
   const prevFaceRef = useRef(false);
   useEffect(() => {
     if (faceMode && !prevFaceRef.current) {
