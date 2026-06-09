@@ -3,6 +3,7 @@ import { Html, Line } from '@react-three/drei';
 import { TerrainData, GeoBounds } from '@/lib/geotiff-loader';
 import * as THREE from 'three';
 import { useVisualMode, useDesignerScheme } from '@/lib/visual-mode';
+import { firstPersonBridge } from '@/lib/first-person-bridge';
 
 interface CanalHighlight {
   canal: string;
@@ -547,36 +548,42 @@ const GeoFeatures = ({ terrain, exaggeration, showBorders, showRivers, show13thB
       {userLocation && (() => {
         const pos = geoToMeshPos(userLocation.lat, userLocation.lon, bounds, terrain, exaggeration, meshWidth, meshHeight);
         if (!pos) return null;
+        const isSchool = firstPersonBridge.school.active;
+        const color = isSchool ? '#f4c542' : '#ff3b30';
+        const label = isSchool ? '🏫 School 12 · Kegeyli' : '📍 You are here';
+        const shaftH = isSchool ? 0.7 : 0.3;
+        const headR = isSchool ? 0.11 : 0.06;
         return (
           <group position={pos}>
-            {/* Pin shaft */}
-            <mesh position={[0, 0.15, 0]}>
-              <cylinderGeometry args={[0.01, 0.01, 0.3, 8]} />
-              <meshStandardMaterial color="#ff3b30" />
+            <mesh position={[0, shaftH / 2, 0]}>
+              <cylinderGeometry args={[0.012, 0.012, shaftH, 8]} />
+              <meshStandardMaterial color={color} />
             </mesh>
-            {/* Pin head */}
-            <mesh position={[0, 0.35, 0]}>
-              <sphereGeometry args={[0.06, 12, 12]} />
-              <meshStandardMaterial color="#ff3b30" emissive="#ff3b30" emissiveIntensity={0.8} />
+            <mesh position={[0, shaftH + headR * 0.6, 0]}>
+              <sphereGeometry args={[headR, 16, 16]} />
+              <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.9} />
             </mesh>
-            {/* Pulsing ring at base */}
             <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
-              <ringGeometry args={[0.06, 0.1, 24]} />
-              <meshStandardMaterial color="#ff3b30" transparent opacity={0.5} />
+              <ringGeometry args={[headR, headR * 1.8, 32]} />
+              <meshStandardMaterial color={color} transparent opacity={0.55} />
             </mesh>
-            <Html position={[0, 0.5, 0]} center distanceFactor={8} style={{ pointerEvents: 'none' }}>
+            {isSchool && (
+              <pointLight color={color} intensity={1.2} distance={3} />
+            )}
+            <Html position={[0, shaftH + headR * 1.8, 0]} center distanceFactor={isSchool ? 6 : 8} style={{ pointerEvents: 'none' }}>
               <div style={{
-                color: '#ff3b30',
-                padding: '1px 6px',
-                fontSize: '10px',
+                color,
+                padding: '2px 8px',
+                fontSize: isSchool ? '12px' : '10px',
                 fontFamily: "'Inter', system-ui, sans-serif",
-                fontWeight: 600,
+                fontWeight: 700,
                 whiteSpace: 'nowrap',
-                textShadow: '0 1px 4px rgba(0,0,0,0.9)',
-                background: 'rgba(0,0,0,0.5)',
+                textShadow: '0 1px 4px rgba(0,0,0,0.95)',
+                background: 'rgba(0,0,0,0.6)',
                 borderRadius: '4px',
+                border: `1px solid ${color}`,
               }}>
-                📍 You are here
+                {label}
               </div>
             </Html>
           </group>

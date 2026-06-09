@@ -224,9 +224,12 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
       groundY += blockCount * CUBE_SIZE;
       firstPersonBridge.player = ll;
       if (thirdPerson && firstPersonBridge.school.active && firstPersonBridge.school.target) {
-        const dx = ll.lon - firstPersonBridge.school.target.lon;
-        const dy = ll.lat - firstPersonBridge.school.target.lat;
-        if (!firstPersonBridge.school.arrived && Math.hypot(dx, dy) < 0.004) {
+        const t = firstPersonBridge.school.target;
+        // Convert ~0.01° lat → ~1.1km tolerance; lon scaled by cos(lat) so a
+        // degree-distance check is closer to true meters near 42°N.
+        const dLat = ll.lat - t.lat;
+        const dLon = (ll.lon - t.lon) * Math.cos((t.lat * Math.PI) / 180);
+        if (!firstPersonBridge.school.arrived && Math.hypot(dLat, dLon) < 0.012) {
           firstPersonBridge.school.arrived = true;
           firstPersonBridge.school.autoWalk = false;
         }
@@ -239,10 +242,12 @@ const FirstPersonController = ({ active, terrain, exaggeration, onPositionChange
         avatarRef.current.position.set(pos.current.x, pos.current.y + 0.05, pos.current.z);
         avatarRef.current.rotation.y = yaw.current;
       }
-      const camOffsetX = Math.sin(yaw.current) * 1.0;
-      const camOffsetZ = Math.cos(yaw.current) * 1.0;
-      camera.position.set(pos.current.x + camOffsetX, pos.current.y + 0.55, pos.current.z + camOffsetZ);
-      camera.lookAt(pos.current.x, pos.current.y + 0.1, pos.current.z);
+      // Tight over-the-shoulder zoom so the avatar feels close to the camera.
+      const camDist = 0.42;
+      const camOffsetX = Math.sin(yaw.current) * camDist;
+      const camOffsetZ = Math.cos(yaw.current) * camDist;
+      camera.position.set(pos.current.x + camOffsetX, pos.current.y + 0.28, pos.current.z + camOffsetZ);
+      camera.lookAt(pos.current.x, pos.current.y + 0.05, pos.current.z);
     } else {
       camera.position.copy(pos.current);
       const quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(pitch.current, yaw.current, 0, 'YXZ'));

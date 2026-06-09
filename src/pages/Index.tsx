@@ -20,6 +20,7 @@ import BackgroundMusic from '@/components/BackgroundMusic';
 import LevelIntroSplash from '@/components/LevelIntroSplash';
 import MapBuilderHUD from '@/components/MapBuilderHUD';
 import SchoolTwelveOverlay from '@/components/SchoolTwelveOverlay';
+import GamepadStickFix from '@/components/GamepadStickFix';
 
 import { applyRandomSpectralPalette } from '@/lib/visual-mode';
 import CharacterSelect from '@/components/CharacterSelect';
@@ -422,7 +423,9 @@ const Index = () => {
   const [contourInterval, setContourInterval] = useState<number>(25);
   const [vectorInterval, setVectorInterval] = useState<number>(50);
   const [hideTerrainSurface, setHideTerrainSurface] = useState<boolean>(false);
-  const schoolStart = useMemo(() => ({ lat: 42.462, lon: 59.603 }), []);
+  // Start ~7km south of the school so the tiny avatar has a meaningful walk
+  // but doesn't have to traverse the whole map.
+  const schoolStart = useMemo(() => ({ lat: 42.695, lon: 59.5618668 }), []);
   const schoolTarget = useMemo(() => ({ lat: 42.7574883, lon: 59.5618668 }), []);
 
   // Lifted data panel state
@@ -1323,6 +1326,9 @@ const Index = () => {
       setSimCompleted(false);
     }
     if (level === 6) {
+      // School sits at lat 42.757, lon 59.56 — only fits inside the Khorezm
+      // region. Force-switch so the marker and walk surface are valid.
+      setTerrainRegion('khorezm');
       firstPersonBridge.school.active = true;
       firstPersonBridge.school.autoWalk = false;
       firstPersonBridge.school.arrived = false;
@@ -1334,7 +1340,7 @@ const Index = () => {
       setSchoolDialogOpen(false);
       setSchoolDistanceMeters(0);
     }
-  }, [schoolTarget, setTerrainMode, setVisualMode]);
+  }, [schoolTarget, schoolStart, setTerrainMode, setVisualMode, setTerrainRegion]);
 
 
   return (
@@ -1779,6 +1785,7 @@ const Index = () => {
 
       {/* Background music — plays during levels with a mute toggle */}
       <BackgroundMusic active={spectralMode || ministryMode || simMode || geoMode || placeMode || schoolMode} />
+      <GamepadStickFix />
 
       {levelIntro && (
         <LevelIntroSplash
