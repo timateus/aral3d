@@ -21,6 +21,7 @@ import SettingsGear from '@/components/SettingsGear';
 import LevelIntroSplash from '@/components/LevelIntroSplash';
 import MapBuilderHUD from '@/components/MapBuilderHUD';
 import SchoolTwelveOverlay from '@/components/SchoolTwelveOverlay';
+import LocationNameOverlay from '@/components/LocationNameOverlay';
 import SchoolPlaceOverlay from '@/components/SchoolPlaceOverlay';
 import FaceCameraBackground from '@/components/FaceCameraBackground';
 import FacePhraseLayer from '@/components/FacePhraseLayer';
