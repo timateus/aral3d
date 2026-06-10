@@ -18,7 +18,7 @@ const GamepadStickFix = () => {
   useEffect(() => { (globalThis as any).__padInvertRX = invX; }, [invX]);
   useEffect(() => { (globalThis as any).__padInvertRY = invY; }, [invY]);
 
-  if (!connected) return null;
+  if (!connected || touchOnly) return null;
   const btn = (active: boolean) =>
     `px-2 py-1 text-[9px] font-mono uppercase tracking-[0.18em] border transition-colors ${
       active ? 'bg-amber-300 text-black border-amber-200' : 'bg-black/70 text-white/70 border-white/15 hover:bg-black/90'
