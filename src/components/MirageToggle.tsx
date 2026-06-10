@@ -1,5 +1,5 @@
 import { useVisualMode } from '@/lib/visual-mode';
-import { Sun, Moon, SlidersHorizontal } from 'lucide-react';
+import { Sun, Moon } from 'lucide-react';
 
 /**
  * Cycles between dark → mirage → designer → dark.
