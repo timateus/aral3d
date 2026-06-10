@@ -655,6 +655,54 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
           </div>
         </div>
       )}
+
+      {/* "Next player maybe?" — big center splash when actions run out */}
+      {isOut && (
+        <div data-hud className="fixed inset-0 z-[105] flex items-center justify-center pointer-events-none animate-in fade-in duration-300">
+          <h1
+            className="font-black tracking-[0.06em] uppercase text-white text-center px-8"
+            style={{
+              fontFamily: '"Trebuchet MS", "Comic Sans MS", "Inter", system-ui, sans-serif',
+              fontSize: 'clamp(48px, 8vw, 120px)',
+              lineHeight: 0.95,
+              textShadow: '0 10px 40px rgba(0,0,0,0.85), 0 0 60px rgba(255,80,80,0.5)',
+            }}
+          >
+            next player maybe?
+          </h1>
+        </div>
+      )}
+
+      {/* Confirmation modal for level navigation */}
+      {confirmNav && (
+        <div
+          data-hud
+          className="fixed inset-0 z-[140] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in"
+          onClick={() => setConfirmNav(null)}
+        >
+          <div
+            className="px-8 py-7 border border-white/30 bg-zinc-950 text-white font-mono text-center max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-[10px] uppercase tracking-[0.4em] text-white/55 mb-3">leave this level?</div>
+            <div className="text-xl mb-6">Go to {confirmNav === 'prev' ? 'previous' : 'next'} level?</div>
+            <div className="flex items-center justify-center gap-3">
+              <button
+                onClick={() => performNav(confirmNav)}
+                className="px-5 py-2 text-[11px] uppercase tracking-[0.3em] bg-white text-black hover:brightness-110"
+              >
+                {remapPadLabel('A').text} · Yes
+              </button>
+              <button
+                onClick={() => { sfx.exit?.(); setConfirmNav(null); }}
+                className="px-5 py-2 text-[11px] uppercase tracking-[0.3em] border border-white/30 hover:bg-white/10"
+              >
+                {remapPadLabel('B').text} · Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
