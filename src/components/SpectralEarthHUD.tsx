@@ -343,11 +343,10 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
-      const permalink = (data as any)?.permalink;
-      toast.innerHTML = permalink
-        ? `Posted! <a href="${permalink}" target="_blank" style="color:${stops[0]};text-decoration:underline;">View on Instagram</a>`
-        : 'Posted to Instagram.';
-      setTimeout(() => toast.remove(), 6000);
+      const permalink = (data as any)?.permalink ?? null;
+      const username = (data as any)?.username ?? null;
+      toast.remove();
+      setIgOverlay({ username, permalink });
     } catch (e: any) {
       console.error('[share] failed', e);
       toast.textContent = `Share failed: ${e?.message ?? 'unknown'}`;
