@@ -35,7 +35,7 @@ function PadHint({ label, bg }: { label: string; bg: string }) {
   const ink = bgIsLight(chipBg) ? '#0a0a0a' : '#ffffff';
   return (
     <span
-      className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-mono font-bold leading-none rounded ml-2"
+      className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] lg:text-[14px] font-mono font-bold leading-none rounded ml-2"
       style={{ border: `1.5px solid ${ink}`, color: ink, background: chipBg, minWidth: 18 }}
     >
       {remapped.text}
@@ -328,7 +328,7 @@ const GeoGuessrHUD = ({ onExit, onPrev, onNext, getAimLatLon, getLatLonAtScreen,
       <div className="absolute top-5 left-5 z-40">
         <button
           onClick={() => { sfx.exit(); onExit(); }}
-          className="flex items-center gap-2 px-3 py-2 text-[10px] font-mono uppercase tracking-[0.3em] bg-black/70 border border-white/20 hover:bg-black/90 transition-colors"
+          className="flex items-center gap-2 px-3 py-2 text-[10px] lg:text-[14px] font-mono uppercase tracking-[0.3em] bg-black/70 border border-white/20 hover:bg-black/90 transition-colors"
           style={{ color: '#fff' }}
         >
           <ArrowLeft className="w-3 h-3" /> exit
@@ -337,8 +337,8 @@ const GeoGuessrHUD = ({ onExit, onPrev, onNext, getAimLatLon, getLatLonAtScreen,
 
       {/* Title */}
       <div className="absolute top-6 left-1/2 -translate-x-1/2 z-40 text-center pointer-events-none">
-        <div className="text-[10px] font-mono uppercase tracking-[0.4em] text-white/40">level 4</div>
-        <h1 className="text-2xl font-extralight tracking-[0.4em] uppercase text-white/90">
+        <div className="text-[10px] lg:text-[14px] font-mono uppercase tracking-[0.4em] text-white/40">level 4</div>
+        <h1 className="text-2xl lg:text-4xl font-extralight tracking-[0.4em] uppercase text-white/90">
           Satellite GeoGuessr
         </h1>
       </div>
@@ -403,14 +403,14 @@ const GeoGuessrHUD = ({ onExit, onPrev, onNext, getAimLatLon, getLatLonAtScreen,
               draggable={false}
             />
             <div
-              className="absolute bottom-1 right-1 flex items-center gap-1 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute bottom-1 right-1 flex items-center gap-1 px-1.5 py-0.5 font-mono text-[9px] lg:text-[13px] uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-opacity"
               style={{ background: bgColor, color: inkColor, border: `1px solid ${inkColor}44` }}
             >
               <ExternalLink className="w-2.5 h-2.5" /> google earth
             </div>
           </a>
           <div
-            className="mt-2 font-mono text-[10px] uppercase tracking-[0.3em] text-center flex items-center justify-center gap-3"
+            className="mt-2 font-mono text-[10px] lg:text-[14px] uppercase tracking-[0.3em] text-center flex items-center justify-center gap-3"
             style={{ color: inkColor }}
           >
             <span>location {idx + 1} / {GEO_LOCATIONS.length}</span>
@@ -431,7 +431,7 @@ const GeoGuessrHUD = ({ onExit, onPrev, onNext, getAimLatLon, getLatLonAtScreen,
       >
         <button
           onClick={() => setTerrainMode('classic')}
-          className="flex items-center gap-1 px-2 py-1 text-[10px] font-mono uppercase tracking-[0.2em]"
+          className="flex items-center gap-1 px-2 py-1 text-[10px] lg:text-[14px] font-mono uppercase tracking-[0.2em]"
           style={{
             background: terrainMode === 'classic' ? `${inkColor}1f` : 'transparent',
             color: inkColor,
@@ -443,7 +443,7 @@ const GeoGuessrHUD = ({ onExit, onPrev, onNext, getAimLatLon, getLatLonAtScreen,
         </button>
         <button
           onClick={() => setTerrainMode('satellite')}
-          className="flex items-center gap-1 px-2 py-1 text-[10px] font-mono uppercase tracking-[0.2em]"
+          className="flex items-center gap-1 px-2 py-1 text-[10px] lg:text-[14px] font-mono uppercase tracking-[0.2em]"
           style={{
             background: terrainMode === 'satellite' ? `${inkColor}1f` : 'transparent',
             color: inkColor,
@@ -460,7 +460,7 @@ const GeoGuessrHUD = ({ onExit, onPrev, onNext, getAimLatLon, getLatLonAtScreen,
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40">
           <button
             onClick={guardedPlace}
-            className="flex items-center gap-3 px-6 py-4 text-sm font-semibold font-mono uppercase tracking-[0.2em] backdrop-blur-md transition-all hover:brightness-110 hover:scale-105"
+            className="flex items-center gap-3 px-6 py-4 text-sm lg:text-lg lg:text-2xl lg:text-4xl font-semibold font-mono uppercase tracking-[0.2em] backdrop-blur-md transition-all hover:brightness-110 hover:scale-105"
             style={{
               border: `3px solid ${accent}`, background: bgColor, color: inkColor,
               boxShadow: `0 0 24px ${accent}55`,
@@ -472,7 +472,7 @@ const GeoGuessrHUD = ({ onExit, onPrev, onNext, getAimLatLon, getLatLonAtScreen,
             <PadHint label="X" bg={bgColor} />
           </button>
           <div
-            className="mt-2 font-mono text-[10px] uppercase tracking-[0.3em] text-center opacity-70"
+            className="mt-2 font-mono text-[10px] lg:text-[14px] uppercase tracking-[0.3em] text-center opacity-70"
             style={{ color: inkColor }}
           >
             tip · click anywhere on the map to drop a pin
@@ -492,16 +492,16 @@ const GeoGuessrHUD = ({ onExit, onPrev, onNext, getAimLatLon, getLatLonAtScreen,
             boxShadow: `0 0 24px ${accent}55`,
           }}
         >
-          <div className="text-[10px] uppercase tracking-[0.3em] opacity-70 mb-1">
+          <div className="text-[10px] lg:text-[14px] uppercase tracking-[0.3em] opacity-70 mb-1">
             confirm your final guess?
           </div>
-          <div className="text-[13px] mb-3" style={{ color: accent }}>
+          <div className="text-[13px] lg:text-[17px] mb-3" style={{ color: accent }}>
             {pending.lat.toFixed(3)}°, {pending.lon.toFixed(3)}°
           </div>
           <div className="flex items-center justify-center gap-2">
             <button
               onClick={cancelPending}
-              className="px-4 py-2 text-[10px] uppercase tracking-[0.3em] hover:brightness-110"
+              className="px-4 py-2 text-[10px] lg:text-[14px] uppercase tracking-[0.3em] hover:brightness-110"
               style={{ border: `1px solid ${inkColor}55`, color: inkColor, background: 'transparent' }}
               title="Pick a different spot (Esc)"
             >
@@ -509,7 +509,7 @@ const GeoGuessrHUD = ({ onExit, onPrev, onNext, getAimLatLon, getLatLonAtScreen,
             </button>
             <button
               onClick={confirmPending}
-              className="flex items-center gap-2 px-5 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] hover:brightness-110"
+              className="flex items-center gap-2 px-5 py-2 text-[11px] lg:text-[15px] font-semibold uppercase tracking-[0.3em] hover:brightness-110"
               style={{ border: `2px solid ${accent}`, color: inkColor, background: `${accent}22` }}
               title="Confirm this final guess"
             >
@@ -525,36 +525,36 @@ const GeoGuessrHUD = ({ onExit, onPrev, onNext, getAimLatLon, getLatLonAtScreen,
       {!done && guess && (
         <div
           data-hud
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 px-6 py-4 backdrop-blur-md font-mono text-[12px]"
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 px-6 py-4 backdrop-blur-md font-mono text-[12px] lg:text-[16px]"
           style={{
             background: bgColor, color: inkColor,
             border: `2px solid ${accent}`,
             minWidth: 420, textAlign: 'center',
           }}
         >
-          <div className="text-[10px] uppercase tracking-[0.3em] opacity-60 mb-1">
+          <div className="text-[10px] lg:text-[14px] uppercase tracking-[0.3em] opacity-60 mb-1">
             {guess.loc.name}
           </div>
-          <div className="text-2xl font-light" style={{ color: accent }}>
+          <div className="text-2xl lg:text-4xl font-light" style={{ color: accent }}>
             {guess.distanceKm.toFixed(1)} km away
           </div>
           <div className="mt-1">+{guess.score.toLocaleString()} pts</div>
           {guess.loc.hint && (
-            <div className="opacity-70 mt-2 text-[11px] italic">{guess.loc.hint}</div>
+            <div className="opacity-70 mt-2 text-[11px] lg:text-[15px] italic">{guess.loc.hint}</div>
           )}
           <div className="flex items-center justify-center gap-2 mt-3">
             <a
               href={`https://earth.google.com/web/@${guess.loc.lat},${guess.loc.lon},0a,2000d,35y,0h,0t,0r`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 px-3 py-2 text-[10px] uppercase tracking-[0.3em] hover:brightness-110"
+              className="inline-flex items-center gap-1 px-3 py-2 text-[10px] lg:text-[14px] uppercase tracking-[0.3em] hover:brightness-110"
               style={{ border: `1px solid ${inkColor}55`, color: inkColor, background: 'transparent' }}
             >
               <ExternalLink className="w-3 h-3" /> open in Google Earth
             </a>
             <button
               onClick={guardedNext}
-              className="px-5 py-2 text-[11px] uppercase tracking-[0.3em] hover:brightness-110"
+              className="px-5 py-2 text-[11px] lg:text-[15px] uppercase tracking-[0.3em] hover:brightness-110"
               style={{ border: `2px solid ${accent}`, color: inkColor, background: 'transparent' }}
             >
               {idx + 1 < GEO_LOCATIONS.length ? 'Next location' : 'See results'}
@@ -604,25 +604,25 @@ const GeoGuessrHUD = ({ onExit, onPrev, onNext, getAimLatLon, getLatLonAtScreen,
           }}
         >
           <div className="px-5 pt-4 pb-3" style={{ borderBottom: `1px solid ${inkColor}22` }}>
-            <div className="text-[10px] uppercase tracking-[0.4em] opacity-70 text-center">final score</div>
+            <div className="text-[10px] lg:text-[14px] uppercase tracking-[0.4em] opacity-70 text-center">final score</div>
             <div
-              className="text-5xl font-bold my-1 text-center tabular-nums"
+              className="text-5xl lg:text-7xl font-bold my-1 text-center tabular-nums"
               style={{ color: inkColor }}
             >
               {totalScore.toLocaleString()}
             </div>
-            <div className="text-[10px] opacity-60 text-center">
+            <div className="text-[10px] lg:text-[14px] opacity-60 text-center">
               / {GEO_LOCATIONS.length * 5000} · pins on the map
             </div>
             {myRank > 0 && (
-              <div className="mt-2 text-[11px] uppercase tracking-[0.3em] text-center" style={{ color: accent }}>
+              <div className="mt-2 text-[11px] lg:text-[15px] uppercase tracking-[0.3em] text-center" style={{ color: accent }}>
                 you are <span className="font-bold">#{myRank}</span> · playing as {playerName}
               </div>
             )}
           </div>
 
           <div className="px-3 pt-3 pb-2" style={{ borderBottom: `1px solid ${inkColor}22` }}>
-            <div className="text-[10px] uppercase tracking-[0.4em] opacity-70 mb-2 px-2">top 20 plays</div>
+            <div className="text-[10px] lg:text-[14px] uppercase tracking-[0.4em] opacity-70 mb-2 px-2">top 20 plays</div>
             <div style={{ width: '100%', height: Math.max(160, chartData.length * 16) }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} layout="vertical" margin={{ top: 2, right: 32, left: 8, bottom: 2 }}>
@@ -651,7 +651,7 @@ const GeoGuessrHUD = ({ onExit, onPrev, onNext, getAimLatLon, getLatLonAtScreen,
           </div>
 
           <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
-            <div className="text-[10px] uppercase tracking-[0.4em] opacity-70 mb-1 px-1">your rounds</div>
+            <div className="text-[10px] lg:text-[14px] uppercase tracking-[0.4em] opacity-70 mb-1 px-1">your rounds</div>
             {history.map((g, i) => (
               <div
                 key={i}
@@ -665,14 +665,14 @@ const GeoGuessrHUD = ({ onExit, onPrev, onNext, getAimLatLon, getLatLonAtScreen,
                   draggable={false}
                 />
                 <div className="flex-1 min-w-0">
-                  <div className="text-[11px] font-semibold uppercase tracking-wider truncate">
+                  <div className="text-[11px] lg:text-[15px] font-semibold uppercase tracking-wider truncate">
                     {g.loc.name}
                   </div>
-                  <div className="text-[10px] opacity-70">
+                  <div className="text-[10px] lg:text-[14px] opacity-70">
                     {g.distanceKm.toFixed(1)} km
                   </div>
                 </div>
-                <div className="text-sm font-bold tabular-nums">
+                <div className="text-sm lg:text-lg lg:text-2xl lg:text-4xl font-bold tabular-nums">
                   +{g.score.toLocaleString()}
                 </div>
               </div>
@@ -683,7 +683,7 @@ const GeoGuessrHUD = ({ onExit, onPrev, onNext, getAimLatLon, getLatLonAtScreen,
           <div className="flex justify-center gap-2 px-3 py-3" style={{ borderTop: `1px solid ${inkColor}22` }}>
             <button
               onClick={() => { setIdx(0); setHistory([]); setGuess(null); setTimeLeft(GUESS_SECONDS); }}
-              className="px-3 py-1.5 text-[10px] uppercase tracking-[0.3em] hover:brightness-110"
+              className="px-3 py-1.5 text-[10px] lg:text-[14px] uppercase tracking-[0.3em] hover:brightness-110"
               style={{ border: `1px solid ${inkColor}55`, color: inkColor, background: 'transparent' }}
             >
               Play again
@@ -691,7 +691,7 @@ const GeoGuessrHUD = ({ onExit, onPrev, onNext, getAimLatLon, getLatLonAtScreen,
             {onNext && (
               <button
                 onClick={() => { sfx.navNext?.(); onNext(); }}
-                className="px-3 py-1.5 text-[10px] uppercase tracking-[0.3em] hover:brightness-110"
+                className="px-3 py-1.5 text-[10px] lg:text-[14px] uppercase tracking-[0.3em] hover:brightness-110"
                 style={{ border: `1px solid ${inkColor}`, color: bgColor, background: inkColor }}
               >
                 Next level →
@@ -699,7 +699,7 @@ const GeoGuessrHUD = ({ onExit, onPrev, onNext, getAimLatLon, getLatLonAtScreen,
             )}
             <button
               onClick={() => { sfx.exit(); onExit(); }}
-              className="px-3 py-1.5 text-[10px] uppercase tracking-[0.3em] hover:brightness-110"
+              className="px-3 py-1.5 text-[10px] lg:text-[14px] uppercase tracking-[0.3em] hover:brightness-110"
               style={{ border: `1px solid ${inkColor}33`, color: inkColor, background: 'transparent' }}
             >
               Exit
@@ -713,7 +713,7 @@ const GeoGuessrHUD = ({ onExit, onPrev, onNext, getAimLatLon, getLatLonAtScreen,
       {/* Help bottom-right */}
       {!done && (
         <div
-          className="fixed bottom-6 right-6 z-40 px-3 py-2 backdrop-blur-md font-mono text-[10px] tracking-wider"
+          className="fixed bottom-6 right-6 z-40 px-3 py-2 backdrop-blur-md font-mono text-[10px] lg:text-[14px] tracking-wider"
           style={{ background: bgColor, color: inkColor, border: `1px solid ${inkColor}33` }}
         >
           <div className="flex items-center gap-1"><MapPin className="w-3 h-3" /> aim crosshair at the spot you think the photo was taken</div>
