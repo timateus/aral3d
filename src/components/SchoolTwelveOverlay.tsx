@@ -529,14 +529,14 @@ const SchoolTwelveOverlay = ({
       {confirmNav && (
         <div
           data-hud
-          className="fixed inset-0 z-[140] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in"
+          className="fixed inset-0 z-[140] flex items-center justify-center bg-slate-900/40 backdrop-blur-[3px] animate-in fade-in"
           onClick={() => setConfirmNav(null)}
         >
           <div
-            className="px-8 py-7 border border-white/30 bg-zinc-950 text-white font-mono text-center max-w-md"
+            className="px-8 py-7 border border-white/30 bg-slate-800/85 backdrop-blur-md text-white font-mono text-center max-w-md shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="text-[10px] uppercase tracking-[0.4em] text-white/55 mb-3">leave this level?</div>
+            <div className="text-[10px] uppercase tracking-[0.4em] text-white/65 mb-3">leave this level?</div>
             <div className="text-xl mb-6">Go to {confirmNav === 'prev' ? 'previous' : 'next'} level?</div>
             <div className="flex items-center justify-center gap-3">
               <button
@@ -548,13 +548,13 @@ const SchoolTwelveOverlay = ({
                 }}
                 className="px-5 py-2 text-[11px] uppercase tracking-[0.3em] bg-white text-black hover:brightness-110"
               >
-                1 · Yes
+                Y · Yes
               </button>
               <button
                 onClick={() => { sfx.exit?.(); setConfirmNav(null); }}
-                className="px-5 py-2 text-[11px] uppercase tracking-[0.3em] border border-white/30 hover:bg-white/10"
+                className="px-5 py-2 text-[11px] uppercase tracking-[0.3em] border border-white/40 hover:bg-white/10"
               >
-                2 · Cancel
+                X · Cancel
               </button>
             </div>
           </div>
