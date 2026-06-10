@@ -56,27 +56,75 @@ interface Props {
 }
 
 const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext }: Props) => {
-  // High-contrast text/accent colors derived from the active terrain palette.
+  // Vivid palette-derived colors with guaranteed AA contrast.
+  // We rank every palette swatch by saturation and pick the most colorful one
+  // that still hits >= 4.5:1 against the background for title + body, then
+  // a different swatch for the accent pill.
   const [colors, setColors] = useState(() => ({
-    text: '#ffffff',
+    bg: '#2a2042',
+    bgGradient: '#2a2042',
+    title: '#ffffff',
+    body: '#ffffff',
     accent: '#ffffff',
     accentBg: '#000000',
+    chrome: '#ffffff',
   }));
   useEffect(() => {
     const recompute = () => {
-      const text = pickContrast('--map-land', [
-        '--map-vegetation',
-        '--map-background',
-        '--map-alert',
-      ]);
-      const accentBg = pickContrast('--map-land', ['--map-alert', '--map-background']);
-      const accent = pickContrast('--map-alert', ['--map-background', '--map-vegetation']);
-      setColors({ text, accent, accentBg });
+      const root = getComputedStyle(document.documentElement);
+      const raw = (v: string) => root.getPropertyValue(v).trim();
+      const swatches = {
+        land: raw('--map-land') || '#2a2042',
+        veg: raw('--map-vegetation') || '#f5f1ff',
+        bgTok: raw('--map-background') || '#06080e',
+        alert: raw('--map-alert') || '#ff3b6b',
+      };
+      const rgbOf: Record<string, [number, number, number] | null> = {};
+      for (const [k, v] of Object.entries(swatches)) rgbOf[k] = parseColor(v);
+
+      const bgRgb = rgbOf.land!;
+      // HSL-saturation proxy: (max-min)/max — favors vivid hues.
+      const sat = (c: [number, number, number]) => {
+        const m = Math.max(...c), n = Math.min(...c);
+        return m === 0 ? 0 : (m - n) / m;
+      };
+      // Candidates ranked by saturation desc, then contrast desc.
+      const candidates = Object.entries(swatches)
+        .filter(([k]) => k !== 'land')
+        .map(([k, hex]) => {
+          const c = rgbOf[k];
+          if (!c) return null;
+          return { key: k, hex, sat: sat(c), ratio: contrast(bgRgb, c) };
+        })
+        .filter(Boolean) as { key: string; hex: string; sat: number; ratio: number }[];
+
+      const passAA = candidates.filter((c) => c.ratio >= 4.5);
+      const pool = passAA.length ? passAA : candidates;
+      pool.sort((a, b) => b.sat - a.sat || b.ratio - a.ratio);
+
+      const title = pool[0]?.hex
+        ?? pickContrast('--map-land', ['--map-vegetation', '--map-background']);
+      // Body: different swatch from title when possible.
+      const bodyPick = pool.find((c) => c.hex !== title) ?? pool[0];
+      const body = bodyPick?.hex ?? title;
+      // Accent pill: most saturated swatch overall (even if it equals title).
+      const accentBg = [...candidates].sort((a, b) => b.sat - a.sat)[0]?.hex ?? title;
+      const accentRgb = parseColor(accentBg);
+      const accent = accentRgb && contrast(accentRgb, [255, 255, 255]) >= 3.5
+        ? '#ffffff'
+        : '#000000';
+      // Chrome (level number, arrows, footnote): subtler but still readable.
+      const chrome = title;
+      // Background gradient: tint land toward the accent for a richer feel.
+      const bgGradient = `linear-gradient(135deg, ${swatches.land} 0%, color-mix(in srgb, ${swatches.land} 70%, ${accentBg}) 100%)`;
+
+      setColors({ bg: swatches.land, bgGradient, title, body, accent, accentBg, chrome });
     };
     recompute();
     const id = window.setTimeout(recompute, 50);
     return () => window.clearTimeout(id);
   }, []);
+
 
   // Gamepad X (2) / A (0) / RB (5) / RT (7) dismiss.
   // Merge button state across ALL connected pads so a ghost/inactive pad at
@@ -150,8 +198,8 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
       onClick={() => { sfx.navNext(); onBegin(); }}
       className="fixed inset-0 z-[9999] flex items-center justify-center cursor-pointer animate-in fade-in duration-300"
       style={{
-        background: 'var(--map-land, #2a2042)',
-        color: colors.text,
+        background: colors.bgGradient,
+        color: colors.body,
       }}
     >
 
@@ -160,7 +208,7 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
           onClick={(e) => { e.stopPropagation(); sfx.navPrev(); onPrev(); }}
           aria-label="previous level"
           className="absolute left-4 top-1/2 -translate-y-1/2 transition-opacity hover:opacity-100 opacity-80"
-          style={{ color: colors.text }}
+          style={{ color: colors.chrome }}
         >
           <ChevronLeft style={{ width: 120, height: 120 }} strokeWidth={3} />
           <div className="font-mono text-xs uppercase tracking-[0.35em]">L1</div>
@@ -171,7 +219,7 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
           onClick={(e) => { e.stopPropagation(); sfx.navNext(); onNext(); }}
           aria-label="next level"
           className="absolute right-4 top-1/2 -translate-y-1/2 transition-opacity hover:opacity-100 opacity-80"
-          style={{ color: colors.text }}
+          style={{ color: colors.chrome }}
         >
           <ChevronRight style={{ width: 120, height: 120 }} strokeWidth={3} />
           <div className="font-mono text-xs uppercase tracking-[0.35em]">R1</div>
@@ -180,7 +228,7 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
       <div className="text-center px-8 max-w-3xl">
         <div
           className="text-sm md:text-base font-mono uppercase tracking-[0.5em] mb-6 opacity-80"
-          style={{ color: colors.text }}
+          style={{ color: colors.chrome }}
         >
           level {number}
         </div>
@@ -190,7 +238,7 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
             fontFamily: '"Trebuchet MS", "Comic Sans MS", "Inter", system-ui, sans-serif',
             fontSize: 'clamp(56px, 9vw, 132px)',
             lineHeight: 0.95,
-            color: colors.text,
+            color: colors.title,
             textShadow: '0 10px 40px rgba(0,0,0,0.35)',
           }}
         >
@@ -204,7 +252,7 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
               style={{
                 fontFamily: '"Georgia", "Trebuchet MS", serif',
                 fontSize: 'clamp(26px, 3.6vw, 52px)',
-                color: colors.text,
+                color: colors.body,
               }}
             >
               {line}
@@ -214,9 +262,9 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
         <div
           className="inline-flex items-center gap-4 px-7 py-4 border-2 rounded-sm"
           style={{
-            borderColor: `color-mix(in srgb, ${colors.text} 50%, transparent)`,
-            background: `color-mix(in srgb, ${colors.text} 10%, transparent)`,
-            color: colors.text,
+            borderColor: `color-mix(in srgb, ${colors.title} 50%, transparent)`,
+            background: `color-mix(in srgb, ${colors.title} 10%, transparent)`,
+            color: colors.title,
           }}
         >
           <span
@@ -235,11 +283,12 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
         </div>
         <div
           className="mt-5 text-xs font-mono uppercase tracking-[0.3em] opacity-70"
-          style={{ color: colors.text }}
+          style={{ color: colors.chrome }}
         >
           (or click anywhere)
         </div>
       </div>
+
     </div>
   );
 };
