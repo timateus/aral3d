@@ -24,9 +24,6 @@ export default function BackgroundMusic({ active, muted: controlledMuted, onMute
   const [internalMuted, setInternalMuted] = useState<boolean>(() => {
     try { return localStorage.getItem('bg-music-muted') === '1'; } catch { return false; }
   });
-  const [tabVisible, setTabVisible] = useState<boolean>(() =>
-    typeof document === 'undefined' ? true : !document.hidden
-  );
 
   const isControlled = controlledMuted !== undefined;
   const muted = isControlled ? controlledMuted : internalMuted;
