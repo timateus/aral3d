@@ -1,67 +1,54 @@
-## 1. Prev / Next buttons on Kegeyli (L6) and Minebox (Voxel)
+# Mobile Pass — Multi-Step Plan
 
-**Kegeyli — `SchoolTwelveOverlay.tsx`**
-- Add `onNext?` prop alongside existing `onPrev`.
-- Render a matching "next ·  RB" button next to the existing "← prev · LB" pill in the top-left HUD strip.
-- In `Index.tsx`, wire `onNext={() => enterGameLevel(1)}` (cycles back to L1, since L6 is the last; show button always so behavior matches "buttons to go to next and previous").
+Goal: on phones/tablets, hide every gamepad-only affordance and make all 8+ levels fully playable with touch. Desktop behavior is unchanged.
 
-**Minebox (`/voxel` page)**
-- Voxel lives outside the level flow, so navigation goes back into `Index.tsx`:
-  - `prev` → navigate to `/?level=6` (Kegeyli).
-  - `next` → navigate to `/?level=1` (Choose your character).
-- Add two pill buttons next to the existing "Exit Survive" link in `Voxel.tsx`.
-- `Index.tsx` reads `?level=N` on mount and calls `enterGameLevel(N)` so the deep-link works.
+## Detection
+- Use the existing `useIsMobile()` hook (< 768 px) for React UI gating.
+- Add a tiny module helper `isTouchOnly()` (no `matchMedia('(pointer: fine)')`) for non-React files (HUDs, overlays, gamepad util) so the same gate applies everywhere.
 
-## 2. Persist game state across reloads
+## Step 1 — Global gamepad UI cleanup (this turn)
+- `GamepadStickFix` returns `null` when touch-only.
+- `PadHint` chip components across HUDs (`SpectralEarthHUD`, `GeoGuessrHUD`, `MinistryHUD`, `SandboxHUD`, `DustHUD`, `LifeHUD`, `WaterSimHUD`, `VoxelHUD`, etc.) render nothing on mobile.
+- Any "press X / press Y" hint text and gamepad-only floating buttons hidden on mobile.
+- Toaster "🎮 Controller connected" suppressed on touch-only devices.
 
-Add a tiny `src/lib/game-persistence.ts` helper that wraps `localStorage` with versioned JSON keys.
+## Step 2 — Universal touch primitives (turn 2)
+Reusable components in `src/components/mobile/`:
+- `TouchJoystick.tsx` — virtual stick writing into a shared bridge (re-use the `touchInput` pattern already in `src/lib/voxel/touch-input.ts`).
+- `TouchActionButton.tsx` — round tappable action buttons with hold/repeat support.
+- `MobileLevelChrome.tsx` — Prev / Next / Exit floating buttons replacing arrow keys + LB/RB.
+- Helper `useMobileTap()` for single-tap "confirm" flows.
 
-Persist:
-- **L2 Great Water Level** — `waterLevel` + `waterLevelManual`.
-- **L3 FLOW** — `flowSpeed`, `flowWaterAmount`, `simCompleted`.
-- **L4 GeoGuessr** — current `idx`, `history`, `timeLeft` (so a refresh resumes the run).
-- **L5 Map Builder** — full `placedItems` array (already in state; just save/restore on mount).
-- **L6 Kegeyli** — `schoolArrived`, `schoolDialogOpen` so returning users skip the walk.
-- **Voxel** — inventory + stats already use hooks; extend `useVoxelInventory` and `useVoxelStats` to read/write localStorage (they already hold the only mutable state; missions stay derived).
+## Step 3 — Per-level controls (turns 3–5)
+For each level, wire touch where keyboard/gamepad currently drives behavior:
 
-A single `clearGameState()` is exposed for future "reset" UI but not wired into the UI in this pass.
+1. **Level 1 (Explore)** — already touch-friendly via OrbitControls touch; just hide gamepad chrome.
+2. **Level 2 (Timeline / Ministry slider)** — add ▲/▼ tap buttons replacing X/B; slider already supports drag.
+3. **Level 3 (Spectral)** — add Share, Print, swipe-to-rotate, tap to advance phrase.
+4. **Level 4 (GeoGuessr)** — tap map to set pending guess (already works), add a big "Confirm guess" tap button when pending; hide "press X" hint.
+5. **Level 5 (Face mode)** — front-camera permission already works on mobile; keep palm tracking; add fallback tap-to-rotate gesture if camera denied.
+6. **Level 6/7 (Mini-worlds / Sandbox / Dust / Life / Water)** — joystick for camera/avatar movement, action buttons for primary verbs (paint, pour, place).
+7. **Voxel `/voxel`** — already has `VoxelTouchControls`; verify it's mounted and tighten layout for small screens.
+8. **Level 8 → Main menu** — already a tap.
 
-## 3. GeoGuessr leaderboard (Lovable Cloud)
+## Step 4 — Layout & viewport polish (turn 5)
+- Add `viewport-fit=cover` + safe-area insets (`env(safe-area-inset-*)`) to floating HUDs.
+- Stack top-bar HUDs vertically under 480 px width; shrink font sizes on chips.
+- Prevent rubber-band scroll while a finger is on the canvas (`touch-action: none` on the R3F canvas wrapper).
+- Reduce DPR cap on mobile (current `dpr={[2,3]}` is heavy on phones) → `dpr={isMobile ? [1, 1.5] : [2, 3]}`.
 
-**Schema (migration)**
-```sql
-CREATE TABLE public.geoguessr_scores (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  player_name text NOT NULL DEFAULT 'anon',
-  score integer NOT NULL,
-  rounds integer NOT NULL,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
-GRANT SELECT, INSERT ON public.geoguessr_scores TO anon, authenticated;
-GRANT ALL ON public.geoguessr_scores TO service_role;
-ALTER TABLE public.geoguessr_scores ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "anyone can read scores" ON public.geoguessr_scores FOR SELECT USING (true);
-CREATE POLICY "anyone can post a score"  ON public.geoguessr_scores FOR INSERT WITH CHECK (true);
-```
-(Anon read/insert is intentional — there's no auth and the game is a public toy.)
+## Step 5 — QA & polish (turn 5/6)
+- Use `preview_ui--set_preview_device_viewport` mobile + a screenshot per level to verify.
+- Ensure every level can be entered, played, and exited without a keyboard.
+- Update `mem://features/mobile-ui` memory (currently restricts mobile to "timeline and header only" — this plan supersedes it).
 
-**Client**
-- On finishing the run (`done` becomes true), POST the totalScore + rounds to `geoguessr_scores`. Player name is auto-generated like `player-7a3b` and stored in `localStorage` so the same browser keeps its name.
-- Fetch top 20 scores with Tanstack Query and render a horizontal bar chart (Recharts) in the existing right-side "final score" panel: each bar = a run, the current player's bar highlighted in `accent`, others in `inkColor` with 30% opacity. Rank label on the left, score on the right.
-- Show the player's rank ("you are #4 of 87") above the chart.
-
-## Files touched
-
-- new: `src/lib/game-persistence.ts`
-- new: `supabase/migrations/<ts>_geoguessr_scores.sql`
-- edited: `src/pages/Index.tsx` — query-param level deep-link, wire `onNext` on L6, persistence hooks for L2/L3/L5/L6.
-- edited: `src/pages/Voxel.tsx` — prev/next pill buttons.
-- edited: `src/components/SchoolTwelveOverlay.tsx` — `onNext` prop + next button.
-- edited: `src/components/GeoGuessrHUD.tsx` — score submit + leaderboard chart.
-- edited: `src/hooks/useVoxelInventory.ts`, `src/hooks/useVoxelStats.ts` — persistence.
+## Files expected to change (high-level)
+- New: `src/lib/touch-device.ts`, `src/components/mobile/TouchJoystick.tsx`, `TouchActionButton.tsx`, `MobileLevelChrome.tsx`.
+- Edited: `GamepadStickFix.tsx`, all `*HUD.tsx`, `TerrainViewer.tsx`, `Index.tsx`, `MirageToggle.tsx`, `useGamepad.ts` (suppress toast on touch), `index.css` (safe-area helpers).
+- Memory update: `mem://features/mobile-ui`.
 
 ## Out of scope
+- Native packaging (Capacitor). Web only.
+- Re-designing the visual aesthetic for mobile — only layout/affordance changes.
 
-- No auth — leaderboard is anonymous on purpose.
-- No "clear save" UI; the helper exists but isn't surfaced.
-- Map Builder already had prev/next buttons, so we don't touch its UI.
+I'll execute Step 1 immediately after you approve, then move through steps 2–5 in follow-up turns so each stage is reviewable.
