@@ -78,7 +78,12 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
   }, [pickerOpen]);
 
   const requestNav = (dir: 'prev' | 'next') => {
+    sfx.click?.();
+    setConfirmNav(dir);
+  };
+  const performNav = (dir: 'prev' | 'next') => {
     sfx[dir === 'prev' ? 'navPrev' : 'navNext']?.();
+    setConfirmNav(null);
     if (dir === 'prev') onPrev();
     else onNext?.();
   };
