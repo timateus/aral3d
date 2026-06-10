@@ -379,12 +379,13 @@ const SchoolTwelveOverlay = ({
       if (pad) {
         const cn = confirmRef.current;
         if (cn) {
-          if (consumeGamepadButton('st-conf-a', !!pad.buttons[0]?.pressed, { cooldownMs: 400, ignoreBlock: true })) {
+          // Y (button 3) confirms · X (button 2) cancels
+          if (consumeGamepadButton('st-conf-y', !!pad.buttons[3]?.pressed, { cooldownMs: 400, ignoreBlock: true })) {
             sfx[cn === 'prev' ? 'navPrev' : 'navNext']?.();
             setConfirmNav(null);
             if (cn === 'prev') onPrev?.(); else onNext?.();
           }
-          if (consumeGamepadButton('st-conf-b', !!pad.buttons[1]?.pressed, { cooldownMs: 400, ignoreBlock: true })) {
+          if (consumeGamepadButton('st-conf-x', !!pad.buttons[2]?.pressed, { cooldownMs: 400, ignoreBlock: true })) {
             sfx.exit?.();
             setConfirmNav(null);
           }
