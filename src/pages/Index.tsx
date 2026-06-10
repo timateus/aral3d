@@ -130,6 +130,9 @@ const Index = () => {
   const [showVocabulary, setShowVocabulary] = useState(false);
   const [showDwellings, setShowDwellings] = useState(false);
   const [showPlaces, setShowPlaces] = useState(true);
+  // True whenever any modal/dialog/menu is on top of the map — used to hide
+  // city labels and place markers that would otherwise bleed through.
+  const overlayActive = useOverlayActive();
   const [showGroundwater, setShowGroundwater] = useState(false);
   const [showPrecipitation, setShowPrecipitation] = useState(false);
   const [showSalinity, setShowSalinity] = useState(false);
