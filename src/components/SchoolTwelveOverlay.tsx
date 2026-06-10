@@ -36,6 +36,7 @@ interface MenuItem {
 const MENU_ITEMS: MenuItem[] = [
   { label: 'Qilqali City', sub: 'qilqalicity.lovable.app', href: 'https://qilqalicity.lovable.app' },
   { label: 'Roar & Guard', sub: 'roar-and-guard.lovable.app', href: 'https://roar-and-guard.lovable.app' },
+  { label: 'Star Game', sub: 'buildwithstar.com', href: 'https://buildwithstar.com/games/9e3a5563-082f-4566-a994-1c64a89e91bb' },
   { label: 'Watch the school film', sub: 'coming soon', disabled: true },
   { label: 'Exit', sub: 'back to the map', action: 'close' },
 ];
