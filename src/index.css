@@ -299,3 +299,30 @@ html.mirage [data-floating="number"] {
 /* SVG strokes — designer-tunable */
 html.mirage svg * { stroke-width: var(--m-svg-stroke) !important; }
 html.mirage svg [data-emphasis="true"] { stroke-width: calc(var(--m-svg-stroke) * 2) !important; }
+
+/* ---------- Mobile / touch helpers ---------- */
+/* Respect notch / home-indicator safe areas on phones. */
+@supports (padding: max(0px)) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    box-sizing: border-box;
+  }
+}
+
+/* Stop iOS rubber-band scrolling so canvas gestures feel native. */
+html, body, #root {
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* On touch-only devices, disable text selection on HUD chrome so long-press
+   doesn't trigger the system selection menu over our controls. */
+@media (hover: none) and (pointer: coarse) {
+  [data-hud], button { -webkit-user-select: none; user-select: none; }
+  /* Prevent iOS Safari from zooming on double-tap. */
+  * { touch-action: manipulation; }
+  canvas { touch-action: none; }
+}

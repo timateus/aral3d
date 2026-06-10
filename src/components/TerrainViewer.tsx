@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle, Suspense, useMemo } from 'react';
 import { faceModeBridge } from '@/lib/face-mode-bridge';
+import { useIsTouchOnly } from '@/lib/touch-device';
 import AgmarProposalMarkers from './AgmarProposalMarkers';
 import GroundwaterLayer from './GroundwaterLayer';
 import SalinityLayer from './SalinityLayer';
@@ -575,6 +576,7 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
   const [popData, setPopData] = useState<PopData | null>(null);
   const [lcData, setLcData] = useState<LandcoverRasterData | null>(null);
   const { mode: terrainMode, token: terrainToken } = useTerrainMode();
+  const touchOnly = useIsTouchOnly();
 
   const handleCanvasRecorderReady = useCallback((controls: { start: () => void; stop: () => void }) => {
     canvasRecorderControls.current = controls;
@@ -593,7 +595,8 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
     <Canvas
       camera={{ position: [0, 18, 8], fov: 50, near: 0.1, far: 1000 }}
       className="w-full h-full"
-      dpr={[2, 3]}
+      style={{ touchAction: 'none' }}
+      dpr={touchOnly ? [1, 1.75] : [2, 3]}
       gl={{ antialias: true, toneMapping: 3, preserveDrawingBuffer: true, alpha: true, powerPreference: 'high-performance' }}
     >
       <SceneBackground />
