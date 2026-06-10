@@ -56,6 +56,28 @@ interface Props {
 }
 
 const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext }: Props) => {
+  // High-contrast text/accent colors derived from the active terrain palette.
+  const [colors, setColors] = useState(() => ({
+    text: '#ffffff',
+    accent: '#ffffff',
+    accentBg: '#000000',
+  }));
+  useEffect(() => {
+    const recompute = () => {
+      const text = pickContrast('--map-land', [
+        '--map-vegetation',
+        '--map-background',
+        '--map-alert',
+      ]);
+      const accentBg = pickContrast('--map-land', ['--map-alert', '--map-background']);
+      const accent = pickContrast('--map-alert', ['--map-background', '--map-vegetation']);
+      setColors({ text, accent, accentBg });
+    };
+    recompute();
+    const id = window.setTimeout(recompute, 50);
+    return () => window.clearTimeout(id);
+  }, []);
+
   // Gamepad X (2) / A (0) / RB (5) / RT (7) dismiss.
   // Merge button state across ALL connected pads so a ghost/inactive pad at
   // index 0 doesn't mask presses coming from a real controller at a higher index.
