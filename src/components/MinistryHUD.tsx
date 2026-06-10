@@ -12,6 +12,7 @@ import {
 import { useDesignerScheme, applyDesignerScheme, getDesignerScheme } from '@/lib/visual-mode';
 import { sfx } from '@/lib/ui-sfx';
 import { consumeGamepadButton } from '@/lib/gamepad-dedupe';
+import { padButtonPressed } from '@/lib/gamepad-stuck';
 
 
 function bgIsLight(hex: string): boolean {
@@ -245,12 +246,15 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
     const tick = (now: number) => {
       const dt = Math.min(0.05, (now - lastT) / 1000);
       lastT = now;
-      const pads = navigator.getGamepads?.() ?? [];
-      let pad: Gamepad | null = null;
-      for (const p of pads) { if (p) { pad = p; break; } }
-      if (pad) {
-        const xBtn = !!pad.buttons[2]?.pressed; // X -> lower
-        const bBtn = !!pad.buttons[1]?.pressed; // O/B -> raise
+      const padsRaw = navigator.getGamepads?.() ?? [];
+      const pads: Gamepad[] = [];
+      for (const p of padsRaw) if (p) pads.push(p);
+      if (pads.length) {
+        // Merge buttons across ALL connected pads with stuck-button filter so
+        // a dead/sticky button on one controller can't block the other one.
+        const any = (idx: number) => pads.some((p) => padButtonPressed(p, idx));
+        const xBtn = any(2); // X -> lower
+        const bBtn = any(1); // O/B -> raise
         const axis = (bBtn ? 1 : 0) - (xBtn ? 1 : 0);
         if (axis !== 0) {
           const next = Math.max(MIN, Math.min(MAX, waterLevelRef.current + axis * 30 * dt));
@@ -262,8 +266,8 @@ const MinistryHUD = ({ waterLevel, onWaterLevelChange, onExit, onPrev, onNext, a
             if (sfxAccum > 0.08) { sfx.slider(); sfxAccum = 0; }
           }
         }
-        const lb = !!pad.buttons[4]?.pressed;
-        const rb = !!pad.buttons[5]?.pressed;
+        const lb = any(4);
+        const rb = any(5);
         if (consumeGamepadButton('x', xBtn) && onNext && waterLevelRef.current < 12) { sfx.navNext(); onNext(); }
         if (consumeGamepadButton('rb', rb) && onNext && waterLevelRef.current < 12) { sfx.navNext(); onNext(); }
         if (consumeGamepadButton('lb', lb) && onPrev) { sfx.navPrev(); onPrev(); }
