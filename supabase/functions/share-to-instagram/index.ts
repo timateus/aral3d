@@ -91,7 +91,18 @@ Deno.serve(async (req) => {
       permalink = permJson?.permalink ?? null;
     } catch { /* ignore */ }
 
-    return json({ ok: true, mediaId: publishData.id, permalink });
+    // Fetch username (best-effort)
+    let username: string | null = null;
+    try {
+      const meUrl = new URL(`${IG_API}/${igUserId}`);
+      meUrl.searchParams.set('fields', 'username');
+      meUrl.searchParams.set('access_token', token);
+      const meRes = await fetch(meUrl.toString());
+      const meJson = await meRes.json();
+      username = meJson?.username ?? null;
+    } catch { /* ignore */ }
+
+    return json({ ok: true, mediaId: publishData.id, permalink, username });
   } catch (e) {
     console.error('[ig] error', e);
     return json({ error: String(e?.message ?? e) }, 500);
