@@ -23,7 +23,9 @@ function hexLum(hex: string): number {
 }
 
 import { remapPadLabel } from '@/lib/pad-labels';
+import { isTouchOnly } from '@/lib/touch-device';
 function PadHint({ label, bg }: { label: string; bg: string }) {
+  if (isTouchOnly()) return null;
   const remapped = remapPadLabel(label);
   const chipBg = remapped.bg ?? bg;
   const ink = bgIsLight(chipBg) ? '#0a0a0a' : '#ffffff';
