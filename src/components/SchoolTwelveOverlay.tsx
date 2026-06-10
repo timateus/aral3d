@@ -361,6 +361,47 @@ const SchoolTwelveOverlay = ({
   onDialogOpen,
 }: Props) => {
   const [lightbox, setLightbox] = useState<null | { src: string; alt: string }>(null);
+  const [confirmNav, setConfirmNav] = useState<null | 'prev' | 'next'>(null);
+  const confirmRef = useRef<null | 'prev' | 'next'>(null);
+  useEffect(() => { confirmRef.current = confirmNav; }, [confirmNav]);
+  const dialogRef = useRef(dialogOpen);
+  useEffect(() => { dialogRef.current = dialogOpen; }, [dialogOpen]);
+
+  // Gamepad LB/RB → request prev/next level (with confirmation).
+  // Inside the confirmation: A = yes, B = cancel.
+  useEffect(() => {
+    let raf = 0;
+    const tick = () => {
+      const pads = navigator.getGamepads?.() ?? [];
+      let pad: Gamepad | null = null;
+      for (const p of pads) { if (p) { pad = p; break; } }
+      if (pad) {
+        const cn = confirmRef.current;
+        if (cn) {
+          if (consumeGamepadButton('st-conf-a', !!pad.buttons[0]?.pressed, { cooldownMs: 400, ignoreBlock: true })) {
+            sfx[cn === 'prev' ? 'navPrev' : 'navNext']?.();
+            setConfirmNav(null);
+            if (cn === 'prev') onPrev?.(); else onNext?.();
+          }
+          if (consumeGamepadButton('st-conf-b', !!pad.buttons[1]?.pressed, { cooldownMs: 400, ignoreBlock: true })) {
+            sfx.exit?.();
+            setConfirmNav(null);
+          }
+        } else if (!dialogRef.current) {
+          if (consumeGamepadButton('st-lb', !!pad.buttons[4]?.pressed, { cooldownMs: 400, ignoreBlock: true }) && onPrev) {
+            sfx.click?.(); setConfirmNav('prev');
+          }
+          if (consumeGamepadButton('st-rb', !!pad.buttons[5]?.pressed, { cooldownMs: 400, ignoreBlock: true }) && onNext) {
+            sfx.click?.(); setConfirmNav('next');
+          }
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [onPrev, onNext]);
+
   return (
     <>
       <div className="absolute top-5 left-5 z-[80] flex gap-2" data-hud>
