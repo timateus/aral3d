@@ -177,7 +177,7 @@ const SchoolDialog = ({ onClose }: { onClose: () => void }) => {
       onClick={onClose}
     >
       <div
-        className="w-[min(900px,94vw)] rounded-3xl overflow-hidden text-white relative"
+        className="w-[min(720px,92vw)] max-h-[92vh] overflow-y-auto rounded-3xl text-white relative"
         style={{
           background: 'rgba(255,255,255,0.10)',
           backdropFilter: 'blur(18px)',
