@@ -63,6 +63,8 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
     onItemsChange(items);
   }, [items, onItemsChange]);
   useEffect(() => { actionsRef.current = actionsLeft; saveState(ACTIONS_KEY, actionsLeft); }, [actionsLeft]);
+  const confirmNavRef = useRef<null | 'prev' | 'next'>(null);
+  useEffect(() => { confirmNavRef.current = confirmNav; }, [confirmNav]);
 
   // 50-action budget resets when leaving Level 5 (component unmount). Placed
   // items themselves persist (loaded from 'placed-items' on mount above).
