@@ -1,5 +1,48 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+
+// Parse any CSS color string into [r,g,b] using a throwaway DOM node.
+const parseColor = (css: string): [number, number, number] | null => {
+  if (typeof window === 'undefined') return null;
+  const probe = document.createElement('div');
+  probe.style.color = css;
+  document.body.appendChild(probe);
+  const computed = getComputedStyle(probe).color;
+  document.body.removeChild(probe);
+  const m = computed.match(/\d+(\.\d+)?/g);
+  if (!m || m.length < 3) return null;
+  return [parseFloat(m[0]), parseFloat(m[1]), parseFloat(m[2])];
+};
+const relLum = ([r, g, b]: [number, number, number]) => {
+  const f = (c: number) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  };
+  return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+};
+const contrast = (a: [number, number, number], b: [number, number, number]) => {
+  const la = relLum(a), lb = relLum(b);
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+};
+// Pick the candidate palette color with the best contrast vs bg, falling back
+// to pure white/black if no palette swatch reaches AA (4.5:1).
+const pickContrast = (bgVar: string, candidateVars: string[]): string => {
+  const bgRaw = getComputedStyle(document.documentElement).getPropertyValue(bgVar).trim() || '#2a2042';
+  const bg = parseColor(bgRaw);
+  if (!bg) return '#ffffff';
+  let best: { color: string; ratio: number } = { color: '#ffffff', ratio: 0 };
+  for (const v of [...candidateVars, '#ffffff', '#000000']) {
+    const raw = v.startsWith('--')
+      ? getComputedStyle(document.documentElement).getPropertyValue(v).trim()
+      : v;
+    if (!raw) continue;
+    const rgb = parseColor(raw);
+    if (!rgb) continue;
+    const ratio = contrast(bg, rgb);
+    if (ratio > best.ratio) best = { color: raw, ratio };
+  }
+  return best.color;
+};
 import { sfx } from '@/lib/ui-sfx';
 import { consumeGamepadButton, setGamepadInputBlocked } from '@/lib/gamepad-dedupe';
 
