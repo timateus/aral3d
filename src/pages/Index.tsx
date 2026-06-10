@@ -2287,7 +2287,7 @@ const Index = () => {
         </div>
       )}
 
-      {visualMode === 'designer' && isMapExploration && !isMobile && (
+      {visualMode === 'designer' && isMapExploration && !isMobile && false && (
         <DesignerPanel onClose={() => setVisualMode('mirage')} />
       )}
 
