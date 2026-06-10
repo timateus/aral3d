@@ -85,7 +85,10 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
       onClick={() => { sfx.navNext(); onBegin(); }}
       className="fixed inset-0 z-[9999] flex items-center justify-center cursor-pointer animate-in fade-in duration-300"
       style={{
-        background: '#06080e',
+        // Pull the dominant terrain "land" tone from the active palette
+        // (set on :root by applyDesignerScheme) — falls back to deep navy.
+        background: 'var(--map-land, #2a2042)',
+        color: 'var(--map-background, #06080e)',
       }}
     >
 
@@ -93,7 +96,8 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
         <button
           onClick={(e) => { e.stopPropagation(); sfx.navPrev(); onPrev(); }}
           aria-label="previous level"
-          className="absolute left-4 top-1/2 -translate-y-1/2 text-white/75 hover:text-white transition-colors"
+          className="absolute left-4 top-1/2 -translate-y-1/2 transition-opacity hover:opacity-100 opacity-80"
+          style={{ color: 'var(--map-background, #06080e)' }}
         >
           <ChevronLeft style={{ width: 120, height: 120 }} strokeWidth={3} />
           <div className="font-mono text-xs uppercase tracking-[0.35em]">L1</div>
@@ -103,23 +107,28 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
         <button
           onClick={(e) => { e.stopPropagation(); sfx.navNext(); onNext(); }}
           aria-label="next level"
-          className="absolute right-4 top-1/2 -translate-y-1/2 text-white/75 hover:text-white transition-colors"
+          className="absolute right-4 top-1/2 -translate-y-1/2 transition-opacity hover:opacity-100 opacity-80"
+          style={{ color: 'var(--map-background, #06080e)' }}
         >
           <ChevronRight style={{ width: 120, height: 120 }} strokeWidth={3} />
           <div className="font-mono text-xs uppercase tracking-[0.35em]">R1</div>
         </button>
       )}
       <div className="text-center px-8 max-w-3xl">
-        <div className="text-sm md:text-base font-mono uppercase tracking-[0.5em] text-white/55 mb-6">
+        <div
+          className="text-sm md:text-base font-mono uppercase tracking-[0.5em] mb-6 opacity-70"
+          style={{ color: 'var(--map-background, #06080e)' }}
+        >
           level {number}
         </div>
         <h1
-          className="font-black tracking-[0.06em] uppercase text-white mb-10"
+          className="font-black tracking-[0.06em] uppercase mb-10"
           style={{
             fontFamily: '"Trebuchet MS", "Comic Sans MS", "Inter", system-ui, sans-serif',
             fontSize: 'clamp(56px, 9vw, 132px)',
             lineHeight: 0.95,
-            textShadow: '0 10px 40px rgba(0,0,0,0.6)',
+            color: 'var(--map-background, #06080e)',
+            textShadow: '0 10px 40px rgba(0,0,0,0.25)',
           }}
         >
           {name}
@@ -128,28 +137,43 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
           {instructions.map((line, i) => (
             <p
               key={i}
-              className="italic text-white/90 leading-tight"
+              className="italic leading-tight opacity-90"
               style={{
                 fontFamily: '"Georgia", "Trebuchet MS", serif',
                 fontSize: 'clamp(26px, 3.6vw, 52px)',
+                color: 'var(--map-vegetation, #f5f1ff)',
               }}
             >
               {line}
             </p>
           ))}
         </div>
-        <div className="inline-flex items-center gap-4 px-7 py-4 border-2 border-white/50 bg-white/5 rounded-sm">
+        <div
+          className="inline-flex items-center gap-4 px-7 py-4 border-2 rounded-sm"
+          style={{
+            borderColor: 'color-mix(in srgb, var(--map-background, #06080e) 50%, transparent)',
+            background: 'color-mix(in srgb, var(--map-background, #06080e) 10%, transparent)',
+            color: 'var(--map-background, #06080e)',
+          }}
+        >
           <span
-            className="inline-flex items-center justify-center w-10 h-10 text-sm font-mono font-bold rounded-full border-2 border-white text-white"
-            style={{ background: '#3b82f6' }}
+            className="inline-flex items-center justify-center w-10 h-10 text-sm font-mono font-bold rounded-full border-2"
+            style={{
+              borderColor: 'var(--map-background, #06080e)',
+              background: 'var(--map-alert, #3b82f6)',
+              color: 'var(--map-background, #06080e)',
+            }}
           >
             3
           </span>
-          <span className="text-sm font-mono uppercase tracking-[0.4em] text-white/90">
+          <span className="text-sm font-mono uppercase tracking-[0.4em] opacity-90">
             or RB · press to begin
           </span>
         </div>
-        <div className="mt-5 text-xs font-mono uppercase tracking-[0.3em] text-white/45">
+        <div
+          className="mt-5 text-xs font-mono uppercase tracking-[0.3em] opacity-55"
+          style={{ color: 'var(--map-background, #06080e)' }}
+        >
           (or click anywhere)
         </div>
       </div>
