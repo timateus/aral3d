@@ -186,6 +186,14 @@ const SchoolDialog = ({ onClose }: { onClose: () => void }) => {
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        <button
+          type="button"
+          onClick={() => { sfx.exit(); onClose(); }}
+          aria-label="Close student menu"
+          className="absolute top-3 right-3 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-black/70 border-2 border-white/60 text-white hover:bg-black"
+        >
+          <X className="h-5 w-5" />
+        </button>
         <div className="grid md:grid-cols-[1.05fr_0.95fr]">
           <div className="p-8 md:p-10">
             <div
