@@ -242,7 +242,7 @@ const SchoolDialog = ({ onClose }: { onClose: () => void }) => {
                       disabled={it.disabled}
                       onMouseEnter={() => !it.disabled && setSel(i)}
                       onClick={() => activate(i)}
-                      className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl text-left transition-all duration-150 ${
+                      className={`w-full flex items-center justify-between px-4 py-2.5 rounded-2xl text-left transition-all duration-150 ${
                         it.disabled ? 'cursor-not-allowed' : 'hover:-translate-y-0.5'
                       }`}
                       style={
@@ -256,17 +256,17 @@ const SchoolDialog = ({ onClose }: { onClose: () => void }) => {
                           : active
                             ? {
                                 background: c.bg,
-                                border: `3px solid ${c.border}`,
+                                border: `2px solid ${c.border}`,
                                 color: c.ink,
                                 transform: 'scale(1.02) rotate(0deg)',
-                                boxShadow: `0 10px 30px ${c.bg}66, 0 0 0 4px rgba(255,255,255,0.25)`,
+                                boxShadow: `0 6px 20px ${c.bg}66, 0 0 0 3px rgba(255,255,255,0.25)`,
                               }
                             : {
                                 background: 'rgba(255,255,255,0.10)',
-                                border: `3px solid ${c.border}`,
+                                border: `2px solid ${c.border}`,
                                 color: '#fff7ff',
                                 transform: `rotate(${tilt}deg)`,
-                                boxShadow: `0 6px 18px ${c.bg}33`,
+                                boxShadow: `0 4px 12px ${c.bg}33`,
                               }
                       }
                     >
@@ -274,7 +274,7 @@ const SchoolDialog = ({ onClose }: { onClose: () => void }) => {
                         <div
                           style={{
                             fontFamily: MENU_FONT,
-                            fontSize: 'clamp(20px,2vw,28px)',
+                            fontSize: 'clamp(14px,1.4vw,18px)',
                             fontWeight: 700,
                             letterSpacing: '0.01em',
                           }}
@@ -282,16 +282,16 @@ const SchoolDialog = ({ onClose }: { onClose: () => void }) => {
                           {it.label}
                         </div>
                         <div
-                          className="text-[12px] mt-1 opacity-80"
+                          className="text-[10px] mt-0.5 opacity-80"
                           style={{ fontFamily: MENU_FONT }}
                         >
                           {it.sub}
                         </div>
                       </div>
                       {it.action === 'close' ? (
-                        <X className="w-6 h-6" />
+                        <X className="w-4 h-4" />
                       ) : (
-                        <ExternalLink className="w-6 h-6" />
+                        <ExternalLink className="w-4 h-4" />
                       )}
                     </button>
                   </li>
