@@ -25,7 +25,8 @@ function isStuck(padIdx: number, btnIdx: number, pressed: boolean, now: number):
 
 export function padButtonPressed(pad: Gamepad, btnIdx: number, now = performance.now()): boolean {
   const raw = !!pad.buttons[btnIdx]?.pressed;
-  return raw && !isStuck(pad.index, btnIdx, true, now) ? true : (isStuck(pad.index, btnIdx, raw, now) ? false : raw);
+  if (!raw) { isStuck(pad.index, btnIdx, false, now); return false; }
+  return !isStuck(pad.index, btnIdx, true, now);
 }
 
 export function padButtonValue(pad: Gamepad, btnIdx: number, now = performance.now()): number {
