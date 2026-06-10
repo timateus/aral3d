@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ExternalLink, Navigation2, X } from 'lucide-react';
 import { sfx } from '@/lib/ui-sfx';
 import { consumeGamepadButton } from '@/lib/gamepad-dedupe';
@@ -186,6 +186,14 @@ const SchoolDialog = ({ onClose }: { onClose: () => void }) => {
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        <button
+          type="button"
+          onClick={() => { sfx.exit(); onClose(); }}
+          aria-label="Close student menu"
+          className="absolute top-3 right-3 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-black/70 border-2 border-white/60 text-white hover:bg-black"
+        >
+          <X className="h-5 w-5" />
+        </button>
         <div className="grid md:grid-cols-[1.05fr_0.95fr]">
           <div className="p-8 md:p-10">
             <div
@@ -353,6 +361,47 @@ const SchoolTwelveOverlay = ({
   onDialogOpen,
 }: Props) => {
   const [lightbox, setLightbox] = useState<null | { src: string; alt: string }>(null);
+  const [confirmNav, setConfirmNav] = useState<null | 'prev' | 'next'>(null);
+  const confirmRef = useRef<null | 'prev' | 'next'>(null);
+  useEffect(() => { confirmRef.current = confirmNav; }, [confirmNav]);
+  const dialogRef = useRef(dialogOpen);
+  useEffect(() => { dialogRef.current = dialogOpen; }, [dialogOpen]);
+
+  // Gamepad LB/RB → request prev/next level (with confirmation).
+  // Inside the confirmation: A = yes, B = cancel.
+  useEffect(() => {
+    let raf = 0;
+    const tick = () => {
+      const pads = navigator.getGamepads?.() ?? [];
+      let pad: Gamepad | null = null;
+      for (const p of pads) { if (p) { pad = p; break; } }
+      if (pad) {
+        const cn = confirmRef.current;
+        if (cn) {
+          if (consumeGamepadButton('st-conf-a', !!pad.buttons[0]?.pressed, { cooldownMs: 400, ignoreBlock: true })) {
+            sfx[cn === 'prev' ? 'navPrev' : 'navNext']?.();
+            setConfirmNav(null);
+            if (cn === 'prev') onPrev?.(); else onNext?.();
+          }
+          if (consumeGamepadButton('st-conf-b', !!pad.buttons[1]?.pressed, { cooldownMs: 400, ignoreBlock: true })) {
+            sfx.exit?.();
+            setConfirmNav(null);
+          }
+        } else if (!dialogRef.current) {
+          if (consumeGamepadButton('st-lb', !!pad.buttons[4]?.pressed, { cooldownMs: 400, ignoreBlock: true }) && onPrev) {
+            sfx.click?.(); setConfirmNav('prev');
+          }
+          if (consumeGamepadButton('st-rb', !!pad.buttons[5]?.pressed, { cooldownMs: 400, ignoreBlock: true }) && onNext) {
+            sfx.click?.(); setConfirmNav('next');
+          }
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [onPrev, onNext]);
+
   return (
     <>
       <div className="absolute top-5 left-5 z-[80] flex gap-2" data-hud>
@@ -472,6 +521,41 @@ const SchoolTwelveOverlay = ({
             className="max-h-[90vh] max-w-[92vw] object-contain border border-white/15 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           />
+        </div>
+      )}
+
+      {confirmNav && (
+        <div
+          data-hud
+          className="fixed inset-0 z-[140] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in"
+          onClick={() => setConfirmNav(null)}
+        >
+          <div
+            className="px-8 py-7 border border-white/30 bg-zinc-950 text-white font-mono text-center max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-[10px] uppercase tracking-[0.4em] text-white/55 mb-3">leave this level?</div>
+            <div className="text-xl mb-6">Go to {confirmNav === 'prev' ? 'previous' : 'next'} level?</div>
+            <div className="flex items-center justify-center gap-3">
+              <button
+                onClick={() => {
+                  const dir = confirmNav;
+                  sfx[dir === 'prev' ? 'navPrev' : 'navNext']?.();
+                  setConfirmNav(null);
+                  if (dir === 'prev') onPrev?.(); else onNext?.();
+                }}
+                className="px-5 py-2 text-[11px] uppercase tracking-[0.3em] bg-white text-black hover:brightness-110"
+              >
+                1 · Yes
+              </button>
+              <button
+                onClick={() => { sfx.exit?.(); setConfirmNav(null); }}
+                className="px-5 py-2 text-[11px] uppercase tracking-[0.3em] border border-white/30 hover:bg-white/10"
+              >
+                2 · Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </>

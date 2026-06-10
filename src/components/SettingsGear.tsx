@@ -10,13 +10,16 @@ export default function SettingsGear({ active }: { active: boolean }) {
   });
   const { connected } = useGamepad();
 
-  const [swap, setSwap] = useState(false);
-  const [invX, setInvX] = useState(false);
-  const [invY, setInvY] = useState(false);
+  const readPref = (k: string, dflt: boolean) => {
+    try { const v = localStorage.getItem(k); return v == null ? dflt : v === '1'; } catch { return dflt; }
+  };
+  const [swap, setSwap] = useState<boolean>(() => readPref('pad-swap-xy', true));
+  const [invX, setInvX] = useState<boolean>(() => readPref('pad-inv-x', true));
+  const [invY, setInvY] = useState<boolean>(() => readPref('pad-inv-y', false));
 
-  useEffect(() => { (globalThis as any).__padSwapRightXY = swap; }, [swap]);
-  useEffect(() => { (globalThis as any).__padInvertRX = invX; }, [invX]);
-  useEffect(() => { (globalThis as any).__padInvertRY = invY; }, [invY]);
+  useEffect(() => { (globalThis as any).__padSwapRightXY = swap; try { localStorage.setItem('pad-swap-xy', swap ? '1' : '0'); } catch {} }, [swap]);
+  useEffect(() => { (globalThis as any).__padInvertRX = invX; try { localStorage.setItem('pad-inv-x', invX ? '1' : '0'); } catch {} }, [invX]);
+  useEffect(() => { (globalThis as any).__padInvertRY = invY; try { localStorage.setItem('pad-inv-y', invY ? '1' : '0'); } catch {} }, [invY]);
 
   const togglePanel = useCallback(() => setOpen((v) => !v), []);
 

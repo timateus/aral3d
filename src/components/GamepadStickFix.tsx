@@ -10,9 +10,12 @@ import { useIsTouchOnly } from '@/lib/touch-device';
 const GamepadStickFix = () => {
   const { connected } = useGamepad();
   const touchOnly = useIsTouchOnly();
-  const [swap, setSwap] = useState(false);
-  const [invX, setInvX] = useState(false);
-  const [invY, setInvY] = useState(false);
+  const readPref = (k: string, dflt: boolean) => {
+    try { const v = localStorage.getItem(k); return v == null ? dflt : v === '1'; } catch { return dflt; }
+  };
+  const [swap, setSwap] = useState<boolean>(() => readPref('pad-swap-xy', true));
+  const [invX, setInvX] = useState<boolean>(() => readPref('pad-inv-x', true));
+  const [invY, setInvY] = useState<boolean>(() => readPref('pad-inv-y', false));
 
   useEffect(() => { (globalThis as any).__padSwapRightXY = swap; }, [swap]);
   useEffect(() => { (globalThis as any).__padInvertRX = invX; }, [invX]);

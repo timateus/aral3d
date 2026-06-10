@@ -276,11 +276,8 @@ const Index = () => {
     if (faceMode && !prevFaceRef.current) {
       setLevelIntro({
         n: 7,
-        name: 'Face as Infrastructure',
-        instructions: [
-          'The terrain is projected onto your face.',
-          'Move it with the gamepad — your silhouette becomes the map.',
-        ],
+        name: 'Aral looks back at me',
+        instructions: [],
       });
     }
     prevFaceRef.current = faceMode;
@@ -1747,8 +1744,7 @@ const Index = () => {
           <FacePhraseLayer />
           {/* Level 7 HUD — mirrors the other levels' top strip + prev/next pills */}
           <div data-hud className="fixed top-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-4 py-2 rounded-md bg-black/60 backdrop-blur-md border border-white/15">
-            <span className="text-white/90 font-mono text-[11px] tracking-wider uppercase">Level 7 · Face as Infrastructure</span>
-            <span className="text-white/40 font-mono text-[10px]">gamepad sticks move the terrain · projected onto you</span>
+            <span className="text-white/90 font-mono text-[11px] tracking-wider uppercase">Level 7 · Aral looks back at me</span>
           </div>
           <button
             data-hud
@@ -1808,9 +1804,9 @@ const Index = () => {
 
       {simMode && terrain && (
         <WaterSimHUD
-          wetPixels={simCompleted ? Math.max(21000, Math.round(terrain.width * terrain.height * 0.09)) : flowWetCount}
+          wetPixels={simCompleted ? Math.max(10500, Math.round(terrain.width * terrain.height * 0.045)) : flowWetCount}
           damEdits={raiseEditCount}
-          lifeThreshold={Math.max(21000, Math.round(terrain.width * terrain.height * 0.09))}
+          lifeThreshold={Math.max(10500, Math.round(terrain.width * terrain.height * 0.045))}
           onExit={() => {
             setSimMode(false);
             setStarted(false);

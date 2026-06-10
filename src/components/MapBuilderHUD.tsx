@@ -63,6 +63,8 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
     onItemsChange(items);
   }, [items, onItemsChange]);
   useEffect(() => { actionsRef.current = actionsLeft; saveState(ACTIONS_KEY, actionsLeft); }, [actionsLeft]);
+  const confirmNavRef = useRef<null | 'prev' | 'next'>(null);
+  useEffect(() => { confirmNavRef.current = confirmNav; }, [confirmNav]);
 
   // 50-action budget resets when leaving Level 5 (component unmount). Placed
   // items themselves persist (loaded from 'placed-items' on mount above).
@@ -78,7 +80,12 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
   }, [pickerOpen]);
 
   const requestNav = (dir: 'prev' | 'next') => {
+    sfx.click?.();
+    setConfirmNav(dir);
+  };
+  const performNav = (dir: 'prev' | 'next') => {
     sfx[dir === 'prev' ? 'navPrev' : 'navNext']?.();
+    setConfirmNav(null);
     if (dir === 'prev') onPrev();
     else onNext?.();
   };
@@ -465,10 +472,22 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
         const aP = !!buttons.a, bP = !!buttons.b, xP = !!buttons.x, yP = !!buttons.y;
         const lbP = !!buttons.lb, rbP = !!buttons.rb;
         const backP = !!buttons.back, startP = !!buttons.start;
-        const dlP = !!buttons.dpadLeft, drP = !!buttons.dpadRight;
+        const dlP = !!buttons.left, drP = !!buttons.right;
 
-        // Build (X or RB) hold-to-repeat
-        const buildHeld = xP || rbP;
+        // If a confirmation dialog is open, gamepad A confirms, B cancels.
+        const cn = confirmNavRef.current; if (cn) {
+          if (aP && !prevPad.current.a) performNav(cn);
+          if (bP && !prevPad.current.b) { sfx.exit?.(); setConfirmNav(null); }
+          prevPad.current.a = aP; prevPad.current.b = bP; prevPad.current.x = xP; prevPad.current.y = yP;
+          prevPad.current.lb = lbP; prevPad.current.rb = rbP;
+          prevPad.current.back = backP; prevPad.current.start = startP;
+          prevPad.current.dl = dlP; prevPad.current.dr = drP;
+          raf = requestAnimationFrame(loop);
+          return;
+        }
+
+        // Build (X) hold-to-repeat
+        const buildHeld = xP;
         if (buildHeld && heldPlace.current.start == null) {
           place();
           heldPlace.current.start = performance.now();
@@ -476,8 +495,8 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
         } else if (!buildHeld && heldPlace.current.start != null) {
           heldPlace.current.start = null;
         }
-        // Destroy (B or LB) hold-to-repeat
-        const destroyHeld = bP || lbP;
+        // Destroy (B) hold-to-repeat
+        const destroyHeld = bP;
         if (destroyHeld && heldRemove.current.start == null) {
           remove();
           heldRemove.current.start = performance.now();
@@ -488,11 +507,6 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
 
         // Y rising edge: toggle material picker
         if (yP && !prevPad.current.y) { setPickerOpen((o) => !o); sfx.click?.(); }
-        // A rising edge: top-down view toggle
-        if (aP && !prevPad.current.a) {
-          window.dispatchEvent(new CustomEvent('level5:topdown'));
-          sfx.click?.();
-        }
         // dpad palette cycle
         if (drP && !prevPad.current.dr) {
           const i = PALETTE_ITEMS.findIndex((x) => x.id === selectedRef.current);
@@ -504,6 +518,9 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
           setSelected(PALETTE_ITEMS[(i - 1 + PALETTE_ITEMS.length) % PALETTE_ITEMS.length].id);
           sfx.click();
         }
+        // RB / LB: request level nav (with confirmation overlay)
+        if (rbP && !prevPad.current.rb && onNext) requestNav('next');
+        if (lbP && !prevPad.current.lb) requestNav('prev');
         if (backP && !prevPad.current.back) requestNav('prev');
         if (startP && !prevPad.current.start && onNext) requestNav('next');
 
@@ -536,7 +553,7 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
       {/* Top bar */}
       <div data-hud className="fixed top-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-4 py-2 rounded-md bg-black/60 backdrop-blur-md border border-white/15">
         <span className="text-white/90 font-mono text-[11px] tracking-wider uppercase">Level 5 · Sandspiel Builder</span>
-        <span className="text-white/40 font-mono text-[10px]">WASD walk · X build · Z remove · 1-9 material · Y picker · A top-down · R2/L2 zoom</span>
+        <span className="text-white/40 font-mono text-[10px]">WASD · X build · B remove · Y picker · dpad ◀▶ material · LB/RB change level</span>
       </div>
 
       <button
@@ -574,7 +591,7 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
         }`}
       >
         {isOut ? (
-          <span className="font-semibold tracking-wide">next person's turn maybe?</span>
+          <span className="font-semibold tracking-wide">out of actions</span>
         ) : (
           <span>Actions {actionsLeft}/{ACTION_LIMIT}</span>
         )}
@@ -634,6 +651,54 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
             </div>
             <div className="text-[10px] text-white/40 mt-3 text-right">
               Press <span className="px-1 border border-white/30 rounded">{remapPadLabel('Y').text}</span> or Esc to close
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* "Next player maybe?" — big center splash when actions run out */}
+      {isOut && (
+        <div data-hud className="fixed inset-0 z-[105] flex items-center justify-center pointer-events-none animate-in fade-in duration-300">
+          <h1
+            className="font-black tracking-[0.06em] uppercase text-white text-center px-8"
+            style={{
+              fontFamily: '"Trebuchet MS", "Comic Sans MS", "Inter", system-ui, sans-serif',
+              fontSize: 'clamp(48px, 8vw, 120px)',
+              lineHeight: 0.95,
+              textShadow: '0 10px 40px rgba(0,0,0,0.85), 0 0 60px rgba(255,80,80,0.5)',
+            }}
+          >
+            next player maybe?
+          </h1>
+        </div>
+      )}
+
+      {/* Confirmation modal for level navigation */}
+      {confirmNav && (
+        <div
+          data-hud
+          className="fixed inset-0 z-[140] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in"
+          onClick={() => setConfirmNav(null)}
+        >
+          <div
+            className="px-8 py-7 border border-white/30 bg-zinc-950 text-white font-mono text-center max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-[10px] uppercase tracking-[0.4em] text-white/55 mb-3">leave this level?</div>
+            <div className="text-xl mb-6">Go to {confirmNav === 'prev' ? 'previous' : 'next'} level?</div>
+            <div className="flex items-center justify-center gap-3">
+              <button
+                onClick={() => performNav(confirmNav)}
+                className="px-5 py-2 text-[11px] uppercase tracking-[0.3em] bg-white text-black hover:brightness-110"
+              >
+                {remapPadLabel('A').text} · Yes
+              </button>
+              <button
+                onClick={() => { sfx.exit?.(); setConfirmNav(null); }}
+                className="px-5 py-2 text-[11px] uppercase tracking-[0.3em] border border-white/30 hover:bg-white/10"
+              >
+                {remapPadLabel('B').text} · Cancel
+              </button>
             </div>
           </div>
         </div>
