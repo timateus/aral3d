@@ -553,7 +553,7 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
       {/* Top bar */}
       <div data-hud className="fixed top-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-4 py-2 rounded-md bg-black/60 backdrop-blur-md border border-white/15">
         <span className="text-white/90 font-mono text-[11px] tracking-wider uppercase">Level 5 · Sandspiel Builder</span>
-        <span className="text-white/40 font-mono text-[10px]">WASD walk · X build · Z remove · 1-9 material · Y picker · A top-down · R2/L2 zoom</span>
+        <span className="text-white/40 font-mono text-[10px]">WASD · X build · B remove · Y picker · dpad ◀▶ material · LB/RB change level</span>
       </div>
 
       <button
