@@ -516,6 +516,56 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
         );
       })()}
 
+      {/* Confirm posting to Instagram */}
+      {confirmShare && (
+        <div
+          className="fixed inset-0 z-[110] flex items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.75)' }}
+        >
+          <div
+            className="relative flex flex-col gap-5 p-6"
+            style={{
+              background: bgColor,
+              color: inkColor,
+              border: `2px solid ${stops[2 % stops.length]}`,
+              width: 'min(420px, 92vw)',
+            }}
+          >
+            <button
+              onClick={() => { sfx.exit(); setConfirmShare(false); }}
+              aria-label="close"
+              className="absolute top-2 right-2 flex items-center justify-center w-8 h-8 hover:brightness-110"
+              style={{ background: bgColor, color: inkColor, border: `1.5px solid ${stops[1 % stops.length]}` }}
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <div className="text-[10px] font-mono uppercase tracking-[0.25em] opacity-70">Confirm</div>
+            <div className="text-base font-mono uppercase tracking-[0.15em]">
+              Post this view to Instagram?
+            </div>
+            <div className="text-[11px] font-mono opacity-70 leading-relaxed">
+              Caption: "{line1} — {line2}"
+            </div>
+            <div className="flex justify-end gap-3 mt-2">
+              <button
+                onClick={() => { sfx.exit(); setConfirmShare(false); }}
+                className="px-4 py-2 text-[11px] font-mono uppercase tracking-[0.18em] hover:brightness-110"
+                style={{ background: bgColor, color: inkColor, border: `1.5px solid ${stops[1 % stops.length]}` }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { sfx.make(); setConfirmShare(false); handleShare(); }}
+                className="px-4 py-2 text-[11px] font-mono uppercase tracking-[0.18em] hover:brightness-110"
+                style={{ background: stops[3 % stops.length], color: bgIsLight(stops[3 % stops.length]) ? '#0a0a0a' : '#ffffff', border: `1.5px solid ${stops[3 % stops.length]}` }}
+              >
+                Post to Instagram
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Instagram overlay shown after a successful share */}
       {igOverlay && (() => {
         // Derive shortcode from permalink: https://www.instagram.com/p/<code>/
