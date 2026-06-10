@@ -152,9 +152,11 @@ export function useGamepad() {
         const rightX = rawRX * invX;
         const rightY = rawRY * invY;
 
-        // OR pressed state and MAX trigger value across every connected pad.
-        const anyPressed = (idx: number) => allPads.some((p) => !!p.buttons[idx]?.pressed);
-        const maxVal = (idx: number) => allPads.reduce((m, p) => Math.max(m, p.buttons[idx]?.value ?? 0), 0);
+        // OR pressed state (with stuck-button filter) and MAX trigger value
+        // across every connected pad. The stuck filter prevents a dead/sticky
+        // button on one pad from masking edge presses on the other.
+        const anyPressed = (idx: number) => allPads.some((p) => padButtonPressed(p, idx));
+        const maxVal = (idx: number) => allPads.reduce((m, p) => Math.max(m, padButtonValue(p, idx)), 0);
         const next: GamepadState = {
           connected: true,
           leftStick: { x: lx, y: ly },
