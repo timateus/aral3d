@@ -21,6 +21,7 @@ function bgIsLight(hex: string): boolean {
 }
 
 function PadHint({ label, color, bg }: { label: string; color: string; bg: string }) {
+  if (isTouchOnly()) return null;
   const remapped = remapPadLabel(label);
   const chipBg = remapped.bg ?? bg;
   const ink = bgIsLight(chipBg) ? '#0a0a0a' : '#ffffff';
