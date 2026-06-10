@@ -300,7 +300,7 @@ const SchoolDialog = ({ onClose }: { onClose: () => void }) => {
             </ul>
 
             <div
-              className="mt-7 flex items-center gap-3 text-[12px]"
+              className="mt-4 flex items-center gap-2 text-[10px]"
               style={{ fontFamily: MENU_FONT, color: '#fffbea' }}
             >
               <span className="inline-flex items-center justify-center w-8 h-8 rounded-full border-2 border-white/80">▲▼</span>
