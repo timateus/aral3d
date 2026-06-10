@@ -150,10 +150,8 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
       onClick={() => { sfx.navNext(); onBegin(); }}
       className="fixed inset-0 z-[9999] flex items-center justify-center cursor-pointer animate-in fade-in duration-300"
       style={{
-        // Pull the dominant terrain "land" tone from the active palette
-        // (set on :root by applyDesignerScheme) — falls back to deep navy.
         background: 'var(--map-land, #2a2042)',
-        color: 'var(--map-background, #06080e)',
+        color: colors.text,
       }}
     >
 
@@ -162,7 +160,7 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
           onClick={(e) => { e.stopPropagation(); sfx.navPrev(); onPrev(); }}
           aria-label="previous level"
           className="absolute left-4 top-1/2 -translate-y-1/2 transition-opacity hover:opacity-100 opacity-80"
-          style={{ color: 'var(--map-background, #06080e)' }}
+          style={{ color: colors.text }}
         >
           <ChevronLeft style={{ width: 120, height: 120 }} strokeWidth={3} />
           <div className="font-mono text-xs uppercase tracking-[0.35em]">L1</div>
@@ -173,7 +171,7 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
           onClick={(e) => { e.stopPropagation(); sfx.navNext(); onNext(); }}
           aria-label="next level"
           className="absolute right-4 top-1/2 -translate-y-1/2 transition-opacity hover:opacity-100 opacity-80"
-          style={{ color: 'var(--map-background, #06080e)' }}
+          style={{ color: colors.text }}
         >
           <ChevronRight style={{ width: 120, height: 120 }} strokeWidth={3} />
           <div className="font-mono text-xs uppercase tracking-[0.35em]">R1</div>
@@ -181,8 +179,8 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
       )}
       <div className="text-center px-8 max-w-3xl">
         <div
-          className="text-sm md:text-base font-mono uppercase tracking-[0.5em] mb-6 opacity-70"
-          style={{ color: 'var(--map-background, #06080e)' }}
+          className="text-sm md:text-base font-mono uppercase tracking-[0.5em] mb-6 opacity-80"
+          style={{ color: colors.text }}
         >
           level {number}
         </div>
@@ -192,8 +190,8 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
             fontFamily: '"Trebuchet MS", "Comic Sans MS", "Inter", system-ui, sans-serif',
             fontSize: 'clamp(56px, 9vw, 132px)',
             lineHeight: 0.95,
-            color: 'var(--map-background, #06080e)',
-            textShadow: '0 10px 40px rgba(0,0,0,0.25)',
+            color: colors.text,
+            textShadow: '0 10px 40px rgba(0,0,0,0.35)',
           }}
         >
           {name}
@@ -202,11 +200,11 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
           {instructions.map((line, i) => (
             <p
               key={i}
-              className="italic leading-tight opacity-90"
+              className="italic leading-tight opacity-95"
               style={{
                 fontFamily: '"Georgia", "Trebuchet MS", serif',
                 fontSize: 'clamp(26px, 3.6vw, 52px)',
-                color: 'var(--map-vegetation, #f5f1ff)',
+                color: colors.text,
               }}
             >
               {line}
@@ -216,17 +214,17 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
         <div
           className="inline-flex items-center gap-4 px-7 py-4 border-2 rounded-sm"
           style={{
-            borderColor: 'color-mix(in srgb, var(--map-background, #06080e) 50%, transparent)',
-            background: 'color-mix(in srgb, var(--map-background, #06080e) 10%, transparent)',
-            color: 'var(--map-background, #06080e)',
+            borderColor: `color-mix(in srgb, ${colors.text} 50%, transparent)`,
+            background: `color-mix(in srgb, ${colors.text} 10%, transparent)`,
+            color: colors.text,
           }}
         >
           <span
             className="inline-flex items-center justify-center w-10 h-10 text-sm font-mono font-bold rounded-full border-2"
             style={{
-              borderColor: 'var(--map-background, #06080e)',
-              background: 'var(--map-alert, #3b82f6)',
-              color: 'var(--map-background, #06080e)',
+              borderColor: colors.accentBg,
+              background: colors.accentBg,
+              color: colors.accent,
             }}
           >
             3
@@ -236,8 +234,8 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
           </span>
         </div>
         <div
-          className="mt-5 text-xs font-mono uppercase tracking-[0.3em] opacity-55"
-          style={{ color: 'var(--map-background, #06080e)' }}
+          className="mt-5 text-xs font-mono uppercase tracking-[0.3em] opacity-70"
+          style={{ color: colors.text }}
         >
           (or click anywhere)
         </div>
@@ -245,5 +243,6 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
     </div>
   );
 };
+
 
 export default LevelIntroSplash;
