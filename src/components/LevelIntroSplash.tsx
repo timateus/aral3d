@@ -198,8 +198,8 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
       onClick={() => { sfx.navNext(); onBegin(); }}
       className="fixed inset-0 z-[9999] flex items-center justify-center cursor-pointer animate-in fade-in duration-300"
       style={{
-        background: 'var(--map-land, #2a2042)',
-        color: colors.text,
+        background: colors.bgGradient,
+        color: colors.body,
       }}
     >
 
@@ -208,7 +208,7 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
           onClick={(e) => { e.stopPropagation(); sfx.navPrev(); onPrev(); }}
           aria-label="previous level"
           className="absolute left-4 top-1/2 -translate-y-1/2 transition-opacity hover:opacity-100 opacity-80"
-          style={{ color: colors.text }}
+          style={{ color: colors.chrome }}
         >
           <ChevronLeft style={{ width: 120, height: 120 }} strokeWidth={3} />
           <div className="font-mono text-xs uppercase tracking-[0.35em]">L1</div>
@@ -219,7 +219,7 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
           onClick={(e) => { e.stopPropagation(); sfx.navNext(); onNext(); }}
           aria-label="next level"
           className="absolute right-4 top-1/2 -translate-y-1/2 transition-opacity hover:opacity-100 opacity-80"
-          style={{ color: colors.text }}
+          style={{ color: colors.chrome }}
         >
           <ChevronRight style={{ width: 120, height: 120 }} strokeWidth={3} />
           <div className="font-mono text-xs uppercase tracking-[0.35em]">R1</div>
@@ -228,7 +228,7 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
       <div className="text-center px-8 max-w-3xl">
         <div
           className="text-sm md:text-base font-mono uppercase tracking-[0.5em] mb-6 opacity-80"
-          style={{ color: colors.text }}
+          style={{ color: colors.chrome }}
         >
           level {number}
         </div>
@@ -238,7 +238,7 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
             fontFamily: '"Trebuchet MS", "Comic Sans MS", "Inter", system-ui, sans-serif',
             fontSize: 'clamp(56px, 9vw, 132px)',
             lineHeight: 0.95,
-            color: colors.text,
+            color: colors.title,
             textShadow: '0 10px 40px rgba(0,0,0,0.35)',
           }}
         >
@@ -252,7 +252,7 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
               style={{
                 fontFamily: '"Georgia", "Trebuchet MS", serif',
                 fontSize: 'clamp(26px, 3.6vw, 52px)',
-                color: colors.text,
+                color: colors.body,
               }}
             >
               {line}
@@ -262,9 +262,9 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
         <div
           className="inline-flex items-center gap-4 px-7 py-4 border-2 rounded-sm"
           style={{
-            borderColor: `color-mix(in srgb, ${colors.text} 50%, transparent)`,
-            background: `color-mix(in srgb, ${colors.text} 10%, transparent)`,
-            color: colors.text,
+            borderColor: `color-mix(in srgb, ${colors.title} 50%, transparent)`,
+            background: `color-mix(in srgb, ${colors.title} 10%, transparent)`,
+            color: colors.title,
           }}
         >
           <span
@@ -283,11 +283,12 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
         </div>
         <div
           className="mt-5 text-xs font-mono uppercase tracking-[0.3em] opacity-70"
-          style={{ color: colors.text }}
+          style={{ color: colors.chrome }}
         >
           (or click anywhere)
         </div>
       </div>
+
     </div>
   );
 };
