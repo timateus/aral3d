@@ -76,7 +76,7 @@ export function useGamepad() {
     const onConnect = (e: GamepadEvent) => {
       setConnected(true);
       setPadId(e.gamepad.id);
-      toast.success('🎮 Controller connected', { description: e.gamepad.id });
+      if (!isTouchOnly()) toast.success('🎮 Controller connected', { description: e.gamepad.id });
       const meta = globalThis as any;
       meta.__padRightAxes = undefined;
       meta.__padRightAxesId = undefined;
