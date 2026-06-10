@@ -365,7 +365,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
       if (s.connected) {
         if (consumeGamepadButton('x', s.buttons.x)) { sfx.make(); onRandomize(); }
         if (consumeGamepadButton('b', s.buttons.b)) { sfx.make(); handlePrint(); }
-        if (consumeGamepadButton('y', s.buttons.y)) { sfx.make(); handleShare(); }
+        if (consumeGamepadButton('y', s.buttons.y)) { sfx.make(); setConfirmShare(true); }
         if (consumeGamepadButton('rb', s.buttons.rb) && onNext) { sfx.navNext(); onNext(); }
       }
       raf = requestAnimationFrame(tick);
