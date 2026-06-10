@@ -591,7 +591,7 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
         }`}
       >
         {isOut ? (
-          <span className="font-semibold tracking-wide">next person's turn maybe?</span>
+          <span className="font-semibold tracking-wide">out of actions</span>
         ) : (
           <span>Actions {actionsLeft}/{ACTION_LIMIT}</span>
         )}
