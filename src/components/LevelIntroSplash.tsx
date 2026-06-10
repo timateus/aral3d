@@ -1,50 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-
-// Parse any CSS color string into [r,g,b] using a throwaway DOM node.
-const parseColor = (css: string): [number, number, number] | null => {
-  if (typeof window === 'undefined') return null;
-  const probe = document.createElement('div');
-  probe.style.color = css;
-  document.body.appendChild(probe);
-  const computed = getComputedStyle(probe).color;
-  document.body.removeChild(probe);
-  const m = computed.match(/\d+(\.\d+)?/g);
-  if (!m || m.length < 3) return null;
-  return [parseFloat(m[0]), parseFloat(m[1]), parseFloat(m[2])];
-};
-const relLum = ([r, g, b]: [number, number, number]) => {
-  const f = (c: number) => {
-    const s = c / 255;
-    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
-  };
-  return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
-};
-const contrast = (a: [number, number, number], b: [number, number, number]) => {
-  const la = relLum(a), lb = relLum(b);
-  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
-};
-// Pick the candidate palette color with the best contrast vs bg, falling back
-// to pure white/black if no palette swatch reaches AA (4.5:1).
-const pickContrast = (bgVar: string, candidateVars: string[]): string => {
-  const bgRaw = getComputedStyle(document.documentElement).getPropertyValue(bgVar).trim() || '#2a2042';
-  const bg = parseColor(bgRaw);
-  if (!bg) return '#ffffff';
-  let best: { color: string; ratio: number } = { color: '#ffffff', ratio: 0 };
-  for (const v of [...candidateVars, '#ffffff', '#000000']) {
-    const raw = v.startsWith('--')
-      ? getComputedStyle(document.documentElement).getPropertyValue(v).trim()
-      : v;
-    if (!raw) continue;
-    const rgb = parseColor(raw);
-    if (!rgb) continue;
-    const ratio = contrast(bg, rgb);
-    if (ratio > best.ratio) best = { color: raw, ratio };
-  }
-  return best.color;
-};
 import { sfx } from '@/lib/ui-sfx';
 import { consumeGamepadButton, setGamepadInputBlocked } from '@/lib/gamepad-dedupe';
+
+// Fixed level-1 palette — black bg, white title, soft lavender body, blue pill.
+const colors = {
+  bg: '#06080e',
+  title: '#ffffff',
+  body: '#f5f1ff',
+  accent: '#ffffff',
+  accentBg: '#3b82f6',
+  chrome: '#ffffff',
+};
 
 interface Props {
   number: number;
@@ -56,74 +23,7 @@ interface Props {
 }
 
 const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext }: Props) => {
-  // Vivid palette-derived colors with guaranteed AA contrast.
-  // We rank every palette swatch by saturation and pick the most colorful one
-  // that still hits >= 4.5:1 against the background for title + body, then
-  // a different swatch for the accent pill.
-  const [colors, setColors] = useState(() => ({
-    bg: '#2a2042',
-    bgGradient: '#2a2042',
-    title: '#ffffff',
-    body: '#ffffff',
-    accent: '#ffffff',
-    accentBg: '#000000',
-    chrome: '#ffffff',
-  }));
-  useEffect(() => {
-    const recompute = () => {
-      const root = getComputedStyle(document.documentElement);
-      const raw = (v: string) => root.getPropertyValue(v).trim();
-      const swatches = {
-        land: raw('--map-land') || '#2a2042',
-        veg: raw('--map-vegetation') || '#f5f1ff',
-        bgTok: raw('--map-background') || '#06080e',
-        alert: raw('--map-alert') || '#ff3b6b',
-      };
-      const rgbOf: Record<string, [number, number, number] | null> = {};
-      for (const [k, v] of Object.entries(swatches)) rgbOf[k] = parseColor(v);
 
-      const bgRgb = rgbOf.land!;
-      // HSL-saturation proxy: (max-min)/max — favors vivid hues.
-      const sat = (c: [number, number, number]) => {
-        const m = Math.max(...c), n = Math.min(...c);
-        return m === 0 ? 0 : (m - n) / m;
-      };
-      // Candidates ranked by saturation desc, then contrast desc.
-      const candidates = Object.entries(swatches)
-        .filter(([k]) => k !== 'land')
-        .map(([k, hex]) => {
-          const c = rgbOf[k];
-          if (!c) return null;
-          return { key: k, hex, sat: sat(c), ratio: contrast(bgRgb, c) };
-        })
-        .filter(Boolean) as { key: string; hex: string; sat: number; ratio: number }[];
-
-      const passAA = candidates.filter((c) => c.ratio >= 4.5);
-      const pool = passAA.length ? passAA : candidates;
-      pool.sort((a, b) => b.sat - a.sat || b.ratio - a.ratio);
-
-      const title = pool[0]?.hex
-        ?? pickContrast('--map-land', ['--map-vegetation', '--map-background']);
-      // Body: different swatch from title when possible.
-      const bodyPick = pool.find((c) => c.hex !== title) ?? pool[0];
-      const body = bodyPick?.hex ?? title;
-      // Accent pill: most saturated swatch overall (even if it equals title).
-      const accentBg = [...candidates].sort((a, b) => b.sat - a.sat)[0]?.hex ?? title;
-      const accentRgb = parseColor(accentBg);
-      const accent = accentRgb && contrast(accentRgb, [255, 255, 255]) >= 3.5
-        ? '#ffffff'
-        : '#000000';
-      // Chrome (level number, arrows, footnote): subtler but still readable.
-      const chrome = title;
-      // Background gradient: tint land toward the accent for a richer feel.
-      const bgGradient = `linear-gradient(135deg, ${swatches.land} 0%, color-mix(in srgb, ${swatches.land} 70%, ${accentBg}) 100%)`;
-
-      setColors({ bg: swatches.land, bgGradient, title, body, accent, accentBg, chrome });
-    };
-    recompute();
-    const id = window.setTimeout(recompute, 50);
-    return () => window.clearTimeout(id);
-  }, []);
 
 
   // Gamepad X (2) / A (0) / RB (5) / RT (7) dismiss.
