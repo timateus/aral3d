@@ -14,30 +14,34 @@ interface Props {
 
 const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext }: Props) => {
   // Gamepad X (2) / A (0) / RB (5) / RT (7) dismiss.
+  // Merge button state across ALL connected pads so a ghost/inactive pad at
+  // index 0 doesn't mask presses coming from a real controller at a higher index.
   useEffect(() => {
     let raf = 0;
     setGamepadInputBlocked(true);
+    const collectPads = (): Gamepad[] => {
+      const raw = navigator.getGamepads?.() ?? [];
+      const out: Gamepad[] = [];
+      for (const p of raw) if (p) out.push(p);
+      return out;
+    };
+    const anyPressed = (pads: Gamepad[], idx: number) =>
+      pads.some((p) => !!p.buttons[idx]?.pressed);
     // Seed prev state so we require a fresh rising edge after mount,
     // regardless of buttons held while the splash was opening.
-    const pads0 = navigator.getGamepads?.() ?? [];
-    let pad0: Gamepad | null = null;
-    for (const p of pads0) { if (p) { pad0 = p; break; } }
-    if (pad0) {
-      consumeGamepadButton('splash-x', !!pad0.buttons[2]?.pressed, { ignoreBlock: true });
-      consumeGamepadButton('splash-lb', !!pad0.buttons[4]?.pressed, { ignoreBlock: true });
-      consumeGamepadButton('splash-rb', !!pad0.buttons[5]?.pressed, { ignoreBlock: true });
-      consumeGamepadButton('splash-rt', !!pad0.buttons[7]?.pressed, { ignoreBlock: true });
-      consumeGamepadButton('splash-a', !!pad0.buttons[0]?.pressed, { ignoreBlock: true });
-    }
+    const pads0 = collectPads();
+    consumeGamepadButton('splash-x', anyPressed(pads0, 2), { ignoreBlock: true });
+    consumeGamepadButton('splash-lb', anyPressed(pads0, 4), { ignoreBlock: true });
+    consumeGamepadButton('splash-rb', anyPressed(pads0, 5), { ignoreBlock: true });
+    consumeGamepadButton('splash-rt', anyPressed(pads0, 7), { ignoreBlock: true });
+    consumeGamepadButton('splash-a', anyPressed(pads0, 0), { ignoreBlock: true });
     let done = false;
     const tick = () => {
       if (done) return;
-      const pads = navigator.getGamepads?.() ?? [];
-      let pad: Gamepad | null = null;
-      for (const p of pads) { if (p) { pad = p; break; } }
-      if (pad) {
+      const pads = collectPads();
+      if (pads.length) {
         const fire = (n: string, b: number) =>
-          consumeGamepadButton(n, !!pad!.buttons[b]?.pressed, { cooldownMs: 700, ignoreBlock: true });
+          consumeGamepadButton(n, anyPressed(pads, b), { cooldownMs: 700, ignoreBlock: true });
         if (fire('splash-lb', 4) && onPrev) {
           sfx.navPrev();
           onPrev();
@@ -62,6 +66,7 @@ const LevelIntroSplash = ({ number, name, instructions, onBegin, onPrev, onNext 
     raf = requestAnimationFrame(tick);
     return () => { cancelAnimationFrame(raf); setGamepadInputBlocked(false); };
   }, [onBegin, onPrev, onNext]);
+
 
   // Keyboard: any of Enter / Space / X dismiss.
   useEffect(() => {

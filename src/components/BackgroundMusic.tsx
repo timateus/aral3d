@@ -24,13 +24,12 @@ export default function BackgroundMusic({ active, muted: controlledMuted, onMute
   const [internalMuted, setInternalMuted] = useState<boolean>(() => {
     try { return localStorage.getItem('bg-music-muted') === '1'; } catch { return false; }
   });
-  const [tabVisible, setTabVisible] = useState<boolean>(() =>
-    typeof document === 'undefined' ? true : !document.hidden
-  );
 
   const isControlled = controlledMuted !== undefined;
   const muted = isControlled ? controlledMuted : internalMuted;
-  const effectiveActive = active && tabVisible;
+  // Keep music playing even when the tab is hidden / unfocused — user requested
+  // it shouldn't switch off in the background.
+  const effectiveActive = active;
   const setMuted = (v: boolean) => {
     if (isControlled) {
       onMutedChange?.(v);
@@ -39,20 +38,6 @@ export default function BackgroundMusic({ active, muted: controlledMuted, onMute
     }
   };
 
-  // Pause music when the tab/window is hidden; resume when visible again.
-  useEffect(() => {
-    const onVis = () => setTabVisible(!document.hidden);
-    const onBlur = () => setTabVisible(false);
-    const onFocus = () => setTabVisible(!document.hidden);
-    document.addEventListener('visibilitychange', onVis);
-    window.addEventListener('blur', onBlur);
-    window.addEventListener('focus', onFocus);
-    return () => {
-      document.removeEventListener('visibilitychange', onVis);
-      window.removeEventListener('blur', onBlur);
-      window.removeEventListener('focus', onFocus);
-    };
-  }, []);
 
   // Lazy-create audio element
   useEffect(() => {

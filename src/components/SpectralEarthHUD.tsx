@@ -79,6 +79,8 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
   const { stateRef } = useGamepad();
   const [igOverlay, setIgOverlay] = useState<{ permalink: string | null } | null>(null);
   const [confirmShare, setConfirmShare] = useState(false);
+  const [confirmPrint, setConfirmPrint] = useState(false);
+
 
 
 
@@ -228,9 +230,20 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
       console.warn('[print] share upload failed', e);
     }
 
-    const w = window.open('', '_blank');
-    if (!w) return;
-    w.document.write(`
+    // Print in the SAME tab via a hidden iframe instead of opening a new
+    // window (which is jarring and gets blocked by popup blockers).
+    const iframe = document.createElement('iframe');
+    iframe.setAttribute('aria-hidden', 'true');
+    iframe.style.cssText =
+      'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
+    document.body.appendChild(iframe);
+    const cleanup = () => {
+      setTimeout(() => { try { iframe.remove(); } catch {} }, 1000);
+    };
+    const doc = iframe.contentDocument;
+    if (!doc) { iframe.remove(); return; }
+    doc.open();
+    doc.write(`
       <!doctype html><html><head><title>Spectral Earth — Aral School 2026</title>
       <style>
         @page { size: landscape; margin: 6mm; }
@@ -250,7 +263,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
       </style></head>
       <body>
         <div class="page">
-          <img class="map" src="${url}" onload="setTimeout(()=>window.print(),400)" />
+          <img class="map" src="${url}" onload="setTimeout(()=>{try{window.focus();window.print();}catch(e){}},400)" />
           ${qrDataUrl ? `
             <div class="share">
               <img src="${qrDataUrl}" alt="QR" />
@@ -264,8 +277,14 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
         </div>
       </body></html>
     `);
-    w.document.close();
+    doc.close();
+    if (iframe.contentWindow) {
+      iframe.contentWindow.onafterprint = cleanup;
+    }
+    // Safety fallback in case onafterprint never fires (e.g. user cancels).
+    setTimeout(cleanup, 60_000);
   };
+
 
   // Post current view directly to YOUR Instagram via the share-to-instagram
   // edge function (uses INSTAGRAM_ACCESS_TOKEN + INSTAGRAM_USER_ID secrets).
@@ -359,40 +378,87 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
 
 
 
-  // Gamepad: X = misbehave, B = print, Y = share to IG, RB = next level.
+  // Gamepad routing.
+  //   Top-level (no overlay open):
+  //     X  = misbehave (randomize)
+  //     B  = open Print confirm  (was: print directly)
+  //     Y  = open Share confirm
+  //     RB = next level
+  //   Any overlay open:
+  //     A  = confirm primary action (print / post / close IG)
+  //     B  = cancel / close overlay
   useEffect(() => {
     let raf = 0;
     const tick = () => {
       const s = stateRef.current;
       if (s.connected) {
-        if (consumeGamepadButton('x', s.buttons.x)) { sfx.make(); onRandomize(); }
-        if (consumeGamepadButton('b', s.buttons.b)) { sfx.make(); handlePrint(); }
-        if (consumeGamepadButton('y', s.buttons.y)) { sfx.make(); setConfirmShare(true); }
-        if (consumeGamepadButton('rb', s.buttons.rb) && onNext) { sfx.navNext(); onNext(); }
+        const aEdge = consumeGamepadButton('se-a', s.buttons.a);
+        const bEdge = consumeGamepadButton('se-b', s.buttons.b);
+        const xEdge = consumeGamepadButton('se-x', s.buttons.x);
+        const yEdge = consumeGamepadButton('se-y', s.buttons.y);
+        const rbEdge = consumeGamepadButton('se-rb', s.buttons.rb);
+        const anyOverlay = confirmPrint || confirmShare || !!igOverlay;
+        if (anyOverlay) {
+          if (aEdge) {
+            sfx.make();
+            if (igOverlay) setIgOverlay(null);
+            else if (confirmPrint) { setConfirmPrint(false); handlePrint(); }
+            else if (confirmShare) { setConfirmShare(false); handleShare(); }
+          }
+          if (bEdge) {
+            sfx.exit();
+            if (igOverlay) setIgOverlay(null);
+            else if (confirmPrint) setConfirmPrint(false);
+            else if (confirmShare) setConfirmShare(false);
+          }
+        } else {
+          if (xEdge) { sfx.make(); onRandomize(); }
+          if (bEdge) { sfx.make(); setConfirmPrint(true); }
+          if (yEdge) { sfx.make(); setConfirmShare(true); }
+          if (rbEdge && onNext) { sfx.navNext(); onNext(); }
+        }
       }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onRandomize, onNext]);
+  }, [onRandomize, onNext, confirmPrint, confirmShare, igOverlay]);
 
   // Keyboard navigation
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
       if (t && /input|textarea|select/i.test(t.tagName)) return;
+      const anyOverlay = confirmPrint || confirmShare || !!igOverlay;
+      if (anyOverlay) {
+        if (e.key === 'Escape') {
+          e.preventDefault(); sfx.exit();
+          if (igOverlay) setIgOverlay(null);
+          else if (confirmPrint) setConfirmPrint(false);
+          else if (confirmShare) setConfirmShare(false);
+        } else if (e.key === 'Enter') {
+          e.preventDefault(); sfx.make();
+          if (igOverlay) setIgOverlay(null);
+          else if (confirmPrint) { setConfirmPrint(false); handlePrint(); }
+          else if (confirmShare) { setConfirmShare(false); handleShare(); }
+        }
+        return;
+      }
       if (e.key === ' ' || e.key === 'Enter' || e.key === 'x' || e.key === 'X') {
         e.preventDefault(); sfx.make(); onRandomize();
       } else if (e.key === 'b' || e.key === 'B') {
-        e.preventDefault(); sfx.make(); handlePrint();
+        e.preventDefault(); sfx.make(); setConfirmPrint(true);
       } else if (e.key === 'ArrowRight' && onNext) {
         e.preventDefault(); sfx.navNext(); onNext();
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onRandomize, onNext]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onRandomize, onNext, confirmPrint, confirmShare, igOverlay]);
+
+
 
   return (
 
@@ -471,7 +537,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
           <PadHint label="X" color={stops[2 % stops.length]} bg={bgColor} />
         </button>
         <button
-          onClick={() => { sfx.make(); handlePrint(); }}
+          onClick={() => { sfx.make(); setConfirmPrint(true); }}
           className="group flex items-center gap-2 px-3 py-2 text-[11px] font-medium font-mono uppercase tracking-[0.18em] backdrop-blur-md transition-all hover:brightness-110"
           style={{
             border: `1px solid ${stops[0]}`,
@@ -518,7 +584,58 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
         );
       })()}
 
+      {/* Confirm printing the map */}
+      {confirmPrint && (
+        <div
+          className="fixed inset-0 z-[110] flex items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.75)' }}
+        >
+          <div
+            className="relative flex flex-col gap-5 p-6"
+            style={{
+              background: bgColor,
+              color: inkColor,
+              border: `2px solid ${stops[0]}`,
+              width: 'min(420px, 92vw)',
+            }}
+          >
+            <button
+              onClick={() => { sfx.exit(); setConfirmPrint(false); }}
+              aria-label="close"
+              className="absolute top-2 right-2 flex items-center justify-center w-8 h-8 hover:brightness-110"
+              style={{ background: bgColor, color: inkColor, border: `1.5px solid ${stops[1 % stops.length]}` }}
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <div className="text-[10px] font-mono uppercase tracking-[0.25em] opacity-70">Confirm</div>
+            <div className="text-base font-mono uppercase tracking-[0.15em]">
+              Print this map?
+            </div>
+            <div className="text-[11px] font-mono opacity-70 leading-relaxed">
+              Opens your browser's print dialog with the current view + manifesto baked in.
+            </div>
+            <div className="flex justify-end gap-3 mt-2">
+              <button
+                onClick={() => { sfx.exit(); setConfirmPrint(false); }}
+                className="flex items-center gap-2 px-4 py-2 text-[11px] font-mono uppercase tracking-[0.18em] hover:brightness-110"
+                style={{ background: bgColor, color: inkColor, border: `1.5px solid ${stops[1 % stops.length]}` }}
+              >
+                Cancel <PadHint label="B" color={stops[1 % stops.length]} bg={bgColor} />
+              </button>
+              <button
+                onClick={() => { sfx.make(); setConfirmPrint(false); handlePrint(); }}
+                className="flex items-center gap-2 px-4 py-2 text-[11px] font-mono uppercase tracking-[0.18em] hover:brightness-110"
+                style={{ background: stops[0], color: bgIsLight(stops[0]) ? '#0a0a0a' : '#ffffff', border: `1.5px solid ${stops[0]}` }}
+              >
+                Print <PadHint label="A" color={stops[0]} bg={stops[0]} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Confirm posting to Instagram */}
+
       {confirmShare && (
         <div
           className="fixed inset-0 z-[110] flex items-center justify-center"
@@ -551,19 +668,20 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
             <div className="flex justify-end gap-3 mt-2">
               <button
                 onClick={() => { sfx.exit(); setConfirmShare(false); }}
-                className="px-4 py-2 text-[11px] font-mono uppercase tracking-[0.18em] hover:brightness-110"
+                className="flex items-center gap-2 px-4 py-2 text-[11px] font-mono uppercase tracking-[0.18em] hover:brightness-110"
                 style={{ background: bgColor, color: inkColor, border: `1.5px solid ${stops[1 % stops.length]}` }}
               >
-                Cancel
+                Cancel <PadHint label="B" color={stops[1 % stops.length]} bg={bgColor} />
               </button>
               <button
                 onClick={() => { sfx.make(); setConfirmShare(false); handleShare(); }}
-                className="px-4 py-2 text-[11px] font-mono uppercase tracking-[0.18em] hover:brightness-110"
+                className="flex items-center gap-2 px-4 py-2 text-[11px] font-mono uppercase tracking-[0.18em] hover:brightness-110"
                 style={{ background: stops[3 % stops.length], color: bgIsLight(stops[3 % stops.length]) ? '#0a0a0a' : '#ffffff', border: `1.5px solid ${stops[3 % stops.length]}` }}
               >
-                Post to Instagram
+                Post to Instagram <PadHint label="A" color={stops[3 % stops.length]} bg={stops[3 % stops.length]} />
               </button>
             </div>
+
           </div>
         </div>
       )}
@@ -583,7 +701,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
             <button
               onClick={() => { sfx.exit(); setIgOverlay(null); }}
               aria-label="close"
-              className="absolute top-4 right-4 z-10 flex items-center justify-center w-10 h-10 hover:brightness-110"
+              className="absolute top-4 right-4 z-10 flex items-center gap-2 px-2 h-10 hover:brightness-110"
               style={{
                 background: bgColor,
                 color: inkColor,
@@ -591,7 +709,9 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
               }}
             >
               <X className="w-5 h-5" />
+              <PadHint label="A/B" color={stops[2 % stops.length]} bg={bgColor} />
             </button>
+
 
             <div
               className="relative flex flex-col p-4"
