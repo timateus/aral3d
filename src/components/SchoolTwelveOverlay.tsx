@@ -313,7 +313,7 @@ const SchoolDialog = ({ onClose }: { onClose: () => void }) => {
           </div>
 
           <div
-            className="p-6 md:p-8 flex flex-col"
+            className="p-4 md:p-5 flex flex-col"
             style={{
               background: 'rgba(255,255,255,0.06)',
               borderLeft: '2px dashed rgba(255,255,255,0.35)',
