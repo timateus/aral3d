@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { padButtonPressed, padButtonValue } from '@/lib/gamepad-stuck';
+import { isTouchOnly } from '@/lib/touch-device';
 
 export interface GamepadState {
   connected: boolean;
