@@ -1597,7 +1597,7 @@ const Index = () => {
       {/* Intro Overlay */}
       {!started && !loading && terrain && !quadrantViewActive && (
         <IntroOverlay
-          onStart={() => setStarted(true)}
+          onStart={() => { setTerrainMode('satellite'); setStarted(true); }}
           onGuidedTour={startNarrative}
           onReading={startReading}
           onCanalTour={startCanalTour}
