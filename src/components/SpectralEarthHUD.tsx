@@ -7,6 +7,7 @@ import { sfx } from '@/lib/ui-sfx';
 import { useGamepad } from '@/hooks/useGamepad';
 import { consumeGamepadButton } from '@/lib/gamepad-dedupe';
 import { remapPadLabel } from '@/lib/pad-labels';
+import { isTouchOnly } from '@/lib/touch-device';
 import { FACE_PHRASES } from '@/lib/face-phrases';
 
 
