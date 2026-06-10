@@ -75,6 +75,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
   const inkColor = bgIsLight(bgColor) ? '#0a0a0a' : '#ffffff';
 
   const { stateRef } = useGamepad();
+  const [igOverlay, setIgOverlay] = useState<{ username: string | null; permalink: string | null } | null>(null);
 
 
 
