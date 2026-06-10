@@ -79,6 +79,8 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
   const { stateRef } = useGamepad();
   const [igOverlay, setIgOverlay] = useState<{ permalink: string | null } | null>(null);
   const [confirmShare, setConfirmShare] = useState(false);
+  const [confirmPrint, setConfirmPrint] = useState(false);
+
 
 
 
