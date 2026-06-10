@@ -476,8 +476,9 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
 
         // If a confirmation dialog is open, gamepad A confirms, B cancels.
         const cn = confirmNavRef.current; if (cn) {
-          if (aP && !prevPad.current.a) performNav(cn);
-          if (bP && !prevPad.current.b) { sfx.exit?.(); setConfirmNav(null); }
+          // Y (button 3) confirms · X (button 2) cancels
+          if (yP && !prevPad.current.y) performNav(cn);
+          if (xP && !prevPad.current.x) { sfx.exit?.(); setConfirmNav(null); }
           prevPad.current.a = aP; prevPad.current.b = bP; prevPad.current.x = xP; prevPad.current.y = yP;
           prevPad.current.lb = lbP; prevPad.current.rb = rbP;
           prevPad.current.back = backP; prevPad.current.start = startP;
