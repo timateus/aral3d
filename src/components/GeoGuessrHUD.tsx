@@ -224,7 +224,12 @@ const GeoGuessrHUD = ({ onExit, onPrev, onNext, getAimLatLon, getLatLonAtScreen,
           } else if (pendingRef.current) {
             confirmPending();
           } else {
-            place();
+            // First X press → set a PENDING guess at the crosshair (require confirmation).
+            const aim = getAimLatLon();
+            if (aim) {
+              setPending({ lat: aim.lat, lon: aim.lon });
+              sfx.navNext?.();
+            }
           }
         }
         if (consumeGamepadButton('lb', lb) && onPrev) {

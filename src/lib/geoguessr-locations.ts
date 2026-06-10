@@ -74,6 +74,22 @@ export function satelliteImageUrl(loc: GeoLocation, w = 640, h = 480): string {
   return `https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/${loc.lon},${loc.lat},${loc.zoom},0/${w}x${h}@2x?access_token=${MAPBOX_TOKEN}&attribution=false&logo=false`;
 }
 
+/**
+ * Warm the browser image cache for every GeoGuessr satellite reference image.
+ * Safe to call repeatedly — uses a module-level flag plus the browser HTTP cache.
+ * Called from earlier levels so the first photo of level 4 never shows a blank.
+ */
+let preloadStarted = false;
+export function preloadGeoGuessrImages(): void {
+  if (preloadStarted || typeof window === 'undefined') return;
+  preloadStarted = true;
+  for (const loc of GEO_LOCATIONS) {
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = satelliteImageUrl(loc, 480, 360);
+  }
+}
+
 /** Great-circle distance in km between two lat/lon points. */
 export function haversineKm(aLat: number, aLon: number, bLat: number, bLon: number): number {
   const R = 6371;

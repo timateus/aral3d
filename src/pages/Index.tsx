@@ -16,6 +16,7 @@ import SpectralEarthHUD from '@/components/SpectralEarthHUD';
 import MinistryHUD from '@/components/MinistryHUD';
 import WaterSimHUD from '@/components/WaterSimHUD';
 import GeoGuessrHUD from '@/components/GeoGuessrHUD';
+import { preloadGeoGuessrImages } from '@/lib/geoguessr-locations';
 import SettingsGear from '@/components/SettingsGear';
 import LevelIntroSplash from '@/components/LevelIntroSplash';
 import MapBuilderHUD from '@/components/MapBuilderHUD';
@@ -143,6 +144,9 @@ const Index = () => {
   }, []);
 
   // Track loading state for heavy layers
+  // Preload satellite reference images so Level 4 (GeoGuessr) never shows a blank.
+  useEffect(() => { preloadGeoGuessrImages(); }, []);
+
   useEffect(() => {
     const checks: { show: boolean; layer: string; isCached: () => boolean }[] = [
       { show: showWaterways, layer: 'waterways', isCached: isWaterwaysCached },
