@@ -701,7 +701,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
             <button
               onClick={() => { sfx.exit(); setIgOverlay(null); }}
               aria-label="close"
-              className="absolute top-4 right-4 z-10 flex items-center justify-center w-10 h-10 hover:brightness-110"
+              className="absolute top-4 right-4 z-10 flex items-center gap-2 px-2 h-10 hover:brightness-110"
               style={{
                 background: bgColor,
                 color: inkColor,
@@ -709,7 +709,9 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
               }}
             >
               <X className="w-5 h-5" />
+              <PadHint label="A/B" color={stops[2 % stops.length]} bg={bgColor} />
             </button>
+
 
             <div
               className="relative flex flex-col p-4"
