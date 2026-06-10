@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle, Suspense, useMemo } from 'react';
 import { faceModeBridge } from '@/lib/face-mode-bridge';
+import { useIsTouchOnly } from '@/lib/touch-device';
 import AgmarProposalMarkers from './AgmarProposalMarkers';
 import GroundwaterLayer from './GroundwaterLayer';
 import SalinityLayer from './SalinityLayer';
