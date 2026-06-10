@@ -12,6 +12,7 @@ import {
 import { useDesignerScheme, applyDesignerScheme, getDesignerScheme } from '@/lib/visual-mode';
 import { sfx } from '@/lib/ui-sfx';
 import { consumeGamepadButton } from '@/lib/gamepad-dedupe';
+import { padButtonPressed } from '@/lib/gamepad-stuck';
 
 
 function bgIsLight(hex: string): boolean {
