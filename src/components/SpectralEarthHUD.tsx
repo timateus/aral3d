@@ -230,9 +230,20 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
       console.warn('[print] share upload failed', e);
     }
 
-    const w = window.open('', '_blank');
-    if (!w) return;
-    w.document.write(`
+    // Print in the SAME tab via a hidden iframe instead of opening a new
+    // window (which is jarring and gets blocked by popup blockers).
+    const iframe = document.createElement('iframe');
+    iframe.setAttribute('aria-hidden', 'true');
+    iframe.style.cssText =
+      'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
+    document.body.appendChild(iframe);
+    const cleanup = () => {
+      setTimeout(() => { try { iframe.remove(); } catch {} }, 1000);
+    };
+    const doc = iframe.contentDocument;
+    if (!doc) { iframe.remove(); return; }
+    doc.open();
+    doc.write(`
       <!doctype html><html><head><title>Spectral Earth — Aral School 2026</title>
       <style>
         @page { size: landscape; margin: 6mm; }
@@ -252,7 +263,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
       </style></head>
       <body>
         <div class="page">
-          <img class="map" src="${url}" onload="setTimeout(()=>window.print(),400)" />
+          <img class="map" src="${url}" onload="setTimeout(()=>{try{window.focus();window.print();}catch(e){}},400)" />
           ${qrDataUrl ? `
             <div class="share">
               <img src="${qrDataUrl}" alt="QR" />
@@ -266,8 +277,14 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
         </div>
       </body></html>
     `);
-    w.document.close();
+    doc.close();
+    if (iframe.contentWindow) {
+      iframe.contentWindow.onafterprint = cleanup;
+    }
+    // Safety fallback in case onafterprint never fires (e.g. user cancels).
+    setTimeout(cleanup, 60_000);
   };
+
 
   // Post current view directly to YOUR Instagram via the share-to-instagram
   // edge function (uses INSTAGRAM_ACCESS_TOKEN + INSTAGRAM_USER_ID secrets).
