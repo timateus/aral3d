@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { padButtonPressed, padButtonValue } from '@/lib/gamepad-stuck';
+import { isTouchOnly } from '@/lib/touch-device';
 
 export interface GamepadState {
   connected: boolean;
@@ -75,7 +76,7 @@ export function useGamepad() {
     const onConnect = (e: GamepadEvent) => {
       setConnected(true);
       setPadId(e.gamepad.id);
-      toast.success('🎮 Controller connected', { description: e.gamepad.id });
+      if (!isTouchOnly()) toast.success('🎮 Controller connected', { description: e.gamepad.id });
       const meta = globalThis as any;
       meta.__padRightAxes = undefined;
       meta.__padRightAxesId = undefined;
@@ -84,7 +85,7 @@ export function useGamepad() {
       setConnected(false);
       setPadId(null);
       stateRef.current = emptyState();
-      toast('🎮 Controller disconnected', { description: e.gamepad.id });
+      if (!isTouchOnly()) toast('🎮 Controller disconnected', { description: e.gamepad.id });
     };
     window.addEventListener('gamepadconnected', onConnect);
     window.addEventListener('gamepaddisconnected', onDisconnect);
