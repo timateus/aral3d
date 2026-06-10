@@ -1558,7 +1558,7 @@ const Index = () => {
             showSchools={showSchools}
             showVocabulary={showVocabulary}
             showDwellings={showDwellings}
-            showPlaces={showPlaces}
+            showPlaces={isMapExploration ? false : showPlaces}
             agmarShowProposalSites={agmarTourActive && !!AGMAR_TOUR_STEPS[agmarTourStep]?.proposalSites}
             showOverlayMetrics={isMapExploration}
             showGroundwater={showGroundwater}
