@@ -584,7 +584,58 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
         );
       })()}
 
+      {/* Confirm printing the map */}
+      {confirmPrint && (
+        <div
+          className="fixed inset-0 z-[110] flex items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.75)' }}
+        >
+          <div
+            className="relative flex flex-col gap-5 p-6"
+            style={{
+              background: bgColor,
+              color: inkColor,
+              border: `2px solid ${stops[0]}`,
+              width: 'min(420px, 92vw)',
+            }}
+          >
+            <button
+              onClick={() => { sfx.exit(); setConfirmPrint(false); }}
+              aria-label="close"
+              className="absolute top-2 right-2 flex items-center justify-center w-8 h-8 hover:brightness-110"
+              style={{ background: bgColor, color: inkColor, border: `1.5px solid ${stops[1 % stops.length]}` }}
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <div className="text-[10px] font-mono uppercase tracking-[0.25em] opacity-70">Confirm</div>
+            <div className="text-base font-mono uppercase tracking-[0.15em]">
+              Print this map?
+            </div>
+            <div className="text-[11px] font-mono opacity-70 leading-relaxed">
+              Opens your browser's print dialog with the current view + manifesto baked in.
+            </div>
+            <div className="flex justify-end gap-3 mt-2">
+              <button
+                onClick={() => { sfx.exit(); setConfirmPrint(false); }}
+                className="flex items-center gap-2 px-4 py-2 text-[11px] font-mono uppercase tracking-[0.18em] hover:brightness-110"
+                style={{ background: bgColor, color: inkColor, border: `1.5px solid ${stops[1 % stops.length]}` }}
+              >
+                Cancel <PadHint label="B" color={stops[1 % stops.length]} bg={bgColor} />
+              </button>
+              <button
+                onClick={() => { sfx.make(); setConfirmPrint(false); handlePrint(); }}
+                className="flex items-center gap-2 px-4 py-2 text-[11px] font-mono uppercase tracking-[0.18em] hover:brightness-110"
+                style={{ background: stops[0], color: bgIsLight(stops[0]) ? '#0a0a0a' : '#ffffff', border: `1.5px solid ${stops[0]}` }}
+              >
+                Print <PadHint label="A" color={stops[0]} bg={stops[0]} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Confirm posting to Instagram */}
+
       {confirmShare && (
         <div
           className="fixed inset-0 z-[110] flex items-center justify-center"
