@@ -9,6 +9,7 @@ import { useIsTouchOnly } from '@/lib/touch-device';
  */
 const GamepadStickFix = () => {
   const { connected } = useGamepad();
+  const touchOnly = useIsTouchOnly();
   const [swap, setSwap] = useState(false);
   const [invX, setInvX] = useState(false);
   const [invY, setInvY] = useState(false);
