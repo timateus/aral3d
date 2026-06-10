@@ -26,6 +26,7 @@ import SchoolPlaceOverlay from '@/components/SchoolPlaceOverlay';
 import FaceCameraBackground from '@/components/FaceCameraBackground';
 import FacePhraseLayer from '@/components/FacePhraseLayer';
 import { faceModeBridge } from '@/lib/face-mode-bridge';
+import { useOverlayActive } from '@/hooks/useOverlayActive';
 
 
 import { applyRandomSpectralPalette } from '@/lib/visual-mode';
