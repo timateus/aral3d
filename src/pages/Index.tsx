@@ -779,39 +779,41 @@ const Index = () => {
   // Level 7 (Face) — ☝ index-up gesture asks Index to flip a layer on, then
   // off when released. Save previous values so the user's other toggles
   // aren't permanently overwritten.
+  const facePrevRef = useRef<Record<string, boolean>>({});
   useEffect(() => {
-    const prev: Record<string, boolean> = {};
-    const setters: Record<string, [boolean, (v: boolean) => void]> = {
-      salinity:    [showSalinity,    setShowSalinity],
-      landcover:   [showLandcover,   setShowLandcover],
-      waterways:   [showWaterways,   setShowWaterways],
-      schools:     [showSchools,     setShowSchools],
-      groundwater: [showGroundwater, setShowGroundwater],
-      popDensity:  [showPopDensity,  setShowPopDensity],
-      choropleth:  [showChoropleth,  setShowChoropleth],
-      migration:   [showMigration,   setShowMigration],
-      basin13:     [show13thBasin,   setShow13thBasin],
-      basin19:     [show19thBasin,   setShow19thBasin],
+    const setters: Record<string, [() => boolean, (v: boolean) => void]> = {
+      salinity:    [() => showSalinity,    setShowSalinity],
+      landcover:   [() => showLandcover,   setShowLandcover],
+      waterways:   [() => showWaterways,   setShowWaterways],
+      schools:     [() => showSchools,     setShowSchools],
+      groundwater: [() => showGroundwater, setShowGroundwater],
+      popDensity:  [() => showPopDensity,  setShowPopDensity],
+      choropleth:  [() => showChoropleth,  setShowChoropleth],
+      migration:   [() => showMigration,   setShowMigration],
+      basin13:     [() => show13thBasin,   setShow13thBasin],
+      basin19:     [() => show19thBasin,   setShow19thBasin],
     };
     const handler = (e: Event) => {
       const { key, active } = (e as CustomEvent).detail || {};
       const entry = setters[key];
       if (!entry) return;
-      const [curr, setter] = entry;
+      const [getCurr, setter] = entry;
+      const prev = facePrevRef.current;
       if (active) {
-        prev[key] = curr;
+        prev[key] = getCurr();
         setter(true);
       } else if (key in prev) {
         setter(prev[key]);
         delete prev[key];
+      } else {
+        setter(false);
       }
     };
     window.addEventListener('face:layer', handler);
     return () => window.removeEventListener('face:layer', handler);
-    // setters are stable; only re-bind when current values change (so prev is fresh)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showSalinity, showLandcover, showWaterways, showSchools, showGroundwater,
       showPopDensity, showChoropleth, showMigration, show13thBasin, show19thBasin]);
+
 
 
   // Game mode water pouring handler
