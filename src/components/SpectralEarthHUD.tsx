@@ -378,40 +378,87 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
 
 
 
-  // Gamepad: X = misbehave, B = print, Y = share to IG, RB = next level.
+  // Gamepad routing.
+  //   Top-level (no overlay open):
+  //     X  = misbehave (randomize)
+  //     B  = open Print confirm  (was: print directly)
+  //     Y  = open Share confirm
+  //     RB = next level
+  //   Any overlay open:
+  //     A  = confirm primary action (print / post / close IG)
+  //     B  = cancel / close overlay
   useEffect(() => {
     let raf = 0;
     const tick = () => {
       const s = stateRef.current;
       if (s.connected) {
-        if (consumeGamepadButton('x', s.buttons.x)) { sfx.make(); onRandomize(); }
-        if (consumeGamepadButton('b', s.buttons.b)) { sfx.make(); handlePrint(); }
-        if (consumeGamepadButton('y', s.buttons.y)) { sfx.make(); setConfirmShare(true); }
-        if (consumeGamepadButton('rb', s.buttons.rb) && onNext) { sfx.navNext(); onNext(); }
+        const aEdge = consumeGamepadButton('se-a', s.buttons.a);
+        const bEdge = consumeGamepadButton('se-b', s.buttons.b);
+        const xEdge = consumeGamepadButton('se-x', s.buttons.x);
+        const yEdge = consumeGamepadButton('se-y', s.buttons.y);
+        const rbEdge = consumeGamepadButton('se-rb', s.buttons.rb);
+        const anyOverlay = confirmPrint || confirmShare || !!igOverlay;
+        if (anyOverlay) {
+          if (aEdge) {
+            sfx.make();
+            if (igOverlay) setIgOverlay(null);
+            else if (confirmPrint) { setConfirmPrint(false); handlePrint(); }
+            else if (confirmShare) { setConfirmShare(false); handleShare(); }
+          }
+          if (bEdge) {
+            sfx.exit();
+            if (igOverlay) setIgOverlay(null);
+            else if (confirmPrint) setConfirmPrint(false);
+            else if (confirmShare) setConfirmShare(false);
+          }
+        } else {
+          if (xEdge) { sfx.make(); onRandomize(); }
+          if (bEdge) { sfx.make(); setConfirmPrint(true); }
+          if (yEdge) { sfx.make(); setConfirmShare(true); }
+          if (rbEdge && onNext) { sfx.navNext(); onNext(); }
+        }
       }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onRandomize, onNext]);
+  }, [onRandomize, onNext, confirmPrint, confirmShare, igOverlay]);
 
   // Keyboard navigation
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
       if (t && /input|textarea|select/i.test(t.tagName)) return;
+      const anyOverlay = confirmPrint || confirmShare || !!igOverlay;
+      if (anyOverlay) {
+        if (e.key === 'Escape') {
+          e.preventDefault(); sfx.exit();
+          if (igOverlay) setIgOverlay(null);
+          else if (confirmPrint) setConfirmPrint(false);
+          else if (confirmShare) setConfirmShare(false);
+        } else if (e.key === 'Enter') {
+          e.preventDefault(); sfx.make();
+          if (igOverlay) setIgOverlay(null);
+          else if (confirmPrint) { setConfirmPrint(false); handlePrint(); }
+          else if (confirmShare) { setConfirmShare(false); handleShare(); }
+        }
+        return;
+      }
       if (e.key === ' ' || e.key === 'Enter' || e.key === 'x' || e.key === 'X') {
         e.preventDefault(); sfx.make(); onRandomize();
       } else if (e.key === 'b' || e.key === 'B') {
-        e.preventDefault(); sfx.make(); handlePrint();
+        e.preventDefault(); sfx.make(); setConfirmPrint(true);
       } else if (e.key === 'ArrowRight' && onNext) {
         e.preventDefault(); sfx.navNext(); onNext();
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onRandomize, onNext]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onRandomize, onNext, confirmPrint, confirmShare, igOverlay]);
+
+
 
   return (
 
