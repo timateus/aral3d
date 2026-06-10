@@ -513,6 +513,112 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
           </button>
         );
       })()}
+
+      {/* Instagram overlay shown after a successful share */}
+      {igOverlay && (() => {
+        const username = igOverlay.username;
+        const profileUrl = username ? `https://www.instagram.com/${username}/` : null;
+        // Derive shortcode from permalink: https://www.instagram.com/p/<code>/
+        const shortMatch = igOverlay.permalink?.match(/\/(p|reel)\/([^/?#]+)/);
+        const embedUrl = shortMatch
+          ? `https://www.instagram.com/${shortMatch[1]}/${shortMatch[2]}/embed`
+          : null;
+        return (
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center"
+            style={{ background: 'rgba(0,0,0,0.85)' }}
+          >
+            <button
+              onClick={() => { sfx.exit(); setIgOverlay(null); }}
+              aria-label="close"
+              className="absolute top-4 right-4 z-10 flex items-center justify-center w-10 h-10 hover:brightness-110"
+              style={{
+                background: bgColor,
+                color: inkColor,
+                border: `2px solid ${stops[2 % stops.length]}`,
+              }}
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div
+              className="relative flex gap-4 p-4"
+              style={{
+                background: bgColor,
+                border: `2px solid ${stops[1 % stops.length]}`,
+                maxWidth: '95vw',
+                maxHeight: '92vh',
+              }}
+            >
+              {/* Profile page */}
+              <div className="flex flex-col" style={{ width: 'min(520px, 45vw)' }}>
+                <div
+                  className="px-2 py-1 text-[10px] font-mono uppercase tracking-[0.2em]"
+                  style={{ color: inkColor }}
+                >
+                  @{username ?? 'profile'}
+                </div>
+                <iframe
+                  src={profileUrl ?? 'about:blank'}
+                  title="Instagram profile"
+                  className="flex-1 bg-white"
+                  style={{ width: '100%', height: 'min(720px, 80vh)', border: `1px solid ${stops[0]}` }}
+                  sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                />
+                {profileUrl && (
+                  <a
+                    href={profileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2 text-[10px] font-mono uppercase tracking-[0.2em] underline"
+                    style={{ color: stops[2 % stops.length] }}
+                  >
+                    Open profile in new tab ↗
+                  </a>
+                )}
+              </div>
+
+              {/* New post embed */}
+              <div className="flex flex-col" style={{ width: 'min(440px, 40vw)' }}>
+                <div
+                  className="px-2 py-1 text-[10px] font-mono uppercase tracking-[0.2em]"
+                  style={{ color: inkColor }}
+                >
+                  New post
+                </div>
+                {embedUrl ? (
+                  <iframe
+                    src={embedUrl}
+                    title="New Instagram post"
+                    className="flex-1 bg-white"
+                    style={{ width: '100%', height: 'min(720px, 80vh)', border: `1px solid ${stops[0]}` }}
+                    scrolling="no"
+                    allowTransparency
+                  />
+                ) : (
+                  <div
+                    className="flex-1 flex items-center justify-center text-[11px] font-mono"
+                    style={{ color: inkColor, border: `1px solid ${stops[0]}`, height: 'min(720px, 80vh)' }}
+                  >
+                    Post published — permalink unavailable.
+                  </div>
+                )}
+                {igOverlay.permalink && (
+                  <a
+                    href={igOverlay.permalink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2 text-[10px] font-mono uppercase tracking-[0.2em] underline"
+                    style={{ color: stops[2 % stops.length] }}
+                  >
+                    Open post in new tab ↗
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </>
   );
 };
