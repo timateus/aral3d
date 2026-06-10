@@ -1928,6 +1928,7 @@ const Index = () => {
         />
       )}
       {schoolMode && <SchoolPlaceOverlay hidden={schoolDialogOpen} />}
+      <LocationNameOverlay active={(placeMode || schoolMode) && !schoolDialogOpen} />
 
       <SettingsGear active={spectralMode || ministryMode || simMode || geoMode || placeMode || schoolMode} />
 
