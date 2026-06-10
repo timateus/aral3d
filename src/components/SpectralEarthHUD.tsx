@@ -668,19 +668,20 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
             <div className="flex justify-end gap-3 mt-2">
               <button
                 onClick={() => { sfx.exit(); setConfirmShare(false); }}
-                className="px-4 py-2 text-[11px] font-mono uppercase tracking-[0.18em] hover:brightness-110"
+                className="flex items-center gap-2 px-4 py-2 text-[11px] font-mono uppercase tracking-[0.18em] hover:brightness-110"
                 style={{ background: bgColor, color: inkColor, border: `1.5px solid ${stops[1 % stops.length]}` }}
               >
-                Cancel
+                Cancel <PadHint label="B" color={stops[1 % stops.length]} bg={bgColor} />
               </button>
               <button
                 onClick={() => { sfx.make(); setConfirmShare(false); handleShare(); }}
-                className="px-4 py-2 text-[11px] font-mono uppercase tracking-[0.18em] hover:brightness-110"
+                className="flex items-center gap-2 px-4 py-2 text-[11px] font-mono uppercase tracking-[0.18em] hover:brightness-110"
                 style={{ background: stops[3 % stops.length], color: bgIsLight(stops[3 % stops.length]) ? '#0a0a0a' : '#ffffff', border: `1.5px solid ${stops[3 % stops.length]}` }}
               >
-                Post to Instagram
+                Post to Instagram <PadHint label="A" color={stops[3 % stops.length]} bg={stops[3 % stops.length]} />
               </button>
             </div>
+
           </div>
         </div>
       )}
