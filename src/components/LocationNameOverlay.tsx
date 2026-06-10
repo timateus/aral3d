@@ -22,15 +22,26 @@ interface NamedRegion {
 
 // Ordered most-specific first so smaller regions win when nested inside a bigger one.
 const REGIONS: NamedRegion[] = [
-  { key: 'muynak',      name: 'Muynak Ship Graveyard',  sub: 'rusted fleet on the dry seabed', lat: 43.778, lon: 59.030, radius: 0.18 },
-  { key: 'kegeyli',     name: 'Kegeyli',                sub: 'home of School 12',               lat: 42.748, lon: 59.583, radius: 0.10 },
-  { key: 'nukus',       name: 'Nukus',                  sub: 'capital of Karakalpakstan',       lat: 42.460, lon: 59.610, radius: 0.18 },
-  { key: 'khiva',       name: 'Ancient Khorezm',        sub: 'Khiva · oasis civilization',      lat: 41.378, lon: 60.363, radius: 0.30 },
-  { key: 'aralsk',      name: 'Aralsk',                 sub: 'former northern port',            lat: 46.800, lon: 61.660, radius: 0.22 },
-  { key: 'vozrozh',     name: 'Vozrozhdeniya Island',   sub: 'biowarfare ghost lab',            lat: 45.150, lon: 59.400, radius: 0.35 },
-  { key: 'amudelta',    name: 'Amu Darya Delta',        sub: 'where the river barely reaches',  lat: 43.500, lon: 59.450, radius: 0.55 },
-  { key: 'aralkum',     name: 'Aralkum Desert',         sub: 'youngest desert on Earth',        lat: 44.800, lon: 60.000, radius: 1.40 },
-  { key: 'karakalpak',  name: 'Karakalpakstan',         sub: '',                                 lat: 43.500, lon: 59.000, radius: 3.50 },
+  // — Most specific first —
+  { key: 'muynak',      name: 'Muynak Ship Graveyard',  sub: 'rusted fleet on the dry seabed',  lat: 43.778, lon: 59.030, radius: 0.18 },
+  { key: 'kegeyli',     name: 'Kegeyli',                sub: 'home of School 12',                lat: 42.748, lon: 59.583, radius: 0.10 },
+  { key: 'nukus',       name: 'Nukus',                  sub: 'capital of Karakalpakstan',        lat: 42.460, lon: 59.610, radius: 0.18 },
+  { key: 'khiva',       name: 'Ancient Khorezm',        sub: 'Khiva · oasis civilization',       lat: 41.378, lon: 60.363, radius: 0.30 },
+  { key: 'aralsk',      name: 'Aralsk · Kazakhstan',    sub: 'former northern port',             lat: 46.800, lon: 61.660, radius: 0.22 },
+  { key: 'vozrozh',     name: 'Vozrozhdeniya Island',   sub: 'biowarfare ghost lab',             lat: 45.150, lon: 59.400, radius: 0.35 },
+  // — Kazakhstan regions / landmarks —
+  { key: 'barsa',       name: 'Barsakelmes',            sub: '"you go and don\u2019t come back"', lat: 45.700, lon: 59.950, radius: 0.30 },
+  { key: 'karatau',     name: 'Karatau Range',          sub: 'black mountains of Kazakhstan',    lat: 43.700, lon: 69.500, radius: 1.20 },
+  { key: 'ustyurt',     name: 'Ustyurt Plateau',        sub: 'wind-cut chalk plateau',           lat: 44.500, lon: 56.000, radius: 2.50 },
+  { key: 'syrdarya',    name: 'Syr Darya',              sub: 'the other great river of the sea', lat: 45.300, lon: 63.500, radius: 1.40 },
+  { key: 'kyzylorda',   name: 'Kyzylorda Region',       sub: 'rice paddies along the Syr Darya', lat: 44.800, lon: 65.500, radius: 1.60 },
+  { key: 'mangystau',   name: 'Mangystau · Kazakhstan', sub: 'Caspian shore & oil country',      lat: 44.200, lon: 52.500, radius: 1.80 },
+  { key: 'aktobe',      name: 'Aktobe Region',          sub: 'steppe and salt lakes',            lat: 48.500, lon: 58.500, radius: 2.00 },
+  // — Broad regions last (largest geofences) —
+  { key: 'amudelta',    name: 'Amu Darya Delta',        sub: 'where the river barely reaches',   lat: 43.500, lon: 59.450, radius: 0.55 },
+  { key: 'aralkum',     name: 'Aralkum Desert',         sub: 'youngest desert on Earth',         lat: 44.800, lon: 60.000, radius: 1.40 },
+  { key: 'kazakhstan',  name: 'Kazakhstan',             sub: 'the great steppe',                 lat: 47.500, lon: 62.000, radius: 4.50 },
+  { key: 'karakalpak',  name: 'Karakalpakstan',         sub: '',                                  lat: 43.500, lon: 59.000, radius: 3.50 },
 ];
 
 interface ShownBanner { key: string; name: string; sub?: string; id: number }

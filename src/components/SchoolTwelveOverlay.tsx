@@ -379,12 +379,13 @@ const SchoolTwelveOverlay = ({
       if (pad) {
         const cn = confirmRef.current;
         if (cn) {
-          if (consumeGamepadButton('st-conf-a', !!pad.buttons[0]?.pressed, { cooldownMs: 400, ignoreBlock: true })) {
+          // Y (button 3) confirms · X (button 2) cancels
+          if (consumeGamepadButton('st-conf-y', !!pad.buttons[3]?.pressed, { cooldownMs: 400, ignoreBlock: true })) {
             sfx[cn === 'prev' ? 'navPrev' : 'navNext']?.();
             setConfirmNav(null);
             if (cn === 'prev') onPrev?.(); else onNext?.();
           }
-          if (consumeGamepadButton('st-conf-b', !!pad.buttons[1]?.pressed, { cooldownMs: 400, ignoreBlock: true })) {
+          if (consumeGamepadButton('st-conf-x', !!pad.buttons[2]?.pressed, { cooldownMs: 400, ignoreBlock: true })) {
             sfx.exit?.();
             setConfirmNav(null);
           }
@@ -528,14 +529,14 @@ const SchoolTwelveOverlay = ({
       {confirmNav && (
         <div
           data-hud
-          className="fixed inset-0 z-[140] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in"
+          className="fixed inset-0 z-[140] flex items-center justify-center bg-slate-900/40 backdrop-blur-[3px] animate-in fade-in"
           onClick={() => setConfirmNav(null)}
         >
           <div
-            className="px-8 py-7 border border-white/30 bg-zinc-950 text-white font-mono text-center max-w-md"
+            className="px-8 py-7 border border-white/30 bg-slate-800/85 backdrop-blur-md text-white font-mono text-center max-w-md shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="text-[10px] uppercase tracking-[0.4em] text-white/55 mb-3">leave this level?</div>
+            <div className="text-[10px] uppercase tracking-[0.4em] text-white/65 mb-3">leave this level?</div>
             <div className="text-xl mb-6">Go to {confirmNav === 'prev' ? 'previous' : 'next'} level?</div>
             <div className="flex items-center justify-center gap-3">
               <button
@@ -547,13 +548,13 @@ const SchoolTwelveOverlay = ({
                 }}
                 className="px-5 py-2 text-[11px] uppercase tracking-[0.3em] bg-white text-black hover:brightness-110"
               >
-                1 · Yes
+                Y · Yes
               </button>
               <button
                 onClick={() => { sfx.exit?.(); setConfirmNav(null); }}
-                className="px-5 py-2 text-[11px] uppercase tracking-[0.3em] border border-white/30 hover:bg-white/10"
+                className="px-5 py-2 text-[11px] uppercase tracking-[0.3em] border border-white/40 hover:bg-white/10"
               >
-                2 · Cancel
+                X · Cancel
               </button>
             </div>
           </div>

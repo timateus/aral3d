@@ -26,6 +26,7 @@ import SchoolPlaceOverlay from '@/components/SchoolPlaceOverlay';
 import FaceCameraBackground from '@/components/FaceCameraBackground';
 import FacePhraseLayer from '@/components/FacePhraseLayer';
 import { faceModeBridge } from '@/lib/face-mode-bridge';
+import { useOverlayActive } from '@/hooks/useOverlayActive';
 
 
 import { applyRandomSpectralPalette } from '@/lib/visual-mode';
@@ -129,6 +130,9 @@ const Index = () => {
   const [showVocabulary, setShowVocabulary] = useState(false);
   const [showDwellings, setShowDwellings] = useState(false);
   const [showPlaces, setShowPlaces] = useState(true);
+  // True whenever any modal/dialog/menu is on top of the map — used to hide
+  // city labels and place markers that would otherwise bleed through.
+  const overlayActive = useOverlayActive();
   const [showGroundwater, setShowGroundwater] = useState(false);
   const [showPrecipitation, setShowPrecipitation] = useState(false);
   const [showSalinity, setShowSalinity] = useState(false);
@@ -1508,7 +1512,7 @@ const Index = () => {
             onRiverFlyoverDone={() => setRiverFlyover(false)}
             riverInflow={currentRiverInflow}
             userLocation={schoolMode ? schoolTarget : userLocation}
-            showCityMarkers={!levelIntro && !schoolDialogOpen}
+            showCityMarkers={!levelIntro && !schoolDialogOpen && !overlayActive}
             inspectorEnabled={showInspector}
             damToolActive={damToolActive}
             onDamPlace={handleRaiseTerrainClick}
@@ -1558,7 +1562,7 @@ const Index = () => {
             showSchools={showSchools}
             showVocabulary={showVocabulary}
             showDwellings={showDwellings}
-            showPlaces={isMapExploration ? false : showPlaces}
+            showPlaces={isMapExploration || overlayActive ? false : showPlaces}
             agmarShowProposalSites={agmarTourActive && !!AGMAR_TOUR_STEPS[agmarTourStep]?.proposalSites}
             showOverlayMetrics={isMapExploration}
             showGroundwater={showGroundwater}
