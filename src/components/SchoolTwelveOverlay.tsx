@@ -195,23 +195,23 @@ const SchoolDialog = ({ onClose }: { onClose: () => void }) => {
         >
           <X className="h-5 w-5" />
         </button>
-        <div className="grid md:grid-cols-[1.05fr_0.95fr]">
-          <div className="p-8 md:p-10">
+        <div className="grid md:grid-cols-[1.1fr_0.9fr]">
+          <div className="p-5 md:p-6">
             <div
-              className="text-[12px] uppercase tracking-[0.4em] mb-4"
+              className="text-[10px] uppercase tracking-[0.35em] mb-2"
               style={{ fontFamily: MENU_FONT, color: '#ffd23f' }}
             >
               ★ school 12 · kegeyli ★
             </div>
             <h2
-              className="mb-5"
+              className="mb-3"
               style={{
                 fontFamily: HEADING_FONT,
-                fontSize: 'clamp(38px,5.6vw,70px)',
+                fontSize: 'clamp(24px,3.6vw,40px)',
                 lineHeight: 0.95,
                 color: '#fff7ff',
                 textShadow:
-                  '0 0 24px rgba(255,79,184,0.6), 3px 3px 0 #ff4fb8, 6px 6px 0 rgba(0,0,0,0.35)',
+                  '0 0 18px rgba(255,79,184,0.6), 2px 2px 0 #ff4fb8, 4px 4px 0 rgba(0,0,0,0.35)',
                 transform: 'rotate(-1.5deg)',
                 display: 'inline-block',
               }}
@@ -219,10 +219,10 @@ const SchoolDialog = ({ onClose }: { onClose: () => void }) => {
               Play the games we made!
             </h2>
             <p
-              className="leading-snug mb-7"
+              className="leading-snug mb-4"
               style={{
                 fontFamily: BODY_FONT,
-                fontSize: 'clamp(16px,1.55vw,22px)',
+                fontSize: 'clamp(12px,1.1vw,15px)',
                 color: '#fffbea',
                 textShadow: '0 2px 12px rgba(0,0,0,0.5)',
               }}
@@ -230,7 +230,7 @@ const SchoolDialog = ({ onClose }: { onClose: () => void }) => {
               Worlds built by students of School 12 — pick one and explore!
             </p>
 
-            <ul className="space-y-3">
+            <ul className="space-y-2">
               {items.map((it, i) => {
                 const active = i === sel;
                 const c = ITEM_COLORS[i % ITEM_COLORS.length];
