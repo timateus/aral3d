@@ -483,7 +483,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
           <PadHint label="B" color={stops[0]} bg={bgColor} />
         </button>
         <button
-          onClick={() => { sfx.make(); handleShare(); }}
+          onClick={() => { sfx.make(); setConfirmShare(true); }}
           className="group flex items-center gap-2 px-3 py-2 text-[11px] font-medium font-mono uppercase tracking-[0.18em] backdrop-blur-md transition-all hover:brightness-110"
           style={{
             border: `1px solid ${stops[3 % stops.length]}`,
