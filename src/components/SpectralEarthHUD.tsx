@@ -75,7 +75,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
   const inkColor = bgIsLight(bgColor) ? '#0a0a0a' : '#ffffff';
 
   const { stateRef } = useGamepad();
-  const [igOverlay, setIgOverlay] = useState<{ username: string | null; permalink: string | null } | null>(null);
+  const [igOverlay, setIgOverlay] = useState<{ permalink: string | null } | null>(null);
 
 
 
@@ -344,9 +344,8 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
       const permalink = (data as any)?.permalink ?? null;
-      const username = (data as any)?.username ?? null;
       toast.remove();
-      setIgOverlay({ username, permalink });
+      setIgOverlay({ permalink });
     } catch (e: any) {
       console.error('[share] failed', e);
       toast.textContent = `Share failed: ${e?.message ?? 'unknown'}`;
@@ -357,7 +356,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
 
 
 
-  // Gamepad: X = misbehave, B = print, RB = next level.
+  // Gamepad: X = misbehave, B = print, Y = share to IG, RB = next level.
   useEffect(() => {
     let raf = 0;
     const tick = () => {
@@ -365,6 +364,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
       if (s.connected) {
         if (consumeGamepadButton('x', s.buttons.x)) { sfx.make(); onRandomize(); }
         if (consumeGamepadButton('b', s.buttons.b)) { sfx.make(); handlePrint(); }
+        if (consumeGamepadButton('y', s.buttons.y)) { sfx.make(); handleShare(); }
         if (consumeGamepadButton('rb', s.buttons.rb) && onNext) { sfx.navNext(); onNext(); }
       }
       raf = requestAnimationFrame(tick);
@@ -493,6 +493,7 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
         >
           <Share2 className="w-3 h-3" style={{ color: stops[3 % stops.length] }} />
           Share to IG
+          <PadHint label="Y" color={stops[3 % stops.length]} bg={bgColor} />
         </button>
       </div>
 
@@ -516,8 +517,6 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
 
       {/* Instagram overlay shown after a successful share */}
       {igOverlay && (() => {
-        const username = igOverlay.username;
-        const profileUrl = username ? `https://www.instagram.com/${username}/` : null;
         // Derive shortcode from permalink: https://www.instagram.com/p/<code>/
         const shortMatch = igOverlay.permalink?.match(/\/(p|reel)\/([^/?#]+)/);
         const embedUrl = shortMatch
@@ -542,79 +541,49 @@ const SpectralEarthHUD = ({ onExit, onRandomize, onNext, randomSeed = 0 }: Props
             </button>
 
             <div
-              className="relative flex gap-4 p-4"
+              className="relative flex flex-col p-4"
               style={{
                 background: bgColor,
                 border: `2px solid ${stops[1 % stops.length]}`,
-                maxWidth: '95vw',
+                width: 'min(500px, 92vw)',
+                maxWidth: '92vw',
                 maxHeight: '92vh',
               }}
             >
-              {/* Profile page */}
-              <div className="flex flex-col" style={{ width: 'min(520px, 45vw)' }}>
-                <div
-                  className="px-2 py-1 text-[10px] font-mono uppercase tracking-[0.2em]"
-                  style={{ color: inkColor }}
-                >
-                  @{username ?? 'profile'}
-                </div>
+              <div
+                className="px-2 py-1 text-[10px] font-mono uppercase tracking-[0.2em]"
+                style={{ color: inkColor }}
+              >
+                New Instagram post
+              </div>
+              {embedUrl ? (
                 <iframe
-                  src={profileUrl ?? 'about:blank'}
-                  title="Instagram profile"
-                  className="flex-1 bg-white"
-                  style={{ width: '100%', height: 'min(720px, 80vh)', border: `1px solid ${stops[0]}` }}
-                  sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                  src={embedUrl}
+                  title="New Instagram post"
+                  className="bg-white"
+                  style={{ width: '100%', height: 'min(720px, 78vh)', border: `1px solid ${stops[0]}` }}
+                  scrolling="no"
+                  allowTransparency
                 />
-                {profileUrl && (
-                  <a
-                    href={profileUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-2 text-[10px] font-mono uppercase tracking-[0.2em] underline"
-                    style={{ color: stops[2 % stops.length] }}
-                  >
-                    Open profile in new tab ↗
-                  </a>
-                )}
-              </div>
-
-              {/* New post embed */}
-              <div className="flex flex-col" style={{ width: 'min(440px, 40vw)' }}>
+              ) : (
                 <div
-                  className="px-2 py-1 text-[10px] font-mono uppercase tracking-[0.2em]"
-                  style={{ color: inkColor }}
+                  className="flex items-center justify-center text-[11px] font-mono"
+                  style={{ color: inkColor, border: `1px solid ${stops[0]}`, height: 'min(720px, 78vh)' }}
                 >
-                  New post
+                  Post published — permalink unavailable.
                 </div>
-                {embedUrl ? (
-                  <iframe
-                    src={embedUrl}
-                    title="New Instagram post"
-                    className="flex-1 bg-white"
-                    style={{ width: '100%', height: 'min(720px, 80vh)', border: `1px solid ${stops[0]}` }}
-                    scrolling="no"
-                    allowTransparency
-                  />
-                ) : (
-                  <div
-                    className="flex-1 flex items-center justify-center text-[11px] font-mono"
-                    style={{ color: inkColor, border: `1px solid ${stops[0]}`, height: 'min(720px, 80vh)' }}
-                  >
-                    Post published — permalink unavailable.
-                  </div>
-                )}
-                {igOverlay.permalink && (
-                  <a
-                    href={igOverlay.permalink}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-2 text-[10px] font-mono uppercase tracking-[0.2em] underline"
-                    style={{ color: stops[2 % stops.length] }}
-                  >
-                    Open post in new tab ↗
-                  </a>
-                )}
-              </div>
+              )}
+              {igOverlay.permalink && (
+                <a
+                  href={igOverlay.permalink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 text-[10px] font-mono uppercase tracking-[0.2em] underline"
+                  style={{ color: stops[2 % stops.length] }}
+                >
+                  Open post in new tab ↗
+                </a>
+              )}
             </div>
           </div>
         );
