@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ExternalLink, Navigation2, X } from 'lucide-react';
 import { sfx } from '@/lib/ui-sfx';
 import { consumeGamepadButton } from '@/lib/gamepad-dedupe';
