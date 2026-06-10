@@ -258,7 +258,18 @@ const FaceCameraBackground = () => {
           }
           // ---- NO HANDS ----
           else {
-            st.palmDir = null;
+            // MediaPipe can briefly drop an open palm near frame edges; keep the
+            // last L/R/T/B orbit alive for a moment so rotation does not feel stuck.
+            const age = performance.now() - st.palmDirAt;
+            if (st.palmDir && age < 750) {
+              const SPEED = 1.1;
+              if (st.palmDir === 'left')   azRate  = +SPEED;
+              if (st.palmDir === 'right')  azRate  = -SPEED;
+              if (st.palmDir === 'top')    polRate = +SPEED;
+              if (st.palmDir === 'bottom') polRate = -SPEED;
+            } else {
+              st.palmDir = null;
+            }
             st.twoHandMode = null;
             if (st.fingerUpActive) {
               st.fingerUpActive = false;
