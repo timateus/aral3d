@@ -85,7 +85,7 @@ export function useGamepad() {
       setConnected(false);
       setPadId(null);
       stateRef.current = emptyState();
-      toast('🎮 Controller disconnected', { description: e.gamepad.id });
+      if (!isTouchOnly()) toast('🎮 Controller disconnected', { description: e.gamepad.id });
     };
     window.addEventListener('gamepadconnected', onConnect);
     window.addEventListener('gamepaddisconnected', onDisconnect);
