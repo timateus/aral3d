@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useGamepad } from '@/hooks/useGamepad';
+import { useIsTouchOnly } from '@/lib/touch-device';
 
 /**
  * Tiny floating HUD chip that lets the user correct right-stick mapping on
