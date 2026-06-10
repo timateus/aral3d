@@ -295,7 +295,7 @@ const FaceCameraBackground = () => {
           ctx.font = '11px ui-monospace, monospace';
           ctx.fillText(
             count === 0 ? 'open palm L/R/T/B · two hands together to zoom in · apart to zoom out'
-            : count === 1 ? 'open palm to orbit · ☝ index up reveals a data layer'
+            : count === 1 ? 'open palm to orbit · ☝ index up cycles data layers (raise to show, raise again to hide)'
             : st.twoHandMode === 'in' ? '🙏 zooming in…'
             : st.twoHandMode === 'out' ? '↔ zooming out…'
             : 'two hands · come closer to zoom in, spread apart to zoom out',

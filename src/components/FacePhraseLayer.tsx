@@ -86,18 +86,30 @@ export const FacePhraseLayer = () => {
       if (hideTimer) window.clearTimeout(hideTimer);
       hideTimer = window.setTimeout(() => setPhrase(null), 3200);
     };
+    // Index-finger gesture cycles through data layers, one at a time:
+    //   raise ☝  → show layer N
+    //   raise ☝  → hide it
+    //   raise ☝  → show layer N+1
+    //   raise ☝  → hide it
+    // We only react to the rising edge (active === true) so a held finger
+    // doesn't spam the cycle.
+    let cursor = -1;
+    let visibleKey: string | null = null;
     const onFingerUp = (e: Event) => {
       const { active } = (e as CustomEvent).detail;
-      if (active) {
-        const next = LAYERS[Math.floor(Math.random() * LAYERS.length)];
-        setLayer(next);
-        // Tell Index.tsx to actually show the layer on the terrain.
-        window.dispatchEvent(new CustomEvent('face:layer', { detail: { key: next.key, active: true } }));
+      if (!active) return; // only rising edges advance the cycle
+      if (visibleKey) {
+        // Currently showing something → hide it.
+        window.dispatchEvent(new CustomEvent('face:layer', { detail: { key: visibleKey, active: false } }));
+        visibleKey = null;
+        setLayer(null);
       } else {
-        setLayer((cur) => {
-          if (cur) window.dispatchEvent(new CustomEvent('face:layer', { detail: { key: cur.key, active: false } }));
-          return null;
-        });
+        // Advance to the next layer and show it.
+        cursor = (cursor + 1) % LAYERS.length;
+        const next = LAYERS[cursor];
+        visibleKey = next.key;
+        setLayer(next);
+        window.dispatchEvent(new CustomEvent('face:layer', { detail: { key: next.key, active: true } }));
       }
     };
     window.addEventListener('face:phrase', onPhrase);
