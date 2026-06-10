@@ -593,7 +593,8 @@ const TerrainViewer = forwardRef<TerrainViewerHandle, TerrainViewerProps>(({ ter
     <Canvas
       camera={{ position: [0, 18, 8], fov: 50, near: 0.1, far: 1000 }}
       className="w-full h-full"
-      gl={{ antialias: true, toneMapping: 3, preserveDrawingBuffer: true, alpha: true }}
+      dpr={[2, 3]}
+      gl={{ antialias: true, toneMapping: 3, preserveDrawingBuffer: true, alpha: true, powerPreference: 'high-performance' }}
     >
       <SceneBackground />
       <FaceModeTransparentClear />

@@ -1597,7 +1597,7 @@ const Index = () => {
       {/* Intro Overlay */}
       {!started && !loading && terrain && !quadrantViewActive && (
         <IntroOverlay
-          onStart={() => setStarted(true)}
+          onStart={() => { setTerrainMode('satellite'); setStarted(true); }}
           onGuidedTour={startNarrative}
           onReading={startReading}
           onCanalTour={startCanalTour}
@@ -1764,13 +1764,19 @@ const Index = () => {
           >Exit</button>
           <button
             data-hud
-            onClick={() => enterGameLevel(1)}
-            aria-label="next level"
+            onClick={() => {
+              setFaceMode(false);
+              setSpectralMode(false);
+              setStarted(false);
+              setVisualMode(spectralPrevModeRef.current);
+              setExaggeration(spectralPrevExaggerationRef.current);
+            }}
+            aria-label="back to main menu"
             className="fixed right-2 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center justify-center text-white/85 hover:text-white"
-            title="Back to Level 1"
+            title="Back to Main Menu"
           >
             <svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
-            <span className="mt-1 px-2 py-0.5 text-[10px] font-mono border border-white/40 rounded">→ Level 1</span>
+            <span className="mt-1 px-2 py-0.5 text-[10px] font-mono border border-white/40 rounded">→ Main menu</span>
           </button>
         </>
       )}
@@ -2281,7 +2287,7 @@ const Index = () => {
         </div>
       )}
 
-      {visualMode === 'designer' && isMapExploration && !isMobile && (
+      {visualMode === 'designer' && isMapExploration && !isMobile && false && (
         <DesignerPanel onClose={() => setVisualMode('mirage')} />
       )}
 

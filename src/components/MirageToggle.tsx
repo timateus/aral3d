@@ -1,14 +1,16 @@
 import { useVisualMode } from '@/lib/visual-mode';
-import { Sun, Moon, SlidersHorizontal } from 'lucide-react';
+import { Sun, Moon } from 'lucide-react';
 
 /**
  * Cycles between dark → mirage → designer → dark.
  */
 const MirageToggle = () => {
   const [mode, setMode] = useVisualMode();
-  const next = mode === 'dark' ? 'mirage' : mode === 'mirage' ? 'designer' : 'dark';
-  const Icon = mode === 'dark' ? Sun : mode === 'mirage' ? SlidersHorizontal : Moon;
-  const label = mode === 'dark' ? 'Mirage' : mode === 'mirage' ? 'Designer' : 'Dark';
+  // Designer mode hidden from Explore — toggle now just flips dark ⇄ mirage.
+  const current = mode === 'designer' ? 'dark' : mode;
+  const next = current === 'dark' ? 'mirage' : 'dark';
+  const Icon = current === 'dark' ? Sun : Moon;
+  const label = current === 'dark' ? 'Mirage' : 'Dark';
   return (
     <button
       onClick={() => setMode(next)}
