@@ -470,10 +470,22 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
         const aP = !!buttons.a, bP = !!buttons.b, xP = !!buttons.x, yP = !!buttons.y;
         const lbP = !!buttons.lb, rbP = !!buttons.rb;
         const backP = !!buttons.back, startP = !!buttons.start;
-        const dlP = !!buttons.dpadLeft, drP = !!buttons.dpadRight;
+        const dlP = !!buttons.left, drP = !!buttons.right;
 
-        // Build (X or RB) hold-to-repeat
-        const buildHeld = xP || rbP;
+        // If a confirmation dialog is open, gamepad A confirms, B cancels.
+        if (confirmNav) {
+          if (aP && !prevPad.current.a) performNav(confirmNav);
+          if (bP && !prevPad.current.b) { sfx.exit?.(); setConfirmNav(null); }
+          prevPad.current.a = aP; prevPad.current.b = bP; prevPad.current.x = xP; prevPad.current.y = yP;
+          prevPad.current.lb = lbP; prevPad.current.rb = rbP;
+          prevPad.current.back = backP; prevPad.current.start = startP;
+          prevPad.current.dl = dlP; prevPad.current.dr = drP;
+          raf = requestAnimationFrame(loop);
+          return;
+        }
+
+        // Build (X) hold-to-repeat
+        const buildHeld = xP;
         if (buildHeld && heldPlace.current.start == null) {
           place();
           heldPlace.current.start = performance.now();
@@ -481,8 +493,8 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
         } else if (!buildHeld && heldPlace.current.start != null) {
           heldPlace.current.start = null;
         }
-        // Destroy (B or LB) hold-to-repeat
-        const destroyHeld = bP || lbP;
+        // Destroy (B) hold-to-repeat
+        const destroyHeld = bP;
         if (destroyHeld && heldRemove.current.start == null) {
           remove();
           heldRemove.current.start = performance.now();
@@ -493,11 +505,6 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
 
         // Y rising edge: toggle material picker
         if (yP && !prevPad.current.y) { setPickerOpen((o) => !o); sfx.click?.(); }
-        // A rising edge: top-down view toggle
-        if (aP && !prevPad.current.a) {
-          window.dispatchEvent(new CustomEvent('level5:topdown'));
-          sfx.click?.();
-        }
         // dpad palette cycle
         if (drP && !prevPad.current.dr) {
           const i = PALETTE_ITEMS.findIndex((x) => x.id === selectedRef.current);
@@ -509,6 +516,9 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
           setSelected(PALETTE_ITEMS[(i - 1 + PALETTE_ITEMS.length) % PALETTE_ITEMS.length].id);
           sfx.click();
         }
+        // RB / LB: request level nav (with confirmation overlay)
+        if (rbP && !prevPad.current.rb && onNext) requestNav('next');
+        if (lbP && !prevPad.current.lb) requestNav('prev');
         if (backP && !prevPad.current.back) requestNav('prev');
         if (startP && !prevPad.current.start && onNext) requestNav('next');
 
