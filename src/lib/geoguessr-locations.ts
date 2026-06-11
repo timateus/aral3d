@@ -73,6 +73,14 @@ export const GEO_LOCATIONS: GeoLocation[] = [
     zoom: 17,
     hint: 'Silk Road caravanserai on the Ustyurt plateau.',
   },
+  {
+    id: 'jasliq',
+    name: 'Jasliq Train Station (and Mukhasan\'s Aul)',
+    lat: 43.97240,
+    lon: 57.48918,
+    zoom: 16,
+    hint: 'Railway stop on the edge of the Ustyurt plateau.',
+  },
 ];
 
 const MAPBOX_TOKEN =
