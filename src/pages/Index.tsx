@@ -72,7 +72,7 @@ import { firstPersonBridge } from '@/lib/first-person-bridge';
 import { loadState, saveState } from '@/lib/game-persistence';
 
 function GamepadIndicator({ btnBase }: { btnBase: string }) {
-  const { connected, padId, stateRef: gpStateRef } = useGamepad();
+  const { connected, padId } = useGamepad();
   if (!connected) return null;
   return (
     <div
