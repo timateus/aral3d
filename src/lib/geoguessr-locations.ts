@@ -65,6 +65,14 @@ export const GEO_LOCATIONS: GeoLocation[] = [
     zoom: 13,
     hint: 'Abandoned settlement and airport on the Ustyurt plateau.',
   },
+  {
+    id: 'beleuli',
+    name: 'Karavan-Saray Beleuli',
+    lat: 44.50407,
+    lon: 57.11523,
+    zoom: 17,
+    hint: 'Silk Road caravanserai on the Ustyurt plateau.',
+  },
 ];
 
 const MAPBOX_TOKEN =
