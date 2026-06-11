@@ -1449,6 +1449,25 @@ const Index = () => {
     } catch { /* ignore */ }
   }, [enterGameLevel]);
 
+  // Level 7 (faceMode): LB → prev level (L6), RB → next level (wrap to L1).
+  useEffect(() => {
+    if (!faceMode) return;
+    let raf = 0;
+    let prevLb = false, prevRb = false;
+    const loop = () => {
+      const gp = gpStateRef.current;
+      if (gp?.connected) {
+        const lb = !!gp.buttons.lb, rb = !!gp.buttons.rb;
+        if (lb && !prevLb) { enterGameLevel(6); return; }
+        if (rb && !prevRb) { enterGameLevel(1); return; }
+        prevLb = lb; prevRb = rb;
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [faceMode, enterGameLevel, gpStateRef]);
+
 
 
   return (
