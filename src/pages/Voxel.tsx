@@ -1,7 +1,6 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useGamepad } from '@/hooks/useGamepad';
 import { Canvas, useFrame } from '@react-three/fiber';
+
 import { Link } from 'react-router-dom';
 import * as THREE from 'three';
 import { loadGeoTiff, type TerrainData } from '@/lib/geotiff-loader';
@@ -125,8 +124,6 @@ const VoxelPage = () => {
   const playerRef = useRef({ x: 0, z: 0, yaw: 0 });
   const timeRef = useRef(0.3);
   const saplingsRef = useRef(createSaplingTracker());
-  const navigate = useNavigate();
-  const { stateRef: gpRef } = useGamepad();
 
   useEffect(() => {
     document.title = `Survive — ${REGIONS[region].label}`;
@@ -242,26 +239,6 @@ const VoxelPage = () => {
     return () => window.removeEventListener('voxel:sapling-planted', onPlanted);
   }, []);
 
-  // Gamepad LB / RB exit Level 7 → back to the main app.
-  useEffect(() => {
-    let raf = 0;
-    let prevLb = false, prevRb = false;
-    const loop = () => {
-      const gp = gpRef.current;
-      if (gp.connected) {
-        const lb = !!gp.buttons.lb, rb = !!gp.buttons.rb;
-        if ((lb && !prevLb) || (rb && !prevRb)) {
-          try { if (document.pointerLockElement) document.exitPointerLock?.(); } catch {}
-          navigate('/');
-          return;
-        }
-        prevLb = lb; prevRb = rb;
-      }
-      raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
-  }, [navigate, gpRef]);
 
   // Try-eat handler (consume flatbread/milk/fish on F when not near water)
   useEffect(() => {

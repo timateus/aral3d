@@ -94,6 +94,7 @@ export type DataSource = 'regional' | 'seabed' | 'merged';
 const Index = () => {
   const isMobile = useIsMobile();
   const { location: userLocation, loading: locating, requestLocation } = useUserLocation();
+  const { stateRef: gpStateRef } = useGamepad();
   const [baseTerrain, setBaseTerrain] = useState<TerrainData | null>(null);
   const [visualMode, setVisualMode] = useVisualMode();
   const [sidePanelHidden, setSidePanelHidden] = useState(false);
@@ -1448,6 +1449,25 @@ const Index = () => {
       }
     } catch { /* ignore */ }
   }, [enterGameLevel]);
+
+  // Level 7 (faceMode): LB → prev level (L6), RB → next level (wrap to L1).
+  useEffect(() => {
+    if (!faceMode) return;
+    let raf = 0;
+    let prevLb = false, prevRb = false;
+    const loop = () => {
+      const gp = gpStateRef.current;
+      if (gp?.connected) {
+        const lb = !!gp.buttons.lb, rb = !!gp.buttons.rb;
+        if (lb && !prevLb) { enterGameLevel(6); return; }
+        if (rb && !prevRb) { enterGameLevel(1); return; }
+        prevLb = lb; prevRb = rb;
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [faceMode, enterGameLevel, gpStateRef]);
 
 
 
