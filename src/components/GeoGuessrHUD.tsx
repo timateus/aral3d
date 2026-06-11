@@ -375,14 +375,14 @@ const GeoGuessrHUD = ({ onExit, onPrev, onNext, getAimLatLon, getLatLonAtScreen,
           className="fixed top-24 right-6 z-40 p-2 backdrop-blur-md"
           style={{ background: bgColor, border: `1px solid ${inkColor}33` }}
         >
-          {/* Name shown immediately — large + bold */}
           <div
-            className="mb-2 px-1 font-mono font-extrabold uppercase text-center"
+            className="mb-2 px-1 font-mono font-extrabold uppercase text-center break-words leading-tight"
             style={{
               color: accent,
               fontSize: 22,
               letterSpacing: '0.18em',
               textShadow: `0 2px 10px ${bgColor}, 0 0 24px ${accent}66`,
+              maxWidth: 360,
             }}
           >
             {loc.name}
