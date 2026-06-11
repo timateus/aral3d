@@ -94,6 +94,7 @@ export type DataSource = 'regional' | 'seabed' | 'merged';
 const Index = () => {
   const isMobile = useIsMobile();
   const { location: userLocation, loading: locating, requestLocation } = useUserLocation();
+  const { stateRef: gpStateRef } = useGamepad();
   const [baseTerrain, setBaseTerrain] = useState<TerrainData | null>(null);
   const [visualMode, setVisualMode] = useVisualMode();
   const [sidePanelHidden, setSidePanelHidden] = useState(false);
