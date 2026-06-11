@@ -81,6 +81,14 @@ export const GEO_LOCATIONS: GeoLocation[] = [
     zoom: 16,
     hint: 'Railway stop on the edge of the Ustyurt plateau.',
   },
+  {
+    id: 'aq-keme',
+    name: 'Aq Keme ("White Boat") Kid\'s Summer Camp',
+    lat: 43.60033,
+    lon: 58.99548,
+    zoom: 16,
+    hint: 'Children\'s summer camp near the former Aral shoreline.',
+  },
 ];
 
 const MAPBOX_TOKEN =
