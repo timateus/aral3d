@@ -242,6 +242,27 @@ const VoxelPage = () => {
     return () => window.removeEventListener('voxel:sapling-planted', onPlanted);
   }, []);
 
+  // Gamepad LB / RB exit Level 7 → back to the main app.
+  useEffect(() => {
+    let raf = 0;
+    let prevLb = false, prevRb = false;
+    const loop = () => {
+      const gp = gpRef.current;
+      if (gp.connected) {
+        const lb = !!gp.buttons.lb, rb = !!gp.buttons.rb;
+        if ((lb && !prevLb) || (rb && !prevRb)) {
+          try { if (document.pointerLockElement) document.exitPointerLock?.(); } catch {}
+          navigate('/');
+          return;
+        }
+        prevLb = lb; prevRb = rb;
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [navigate, gpRef]);
+
   // Try-eat handler (consume flatbread/milk/fish on F when not near water)
   useEffect(() => {
     const onEat = () => {
