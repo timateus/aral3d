@@ -602,15 +602,27 @@ const MapBuilderHUD = ({ onExit, onPrev, onNext, getAimLatLon, onItemsChange }: 
         >Reset</button>
       </div>
 
-      <div data-hud className="fixed top-28 right-4 z-40 px-3 py-1.5 rounded-md bg-black/60 backdrop-blur-md border border-white/15 text-white/90 font-mono text-[11px]">
-        Placed: <span className="text-white">{items.length}</span>
-        {items.length > 0 && (
-          <button onClick={() => { setItems([]); sfx.exit?.(); }} className="ml-3 underline text-white/60 hover:text-white">clear</button>
-        )}
+      <div data-hud className="fixed top-28 right-4 z-40 flex flex-col items-end gap-1.5">
+        <div className="px-3 py-1.5 rounded-md bg-black/60 backdrop-blur-md border border-white/15 text-white/90 font-mono text-[11px]">
+          Placed: <span className="text-white">{items.length}</span>
+        </div>
+        <button
+          onClick={() => { setItems([]); sfx.exit?.(); }}
+          onMouseEnter={() => { if (document.pointerLockElement) { try { (document as any).exitPointerLock?.(); } catch {} } }}
+          disabled={items.length === 0}
+          className="px-3 py-1.5 rounded-md bg-red-900/70 hover:bg-red-800/80 disabled:opacity-40 disabled:cursor-not-allowed border border-red-300/60 text-red-50 font-mono text-[11px] uppercase tracking-widest transition-colors"
+          title="Remove every placed block (mouse only)"
+        >
+          Clear all blocks
+        </button>
       </div>
 
-      {/* Hotbar */}
-      <div data-hud className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex gap-2 px-3 py-2 rounded-lg bg-black/70 backdrop-blur-md border border-white/15">
+      {/* Hotbar — pointer-enter releases pointer lock so clicks always select. */}
+      <div
+        data-hud
+        onMouseEnter={() => { if (document.pointerLockElement) { try { (document as any).exitPointerLock?.(); } catch {} } }}
+        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex gap-2 px-3 py-2 rounded-lg bg-black/70 backdrop-blur-md border border-white/15"
+      >
         {PALETTE_ITEMS.map((it, i) => {
           const isSel = selected === it.id;
           return (
