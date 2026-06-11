@@ -1,4 +1,6 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useGamepad } from '@/hooks/useGamepad';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Link } from 'react-router-dom';
 import * as THREE from 'three';
