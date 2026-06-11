@@ -125,6 +125,8 @@ const VoxelPage = () => {
   const playerRef = useRef({ x: 0, z: 0, yaw: 0 });
   const timeRef = useRef(0.3);
   const saplingsRef = useRef(createSaplingTracker());
+  const navigate = useNavigate();
+  const { stateRef: gpRef } = useGamepad();
 
   useEffect(() => {
     document.title = `Survive — ${REGIONS[region].label}`;
