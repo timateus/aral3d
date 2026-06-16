@@ -1,6 +1,11 @@
 # 2 · Modes & Levels
 
-The app is organized as a numbered series of **levels**, plus a set of standalone **modes** reached from the landing page or the "More Modes" dropdown.
+The app is organized as a numbered series of **levels**, plus a set of standalone **modes** reached from the landing page or the "More Modes" dropdown. Each mode can be located on the two scales described in [philosophy.md](philosophy.md):
+
+- **Engagement:** personal gesture ↔ planetary system
+- **Mode:** serious ↔ playful
+
+The modes are not ranked. They are different *models of water* made interactive — a way to ask, of any given action, *what kind of water did this assume?*
 
 Navigation between levels:
 
