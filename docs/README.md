@@ -3,31 +3,41 @@
 **Live site:** https://aral3d.com  
 **Preview:** https://aral3d.lovable.app
 
-An interactive, multi-modal 3D exploration of the Aral Sea region — built to make the slow, century-long story of the world's most famous environmental catastrophe legible to anyone with a browser. Real DEM (digital elevation) data, satellite imagery, historical basin shapes, demographic and climate records, and a stack of mini-games and simulations are layered on top of the same terrain.
+A data and mapping platform that is also a video game. Real DEM data, historical basin shapes, demographic and climate records, gesture control, multiplayer modes — layered on top of the same Karakalpakstan terrain and turned into something you can play.
 
 ![Landing page](screenshots/01-landing.png)
 
 ## Why this exists
 
-The Aral Sea collapsed not because of one catastrophic event but because of decades of irrigation policy, climate change, and population pressure. Numbers in a UN report don't convey that. A 3D terrain you can:
+This project begins where Aral School begins: with the question *what water is*. Not where water is, not how much, not how it flows and evaporates — but **what water is imagined to be**, because what we imagine water to be defines how we engage with it.
 
-- scrub through time (1925 → 2024),
-- fly over,
-- drain and refill,
-- guess locations on,
-- and even **survive in** Minecraft-style,
+The Aral Sea is the most famous case of an ecosystem being managed as if it were a clean, external visual object — a polygon on a planner's map. It is not. The project takes the serious data and mapping instrument already developed for the Aral Sea and turns it toward its own limits, its embedded assumptions, its aesthetic defaults and its political imagination.
 
-…does. The project is part atlas, part toy, part argument.
+What we arrived at is a platform where visitors do not simply look at a map of the Aral Sea; they move through it, compete inside it, collaborate with it, flood it, dry it, plant it, reroute it, break it, restore it — and test what kind of water each action assumes.
+
+## Two scales
+
+Every mode in this app can be located on two axes:
+
+- **Engagement scale:** personal gesture ↔ planetary system
+- **Mode of engagement:** serious ↔ playful
+
+A local swimming spot is playful and personal. A canal network is serious and planetary. A dam is engineering, geopolitics, **and** a game mechanic. The point is not to make ecological crisis entertaining, but to use play as a way of making complexity graspable without pretending it has become simple.
+
+## Audiences
+
+The platform is designed for schools, museums, festivals, scientists, policymakers, teenagers and casual visitors — not by giving each a separate simplified version, but by allowing different *models of water* to appear through different modes of interaction. It can be a curriculum tool, a museum installation, a speculative policy interface, a science-fair exhibit, and a public storytelling environment all at once.
 
 ## Documentation map
 
 | File | Audience | What's inside |
 |---|---|---|
-| [01-overview.md](01-overview.md) | Everyone | Goals, audience, what the app does at a high level |
-| [02-modes-and-levels.md](02-modes-and-levels.md) | Players / educators | Walk-through of every game mode and level |
+| [01-overview.md](01-overview.md) | Everyone | What the app does, who it is for, what it is *not* |
+| [philosophy.md](philosophy.md) | Curators / educators | Comparative water-logy, theoretical lineage, the recipe |
+| [02-modes-and-levels.md](02-modes-and-levels.md) | Players / educators | Every level and standalone mode, placed on the two scales |
 | [03-architecture.md](03-architecture.md) | Developers | Tech stack, render pipeline, data flow |
 | [04-data-sources.md](04-data-sources.md) | Researchers / devs | DEMs, GeoJSON, CSVs, audio assets |
-| [05-features-deep-dive.md](05-features-deep-dive.md) | Developers | Terrain, water simulation, AI scenario chat, voxel world, etc. |
+| [05-features-deep-dive.md](05-features-deep-dive.md) | Developers | Terrain, water sim, AI scenario chat, voxel world |
 | [06-controls.md](06-controls.md) | Players | Keyboard, mouse, gamepad, touch reference |
 | [07-development.md](07-development.md) | Contributors | Local setup, scripts, conventions |
 | [08-deployment.md](08-deployment.md) | Maintainers | Publishing, custom domain, edge functions |
