@@ -85,7 +85,7 @@ const slides = [];
     x: 0.6, y: 5.1, w: 12, h: 0.7, fontSize: 24, color: LAV, align: 'center',
   });
   // pill centered
-  const pw = 5.4, px = (W - pw) / 2, py = 6.3;
+  const pw = 6.4, px = (W - pw) / 2, py = 6.3;
   s.addShape(pptx.ShapeType.rect, {
     x: px, y: py, w: pw, h: 0.85,
     line: { color: BLUE, width: 2 }, fill: { color: '0E1530' }, rectRadius: 0.05,
