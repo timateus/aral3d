@@ -168,24 +168,23 @@ const slides = [];
 function levelShot(label, title, subtitle, path, accent = BLUE) {
   const s = pptx.addSlide(); s.background = { color: DARK };
   s.addImage({ path, x: 0, y: 0, w: W, h: H, sizing: { type: 'cover', w: W, h: H } });
-
-  // Mission card top-left, like the in-game HUD
+  // Bottom strip overlay for readable title
   s.addShape(pptx.ShapeType.rect, {
-    x: 0.5, y: 0.5, w: 6.2, h: 1.7,
+    x: 0, y: H - 1.9, w: W, h: 1.9,
     line: { color: WHITE, width: 0, transparency: 100 },
     fill: { color: '06080E', transparency: 15 },
   });
   s.addText(label, {
-    x: 0.75, y: 0.7, w: 5.8, h: 0.35,
-    fontFace: FONT_M, fontSize: 11, color: accent, charSpacing: 10, bold: true,
+    x: 0.7, y: H - 1.7, w: 12, h: 0.35,
+    fontFace: FONT_M, fontSize: 12, color: accent, charSpacing: 12, bold: true,
   });
   s.addText(title, {
-    x: 0.75, y: 1.1, w: 5.8, h: 0.55,
-    fontFace: FONT_PLAY, bold: true, fontSize: 26, color: WHITE,
+    x: 0.7, y: H - 1.3, w: 12, h: 0.7,
+    fontFace: FONT_PLAY, bold: true, fontSize: 36, color: WHITE, charSpacing: 4,
   });
   s.addText(subtitle, {
-    x: 0.75, y: 1.65, w: 5.8, h: 0.5,
-    fontFace: FONT_ITAL, italic: true, fontSize: 16, color: LAV,
+    x: 0.7, y: H - 0.6, w: 12, h: 0.4,
+    fontFace: FONT_ITAL, italic: true, fontSize: 18, color: LAV,
   });
   slides.push(s);
 }
