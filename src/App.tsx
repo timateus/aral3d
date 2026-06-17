@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import VoxelPage from "./pages/Voxel";
 import SharePage from "./pages/Share";
+import PresentationPage from "./pages/Presentation";
 
 
 const queryClient = new QueryClient();
