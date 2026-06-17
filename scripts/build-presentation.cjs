@@ -71,22 +71,37 @@ const slides = [];
 {
   const s = pptx.addSlide(); s.background = { color: DARK };
   s.addText('LEVEL 00', {
-    x: 0.6, y: 1.6, w: 12, h: 0.5,
-    fontFace: FONT_M, fontSize: 14, color: WHITE, charSpacing: 24, bold: true, align: 'center',
+    x: 0.6, y: 0.9, w: 12, h: 0.4,
+    fontFace: FONT_M, fontSize: 13, color: WHITE, charSpacing: 24, bold: true, align: 'center',
   });
   play(s, 'ARAL3D', {
-    x: 0.6, y: 2.4, w: 12, h: 2.2,
-    fontSize: 200, color: WHITE, charSpacing: 8, align: 'center',
+    x: 0.6, y: 2.2, w: 12, h: 1.8,
+    fontSize: 140, color: WHITE, charSpacing: 10, align: 'center',
   });
   ital(s, 'A 3D platform for the Aral Sea basin.', {
-    x: 0.6, y: 5.0, w: 12, h: 0.7,
-    fontSize: 32, color: LAV, align: 'center',
+    x: 0.6, y: 4.4, w: 12, h: 0.7, fontSize: 30, color: LAV, align: 'center',
   });
   ital(s, 'An educational game and a data exploration tool.', {
-    x: 0.6, y: 5.7, w: 12, h: 0.7,
-    fontSize: 28, color: LAV, align: 'center',
+    x: 0.6, y: 5.1, w: 12, h: 0.7, fontSize: 24, color: LAV, align: 'center',
   });
-  pill(s, 'OR RB · PRESS TO BEGIN', (W - 4.6) / 2, 6.55);
+  // pill centered
+  const pw = 5.4, px = (W - pw) / 2, py = 6.3;
+  s.addShape(pptx.ShapeType.rect, {
+    x: px, y: py, w: pw, h: 0.85,
+    line: { color: BLUE, width: 2 }, fill: { color: '0E1530' }, rectRadius: 0.05,
+  });
+  s.addShape(pptx.ShapeType.ellipse, {
+    x: px + 0.18, y: py + 0.13, w: 0.6, h: 0.6,
+    line: { color: BLUE, width: 2 }, fill: { color: BLUE },
+  });
+  s.addText('3', {
+    x: px + 0.18, y: py + 0.13, w: 0.6, h: 0.6,
+    fontFace: FONT_M, fontSize: 14, bold: true, color: WHITE, align: 'center', valign: 'middle',
+  });
+  s.addText('OR RB · PRESS TO BEGIN', {
+    x: px + 0.95, y: py, w: pw - 1.1, h: 0.85,
+    fontFace: FONT_M, fontSize: 11, bold: true, color: WHITE, charSpacing: 8, valign: 'middle',
+  });
   slides.push(s);
 }
 
