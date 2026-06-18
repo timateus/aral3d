@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Download, FileText, ArrowLeft, Maximize2 } from 'lucide-react';
 
-const TOTAL = 14;
+const TOTAL = 17;
 const slides = Array.from({ length: TOTAL }, (_, i) =>
   `/presentation/slide-${String(i + 1).padStart(2, '0')}.jpg`
 );
