@@ -1,4 +1,4 @@
-const PptxGenJS = require('/nix/store/31sh8fzcbg4sjahp3zj002j0ca8sfvvr-nodejs-22.22.0/lib/node_modules/pptxgenjs');
+const PptxGenJS = require('pptxgenjs');
 
 const pptx = new PptxGenJS();
 pptx.layout = 'LAYOUT_WIDE';
