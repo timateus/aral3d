@@ -11,6 +11,8 @@ export interface LocationDef {
   center: { lat: number; lon: number };
   /** Bounding box for terrain, satellite, and vector layers. */
   bounds: GeoBounds;
+  /** Larger bounding box for water features (rendered beyond terrain edges). */
+  waterBounds?: GeoBounds;
   /** Optional default vertical exaggeration (1–30). */
   exaggeration?: number;
 }
@@ -40,6 +42,10 @@ export const LOCATIONS: LocationDef[] = [
       maxLat: 43.36792,
       minLon: 79.03803,
       maxLon: 79.09781,
+    },
+    waterBounds: {
+      minLat: 43.261, maxLat: 43.441,
+      minLon: 78.945, maxLon: 79.191,
     },
     exaggeration: 30,
   },
