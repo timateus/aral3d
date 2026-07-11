@@ -231,7 +231,7 @@ export default function LocationPage() {
               <OsmWaterwaysLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} />
             )}
             {showBuildings && (
-              <OsmBuildingsLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} />
+              <OvertureBuildingsLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} />
             )}
             {showPopulation && (
               <OsmPopulationLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} />
