@@ -153,21 +153,23 @@ export default function LocationPage() {
   const { terrain, loading, error } = useMapterhornTerrain(location?.bounds ?? null, !!location);
 
   const [exaggeration, setExaggeration] = useState(location?.exaggeration ?? 30);
+  const [showTerrain, setShowTerrain] = useState(true);
   const [showWater, setShowWater] = useState(true);
   const [showPopulation, setShowPopulation] = useState(false);
   const [showOsmBuildings, setShowOsmBuildings] = useState(true);
   const [showOvertureBuildings, setShowOvertureBuildings] = useState(false);
 
   // View mode & per-mode parameters
-  const [terrainStyle, setTerrainStyle] = useState<TerrainStyle | 'mesh'>('none');
+  const [terrainStyle, setTerrainStyle] = useState<TerrainStyle>('none');
   const [contourInterval, setContourInterval] = useState(25);
   const [vectorInterval, setVectorInterval] = useState(80);
+  const [meshInterval, setMeshInterval] = useState(60);
 
   // Basemap image adjustments
-  const [brightness, setBrightness] = useState(1.35);
-  const [contrast, setContrast] = useState(1.05);
-  const [saturation, setSaturation] = useState(1.1);
-  const [gamma, setGamma] = useState(1);
+  const [brightness, setBrightness] = useState(1.75);
+  const [contrast, setContrast] = useState(0.8);
+  const [saturation, setSaturation] = useState(0.6);
+  const [gamma, setGamma] = useState(0.9);
 
   const [waterFlowActive, setWaterFlowActive] = useState(false);
   const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
