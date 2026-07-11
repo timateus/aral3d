@@ -36,6 +36,13 @@ const TerrainStyleOverlay = ({
     return Math.max(0.5, widthMeters / terrain.width);
   }, [bounds, terrain.width]);
 
+  const meshToWorld = (i: number, j: number, normalized: number, w: number, h: number, maxHeight: number) => {
+    const mx = (i / (w - 1) - 0.5) * 10;
+    const my = (0.5 - j / (h - 1)) * 10 * (h / w);
+    const mz = normalized * maxHeight;
+    return [mx, mz, -my] as const;
+  };
+
   const contourGeometry = useMemo(() => {
     if (style !== 'contours') return null;
     const { width: w, height: h, elevations, minElevation, maxElevation, noDataValue } = terrain;
