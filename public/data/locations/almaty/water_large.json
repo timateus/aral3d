@@ -9,9 +9,7 @@
 <body>
 
 <p>The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.</p>
-<p><strong style="color:#FF0000">Error</strong>: line 1: parse error: ';' expected - ')' found. </p>
-<p><strong style="color:#FF0000">Error</strong>: line 1: parse error: Unexpected end of input. </p>
-<p><strong style="color:#FF0000">Error</strong>: line 1: static error: Element &quot;print&quot; cannot be subelement of element &quot;union&quot;. </p>
+<p><strong style="color:#FF0000">Error</strong>: runtime error: open64: 0 Success /osm3s_osm_base Dispatcher_Client::request_read_and_idx::timeout. The server is probably too busy to handle your request. </p>
 
 </body>
 </html>
