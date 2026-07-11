@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useParams, Navigate, Link } from 'react-router-dom';
+import { useParams, Navigate, Link, useLocation } from 'react-router-dom';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
@@ -117,7 +117,9 @@ function UserPin({
 }
 
 export default function LocationPage() {
-  const { slug } = useParams<{ slug: string }>();
+  const params = useParams<{ slug?: string }>();
+  const routerLoc = useLocation();
+  const slug = params.slug ?? routerLoc.pathname.replace(/^\//, '').split('/')[0];
   const location = slug ? findLocation(slug) : undefined;
   const { token } = useTerrainMode();
   const { terrain, loading, error } = useMapboxTerrain(location?.bounds ?? null, token, !!location);
