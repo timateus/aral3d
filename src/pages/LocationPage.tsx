@@ -54,7 +54,6 @@ function ClickCatcher({
   onPixel: (row: number, col: number) => void;
   enabled: boolean;
 }) {
-  const raycaster = useMemo(() => new THREE.Raycaster(), []);
   return (
     <mesh
       visible={false}
