@@ -6,31 +6,14 @@ interface Props {
   terrain: TerrainData;
   exaggeration: number;
   bounds: GeoBounds;
+  dataUrl?: string;
 }
 
 interface Place { lon: number; lat: number; population: number; name: string | null }
 
 const _cache = new Map<string, Place[]>();
 
-async function fetchOsmPlaces(b: GeoBounds): Promise<Place[]> {
-  const key = `${b.minLon.toFixed(4)},${b.minLat.toFixed(4)},${b.maxLon.toFixed(4)},${b.maxLat.toFixed(4)}`;
-  const hit = _cache.get(key);
-  if (hit) return hit;
-  const bbox = `${b.minLat},${b.minLon},${b.maxLat},${b.maxLon}`;
-  // Grab any node/way tagged with population; fall back to place tag.
-  const q = `[out:json][timeout:30];
-    (
-      node["population"](${bbox});
-      node["place"~"city|town|village|hamlet|suburb|neighbourhood|isolated_dwelling|farm"](${bbox});
-      way["building"](${bbox});
-    );
-    out center 500;`;
-  const res = await fetch('https://overpass-api.de/api/interpreter', {
-    method: 'POST',
-    body: new URLSearchParams({ data: q }),
-  });
-  if (!res.ok) throw new Error(`Overpass ${res.status}`);
-  const data = await res.json();
+function parseElements(data: any): Place[] {
   const places: Place[] = [];
   const placeWeights: Record<string, number> = {
     city: 100000, town: 15000, village: 1500, hamlet: 200,
@@ -44,10 +27,40 @@ async function fetchOsmPlaces(b: GeoBounds): Promise<Place[]> {
     let pop = 0;
     if (t.population) pop = parseFloat(t.population) || 0;
     if (!pop && t.place && placeWeights[t.place]) pop = placeWeights[t.place];
-    if (!pop && t.building) pop = 3; // 1 building ~ a few people (proxy)
+    if (!pop && t.building) pop = 3;
     if (pop <= 0) continue;
     places.push({ lon, lat, population: pop, name: t.name ?? null });
   }
+  return places;
+}
+
+async function fetchStatic(url: string): Promise<Place[]> {
+  const hit = _cache.get(url);
+  if (hit) return hit;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Static ${res.status}`);
+  const parsed = parseElements(await res.json());
+  _cache.set(url, parsed);
+  return parsed;
+}
+
+async function fetchOsmPlaces(b: GeoBounds): Promise<Place[]> {
+  const key = `${b.minLon.toFixed(4)},${b.minLat.toFixed(4)},${b.maxLon.toFixed(4)},${b.maxLat.toFixed(4)}`;
+  const hit = _cache.get(key);
+  if (hit) return hit;
+  const bbox = `${b.minLat},${b.minLon},${b.maxLat},${b.maxLon}`;
+  const q = `[out:json][timeout:30];
+    (
+      node["population"](${bbox});
+      node["place"~"city|town|village|hamlet|suburb|neighbourhood|isolated_dwelling|farm"](${bbox});
+    );
+    out center 500;`;
+  const res = await fetch('https://overpass-api.de/api/interpreter', {
+    method: 'POST',
+    body: new URLSearchParams({ data: q }),
+  });
+  if (!res.ok) throw new Error(`Overpass ${res.status}`);
+  const places = parseElements(await res.json());
   _cache.set(key, places);
   return places;
 }
