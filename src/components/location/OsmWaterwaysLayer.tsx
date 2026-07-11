@@ -10,12 +10,42 @@ interface Props {
   terrain: TerrainData;
   exaggeration: number;
   bounds: GeoBounds;
+  /** If set, load OSM water JSON from this static URL instead of hitting Overpass. */
+  dataUrl?: string;
 }
 
 interface Line { coords: [number, number][]; kind: 'linear' | 'area' }
 
-// Cache per-bbox key to avoid re-hitting Overpass on remounts.
 const _cache = new Map<string, Line[]>();
+
+function parseElements(data: any): Line[] {
+  const lines: Line[] = [];
+  for (const el of data.elements || []) {
+    if (el.type === 'way' && Array.isArray(el.geometry)) {
+      const coords = el.geometry.map((g: any) => [g.lon, g.lat] as [number, number]);
+      const kind: 'linear' | 'area' = el.tags?.waterway ? 'linear' : 'area';
+      lines.push({ coords, kind });
+    } else if (el.type === 'relation' && Array.isArray(el.members)) {
+      for (const m of el.members) {
+        if (m.type === 'way' && Array.isArray(m.geometry)) {
+          const coords = m.geometry.map((g: any) => [g.lon, g.lat] as [number, number]);
+          lines.push({ coords, kind: 'area' });
+        }
+      }
+    }
+  }
+  return lines;
+}
+
+async function fetchStatic(url: string): Promise<Line[]> {
+  const hit = _cache.get(url);
+  if (hit) return hit;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Static ${res.status}`);
+  const parsed = parseElements(await res.json());
+  _cache.set(url, parsed);
+  return parsed;
+}
 
 async function fetchOsmWater(b: GeoBounds): Promise<Line[]> {
   const key = `${b.minLon.toFixed(4)},${b.minLat.toFixed(4)},${b.maxLon.toFixed(4)},${b.maxLat.toFixed(4)}`;
@@ -35,37 +65,22 @@ async function fetchOsmWater(b: GeoBounds): Promise<Line[]> {
     body: new URLSearchParams({ data: q }),
   });
   if (!res.ok) throw new Error(`Overpass ${res.status}`);
-  const data = await res.json();
-  const lines: Line[] = [];
-  for (const el of data.elements || []) {
-    if (el.type === 'way' && Array.isArray(el.geometry)) {
-      const coords = el.geometry.map((g: any) => [g.lon, g.lat] as [number, number]);
-      const kind: 'linear' | 'area' = el.tags?.waterway ? 'linear' : 'area';
-      lines.push({ coords, kind });
-    } else if (el.type === 'relation' && Array.isArray(el.members)) {
-      for (const m of el.members) {
-        if (m.type === 'way' && Array.isArray(m.geometry)) {
-          const coords = m.geometry.map((g: any) => [g.lon, g.lat] as [number, number]);
-          lines.push({ coords, kind: 'area' });
-        }
-      }
-    }
-  }
+  const lines = parseElements(await res.json());
   _cache.set(key, lines);
   return lines;
 }
 
-const OsmWaterwaysLayer = ({ terrain, exaggeration, bounds }: Props) => {
+const OsmWaterwaysLayer = ({ terrain, exaggeration, bounds, dataUrl }: Props) => {
   const [lines, setLines] = useState<Line[] | null>(null);
   const { size } = useThree();
 
   useEffect(() => {
     let cancelled = false;
-    fetchOsmWater(bounds)
-      .then((l) => { if (!cancelled) setLines(l); })
-      .catch((e) => { console.warn('OSM water fetch failed', e); if (!cancelled) setLines([]); });
+    const p = dataUrl ? fetchStatic(dataUrl) : fetchOsmWater(bounds);
+    p.then((l) => { if (!cancelled) setLines(l); })
+     .catch((e) => { console.warn('OSM water fetch failed', e); if (!cancelled) setLines([]); });
     return () => { cancelled = true; };
-  }, [bounds.minLon, bounds.minLat, bounds.maxLon, bounds.maxLat]);
+  }, [dataUrl, bounds.minLon, bounds.minLat, bounds.maxLon, bounds.maxLat]);
 
   const object = useMemo(() => {
     if (!lines || lines.length === 0) return null;
@@ -96,7 +111,6 @@ const OsmWaterwaysLayer = ({ terrain, exaggeration, bounds }: Props) => {
         const ny1 = (lat1 - bounds.minLat) / (bounds.maxLat - bounds.minLat);
         const nx2 = (lon2 - bounds.minLon) / (bounds.maxLon - bounds.minLon);
         const ny2 = (lat2 - bounds.minLat) / (bounds.maxLat - bounds.minLat);
-        // Skip only if BOTH ends are outside — so cross-boundary segments still render.
         const in1 = nx1 >= 0 && nx1 <= 1 && ny1 >= 0 && ny1 <= 1;
         const in2 = nx2 >= 0 && nx2 <= 1 && ny2 >= 0 && ny2 <= 1;
         if (!in1 && !in2) continue;
