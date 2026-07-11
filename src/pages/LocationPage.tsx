@@ -292,7 +292,14 @@ export default function LocationPage() {
               bounds={location.bounds}
             />
             {showWater && (
-              <OsmWaterwaysLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} dataUrl={`${dataBase}/water.json`} />
+              <OsmWaterwaysLayer
+                terrain={terrain}
+                exaggeration={exaggeration}
+                bounds={location.bounds}
+                clipBounds={location.waterBounds ?? location.bounds}
+                dataUrl={`${dataBase}/${location.waterBounds ? 'water_large.json' : 'water.json'}`}
+                onSelect={setSelectedWater}
+              />
             )}
             {showOsmBuildings && (
               <OsmBuildingsLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} dataUrl={`${dataBase}/buildings.json`} />
