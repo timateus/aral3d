@@ -39,6 +39,37 @@ function loadImage(url: string): Promise<HTMLImageElement> {
   });
 }
 
+async function stitchAtZoom(bounds: GeoBounds, z: number) {
+  const fx0 = lon2tile(bounds.minLon, z);
+  const fx1 = lon2tile(bounds.maxLon, z);
+  const fy0 = lat2tile(bounds.maxLat, z);
+  const fy1 = lat2tile(bounds.minLat, z);
+  const x0 = Math.floor(fx0), x1 = Math.floor(fx1);
+  const y0 = Math.floor(fy0), y1 = Math.floor(fy1);
+  const cols = x1 - x0 + 1, rows = y1 - y0 + 1;
+  const canvas = document.createElement('canvas');
+  canvas.width = cols * TILE_SIZE;
+  canvas.height = rows * TILE_SIZE;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
+  const tasks: Promise<void>[] = [];
+  for (let ty = y0; ty <= y1; ty++) {
+    for (let tx = x0; tx <= x1; tx++) {
+      const url = `https://tiles.mapterhorn.com/${z}/${tx}/${ty}.webp`;
+      tasks.push(loadImage(url).then((img) => {
+        ctx.drawImage(img, (tx - x0) * TILE_SIZE, (ty - y0) * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+      }));
+    }
+  }
+  await Promise.all(tasks);
+  return {
+    canvas,
+    u0: (fx0 - x0) / cols,
+    u1: (fx1 - x0) / cols,
+    v0: (fy0 - y0) / rows,
+    v1: (fy1 - y0) / rows,
+  };
+}
+
 export async function loadMapterhornDEM(
   bounds: GeoBounds,
   opts: { targetSize?: number } = {},
