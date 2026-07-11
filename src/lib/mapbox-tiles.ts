@@ -27,7 +27,7 @@ function lat2tile(lat: number, z: number) {
 
 function pickZoom(bounds: LonLatBounds, targetTiles = 4): number {
   // pick the smallest zoom where the bbox spans roughly targetTiles tiles
-  for (let z = 1; z <= 12; z++) {
+  for (let z = 1; z <= 16; z++) {
     const x0 = Math.floor(lon2tile(bounds.minLon, z));
     const x1 = Math.floor(lon2tile(bounds.maxLon, z));
     const y0 = Math.floor(lat2tile(bounds.maxLat, z));
@@ -36,7 +36,7 @@ function pickZoom(bounds: LonLatBounds, targetTiles = 4): number {
     const h = y1 - y0 + 1;
     if (Math.max(w, h) >= targetTiles) return z;
   }
-  return 8;
+  return 16;
 }
 
 function loadImage(url: string): Promise<HTMLImageElement> {

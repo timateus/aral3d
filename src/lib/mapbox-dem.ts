@@ -14,7 +14,7 @@ const MAX_TILES_PER_AXIS = 4; // -> at most 16 tiles, 2048×2048 raster
 
 function pickZoom(bounds: GeoBounds): number {
   // Pick the highest zoom where the bbox tile-count stays under the cap.
-  for (let z = 14; z >= 1; z--) {
+  for (let z = 16; z >= 1; z--) {
     const x0 = Math.floor(lon2tile(bounds.minLon, z));
     const x1 = Math.floor(lon2tile(bounds.maxLon, z));
     const y0 = Math.floor(lat2tile(bounds.maxLat, z));
