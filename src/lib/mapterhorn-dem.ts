@@ -15,8 +15,11 @@ function lat2tile(lat: number, z: number) {
   return ((1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2) * Math.pow(2, z);
 }
 
+// Mapterhorn global coverage tops out at ~z12 in most regions.
+const MAX_ZOOM = 12;
+
 function pickZoom(bounds: GeoBounds): number {
-  for (let z = 14; z >= 1; z--) {
+  for (let z = MAX_ZOOM; z >= 1; z--) {
     const x0 = Math.floor(lon2tile(bounds.minLon, z));
     const x1 = Math.floor(lon2tile(bounds.maxLon, z));
     const y0 = Math.floor(lat2tile(bounds.maxLat, z));
