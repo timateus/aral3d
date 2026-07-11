@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, Navigate, Link, useLocation } from 'react-router-dom';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
-import { Loader2, Layers, Waves, Crosshair, Mountain, ArrowRight, Copy, Check } from 'lucide-react';
+import { Loader2, Layers, Waves, Crosshair, Mountain, ArrowRight, Copy, Check, Sliders, Eye } from 'lucide-react';
 import { findLocation, LOCATIONS } from '@/lib/locations';
 import { useMapterhornTerrain } from '@/hooks/useMapterhornTerrain';
 import { useTerrainMode } from '@/hooks/useTerrainMode';
@@ -12,6 +12,7 @@ import TerrainStyleOverlay, { type TerrainStyle } from '@/components/TerrainStyl
 import OsmWaterwaysLayer from '@/components/location/OsmWaterwaysLayer';
 import OsmPopulationLayer from '@/components/location/OsmPopulationLayer';
 import OvertureBuildingsLayer from '@/components/location/OvertureBuildingsLayer';
+import OsmBuildingsLayer from '@/components/location/OsmBuildingsLayer';
 import WaterFlowOverlay from '@/components/WaterFlowOverlay';
 import { createFlowState, addWaterAt, stepFlow, type WaterFlowState } from '@/lib/water-flow-simulation';
 import { useUserLocation } from '@/hooks/useUserLocation';
@@ -19,6 +20,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuTrigger,
   DropdownMenuCheckboxItem, DropdownMenuLabel, DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 export function LocationsIndex() {
   return (
@@ -38,11 +40,15 @@ export function LocationsIndex() {
 }
 
 interface HoverCoord { lat: number; lon: number; elev: number }
+interface CameraInfo {
+  pos: [number, number, number];
+  target: [number, number, number];
+  distance: number;
+  headingDeg: number;
+  tiltDeg: number;
+  fov: number;
+}
 
-/**
- * Extract lat/lon/elev from a pointer event whose intersection carries UVs
- * matching the terrain mesh's parameterization (i/(w-1), 1 - j/(h-1)).
- */
 function uvToCoord(
   uv: THREE.Vector2,
   terrain: import('@/lib/geotiff-loader').TerrainData,
@@ -57,6 +63,30 @@ function uvToCoord(
   return { lat, lon, elev };
 }
 
+function CameraProbe({ orbitRef, onChange }: { orbitRef: React.MutableRefObject<any>; onChange: (c: CameraInfo) => void }) {
+  const { camera } = useThree();
+  useFrame(() => {
+    const ctrl = orbitRef.current;
+    const target = ctrl ? ctrl.target : new THREE.Vector3();
+    const dx = camera.position.x - target.x;
+    const dy = camera.position.y - target.y;
+    const dz = camera.position.z - target.z;
+    const distance = Math.hypot(dx, dy, dz);
+    // Heading: compass 0=N, 90=E. In our scene +Z is toward viewer(south), -Z is north.
+    const headingDeg = (Math.atan2(dx, -dz) * 180) / Math.PI;
+    const tiltDeg = (Math.atan2(dy, Math.hypot(dx, dz)) * 180) / Math.PI;
+    const fov = (camera as THREE.PerspectiveCamera).fov ?? 45;
+    onChange({
+      pos: [camera.position.x, camera.position.y, camera.position.z],
+      target: [target.x, target.y, target.z],
+      distance,
+      headingDeg: (headingDeg + 360) % 360,
+      tiltDeg,
+      fov,
+    });
+  });
+  return null;
+}
 
 function UserPin({
   terrain, bounds, exaggeration, location,
@@ -97,6 +127,23 @@ function UserPin({
   );
 }
 
+function Slider({ label, value, min, max, step = 1, onChange, format }: {
+  label: string; value: number; min: number; max: number; step?: number;
+  onChange: (v: number) => void; format?: (v: number) => string;
+}) {
+  return (
+    <div className="flex items-center gap-2 text-[11px]">
+      <span className="text-muted-foreground w-20 shrink-0">{label}</span>
+      <input
+        type="range" min={min} max={max} step={step} value={value}
+        onChange={(e) => onChange(parseFloat(e.target.value))}
+        className="flex-1"
+      />
+      <span className="font-mono w-10 text-right">{format ? format(value) : value}</span>
+    </div>
+  );
+}
+
 export default function LocationPage() {
   const params = useParams<{ slug?: string }>();
   const routerLoc = useLocation();
@@ -105,15 +152,28 @@ export default function LocationPage() {
   const { token } = useTerrainMode();
   const { terrain, loading, error } = useMapterhornTerrain(location?.bounds ?? null, !!location);
 
-  const [exaggeration, setExaggeration] = useState(location?.exaggeration ?? 4);
+  const [exaggeration, setExaggeration] = useState(location?.exaggeration ?? 30);
   const [showWater, setShowWater] = useState(true);
   const [showPopulation, setShowPopulation] = useState(false);
-  const [showBuildings, setShowBuildings] = useState(true);
-  const [terrainStyle, setTerrainStyle] = useState<TerrainStyle>('none');
+  const [showOsmBuildings, setShowOsmBuildings] = useState(true);
+  const [showOvertureBuildings, setShowOvertureBuildings] = useState(false);
+
+  // View mode & per-mode parameters
+  const [terrainStyle, setTerrainStyle] = useState<TerrainStyle | 'mesh'>('none');
+  const [contourInterval, setContourInterval] = useState(25);
+  const [vectorInterval, setVectorInterval] = useState(80);
+
+  // Basemap image adjustments
+  const [brightness, setBrightness] = useState(1.35);
+  const [contrast, setContrast] = useState(1.05);
+  const [saturation, setSaturation] = useState(1.1);
+  const [gamma, setGamma] = useState(1);
+
   const [waterFlowActive, setWaterFlowActive] = useState(false);
   const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
   const [flowKey, setFlowKey] = useState(0);
   const [hover, setHover] = useState<HoverCoord | null>(null);
+  const [camera, setCamera] = useState<CameraInfo | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const flowLoopRef = useRef<number | null>(null);
   const orbitRef = useRef<any>(null);
@@ -138,12 +198,12 @@ export default function LocationPage() {
     return () => { if (flowLoopRef.current) cancelAnimationFrame(flowLoopRef.current); };
   }, [waterFlowActive, flowState]);
 
-  const copyCoords = async (c: HoverCoord) => {
-    const txt = `${c.lat.toFixed(6)}, ${c.lon.toFixed(6)}`;
+  const copyText = async (txt: string) => {
     try { await navigator.clipboard.writeText(txt); } catch { /* ignore */ }
     setCopied(txt);
     setTimeout(() => setCopied(null), 1600);
   };
+  const copyCoords = (c: HoverCoord) => copyText(`${c.lat.toFixed(6)}, ${c.lon.toFixed(6)}`);
 
   if (!slug) return <Navigate to="/" replace />;
   if (!location) {
@@ -163,6 +223,10 @@ export default function LocationPage() {
   const btnBase =
     'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium border border-border/60 bg-background/80 backdrop-blur hover:bg-accent transition-colors';
 
+  const overlayStyle: TerrainStyle =
+    terrainStyle === 'contours' ? 'contours' :
+    terrainStyle === 'vectors' ? 'vectors' : 'none';
+
   return (
     <div className="fixed inset-0 bg-background text-foreground">
       <Canvas camera={{ position: [0, 8, 10], fov: 45, near: 0.1, far: 200 }} shadows={false}>
@@ -180,13 +244,10 @@ export default function LocationPage() {
           maxPolarAngle={Math.PI / 2.05}
           mouseButtons={{ LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE }}
         />
+        <CameraProbe orbitRef={orbitRef} onChange={setCamera} />
 
         {terrain && (
           <>
-            {/* Wrap the terrain mesh so pointer events raycast against the
-                actual displaced surface (not a flat plane) — this fixes the
-                click/hover misalignment on mountains. UVs come straight from
-                the terrain mesh geometry. */}
             <group
               onPointerMove={(e) => {
                 if (!e.uv) return;
@@ -212,20 +273,27 @@ export default function LocationPage() {
                 exaggeration={exaggeration}
                 token={token}
                 baseStyleOverride="satlas"
-                brightness={1.35}
+                brightness={brightness}
+                contrast={contrast}
+                saturation={saturation}
+                gamma={gamma}
+                wireframe={terrainStyle === 'mesh'}
               />
             </group>
             <TerrainStyleOverlay
               terrain={terrain}
               exaggeration={exaggeration}
-              style={terrainStyle}
-              contourInterval={25}
-              vectorInterval={80}
+              style={overlayStyle}
+              contourInterval={contourInterval}
+              vectorInterval={vectorInterval}
             />
             {showWater && (
               <OsmWaterwaysLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} />
             )}
-            {showBuildings && (
+            {showOsmBuildings && (
+              <OsmBuildingsLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} />
+            )}
+            {showOvertureBuildings && (
               <OvertureBuildingsLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} />
             )}
             {showPopulation && (
@@ -274,6 +342,7 @@ export default function LocationPage() {
 
       {/* Toolbar */}
       <div className="absolute top-3 right-3 flex items-center gap-2">
+        {/* Layers */}
         <DropdownMenu>
           <DropdownMenuTrigger className={btnBase}>
             <Layers className="w-3.5 h-3.5" /> Layers
@@ -283,39 +352,74 @@ export default function LocationPage() {
             <DropdownMenuCheckboxItem checked={showWater} onCheckedChange={(v) => setShowWater(!!v)}>
               OSM water
             </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem checked={showBuildings} onCheckedChange={(v) => setShowBuildings(!!v)}>
+            <DropdownMenuCheckboxItem checked={showOsmBuildings} onCheckedChange={(v) => setShowOsmBuildings(!!v)}>
               OSM buildings
             </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem
-              checked={showPopulation}
-              onCheckedChange={(v) => setShowPopulation(!!v)}
-            >
-              Population density
+            <DropdownMenuCheckboxItem checked={showOvertureBuildings} onCheckedChange={(v) => setShowOvertureBuildings(!!v)}>
+              Overture buildings
             </DropdownMenuCheckboxItem>
             <DropdownMenuSeparator />
-            <DropdownMenuLabel>Terrain style</DropdownMenuLabel>
-            <DropdownMenuCheckboxItem
-              checked={terrainStyle === 'contours'}
-              onCheckedChange={(v) => setTerrainStyle(v ? 'contours' : 'none')}
-            >
-              Contours
-            </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem
-              checked={terrainStyle === 'vectors'}
-              onCheckedChange={(v) => setTerrainStyle(v ? 'vectors' : 'none')}
-            >
-              Slope vectors
+            <DropdownMenuCheckboxItem checked={showPopulation} onCheckedChange={(v) => setShowPopulation(!!v)}>
+              Population density
             </DropdownMenuCheckboxItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <button
-          className={`${btnBase} ${terrainStyle === 'contours' ? 'text-primary border-primary/50' : ''}`}
-          onClick={() => setTerrainStyle((s) => (s === 'contours' ? 'none' : 'contours'))}
-          title="Toggle contour lines"
-        >
-          <Mountain className="w-3.5 h-3.5" /> Contours
-        </button>
+        {/* View mode */}
+        <Popover>
+          <PopoverTrigger className={`${btnBase} ${terrainStyle !== 'none' ? 'text-primary border-primary/50' : ''}`}>
+            <Eye className="w-3.5 h-3.5" /> View
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-64 space-y-3">
+            <div className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground">Terrain view</div>
+            <div className="grid grid-cols-4 gap-1 text-[11px]">
+              {(['none','contours','mesh','vectors'] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setTerrainStyle(m)}
+                  className={`px-2 py-1 rounded border ${terrainStyle === m ? 'bg-primary text-primary-foreground border-primary' : 'border-border/60 hover:bg-accent'}`}
+                >
+                  {m === 'none' ? 'Off' : m === 'contours' ? 'Contour' : m === 'mesh' ? 'Mesh' : 'Vectors'}
+                </button>
+              ))}
+            </div>
+            {terrainStyle === 'contours' && (
+              <Slider label="Interval" value={contourInterval} min={5} max={200} step={5}
+                onChange={setContourInterval} format={(v) => `${v}m`} />
+            )}
+            {terrainStyle === 'vectors' && (
+              <Slider label="Spacing" value={vectorInterval} min={20} max={400} step={10}
+                onChange={setVectorInterval} format={(v) => `${v}m`} />
+            )}
+            {terrainStyle === 'mesh' && (
+              <div className="text-[11px] text-muted-foreground">Wireframe overlays satellite imagery.</div>
+            )}
+          </PopoverContent>
+        </Popover>
+
+        {/* Image adjust */}
+        <Popover>
+          <PopoverTrigger className={btnBase}>
+            <Sliders className="w-3.5 h-3.5" /> Image
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-64 space-y-2">
+            <div className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground">Basemap</div>
+            <Slider label="Brightness" value={brightness} min={0.5} max={3} step={0.05}
+              onChange={setBrightness} format={(v) => v.toFixed(2)} />
+            <Slider label="Contrast" value={contrast} min={0.5} max={2.5} step={0.05}
+              onChange={setContrast} format={(v) => v.toFixed(2)} />
+            <Slider label="Saturation" value={saturation} min={0} max={2.5} step={0.05}
+              onChange={setSaturation} format={(v) => v.toFixed(2)} />
+            <Slider label="Gamma" value={gamma} min={0.4} max={2.5} step={0.05}
+              onChange={setGamma} format={(v) => v.toFixed(2)} />
+            <button
+              onClick={() => { setBrightness(1.35); setContrast(1.05); setSaturation(1.1); setGamma(1); }}
+              className="w-full mt-1 text-[11px] px-2 py-1 rounded border border-border/60 hover:bg-accent"
+            >
+              Reset
+            </button>
+          </PopoverContent>
+        </Popover>
 
         <button
           className={`${btnBase} ${waterFlowActive ? 'text-primary border-primary/50' : ''}`}
@@ -337,9 +441,9 @@ export default function LocationPage() {
         </button>
       </div>
 
-      {/* Coordinate inspector */}
-      <div className="absolute bottom-3 right-3 px-3 py-2 rounded-md bg-background/80 backdrop-blur border border-border/60 text-xs font-mono min-w-[220px]">
-        <div className="flex items-center justify-between gap-3">
+      {/* Inspector */}
+      <div className="absolute bottom-3 right-3 px-3 py-2 rounded-md bg-background/80 backdrop-blur border border-border/60 text-xs font-mono min-w-[240px]">
+        <div className="flex items-center justify-between gap-3 mb-1">
           <span className="uppercase tracking-widest text-[10px] text-muted-foreground">Inspector</span>
           {copied ? (
             <span className="flex items-center gap-1 text-primary">
@@ -351,14 +455,45 @@ export default function LocationPage() {
             </span>
           )}
         </div>
+
+        <div className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Cursor</div>
         {hover ? (
-          <div className="mt-1 leading-tight">
+          <button
+            className="block w-full text-left hover:text-primary leading-tight"
+            onClick={() => copyCoords(hover)}
+            title="Copy lat, lon"
+          >
             <div>lat {hover.lat.toFixed(6)}</div>
             <div>lon {hover.lon.toFixed(6)}</div>
             <div className="text-muted-foreground">elev {hover.elev.toFixed(1)} m</div>
-          </div>
+          </button>
         ) : (
-          <div className="mt-1 text-muted-foreground">hover terrain…</div>
+          <div className="text-muted-foreground">hover terrain…</div>
+        )}
+
+        <div className="text-[10px] uppercase tracking-widest text-muted-foreground mt-2">Camera</div>
+        {camera ? (
+          <button
+            className="block w-full text-left hover:text-primary leading-tight"
+            onClick={() => copyText(
+              `pos ${camera.pos.map((n) => n.toFixed(3)).join(', ')}\n` +
+              `target ${camera.target.map((n) => n.toFixed(3)).join(', ')}\n` +
+              `distance ${camera.distance.toFixed(3)}\n` +
+              `heading ${camera.headingDeg.toFixed(1)}°\n` +
+              `tilt ${camera.tiltDeg.toFixed(1)}°\n` +
+              `fov ${camera.fov.toFixed(1)}°`
+            )}
+            title="Copy camera state"
+          >
+            <div>dist {camera.distance.toFixed(2)}</div>
+            <div>hdg {camera.headingDeg.toFixed(1)}° · tilt {camera.tiltDeg.toFixed(1)}°</div>
+            <div className="text-muted-foreground">fov {camera.fov.toFixed(0)}°</div>
+            <div className="text-muted-foreground">
+              pos {camera.pos.map((n) => n.toFixed(1)).join(',')}
+            </div>
+          </button>
+        ) : (
+          <div className="text-muted-foreground">—</div>
         )}
       </div>
 
@@ -366,12 +501,12 @@ export default function LocationPage() {
       <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-2 rounded-md bg-background/80 backdrop-blur border border-border/60 flex items-center gap-3 text-xs">
         <span className="text-muted-foreground font-mono">Vertical exag</span>
         <input
-          type="range" min={1} max={20} step={1}
+          type="range" min={0} max={100} step={1}
           value={exaggeration}
           onChange={(e) => setExaggeration(parseInt(e.target.value, 10))}
-          className="w-40"
+          className="w-52"
         />
-        <span className="font-mono w-6 text-right">{exaggeration}x</span>
+        <span className="font-mono w-8 text-right">{exaggeration}x</span>
         {waterFlowActive && (
           <span className="ml-3 text-primary font-mono">click terrain to add water</span>
         )}
@@ -379,7 +514,7 @@ export default function LocationPage() {
 
       {/* Attribution */}
       <div className="absolute bottom-1 left-2 text-[10px] font-mono text-muted-foreground/70 pointer-events-none">
-        Elevation: Mapterhorn · Imagery: Satlas Super-Res 2023 (Allen Institute for AI) · Buildings: Overture Maps Foundation · Data © OpenStreetMap contributors
+        Elevation: Mapterhorn · Imagery: Satlas Super-Res 2023 (Allen Institute for AI) · Buildings: OSM / Overture Maps Foundation · Data © OpenStreetMap contributors
       </div>
     </div>
   );

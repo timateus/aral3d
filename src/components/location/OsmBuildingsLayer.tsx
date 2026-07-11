@@ -88,20 +88,22 @@ const OsmBuildingsLayer = ({ terrain, exaggeration, bounds }: Props) => {
       let baseSet = false;
       let localMinElev = Infinity;
       const projected: [number, number][] = [];
+      let anyInside = false;
       for (const [lon, lat] of b.coords) {
         const nx = (lon - bounds.minLon) / (bounds.maxLon - bounds.minLon);
         const ny = (lat - bounds.minLat) / (bounds.maxLat - bounds.minLat);
-        if (nx < 0 || nx > 1 || ny < 0 || ny > 1) { projected.length = 0; break; }
+        if (nx >= 0 && nx <= 1 && ny >= 0 && ny <= 1) anyInside = true;
         const x = (nx - 0.5) * meshW;
         const z = -((ny - 0.5) * meshH);
         projected.push([x, z]);
-        const px = Math.floor(nx * (terrain.width - 1));
-        const py = Math.floor((1 - ny) * (terrain.height - 1));
-        let e = terrain.elevations[py * terrain.width + px];
+        const cx = Math.max(0, Math.min(terrain.width - 1, Math.floor(nx * (terrain.width - 1))));
+        const cy = Math.max(0, Math.min(terrain.height - 1, Math.floor((1 - ny) * (terrain.height - 1))));
+        let e = terrain.elevations[cy * terrain.width + cx];
         if (!isFinite(e)) e = terrain.minElevation;
         if (e < localMinElev) localMinElev = e;
         baseSet = true;
       }
+      if (!anyInside) continue;
       if (projected.length < 3 || !baseSet) continue;
       baseElev = localMinElev;
 

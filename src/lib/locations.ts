@@ -42,7 +42,7 @@ export const LOCATIONS: LocationDef[] = [
       minLon: 79.03803,
       maxLon: 79.09781,
     },
-    exaggeration: 4,
+    exaggeration: 30,
   },
 ];
 
