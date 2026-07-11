@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import * as THREE from 'three';
 import { PMTiles } from 'pmtiles';
 import { VectorTile } from '@mapbox/vector-tile';
-import * as Pbf from 'pbf';
+import { PbfReader } from 'pbf';
 import type { GeoBounds, TerrainData } from '@/lib/geotiff-loader';
 
 interface Props {
