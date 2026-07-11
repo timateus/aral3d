@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import * as THREE from 'three';
-import { TerrainData } from '@/lib/geotiff-loader';
+import { TerrainData, GeoBounds } from '@/lib/geotiff-loader';
 import { useVisualMode, useDesignerScheme } from '@/lib/visual-mode';
 
-export type TerrainStyle = 'none' | 'contours' | 'vectors';
+export type TerrainStyle = 'none' | 'contours' | 'vectors' | 'mesh';
 
 interface Props {
   terrain: TerrainData;
@@ -13,13 +13,10 @@ interface Props {
   contourInterval?: number;
   /** Spacing in meters between sampled vectors (controls density) */
   vectorInterval?: number;
-}
-
-function meshToWorld(i: number, j: number, normalized: number, w: number, h: number, maxHeight: number) {
-  const mx = (i / (w - 1) - 0.5) * 10;
-  const my = (0.5 - j / (h - 1)) * 10 * (h / w);
-  const mz = normalized * maxHeight;
-  return [mx, mz, -my] as const;
+  /** Spacing in meters between mesh-grid lines */
+  meshInterval?: number;
+  /** Bounds — required for accurate meters→pixels for vector/mesh spacing */
+  bounds?: GeoBounds;
 }
 
 const TerrainStyleOverlay = ({
@@ -28,7 +25,17 @@ const TerrainStyleOverlay = ({
   style,
   contourInterval = 25,
   vectorInterval = 50,
+  meshInterval = 100,
+  bounds,
 }: Props) => {
+  // meters per pixel from bounds (fallback ~250)
+  const metersPerPixel = useMemo(() => {
+    if (!bounds) return 250;
+    const latMid = (bounds.minLat + bounds.maxLat) / 2;
+    const widthMeters = (bounds.maxLon - bounds.minLon) * 111000 * Math.cos((latMid * Math.PI) / 180);
+    return Math.max(0.5, widthMeters / terrain.width);
+  }, [bounds, terrain.width]);
+
   const contourGeometry = useMemo(() => {
     if (style !== 'contours') return null;
     const { width: w, height: h, elevations, minElevation, maxElevation, noDataValue } = terrain;
