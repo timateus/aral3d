@@ -177,6 +177,7 @@ export default function LocationPage() {
   const [hover, setHover] = useState<HoverCoord | null>(null);
   const [camera, setCamera] = useState<CameraInfo | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [selectedWater, setSelectedWater] = useState<import('@/components/location/OsmWaterwaysLayer').WaterFeature | null>(null);
   const flowLoopRef = useRef<number | null>(null);
   const orbitRef = useRef<any>(null);
 
@@ -229,7 +230,7 @@ export default function LocationPage() {
 
   return (
     <div className="fixed inset-0 bg-background text-foreground">
-      <Canvas camera={{ position: [0, 8, 10], fov: 45, near: 0.1, far: 200 }} shadows={false}>
+      <Canvas camera={{ position: [-4.2, 4.2, -1.9], fov: 45, near: 0.1, far: 200 }} shadows={false}>
         <color attach="background" args={['#f3f0e7']} />
         <ambientLight intensity={0.9} />
         <directionalLight position={[10, 20, 10]} intensity={1.1} />
