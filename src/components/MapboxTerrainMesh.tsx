@@ -83,6 +83,7 @@ const MapboxTerrainMesh = ({ terrain, exaggeration, token, onError, baseStyleOve
       uSatellite: { value: null },
       uMirage: { value: 0 },
       uHasTex: { value: 0 },
+      uBrightness: { value: brightness },
     },
     vertexShader: /* glsl */ `
       varying vec2 vUv;
@@ -95,12 +96,13 @@ const MapboxTerrainMesh = ({ terrain, exaggeration, token, onError, baseStyleOve
       uniform sampler2D uSatellite;
       uniform float uMirage;
       uniform float uHasTex;
+      uniform float uBrightness;
       varying vec2 vUv;
       void main() {
         vec3 col = uHasTex > 0.5 ? texture2D(uSatellite, vUv).rgb : vec3(0.4, 0.42, 0.45);
+        col = clamp(col * uBrightness, 0.0, 1.0);
         if (uMirage > 0.5) {
           float gray = dot(col, vec3(0.299, 0.587, 0.114));
-          // Mild desaturation + slight warm tint — keep land/water colors readable
           vec3 desat = mix(col, vec3(gray), 0.35);
           vec3 warm = desat * vec3(1.05, 1.0, 0.92);
           col = warm;
@@ -112,6 +114,7 @@ const MapboxTerrainMesh = ({ terrain, exaggeration, token, onError, baseStyleOve
   }), []);
 
   useEffect(() => { material.uniforms.uMirage.value = isMirage ? 1 : 0; }, [isMirage, material]);
+  useEffect(() => { material.uniforms.uBrightness.value = brightness; }, [brightness, material]);
   useEffect(() => {
     material.uniforms.uSatellite.value = satellite;
     material.uniforms.uHasTex.value = satellite ? 1 : 0;
