@@ -379,7 +379,7 @@ export default function LocationPage() {
 
       {/* Attribution */}
       <div className="absolute bottom-1 left-2 text-[10px] font-mono text-muted-foreground/70 pointer-events-none">
-        Elevation: Mapterhorn · Imagery: Mapbox · Data © OpenStreetMap contributors
+        Elevation: Mapterhorn · Imagery: Satlas Super-Res 2023 (Allen Institute for AI) · Buildings: Overture Maps Foundation · Data © OpenStreetMap contributors
       </div>
     </div>
   );
