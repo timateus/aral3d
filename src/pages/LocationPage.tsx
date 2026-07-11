@@ -225,9 +225,7 @@ export default function LocationPage() {
   const btnBase =
     'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium border border-border/60 bg-background/80 backdrop-blur hover:bg-accent transition-colors';
 
-  const overlayStyle: TerrainStyle =
-    terrainStyle === 'contours' ? 'contours' :
-    terrainStyle === 'vectors' ? 'vectors' : 'none';
+  const dataBase = `/data/locations/${location.slug}`;
 
   return (
     <div className="fixed inset-0 bg-background text-foreground">
