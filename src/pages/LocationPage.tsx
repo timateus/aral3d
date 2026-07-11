@@ -11,7 +11,7 @@ import MapboxTerrainMesh from '@/components/MapboxTerrainMesh';
 import TerrainStyleOverlay, { type TerrainStyle } from '@/components/TerrainStyleOverlay';
 import OsmWaterwaysLayer from '@/components/location/OsmWaterwaysLayer';
 import OsmPopulationLayer from '@/components/location/OsmPopulationLayer';
-import OsmBuildingsLayer from '@/components/location/OsmBuildingsLayer';
+import OvertureBuildingsLayer from '@/components/location/OvertureBuildingsLayer';
 import WaterFlowOverlay from '@/components/WaterFlowOverlay';
 import { createFlowState, addWaterAt, stepFlow, type WaterFlowState } from '@/lib/water-flow-simulation';
 import { useUserLocation } from '@/hooks/useUserLocation';
