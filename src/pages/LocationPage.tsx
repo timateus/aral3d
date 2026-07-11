@@ -39,60 +39,24 @@ export function LocationsIndex() {
 
 interface HoverCoord { lat: number; lon: number; elev: number }
 
-function InspectorPlane({
-  terrain,
-  bounds,
-  onHover,
-  onClick,
-  waterMode,
-  onWaterPixel,
-}: {
-  terrain: import('@/lib/geotiff-loader').TerrainData;
-  bounds: import('@/lib/geotiff-loader').GeoBounds;
-  onHover: (c: HoverCoord | null) => void;
-  onClick: (c: HoverCoord) => void;
-  waterMode: boolean;
-  onWaterPixel: (row: number, col: number) => void;
-}) {
-  return (
-    <mesh
-      visible={false}
-      rotation={[-Math.PI / 2, 0, 0]}
-      onPointerMove={(e) => {
-        if (!e.uv) return;
-        const nx = e.uv.x;
-        const ny = e.uv.y;
-        const lon = bounds.minLon + nx * (bounds.maxLon - bounds.minLon);
-        const lat = bounds.minLat + ny * (bounds.maxLat - bounds.minLat);
-        const col = Math.floor(nx * (terrain.width - 1));
-        const row = Math.floor((1 - ny) * (terrain.height - 1));
-        const elev = terrain.elevations[row * terrain.width + col] ?? terrain.minElevation;
-        onHover({ lat, lon, elev });
-      }}
-      onPointerOut={() => onHover(null)}
-      onClick={(e) => {
-        if (!e.uv) return;
-        e.stopPropagation();
-        const nx = e.uv.x, ny = e.uv.y;
-        if (waterMode) {
-          const col = Math.floor(nx * (terrain.width - 1));
-          const row = Math.floor((1 - ny) * (terrain.height - 1));
-          onWaterPixel(row, col);
-          return;
-        }
-        const lon = bounds.minLon + nx * (bounds.maxLon - bounds.minLon);
-        const lat = bounds.minLat + ny * (bounds.maxLat - bounds.minLat);
-        const col = Math.floor(nx * (terrain.width - 1));
-        const row = Math.floor((1 - ny) * (terrain.height - 1));
-        const elev = terrain.elevations[row * terrain.width + col] ?? terrain.minElevation;
-        onClick({ lat, lon, elev });
-      }}
-    >
-      <planeGeometry args={[10, 10 * (terrain.height / terrain.width)]} />
-      <meshBasicMaterial transparent opacity={0} />
-    </mesh>
-  );
+/**
+ * Extract lat/lon/elev from a pointer event whose intersection carries UVs
+ * matching the terrain mesh's parameterization (i/(w-1), 1 - j/(h-1)).
+ */
+function uvToCoord(
+  uv: THREE.Vector2,
+  terrain: import('@/lib/geotiff-loader').TerrainData,
+  bounds: import('@/lib/geotiff-loader').GeoBounds,
+): HoverCoord {
+  const nx = uv.x, ny = uv.y;
+  const lon = bounds.minLon + nx * (bounds.maxLon - bounds.minLon);
+  const lat = bounds.minLat + ny * (bounds.maxLat - bounds.minLat);
+  const col = Math.max(0, Math.min(terrain.width - 1, Math.floor(nx * (terrain.width - 1))));
+  const row = Math.max(0, Math.min(terrain.height - 1, Math.floor((1 - ny) * (terrain.height - 1))));
+  const elev = terrain.elevations[row * terrain.width + col] ?? terrain.minElevation;
+  return { lat, lon, elev };
 }
+
 
 function UserPin({
   terrain, bounds, exaggeration, location,
