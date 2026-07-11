@@ -374,7 +374,18 @@ export default function LocationPage() {
             <Eye className="w-3.5 h-3.5" /> View
           </PopoverTrigger>
           <PopoverContent align="end" className="w-64 space-y-3">
-            <div className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground">Terrain view</div>
+            <div className="flex items-center justify-between">
+              <div className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground">Terrain</div>
+              <label className="flex items-center gap-1.5 text-[11px] cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showTerrain}
+                  onChange={(e) => setShowTerrain(e.target.checked)}
+                />
+                Show
+              </label>
+            </div>
+            <div className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground">Overlay</div>
             <div className="grid grid-cols-4 gap-1 text-[11px]">
               {(['none','contours','mesh','vectors'] as const).map((m) => (
                 <button
@@ -391,11 +402,12 @@ export default function LocationPage() {
                 onChange={setContourInterval} format={(v) => `${v}m`} />
             )}
             {terrainStyle === 'vectors' && (
-              <Slider label="Spacing" value={vectorInterval} min={20} max={400} step={10}
+              <Slider label="Spacing" value={vectorInterval} min={10} max={400} step={5}
                 onChange={setVectorInterval} format={(v) => `${v}m`} />
             )}
             {terrainStyle === 'mesh' && (
-              <div className="text-[11px] text-muted-foreground">Wireframe overlays satellite imagery.</div>
+              <Slider label="Spacing" value={meshInterval} min={5} max={400} step={5}
+                onChange={setMeshInterval} format={(v) => `${v}m`} />
             )}
           </PopoverContent>
         </Popover>
@@ -416,7 +428,7 @@ export default function LocationPage() {
             <Slider label="Gamma" value={gamma} min={0.4} max={2.5} step={0.05}
               onChange={setGamma} format={(v) => v.toFixed(2)} />
             <button
-              onClick={() => { setBrightness(1.35); setContrast(1.05); setSaturation(1.1); setGamma(1); }}
+              onClick={() => { setBrightness(1.75); setContrast(0.8); setSaturation(0.6); setGamma(0.9); }}
               className="w-full mt-1 text-[11px] px-2 py-1 rounded border border-border/60 hover:bg-accent"
             >
               Reset
