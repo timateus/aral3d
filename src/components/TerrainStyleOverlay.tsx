@@ -120,14 +120,9 @@ const TerrainStyleOverlay = ({
     const lift = 0.15;
     const arrowScale = 1.2;
 
-    // Map vector interval (meters) → pixel step. Approximate using elevRange ratios is wrong;
-    // use the terrain's degree extent if available, otherwise fall back to a sensible pixel step.
-    // We approximate ~1° latitude ≈ 111_000 m. Terrain is ~5° wide typically — but without bounds
-    // we just translate intervalMeters to a step in pixels via a heuristic.
-    // Fallback: clamp to sane min/max.
-    const approxMetersPerPixel = 250; // typical for the merged DEM grid
-    let step = Math.max(2, Math.round(vectorInterval / approxMetersPerPixel));
-    if (step > Math.min(w, h) / 4) step = Math.max(2, Math.floor(Math.min(w, h) / 8));
+    // Convert spacing (meters) → grid step (pixels) using true metersPerPixel from bounds.
+    let step = Math.max(1, Math.round(vectorInterval / metersPerPixel));
+    if (step > Math.min(w, h) / 3) step = Math.max(1, Math.floor(Math.min(w, h) / 6));
 
     let maxGrad = 0;
     const samples: { i: number; j: number; dx: number; dy: number; mag: number }[] = [];
