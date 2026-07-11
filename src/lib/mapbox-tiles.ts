@@ -155,23 +155,29 @@ export async function loadMapboxSatellite(bounds: LonLatBounds, token: string): 
   return loadBaseStyleTexture(bounds, 'satellite', token);
 }
 
-export type BaseStyle = 'satellite' | 'streets' | 'osm';
+export type BaseStyle = 'satellite' | 'streets' | 'osm' | 'satlas';
 
 /**
- * Fetch + stitch a raster basemap (Mapbox satellite, Mapbox streets, or OSM)
- * for the given bbox and return it as an sRGB texture suitable for draping
- * over the terrain mesh.
+ * Fetch + stitch a raster basemap for the given bbox and return it as an
+ * sRGB texture suitable for draping over the terrain mesh.
+ *
+ * `satlas` = Satlas Super-Res 2023 (Sentinel-2 SR by Allen Institute for AI),
+ * much brighter than Mapbox satellite in mountainous terrain.
  */
 export async function loadBaseStyleTexture(
   bounds: LonLatBounds,
   style: BaseStyle,
   token: string,
 ): Promise<THREE.Texture> {
-  const z = pickZoom(bounds, 4);
+  // Satlas covers up to z17 globally — go tighter for more detail.
+  const target = style === 'satlas' ? 6 : 4;
+  const z = pickZoom(bounds, target);
   let urlFor: (x: number, y: number, z: number) => string;
   if (style === 'osm') {
-    // OSM standard tiles — no token required. Respect usage policy: low volume.
     urlFor = (x, y, z) => `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
+  } else if (style === 'satlas') {
+    urlFor = (x, y, z) =>
+      `https://se-tile-api.allen.ai/mosaic/superres/sr2023/tci/${z}/${x}/${y}.webp`;
   } else if (style === 'streets') {
     urlFor = (x, y, z) =>
       `https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/512/${z}/${x}/${y}@2x?access_token=${token}`;

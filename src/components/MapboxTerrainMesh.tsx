@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import * as THREE from 'three';
 import { TerrainData } from '@/lib/geotiff-loader';
-import { loadBaseStyleTexture } from '@/lib/mapbox-tiles';
+import { loadBaseStyleTexture, type BaseStyle } from '@/lib/mapbox-tiles';
 import { useVisualMode } from '@/lib/visual-mode';
 import { useTerrainMode } from '@/hooks/useTerrainMode';
 
@@ -10,6 +10,10 @@ interface Props {
   exaggeration: number;
   token: string;
   onError?: (msg: string) => void;
+  /** Override the global basemap style (e.g. force Satlas for location pages). */
+  baseStyleOverride?: BaseStyle;
+  /** Multiplier applied to sampled satellite RGB. 1.0 = untouched, 1.4 = brighter. */
+  brightness?: number;
 }
 
 /**
@@ -18,17 +22,18 @@ interface Props {
  * alignment of overlay features and works for ANY bounds (Khorezm, custom
  * regions, etc.) — we just refetch the satellite texture for the new bbox.
  */
-const MapboxTerrainMesh = ({ terrain, exaggeration, token, onError }: Props) => {
+const MapboxTerrainMesh = ({ terrain, exaggeration, token, onError, baseStyleOverride, brightness = 1 }: Props) => {
   const [satellite, setSatellite] = useState<THREE.Texture | null>(null);
   const [mode] = useVisualMode();
   const isMirage = mode === 'mirage' || mode === 'designer';
-  const { baseStyle } = useTerrainMode();
+  const { baseStyle: globalBaseStyle } = useTerrainMode();
+  const baseStyle = baseStyleOverride ?? globalBaseStyle;
 
   // Refetch basemap whenever bounds or basemap style change.
   useEffect(() => {
     if (!terrain.bounds) return;
-    // Mapbox styles need a token; OSM does not.
-    if (baseStyle !== 'osm' && !token) return;
+    // Only Mapbox styles need a token; OSM and Satlas are open.
+    if (baseStyle !== 'osm' && baseStyle !== 'satlas' && !token) return;
     let cancelled = false;
     setSatellite(null);
     loadBaseStyleTexture(terrain.bounds, baseStyle, token)
@@ -78,6 +83,7 @@ const MapboxTerrainMesh = ({ terrain, exaggeration, token, onError }: Props) => 
       uSatellite: { value: null },
       uMirage: { value: 0 },
       uHasTex: { value: 0 },
+      uBrightness: { value: brightness },
     },
     vertexShader: /* glsl */ `
       varying vec2 vUv;
@@ -90,12 +96,13 @@ const MapboxTerrainMesh = ({ terrain, exaggeration, token, onError }: Props) => 
       uniform sampler2D uSatellite;
       uniform float uMirage;
       uniform float uHasTex;
+      uniform float uBrightness;
       varying vec2 vUv;
       void main() {
         vec3 col = uHasTex > 0.5 ? texture2D(uSatellite, vUv).rgb : vec3(0.4, 0.42, 0.45);
+        col = clamp(col * uBrightness, 0.0, 1.0);
         if (uMirage > 0.5) {
           float gray = dot(col, vec3(0.299, 0.587, 0.114));
-          // Mild desaturation + slight warm tint — keep land/water colors readable
           vec3 desat = mix(col, vec3(gray), 0.35);
           vec3 warm = desat * vec3(1.05, 1.0, 0.92);
           col = warm;
@@ -107,6 +114,7 @@ const MapboxTerrainMesh = ({ terrain, exaggeration, token, onError }: Props) => 
   }), []);
 
   useEffect(() => { material.uniforms.uMirage.value = isMirage ? 1 : 0; }, [isMirage, material]);
+  useEffect(() => { material.uniforms.uBrightness.value = brightness; }, [brightness, material]);
   useEffect(() => {
     material.uniforms.uSatellite.value = satellite;
     material.uniforms.uHasTex.value = satellite ? 1 : 0;
