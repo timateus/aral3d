@@ -1,43 +1,51 @@
 import { useEffect, useMemo, useState } from 'react';
 import * as THREE from 'three';
-import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js';
-import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js';
+import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
+import { Line2 } from 'three/examples/jsm/lines/Line2.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import { useThree } from '@react-three/fiber';
 import type { GeoBounds, TerrainData } from '@/lib/geotiff-loader';
 
+export interface WaterFeature {
+  id: number | string;
+  kind: 'linear' | 'area';
+  tags: Record<string, string>;
+  coords: [number, number][];
+}
+
 interface Props {
   terrain: TerrainData;
   exaggeration: number;
+  /** Terrain bounds — used to map lat/lon to mesh coords. */
   bounds: GeoBounds;
-  /** If set, load OSM water JSON from this static URL instead of hitting Overpass. */
+  /** Larger clip bounds — features fully outside are dropped. Defaults to bounds. */
+  clipBounds?: GeoBounds;
   dataUrl?: string;
+  onSelect?: (f: WaterFeature | null) => void;
 }
 
-interface Line { coords: [number, number][]; kind: 'linear' | 'area' }
+const _cache = new Map<string, WaterFeature[]>();
 
-const _cache = new Map<string, Line[]>();
-
-function parseElements(data: any): Line[] {
-  const lines: Line[] = [];
+function parseElements(data: any): WaterFeature[] {
+  const out: WaterFeature[] = [];
   for (const el of data.elements || []) {
     if (el.type === 'way' && Array.isArray(el.geometry)) {
       const coords = el.geometry.map((g: any) => [g.lon, g.lat] as [number, number]);
       const kind: 'linear' | 'area' = el.tags?.waterway ? 'linear' : 'area';
-      lines.push({ coords, kind });
+      out.push({ id: el.id, kind, tags: el.tags || {}, coords });
     } else if (el.type === 'relation' && Array.isArray(el.members)) {
       for (const m of el.members) {
         if (m.type === 'way' && Array.isArray(m.geometry)) {
           const coords = m.geometry.map((g: any) => [g.lon, g.lat] as [number, number]);
-          lines.push({ coords, kind: 'area' });
+          out.push({ id: `${el.id}/${m.ref}`, kind: 'area', tags: el.tags || {}, coords });
         }
       }
     }
   }
-  return lines;
+  return out;
 }
 
-async function fetchStatic(url: string): Promise<Line[]> {
+async function fetchStatic(url: string): Promise<WaterFeature[]> {
   const hit = _cache.get(url);
   if (hit) return hit;
   const res = await fetch(url);
@@ -47,111 +55,108 @@ async function fetchStatic(url: string): Promise<Line[]> {
   return parsed;
 }
 
-async function fetchOsmWater(b: GeoBounds): Promise<Line[]> {
-  const key = `${b.minLon.toFixed(4)},${b.minLat.toFixed(4)},${b.maxLon.toFixed(4)},${b.maxLat.toFixed(4)}`;
-  const hit = _cache.get(key);
-  if (hit) return hit;
-  const bbox = `${b.minLat},${b.minLon},${b.maxLat},${b.maxLon}`;
-  const q = `[out:json][timeout:30];
-    (
-      way["waterway"](${bbox});
-      way["natural"="water"](${bbox});
-      way["landuse"="reservoir"](${bbox});
-      relation["natural"="water"](${bbox});
-    );
-    out geom;`;
-  const res = await fetch('https://overpass-api.de/api/interpreter', {
-    method: 'POST',
-    body: new URLSearchParams({ data: q }),
-  });
-  if (!res.ok) throw new Error(`Overpass ${res.status}`);
-  const lines = parseElements(await res.json());
-  _cache.set(key, lines);
-  return lines;
-}
-
-const OsmWaterwaysLayer = ({ terrain, exaggeration, bounds, dataUrl }: Props) => {
-  const [lines, setLines] = useState<Line[] | null>(null);
+const OsmWaterwaysLayer = ({ terrain, exaggeration, bounds, clipBounds, dataUrl, onSelect }: Props) => {
+  const [features, setFeatures] = useState<WaterFeature[] | null>(null);
   const { size } = useThree();
+  const clip = clipBounds ?? bounds;
 
   useEffect(() => {
+    if (!dataUrl) { setFeatures([]); return; }
     let cancelled = false;
-    const p = dataUrl ? fetchStatic(dataUrl) : fetchOsmWater(bounds);
-    p.then((l) => { if (!cancelled) setLines(l); })
-     .catch((e) => { console.warn('OSM water fetch failed', e); if (!cancelled) setLines([]); });
+    fetchStatic(dataUrl)
+      .then((l) => { if (!cancelled) setFeatures(l); })
+      .catch((e) => { console.warn('OSM water fetch failed', e); if (!cancelled) setFeatures([]); });
     return () => { cancelled = true; };
-  }, [dataUrl, bounds.minLon, bounds.minLat, bounds.maxLon, bounds.maxLat]);
+  }, [dataUrl]);
 
-  const object = useMemo(() => {
-    if (!lines || lines.length === 0) return null;
+  const group = useMemo(() => {
+    if (!features || features.length === 0) return null;
     const meshW = 10;
     const meshH = 10 * (terrain.height / terrain.width);
     const elevRange = terrain.maxElevation - terrain.minElevation || 1;
     const maxHeight = 10 * (exaggeration / 100);
     const lift = Math.max(0.05, maxHeight * 0.015);
-    const positions: number[] = [];
-    const colors: number[] = [];
     const linearColor = new THREE.Color('#0ea5e9');
     const areaColor = new THREE.Color('#1d4ed8');
 
-    const sampleY = (nx: number, ny: number) => {
-      const cx = Math.max(0, Math.min(terrain.width - 1, Math.floor(nx * (terrain.width - 1))));
-      const cy = Math.max(0, Math.min(terrain.height - 1, Math.floor((1 - ny) * (terrain.height - 1))));
+    // Water features can extend beyond terrain — scale positions using terrain bounds
+    // (so overlap is aligned) but keep them visible on a flat plane at min height.
+    const sampleY = (nxT: number, nyT: number) => {
+      if (nxT < 0 || nxT > 1 || nyT < 0 || nyT > 1) return lift; // outside terrain: near base
+      const cx = Math.max(0, Math.min(terrain.width - 1, Math.floor(nxT * (terrain.width - 1))));
+      const cy = Math.max(0, Math.min(terrain.height - 1, Math.floor((1 - nyT) * (terrain.height - 1))));
       let e = terrain.elevations[cy * terrain.width + cx];
       if (!isFinite(e)) e = terrain.minElevation;
       return ((e - terrain.minElevation) / elevRange) * maxHeight + lift;
     };
 
-    for (const l of lines) {
-      const col = l.kind === 'linear' ? linearColor : areaColor;
-      for (let i = 0; i < l.coords.length - 1; i++) {
-        const [lon1, lat1] = l.coords[i];
-        const [lon2, lat2] = l.coords[i + 1];
-        const nx1 = (lon1 - bounds.minLon) / (bounds.maxLon - bounds.minLon);
-        const ny1 = (lat1 - bounds.minLat) / (bounds.maxLat - bounds.minLat);
-        const nx2 = (lon2 - bounds.minLon) / (bounds.maxLon - bounds.minLon);
-        const ny2 = (lat2 - bounds.minLat) / (bounds.maxLat - bounds.minLat);
-        const in1 = nx1 >= 0 && nx1 <= 1 && ny1 >= 0 && ny1 <= 1;
-        const in2 = nx2 >= 0 && nx2 <= 1 && ny2 >= 0 && ny2 <= 1;
-        if (!in1 && !in2) continue;
-        const x1 = (nx1 - 0.5) * meshW;
-        const z1 = -((ny1 - 0.5) * meshH);
-        const x2 = (nx2 - 0.5) * meshW;
-        const z2 = -((ny2 - 0.5) * meshH);
-        const y1 = sampleY(nx1, ny1);
-        const y2 = sampleY(nx2, ny2);
-        positions.push(x1, y1, z1, x2, y2, z2);
-        colors.push(col.r, col.g, col.b, col.r, col.g, col.b);
+    const g = new THREE.Group();
+    const disposables: { geom: LineGeometry; mat: LineMaterial }[] = [];
+
+    for (const f of features) {
+      // clip test against wider bounds
+      let anyInClip = false;
+      for (const [lon, lat] of f.coords) {
+        if (lon >= clip.minLon && lon <= clip.maxLon && lat >= clip.minLat && lat <= clip.maxLat) {
+          anyInClip = true; break;
+        }
       }
+      if (!anyInClip) continue;
+
+      const positions: number[] = [];
+      for (const [lon, lat] of f.coords) {
+        const nxT = (lon - bounds.minLon) / (bounds.maxLon - bounds.minLon);
+        const nyT = (lat - bounds.minLat) / (bounds.maxLat - bounds.minLat);
+        const x = (nxT - 0.5) * meshW;
+        const z = -((nyT - 0.5) * meshH);
+        const y = sampleY(nxT, nyT);
+        positions.push(x, y, z);
+      }
+      if (positions.length < 6) continue;
+
+      const geom = new LineGeometry();
+      geom.setPositions(new Float32Array(positions));
+      const col = f.kind === 'linear' ? linearColor : areaColor;
+      const mat = new LineMaterial({
+        color: col.getHex(),
+        linewidth: 4,
+        transparent: true,
+        opacity: 1,
+        depthTest: false,
+        resolution: new THREE.Vector2(size.width, size.height),
+      });
+      const line = new Line2(geom, mat);
+      line.renderOrder = 10;
+      line.userData = { waterFeature: f };
+      g.add(line);
+      disposables.push({ geom, mat });
     }
-    if (positions.length === 0) return null;
-    const geo = new LineSegmentsGeometry();
-    geo.setPositions(new Float32Array(positions));
-    geo.setColors(new Float32Array(colors));
-    const mat = new LineMaterial({
-      vertexColors: true,
-      linewidth: 4,
-      transparent: true,
-      opacity: 1,
-      depthTest: false,
-      resolution: new THREE.Vector2(size.width, size.height),
-    });
-    const obj = new LineSegments2(geo, mat);
-    obj.renderOrder = 10;
-    return obj;
-  }, [lines, terrain, exaggeration, bounds, size.width, size.height]);
+    (g.userData as any).__disposables = disposables;
+    return g;
+  }, [features, terrain, exaggeration, bounds, clip.minLon, clip.minLat, clip.maxLon, clip.maxLat, size.width, size.height]);
 
-  useEffect(() => {
-    return () => {
-      if (object) {
-        object.geometry.dispose();
-        (object.material as LineMaterial).dispose();
-      }
-    };
-  }, [object]);
+  useEffect(() => () => {
+    if (!group) return;
+    const d = (group.userData as any).__disposables as { geom: LineGeometry; mat: LineMaterial }[] | undefined;
+    if (d) for (const { geom, mat } of d) { geom.dispose(); mat.dispose(); }
+  }, [group]);
 
-  if (!object) return null;
-  return <primitive object={object} />;
+  if (!group) return null;
+  return (
+    <primitive
+      object={group}
+      onClick={(e: any) => {
+        const obj = e.object;
+        const f = obj?.userData?.waterFeature as WaterFeature | undefined;
+        if (f) { e.stopPropagation(); onSelect?.(f); }
+      }}
+      onPointerOver={(e: any) => {
+        const f = e.object?.userData?.waterFeature;
+        if (f) document.body.style.cursor = 'pointer';
+      }}
+      onPointerOut={() => { document.body.style.cursor = ''; }}
+    />
+  );
 };
 
 export default OsmWaterwaysLayer;

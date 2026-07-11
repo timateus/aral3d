@@ -3,7 +3,7 @@ import { useParams, Navigate, Link, useLocation } from 'react-router-dom';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
-import { Loader2, Layers, Waves, Crosshair, Mountain, ArrowRight, Copy, Check, Sliders, Eye } from 'lucide-react';
+import { Loader2, Layers, Waves, Crosshair, Mountain, ArrowRight, Copy, Check, Sliders, Eye, X } from 'lucide-react';
 import { findLocation, LOCATIONS } from '@/lib/locations';
 import { useMapterhornTerrain } from '@/hooks/useMapterhornTerrain';
 import { useTerrainMode } from '@/hooks/useTerrainMode';
@@ -177,6 +177,7 @@ export default function LocationPage() {
   const [hover, setHover] = useState<HoverCoord | null>(null);
   const [camera, setCamera] = useState<CameraInfo | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [selectedWater, setSelectedWater] = useState<import('@/components/location/OsmWaterwaysLayer').WaterFeature | null>(null);
   const flowLoopRef = useRef<number | null>(null);
   const orbitRef = useRef<any>(null);
 
@@ -229,7 +230,7 @@ export default function LocationPage() {
 
   return (
     <div className="fixed inset-0 bg-background text-foreground">
-      <Canvas camera={{ position: [0, 8, 10], fov: 45, near: 0.1, far: 200 }} shadows={false}>
+      <Canvas camera={{ position: [-4.2, 4.2, -1.9], fov: 45, near: 0.1, far: 200 }} shadows={false}>
         <color attach="background" args={['#f3f0e7']} />
         <ambientLight intensity={0.9} />
         <directionalLight position={[10, 20, 10]} intensity={1.1} />
@@ -291,7 +292,14 @@ export default function LocationPage() {
               bounds={location.bounds}
             />
             {showWater && (
-              <OsmWaterwaysLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} dataUrl={`${dataBase}/water.json`} />
+              <OsmWaterwaysLayer
+                terrain={terrain}
+                exaggeration={exaggeration}
+                bounds={location.bounds}
+                clipBounds={location.waterBounds ?? location.bounds}
+                dataUrl={`${dataBase}/${location.waterBounds ? 'water_large.json' : 'water.json'}`}
+                onSelect={setSelectedWater}
+              />
             )}
             {showOsmBuildings && (
               <OsmBuildingsLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} dataUrl={`${dataBase}/buildings.json`} />
@@ -455,6 +463,43 @@ export default function LocationPage() {
           Locate me
         </button>
       </div>
+
+      {/* Water feature info */}
+      {selectedWater && (
+        <div className="absolute top-16 right-3 w-72 p-3 rounded-md bg-background/90 backdrop-blur border border-border/60 text-xs font-mono z-10">
+          <div className="flex items-center justify-between mb-2">
+            <span className="uppercase tracking-widest text-[10px] text-primary">Water · {selectedWater.kind}</span>
+            <button onClick={() => setSelectedWater(null)} className="text-muted-foreground hover:text-foreground">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          <div className="text-[10px] text-muted-foreground mb-1">
+            id {String(selectedWater.id)}
+          </div>
+          {selectedWater.tags?.name && (
+            <div className="text-sm font-sans font-semibold mb-1">{selectedWater.tags.name}</div>
+          )}
+          <div className="max-h-64 overflow-auto space-y-0.5">
+            {Object.entries(selectedWater.tags).map(([k, v]) => (
+              <div key={k} className="flex gap-2 leading-tight">
+                <span className="text-muted-foreground shrink-0">{k}</span>
+                <span className="break-all">{String(v)}</span>
+              </div>
+            ))}
+            {Object.keys(selectedWater.tags).length === 0 && (
+              <div className="text-muted-foreground">no tags</div>
+            )}
+          </div>
+          <a
+            className="mt-2 inline-block text-primary hover:underline"
+            href={`https://www.openstreetmap.org/${String(selectedWater.id).includes('/') ? 'relation' : 'way'}/${String(selectedWater.id).split('/')[0]}`}
+            target="_blank" rel="noreferrer"
+          >
+            open in OSM →
+          </a>
+        </div>
+      )}
+
 
       {/* Inspector */}
       <div className="absolute bottom-3 right-3 px-3 py-2 rounded-md bg-background/80 backdrop-blur border border-border/60 text-xs font-mono min-w-[240px]">

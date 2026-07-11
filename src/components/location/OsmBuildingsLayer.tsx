@@ -106,13 +106,15 @@ const OsmBuildingsLayer = ({ terrain, exaggeration, bounds, dataUrl }: Props) =>
       let anyInside = false;
       for (const [lon, lat] of b.coords) {
         const nx = (lon - bounds.minLon) / (bounds.maxLon - bounds.minLon);
-        const ny = (lat - bounds.minLat) / (bounds.maxLat - bounds.minLat);
-        if (nx >= 0 && nx <= 1 && ny >= 0 && ny <= 1) anyInside = true;
+        const nyGeo = (lat - bounds.minLat) / (bounds.maxLat - bounds.minLat);
+        // N-S flipped to match terrain orientation
+        const ny = 1 - nyGeo;
+        if (nx >= 0 && nx <= 1 && nyGeo >= 0 && nyGeo <= 1) anyInside = true;
         const x = (nx - 0.5) * meshW;
         const z = -((ny - 0.5) * meshH);
         projected.push([x, z]);
         const cx = Math.max(0, Math.min(terrain.width - 1, Math.floor(nx * (terrain.width - 1))));
-        const cy = Math.max(0, Math.min(terrain.height - 1, Math.floor((1 - ny) * (terrain.height - 1))));
+        const cy = Math.max(0, Math.min(terrain.height - 1, Math.floor((1 - nyGeo) * (terrain.height - 1))));
         let e = terrain.elevations[cy * terrain.width + cx];
         if (!isFinite(e)) e = terrain.minElevation;
         if (e < localMinElev) localMinElev = e;

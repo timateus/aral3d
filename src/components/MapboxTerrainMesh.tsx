@@ -134,9 +134,72 @@ const MapboxTerrainMesh = ({
     material.needsUpdate = true;
   }, [satellite, material]);
 
+  // Skirt: opaque vertical sides + base cap, so terrain looks like a solid block
+  const skirt = useMemo(() => {
+    const { width: w, height: h, elevations, minElevation, maxElevation, noDataValue } = terrain;
+    const elevRange = maxElevation - minElevation || 1;
+    const maxHeight = 10 * (exaggeration / 100);
+    const meshW = 10;
+    const meshH = 10 * (h / w);
+    const baseZ = -0.4; // pre-rotation z (below terrain min)
+    const elevAt = (i: number, j: number) => {
+      let e = elevations[j * w + i];
+      const nd = isNaN(e) || (noDataValue !== null && e === noDataValue) || e <= -9999;
+      if (nd) e = minElevation;
+      return ((e - minElevation) / elevRange) * maxHeight;
+    };
+    const xAt = (i: number) => (i / (w - 1) - 0.5) * meshW;
+    const yAt = (j: number) => (0.5 - j / (h - 1)) * meshH;
+    const positions: number[] = [];
+    const pushQuad = (a: number[], b: number[], c: number[], d: number[]) => {
+      positions.push(...a, ...b, ...c, ...a, ...c, ...d);
+    };
+    // North edge (j=0)
+    for (let i = 0; i < w - 1; i++) {
+      const x1 = xAt(i), x2 = xAt(i + 1);
+      const y = yAt(0);
+      const z1 = elevAt(i, 0), z2 = elevAt(i + 1, 0);
+      pushQuad([x1, y, baseZ], [x2, y, baseZ], [x2, y, z2], [x1, y, z1]);
+    }
+    // South edge (j=h-1)
+    for (let i = 0; i < w - 1; i++) {
+      const x1 = xAt(i), x2 = xAt(i + 1);
+      const y = yAt(h - 1);
+      const z1 = elevAt(i, h - 1), z2 = elevAt(i + 1, h - 1);
+      pushQuad([x1, y, z1], [x2, y, z2], [x2, y, baseZ], [x1, y, baseZ]);
+    }
+    // West edge (i=0)
+    for (let j = 0; j < h - 1; j++) {
+      const y1 = yAt(j), y2 = yAt(j + 1);
+      const x = xAt(0);
+      const z1 = elevAt(0, j), z2 = elevAt(0, j + 1);
+      pushQuad([x, y1, z1], [x, y1, baseZ], [x, y2, baseZ], [x, y2, z2]);
+    }
+    // East edge (i=w-1)
+    for (let j = 0; j < h - 1; j++) {
+      const y1 = yAt(j), y2 = yAt(j + 1);
+      const x = xAt(w - 1);
+      const z1 = elevAt(w - 1, j), z2 = elevAt(w - 1, j + 1);
+      pushQuad([x, y1, baseZ], [x, y1, z1], [x, y2, z2], [x, y2, baseZ]);
+    }
+    // Bottom cap (single quad)
+    const xMin = xAt(0), xMax = xAt(w - 1);
+    const yTop = yAt(0), yBot = yAt(h - 1);
+    pushQuad([xMin, yTop, baseZ], [xMin, yBot, baseZ], [xMax, yBot, baseZ], [xMax, yTop, baseZ]);
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    g.computeVertexNormals();
+    return g;
+  }, [terrain, exaggeration]);
+
+  const skirtMaterial = useMemo(() => new THREE.MeshStandardMaterial({
+    color: '#f5efe1', roughness: 0.95, metalness: 0, side: THREE.DoubleSide,
+  }), []);
+
   return (
     <group rotation={[-Math.PI / 2, 0, 0]}>
       <mesh geometry={geometry} material={material} userData={{ terrainSurface: true }} />
+      <mesh geometry={skirt} material={skirtMaterial} />
       {wireframe && (
         <mesh geometry={geometry}>
           <meshBasicMaterial color="#111827" wireframe transparent opacity={0.55} depthTest={false} />
