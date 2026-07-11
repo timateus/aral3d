@@ -464,6 +464,43 @@ export default function LocationPage() {
         </button>
       </div>
 
+      {/* Water feature info */}
+      {selectedWater && (
+        <div className="absolute top-16 right-3 w-72 p-3 rounded-md bg-background/90 backdrop-blur border border-border/60 text-xs font-mono z-10">
+          <div className="flex items-center justify-between mb-2">
+            <span className="uppercase tracking-widest text-[10px] text-primary">Water · {selectedWater.kind}</span>
+            <button onClick={() => setSelectedWater(null)} className="text-muted-foreground hover:text-foreground">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          <div className="text-[10px] text-muted-foreground mb-1">
+            id {String(selectedWater.id)}
+          </div>
+          {selectedWater.tags?.name && (
+            <div className="text-sm font-sans font-semibold mb-1">{selectedWater.tags.name}</div>
+          )}
+          <div className="max-h-64 overflow-auto space-y-0.5">
+            {Object.entries(selectedWater.tags).map(([k, v]) => (
+              <div key={k} className="flex gap-2 leading-tight">
+                <span className="text-muted-foreground shrink-0">{k}</span>
+                <span className="break-all">{String(v)}</span>
+              </div>
+            ))}
+            {Object.keys(selectedWater.tags).length === 0 && (
+              <div className="text-muted-foreground">no tags</div>
+            )}
+          </div>
+          <a
+            className="mt-2 inline-block text-primary hover:underline"
+            href={`https://www.openstreetmap.org/${String(selectedWater.id).includes('/') ? 'relation' : 'way'}/${String(selectedWater.id).split('/')[0]}`}
+            target="_blank" rel="noreferrer"
+          >
+            open in OSM →
+          </a>
+        </div>
+      )}
+
+
       {/* Inspector */}
       <div className="absolute bottom-3 right-3 px-3 py-2 rounded-md bg-background/80 backdrop-blur border border-border/60 text-xs font-mono min-w-[240px]">
         <div className="flex items-center justify-between gap-3 mb-1">
