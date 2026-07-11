@@ -22,17 +22,18 @@ interface Props {
  * alignment of overlay features and works for ANY bounds (Khorezm, custom
  * regions, etc.) — we just refetch the satellite texture for the new bbox.
  */
-const MapboxTerrainMesh = ({ terrain, exaggeration, token, onError }: Props) => {
+const MapboxTerrainMesh = ({ terrain, exaggeration, token, onError, baseStyleOverride, brightness = 1 }: Props) => {
   const [satellite, setSatellite] = useState<THREE.Texture | null>(null);
   const [mode] = useVisualMode();
   const isMirage = mode === 'mirage' || mode === 'designer';
-  const { baseStyle } = useTerrainMode();
+  const { baseStyle: globalBaseStyle } = useTerrainMode();
+  const baseStyle = baseStyleOverride ?? globalBaseStyle;
 
   // Refetch basemap whenever bounds or basemap style change.
   useEffect(() => {
     if (!terrain.bounds) return;
-    // Mapbox styles need a token; OSM does not.
-    if (baseStyle !== 'osm' && !token) return;
+    // Only Mapbox styles need a token; OSM and Satlas are open.
+    if (baseStyle !== 'osm' && baseStyle !== 'satlas' && !token) return;
     let cancelled = false;
     setSatellite(null);
     loadBaseStyleTexture(terrain.bounds, baseStyle, token)
