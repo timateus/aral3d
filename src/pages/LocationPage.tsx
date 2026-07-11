@@ -166,10 +166,10 @@ export default function LocationPage() {
   return (
     <div className="fixed inset-0 bg-background text-foreground">
       <Canvas camera={{ position: [0, 8, 10], fov: 45, near: 0.1, far: 200 }} shadows={false}>
-        <color attach="background" args={['#0d1117']} />
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[10, 20, 10]} intensity={1.0} />
-        <hemisphereLight args={['#a3b8d6', '#3b2b1c', 0.3]} />
+        <color attach="background" args={['#f3f0e7']} />
+        <ambientLight intensity={0.9} />
+        <directionalLight position={[10, 20, 10]} intensity={1.1} />
+        <hemisphereLight args={['#ffffff', '#c9b98a', 0.5]} />
 
         <OrbitControls
           ref={orbitRef}
@@ -183,7 +183,38 @@ export default function LocationPage() {
 
         {terrain && (
           <>
-            <MapboxTerrainMesh terrain={terrain} exaggeration={exaggeration} token={token} />
+            {/* Wrap the terrain mesh so pointer events raycast against the
+                actual displaced surface (not a flat plane) — this fixes the
+                click/hover misalignment on mountains. UVs come straight from
+                the terrain mesh geometry. */}
+            <group
+              onPointerMove={(e) => {
+                if (!e.uv) return;
+                setHover(uvToCoord(e.uv, terrain, location.bounds));
+              }}
+              onPointerOut={() => setHover(null)}
+              onClick={(e) => {
+                if (!e.uv) return;
+                e.stopPropagation();
+                const c = uvToCoord(e.uv, terrain, location.bounds);
+                if (waterFlowActive && flowState) {
+                  const col = Math.floor((e.uv.x) * (terrain.width - 1));
+                  const row = Math.floor((1 - e.uv.y) * (terrain.height - 1));
+                  addWaterAt(flowState, row, col, 8, 4);
+                  setFlowKey((k) => k + 1);
+                  return;
+                }
+                copyCoords(c);
+              }}
+            >
+              <MapboxTerrainMesh
+                terrain={terrain}
+                exaggeration={exaggeration}
+                token={token}
+                baseStyleOverride="satlas"
+                brightness={1.35}
+              />
+            </group>
             <TerrainStyleOverlay
               terrain={terrain}
               exaggeration={exaggeration}
@@ -208,18 +239,6 @@ export default function LocationPage() {
                 renderKey={flowKey}
               />
             )}
-            <InspectorPlane
-              terrain={terrain}
-              bounds={location.bounds}
-              onHover={setHover}
-              onClick={copyCoords}
-              waterMode={waterFlowActive && !!flowState}
-              onWaterPixel={(row, col) => {
-                if (!flowState) return;
-                addWaterAt(flowState, row, col, 8, 4);
-                setFlowKey((k) => k + 1);
-              }}
-            />
             {userLoc && (
               <UserPin
                 terrain={terrain}
