@@ -70,16 +70,16 @@ async function fetchOsmPlaces(b: GeoBounds): Promise<Place[]> {
  * fetching from Overpass. Renders extruded hex-like cylinders whose height
  * and color encode local population (log-scaled).
  */
-const OsmPopulationLayer = ({ terrain, exaggeration, bounds }: Props) => {
+const OsmPopulationLayer = ({ terrain, exaggeration, bounds, dataUrl }: Props) => {
   const [places, setPlaces] = useState<Place[] | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    fetchOsmPlaces(bounds)
-      .then((p) => { if (!cancelled) setPlaces(p); })
-      .catch((e) => { console.warn('OSM places fetch failed', e); if (!cancelled) setPlaces([]); });
+    const p = dataUrl ? fetchStatic(dataUrl) : fetchOsmPlaces(bounds);
+    p.then((pl) => { if (!cancelled) setPlaces(pl); })
+     .catch((e) => { console.warn('OSM places fetch failed', e); if (!cancelled) setPlaces([]); });
     return () => { cancelled = true; };
-  }, [bounds.minLon, bounds.minLat, bounds.maxLon, bounds.maxLat]);
+  }, [dataUrl, bounds.minLon, bounds.minLat, bounds.maxLon, bounds.maxLat]);
 
   const mesh = useMemo(() => {
     if (!places || places.length === 0) return null;
