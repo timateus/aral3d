@@ -73,10 +73,19 @@ const OsmWaterwaysLayer = ({ terrain, exaggeration, bounds }: Props) => {
     const meshH = 10 * (terrain.height / terrain.width);
     const elevRange = terrain.maxElevation - terrain.minElevation || 1;
     const maxHeight = 10 * (exaggeration / 100);
+    const lift = Math.max(0.05, maxHeight * 0.015);
     const positions: number[] = [];
     const colors: number[] = [];
-    const linearColor = new THREE.Color('#3b82f6');
+    const linearColor = new THREE.Color('#0ea5e9');
     const areaColor = new THREE.Color('#1d4ed8');
+
+    const sampleY = (nx: number, ny: number) => {
+      const cx = Math.max(0, Math.min(terrain.width - 1, Math.floor(nx * (terrain.width - 1))));
+      const cy = Math.max(0, Math.min(terrain.height - 1, Math.floor((1 - ny) * (terrain.height - 1))));
+      let e = terrain.elevations[cy * terrain.width + cx];
+      if (!isFinite(e)) e = terrain.minElevation;
+      return ((e - terrain.minElevation) / elevRange) * maxHeight + lift;
+    };
 
     for (const l of lines) {
       const col = l.kind === 'linear' ? linearColor : areaColor;
@@ -87,22 +96,16 @@ const OsmWaterwaysLayer = ({ terrain, exaggeration, bounds }: Props) => {
         const ny1 = (lat1 - bounds.minLat) / (bounds.maxLat - bounds.minLat);
         const nx2 = (lon2 - bounds.minLon) / (bounds.maxLon - bounds.minLon);
         const ny2 = (lat2 - bounds.minLat) / (bounds.maxLat - bounds.minLat);
-        if (nx1 < 0 || nx1 > 1 || ny1 < 0 || ny1 > 1) continue;
-        if (nx2 < 0 || nx2 > 1 || ny2 < 0 || ny2 > 1) continue;
+        // Skip only if BOTH ends are outside — so cross-boundary segments still render.
+        const in1 = nx1 >= 0 && nx1 <= 1 && ny1 >= 0 && ny1 <= 1;
+        const in2 = nx2 >= 0 && nx2 <= 1 && ny2 >= 0 && ny2 <= 1;
+        if (!in1 && !in2) continue;
         const x1 = (nx1 - 0.5) * meshW;
         const z1 = -((ny1 - 0.5) * meshH);
         const x2 = (nx2 - 0.5) * meshW;
         const z2 = -((ny2 - 0.5) * meshH);
-        const px1 = Math.floor(nx1 * (terrain.width - 1));
-        const py1 = Math.floor((1 - ny1) * (terrain.height - 1));
-        const px2 = Math.floor(nx2 * (terrain.width - 1));
-        const py2 = Math.floor((1 - ny2) * (terrain.height - 1));
-        let e1 = terrain.elevations[py1 * terrain.width + px1] ?? terrain.minElevation;
-        let e2 = terrain.elevations[py2 * terrain.width + px2] ?? terrain.minElevation;
-        if (isNaN(e1)) e1 = terrain.minElevation;
-        if (isNaN(e2)) e2 = terrain.minElevation;
-        const y1 = ((e1 - terrain.minElevation) / elevRange) * maxHeight + 0.04;
-        const y2 = ((e2 - terrain.minElevation) / elevRange) * maxHeight + 0.04;
+        const y1 = sampleY(nx1, ny1);
+        const y2 = sampleY(nx2, ny2);
         positions.push(x1, y1, z1, x2, y2, z2);
         colors.push(col.r, col.g, col.b, col.r, col.g, col.b);
       }
@@ -113,12 +116,15 @@ const OsmWaterwaysLayer = ({ terrain, exaggeration, bounds }: Props) => {
     geo.setColors(new Float32Array(colors));
     const mat = new LineMaterial({
       vertexColors: true,
-      linewidth: 3,
+      linewidth: 4,
       transparent: true,
-      opacity: 0.95,
+      opacity: 1,
+      depthTest: false,
       resolution: new THREE.Vector2(size.width, size.height),
     });
-    return new LineSegments2(geo, mat);
+    const obj = new LineSegments2(geo, mat);
+    obj.renderOrder = 10;
+    return obj;
   }, [lines, terrain, exaggeration, bounds, size.width, size.height]);
 
   useEffect(() => {
