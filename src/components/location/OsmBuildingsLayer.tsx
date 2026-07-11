@@ -6,11 +6,49 @@ interface Props {
   terrain: TerrainData;
   exaggeration: number;
   bounds: GeoBounds;
+  /** If set, load OSM buildings JSON from this static URL instead of hitting Overpass. */
+  dataUrl?: string;
 }
 
 interface Building { coords: [number, number][]; height: number }
 
 const _cache = new Map<string, Building[]>();
+
+function parseElements(data: any): Building[] {
+  const out: Building[] = [];
+  const parseH = (t: any): number => {
+    if (!t) return 6;
+    if (t.height) { const n = parseFloat(t.height); if (isFinite(n)) return n; }
+    if (t['building:levels']) { const n = parseFloat(t['building:levels']); if (isFinite(n)) return n * 3; }
+    return 6;
+  };
+  for (const el of data.elements || []) {
+    if (el.type === 'way' && Array.isArray(el.geometry) && el.geometry.length >= 3) {
+      out.push({
+        coords: el.geometry.map((g: any) => [g.lon, g.lat] as [number, number]),
+        height: parseH(el.tags),
+      });
+    } else if (el.type === 'relation' && Array.isArray(el.members)) {
+      const h = parseH(el.tags);
+      for (const m of el.members) {
+        if (m.type === 'way' && m.role === 'outer' && Array.isArray(m.geometry) && m.geometry.length >= 3) {
+          out.push({ coords: m.geometry.map((g: any) => [g.lon, g.lat] as [number, number]), height: h });
+        }
+      }
+    }
+  }
+  return out;
+}
+
+async function fetchStatic(url: string): Promise<Building[]> {
+  const hit = _cache.get(url);
+  if (hit) return hit;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Static ${res.status}`);
+  const parsed = parseElements(await res.json());
+  _cache.set(url, parsed);
+  return parsed;
+}
 
 async function fetchOsmBuildings(b: GeoBounds): Promise<Building[]> {
   const key = `${b.minLon.toFixed(4)},${b.minLat.toFixed(4)},${b.maxLon.toFixed(4)},${b.maxLat.toFixed(4)}`;
@@ -28,43 +66,21 @@ async function fetchOsmBuildings(b: GeoBounds): Promise<Building[]> {
     body: new URLSearchParams({ data: q }),
   });
   if (!res.ok) throw new Error(`Overpass ${res.status}`);
-  const data = await res.json();
-  const out: Building[] = [];
-  for (const el of data.elements || []) {
-    const parseH = (t: any): number => {
-      if (!t) return 6;
-      if (t.height) { const n = parseFloat(t.height); if (isFinite(n)) return n; }
-      if (t['building:levels']) { const n = parseFloat(t['building:levels']); if (isFinite(n)) return n * 3; }
-      return 6;
-    };
-    if (el.type === 'way' && Array.isArray(el.geometry) && el.geometry.length >= 3) {
-      out.push({
-        coords: el.geometry.map((g: any) => [g.lon, g.lat] as [number, number]),
-        height: parseH(el.tags),
-      });
-    } else if (el.type === 'relation' && Array.isArray(el.members)) {
-      const h = parseH(el.tags);
-      for (const m of el.members) {
-        if (m.type === 'way' && m.role === 'outer' && Array.isArray(m.geometry) && m.geometry.length >= 3) {
-          out.push({ coords: m.geometry.map((g: any) => [g.lon, g.lat] as [number, number]), height: h });
-        }
-      }
-    }
-  }
+  const out = parseElements(await res.json());
   _cache.set(key, out);
   return out;
 }
 
-const OsmBuildingsLayer = ({ terrain, exaggeration, bounds }: Props) => {
+const OsmBuildingsLayer = ({ terrain, exaggeration, bounds, dataUrl }: Props) => {
   const [buildings, setBuildings] = useState<Building[] | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    fetchOsmBuildings(bounds)
-      .then((b) => { if (!cancelled) setBuildings(b); })
-      .catch((e) => { console.warn('OSM buildings fetch failed', e); if (!cancelled) setBuildings([]); });
+    const p = dataUrl ? fetchStatic(dataUrl) : fetchOsmBuildings(bounds);
+    p.then((b) => { if (!cancelled) setBuildings(b); })
+     .catch((e) => { console.warn('OSM buildings fetch failed', e); if (!cancelled) setBuildings([]); });
     return () => { cancelled = true; };
-  }, [bounds.minLon, bounds.minLat, bounds.maxLon, bounds.maxLat]);
+  }, [dataUrl, bounds.minLon, bounds.minLat, bounds.maxLon, bounds.maxLat]);
 
   const group = useMemo(() => {
     if (!buildings || buildings.length === 0) return null;
@@ -72,7 +88,6 @@ const OsmBuildingsLayer = ({ terrain, exaggeration, bounds }: Props) => {
     const meshH = 10 * (terrain.height / terrain.width);
     const elevRange = terrain.maxElevation - terrain.minElevation || 1;
     const maxH = 10 * (exaggeration / 100);
-    // Scene units per meter (approx) — matches the vertical scaling.
     const unitsPerMeter = maxH / elevRange;
 
     const material = new THREE.MeshStandardMaterial({
@@ -113,8 +128,6 @@ const OsmBuildingsLayer = ({ terrain, exaggeration, bounds }: Props) => {
 
       const heightUnits = Math.max(0.02, b.height * unitsPerMeter);
       const geo = new THREE.ExtrudeGeometry(shape, { depth: heightUnits, bevelEnabled: false });
-      // Shape is in XZ plane (x, z=y-of-shape). Extrude goes along +Z of shape space.
-      // Rotate so extrusion goes up world +Y and shape lays flat on XZ.
       geo.rotateX(-Math.PI / 2);
       const baseY = ((baseElev - terrain.minElevation) / elevRange) * maxH;
       geo.translate(0, baseY, 0);

@@ -34,13 +34,24 @@ export const LOCATIONS: LocationDef[] = [
   {
     slug: 'suaq',
     label: 'Suaq',
-    // Exact bounds from maps3d.io link (sw / ne).
     center: { lat: (43.33403 + 43.36792) / 2, lon: (79.03803 + 79.09781) / 2 },
     bounds: {
       minLat: 43.33403,
       maxLat: 43.36792,
       minLon: 79.03803,
       maxLon: 79.09781,
+    },
+    exaggeration: 30,
+  },
+  {
+    slug: 'almaty',
+    label: 'Almaty',
+    center: { lat: (43.220 + 43.256) / 2, lon: (76.925 + 76.975) / 2 },
+    bounds: {
+      minLat: 43.220,
+      maxLat: 43.256,
+      minLon: 76.925,
+      maxLon: 76.975,
     },
     exaggeration: 30,
   },

@@ -153,21 +153,23 @@ export default function LocationPage() {
   const { terrain, loading, error } = useMapterhornTerrain(location?.bounds ?? null, !!location);
 
   const [exaggeration, setExaggeration] = useState(location?.exaggeration ?? 30);
+  const [showTerrain, setShowTerrain] = useState(true);
   const [showWater, setShowWater] = useState(true);
   const [showPopulation, setShowPopulation] = useState(false);
   const [showOsmBuildings, setShowOsmBuildings] = useState(true);
   const [showOvertureBuildings, setShowOvertureBuildings] = useState(false);
 
   // View mode & per-mode parameters
-  const [terrainStyle, setTerrainStyle] = useState<TerrainStyle | 'mesh'>('none');
+  const [terrainStyle, setTerrainStyle] = useState<TerrainStyle>('none');
   const [contourInterval, setContourInterval] = useState(25);
   const [vectorInterval, setVectorInterval] = useState(80);
+  const [meshInterval, setMeshInterval] = useState(60);
 
   // Basemap image adjustments
-  const [brightness, setBrightness] = useState(1.35);
-  const [contrast, setContrast] = useState(1.05);
-  const [saturation, setSaturation] = useState(1.1);
-  const [gamma, setGamma] = useState(1);
+  const [brightness, setBrightness] = useState(1.75);
+  const [contrast, setContrast] = useState(0.8);
+  const [saturation, setSaturation] = useState(0.6);
+  const [gamma, setGamma] = useState(0.9);
 
   const [waterFlowActive, setWaterFlowActive] = useState(false);
   const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
@@ -223,9 +225,7 @@ export default function LocationPage() {
   const btnBase =
     'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium border border-border/60 bg-background/80 backdrop-blur hover:bg-accent transition-colors';
 
-  const overlayStyle: TerrainStyle =
-    terrainStyle === 'contours' ? 'contours' :
-    terrainStyle === 'vectors' ? 'vectors' : 'none';
+  const dataBase = `/data/locations/${location.slug}`;
 
   return (
     <div className="fixed inset-0 bg-background text-foreground">
@@ -268,36 +268,39 @@ export default function LocationPage() {
                 copyCoords(c);
               }}
             >
-              <MapboxTerrainMesh
-                terrain={terrain}
-                exaggeration={exaggeration}
-                token={token}
-                baseStyleOverride="satlas"
-                brightness={brightness}
-                contrast={contrast}
-                saturation={saturation}
-                gamma={gamma}
-                wireframe={terrainStyle === 'mesh'}
-              />
+              {showTerrain && (
+                <MapboxTerrainMesh
+                  terrain={terrain}
+                  exaggeration={exaggeration}
+                  token={token}
+                  baseStyleOverride="satlas"
+                  brightness={brightness}
+                  contrast={contrast}
+                  saturation={saturation}
+                  gamma={gamma}
+                />
+              )}
             </group>
             <TerrainStyleOverlay
               terrain={terrain}
               exaggeration={exaggeration}
-              style={overlayStyle}
+              style={terrainStyle}
               contourInterval={contourInterval}
               vectorInterval={vectorInterval}
+              meshInterval={meshInterval}
+              bounds={location.bounds}
             />
             {showWater && (
-              <OsmWaterwaysLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} />
+              <OsmWaterwaysLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} dataUrl={`${dataBase}/water.json`} />
             )}
             {showOsmBuildings && (
-              <OsmBuildingsLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} />
+              <OsmBuildingsLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} dataUrl={`${dataBase}/buildings.json`} />
             )}
             {showOvertureBuildings && (
               <OvertureBuildingsLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} />
             )}
             {showPopulation && (
-              <OsmPopulationLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} />
+              <OsmPopulationLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} dataUrl={`${dataBase}/population.json`} />
             )}
             {flowState && (
               <WaterFlowOverlay
@@ -371,7 +374,18 @@ export default function LocationPage() {
             <Eye className="w-3.5 h-3.5" /> View
           </PopoverTrigger>
           <PopoverContent align="end" className="w-64 space-y-3">
-            <div className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground">Terrain view</div>
+            <div className="flex items-center justify-between">
+              <div className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground">Terrain</div>
+              <label className="flex items-center gap-1.5 text-[11px] cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showTerrain}
+                  onChange={(e) => setShowTerrain(e.target.checked)}
+                />
+                Show
+              </label>
+            </div>
+            <div className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground">Overlay</div>
             <div className="grid grid-cols-4 gap-1 text-[11px]">
               {(['none','contours','mesh','vectors'] as const).map((m) => (
                 <button
@@ -388,11 +402,12 @@ export default function LocationPage() {
                 onChange={setContourInterval} format={(v) => `${v}m`} />
             )}
             {terrainStyle === 'vectors' && (
-              <Slider label="Spacing" value={vectorInterval} min={20} max={400} step={10}
+              <Slider label="Spacing" value={vectorInterval} min={10} max={400} step={5}
                 onChange={setVectorInterval} format={(v) => `${v}m`} />
             )}
             {terrainStyle === 'mesh' && (
-              <div className="text-[11px] text-muted-foreground">Wireframe overlays satellite imagery.</div>
+              <Slider label="Spacing" value={meshInterval} min={5} max={400} step={5}
+                onChange={setMeshInterval} format={(v) => `${v}m`} />
             )}
           </PopoverContent>
         </Popover>
@@ -413,7 +428,7 @@ export default function LocationPage() {
             <Slider label="Gamma" value={gamma} min={0.4} max={2.5} step={0.05}
               onChange={setGamma} format={(v) => v.toFixed(2)} />
             <button
-              onClick={() => { setBrightness(1.35); setContrast(1.05); setSaturation(1.1); setGamma(1); }}
+              onClick={() => { setBrightness(1.75); setContrast(0.8); setSaturation(0.6); setGamma(0.9); }}
               className="w-full mt-1 text-[11px] px-2 py-1 rounded border border-border/60 hover:bg-accent"
             >
               Reset
