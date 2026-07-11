@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import * as THREE from 'three';
 import { TerrainData } from '@/lib/geotiff-loader';
-import { loadBaseStyleTexture } from '@/lib/mapbox-tiles';
+import { loadBaseStyleTexture, type BaseStyle } from '@/lib/mapbox-tiles';
 import { useVisualMode } from '@/lib/visual-mode';
 import { useTerrainMode } from '@/hooks/useTerrainMode';
 
@@ -10,6 +10,10 @@ interface Props {
   exaggeration: number;
   token: string;
   onError?: (msg: string) => void;
+  /** Override the global basemap style (e.g. force Satlas for location pages). */
+  baseStyleOverride?: BaseStyle;
+  /** Multiplier applied to sampled satellite RGB. 1.0 = untouched, 1.4 = brighter. */
+  brightness?: number;
 }
 
 /**
