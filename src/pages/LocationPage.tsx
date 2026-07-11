@@ -268,36 +268,39 @@ export default function LocationPage() {
                 copyCoords(c);
               }}
             >
-              <MapboxTerrainMesh
-                terrain={terrain}
-                exaggeration={exaggeration}
-                token={token}
-                baseStyleOverride="satlas"
-                brightness={brightness}
-                contrast={contrast}
-                saturation={saturation}
-                gamma={gamma}
-                wireframe={terrainStyle === 'mesh'}
-              />
+              {showTerrain && (
+                <MapboxTerrainMesh
+                  terrain={terrain}
+                  exaggeration={exaggeration}
+                  token={token}
+                  baseStyleOverride="satlas"
+                  brightness={brightness}
+                  contrast={contrast}
+                  saturation={saturation}
+                  gamma={gamma}
+                />
+              )}
             </group>
             <TerrainStyleOverlay
               terrain={terrain}
               exaggeration={exaggeration}
-              style={overlayStyle}
+              style={terrainStyle}
               contourInterval={contourInterval}
               vectorInterval={vectorInterval}
+              meshInterval={meshInterval}
+              bounds={location.bounds}
             />
             {showWater && (
-              <OsmWaterwaysLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} />
+              <OsmWaterwaysLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} dataUrl={`${dataBase}/water.json`} />
             )}
             {showOsmBuildings && (
-              <OsmBuildingsLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} />
+              <OsmBuildingsLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} dataUrl={`${dataBase}/buildings.json`} />
             )}
             {showOvertureBuildings && (
               <OvertureBuildingsLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} />
             )}
             {showPopulation && (
-              <OsmPopulationLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} />
+              <OsmPopulationLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} dataUrl={`${dataBase}/population.json`} />
             )}
             {flowState && (
               <WaterFlowOverlay
