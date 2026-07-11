@@ -34,9 +34,14 @@ export const LOCATIONS: LocationDef[] = [
   {
     slug: 'suaq',
     label: 'Suaq',
-    center: { lat: 43.3463873, lon: 79.0569679 },
-    // ~2 km on a side ≈ 4 sq km, covers the requested ~3 sq km area.
-    bounds: bboxAround(43.3463873, 79.0569679, 2.0),
+    // Exact bounds from maps3d.io link (sw / ne).
+    center: { lat: (43.33403 + 43.36792) / 2, lon: (79.03803 + 79.09781) / 2 },
+    bounds: {
+      minLat: 43.33403,
+      maxLat: 43.36792,
+      minLon: 79.03803,
+      maxLon: 79.09781,
+    },
     exaggeration: 4,
   },
 ];
