@@ -57,7 +57,7 @@ async function fetchOvertureBuildings(b: GeoBounds): Promise<Building[]> {
         continue;
       }
       if (!tile) continue;
-      const vt = new VectorTile(new Pbf(new Uint8Array(tile.data)));
+      const vt = new VectorTile(new PbfReader(new Uint8Array(tile.data)));
       const layer = vt.layers['building'] ?? vt.layers['buildings'] ?? Object.values(vt.layers)[0];
       if (!layer) continue;
       // Tile → lon/lat converter
