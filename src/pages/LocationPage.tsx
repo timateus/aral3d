@@ -3,31 +3,23 @@ import { useParams, Navigate, Link, useLocation } from 'react-router-dom';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
-import { Loader2, Layers, Waves, Crosshair, Mountain, ArrowRight } from 'lucide-react';
+import { Loader2, Layers, Waves, Crosshair, Mountain, ArrowRight, Copy, Check } from 'lucide-react';
 import { findLocation, LOCATIONS } from '@/lib/locations';
-import { useMapboxTerrain } from '@/hooks/useMapboxTerrain';
+import { useMapterhornTerrain } from '@/hooks/useMapterhornTerrain';
 import { useTerrainMode } from '@/hooks/useTerrainMode';
 import MapboxTerrainMesh from '@/components/MapboxTerrainMesh';
 import TerrainStyleOverlay, { type TerrainStyle } from '@/components/TerrainStyleOverlay';
 import OsmWaterwaysLayer from '@/components/location/OsmWaterwaysLayer';
 import OsmPopulationLayer from '@/components/location/OsmPopulationLayer';
+import OsmBuildingsLayer from '@/components/location/OsmBuildingsLayer';
 import WaterFlowOverlay from '@/components/WaterFlowOverlay';
 import { createFlowState, addWaterAt, stepFlow, type WaterFlowState } from '@/lib/water-flow-simulation';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuCheckboxItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
+  DropdownMenu, DropdownMenuContent, DropdownMenuTrigger,
+  DropdownMenuCheckboxItem, DropdownMenuLabel, DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 
-/**
- * Location index — landing at `/` for the location system.
- * (The main app still lives at `/`; this list is available under `/locations`
- * via LocationsIndex below if we want it later.)
- */
 export function LocationsIndex() {
   return (
     <div className="min-h-screen bg-background text-foreground p-8">
@@ -45,26 +37,55 @@ export function LocationsIndex() {
   );
 }
 
-function ClickCatcher({
+interface HoverCoord { lat: number; lon: number; elev: number }
+
+function InspectorPlane({
   terrain,
-  onPixel,
-  enabled,
+  bounds,
+  onHover,
+  onClick,
+  waterMode,
+  onWaterPixel,
 }: {
   terrain: import('@/lib/geotiff-loader').TerrainData;
-  onPixel: (row: number, col: number) => void;
-  enabled: boolean;
+  bounds: import('@/lib/geotiff-loader').GeoBounds;
+  onHover: (c: HoverCoord | null) => void;
+  onClick: (c: HoverCoord) => void;
+  waterMode: boolean;
+  onWaterPixel: (row: number, col: number) => void;
 }) {
   return (
     <mesh
       visible={false}
       rotation={[-Math.PI / 2, 0, 0]}
-      onClick={(e) => {
-        if (!enabled) return;
-        e.stopPropagation();
+      onPointerMove={(e) => {
         if (!e.uv) return;
-        const col = Math.floor(e.uv.x * (terrain.width - 1));
-        const row = Math.floor((1 - e.uv.y) * (terrain.height - 1));
-        onPixel(row, col);
+        const nx = e.uv.x;
+        const ny = e.uv.y;
+        const lon = bounds.minLon + nx * (bounds.maxLon - bounds.minLon);
+        const lat = bounds.minLat + ny * (bounds.maxLat - bounds.minLat);
+        const col = Math.floor(nx * (terrain.width - 1));
+        const row = Math.floor((1 - ny) * (terrain.height - 1));
+        const elev = terrain.elevations[row * terrain.width + col] ?? terrain.minElevation;
+        onHover({ lat, lon, elev });
+      }}
+      onPointerOut={() => onHover(null)}
+      onClick={(e) => {
+        if (!e.uv) return;
+        e.stopPropagation();
+        const nx = e.uv.x, ny = e.uv.y;
+        if (waterMode) {
+          const col = Math.floor(nx * (terrain.width - 1));
+          const row = Math.floor((1 - ny) * (terrain.height - 1));
+          onWaterPixel(row, col);
+          return;
+        }
+        const lon = bounds.minLon + nx * (bounds.maxLon - bounds.minLon);
+        const lat = bounds.minLat + ny * (bounds.maxLat - bounds.minLat);
+        const col = Math.floor(nx * (terrain.width - 1));
+        const row = Math.floor((1 - ny) * (terrain.height - 1));
+        const elev = terrain.elevations[row * terrain.width + col] ?? terrain.minElevation;
+        onClick({ lat, lon, elev });
       }}
     >
       <planeGeometry args={[10, 10 * (terrain.height / terrain.width)]} />
@@ -74,10 +95,7 @@ function ClickCatcher({
 }
 
 function UserPin({
-  terrain,
-  bounds,
-  exaggeration,
-  location,
+  terrain, bounds, exaggeration, location,
 }: {
   terrain: import('@/lib/geotiff-loader').TerrainData;
   bounds: import('@/lib/geotiff-loader').GeoBounds;
@@ -121,45 +139,47 @@ export default function LocationPage() {
   const slug = params.slug ?? routerLoc.pathname.replace(/^\//, '').split('/')[0];
   const location = slug ? findLocation(slug) : undefined;
   const { token } = useTerrainMode();
-  const { terrain, loading, error } = useMapboxTerrain(location?.bounds ?? null, token, !!location);
+  const { terrain, loading, error } = useMapterhornTerrain(location?.bounds ?? null, !!location);
 
   const [exaggeration, setExaggeration] = useState(location?.exaggeration ?? 4);
   const [showWater, setShowWater] = useState(true);
   const [showPopulation, setShowPopulation] = useState(false);
+  const [showBuildings, setShowBuildings] = useState(true);
   const [terrainStyle, setTerrainStyle] = useState<TerrainStyle>('none');
   const [waterFlowActive, setWaterFlowActive] = useState(false);
   const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
   const [flowKey, setFlowKey] = useState(0);
+  const [hover, setHover] = useState<HoverCoord | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
   const flowLoopRef = useRef<number | null>(null);
   const orbitRef = useRef<any>(null);
 
   const { location: userLoc, loading: locating, requestLocation } = useUserLocation();
 
-  // Reset flow when terrain changes.
   useEffect(() => {
     if (!terrain) return;
     setFlowState(createFlowState(terrain));
     setFlowKey((k) => k + 1);
   }, [terrain]);
 
-  // Water flow tick loop.
   useEffect(() => {
     if (!waterFlowActive || !flowState) return;
     let last = performance.now();
     const loop = () => {
       const now = performance.now();
-      if (now - last > 60) {
-        stepFlow(flowState);
-        setFlowKey((k) => k + 1);
-        last = now;
-      }
+      if (now - last > 60) { stepFlow(flowState); setFlowKey((k) => k + 1); last = now; }
       flowLoopRef.current = requestAnimationFrame(loop);
     };
     flowLoopRef.current = requestAnimationFrame(loop);
-    return () => {
-      if (flowLoopRef.current) cancelAnimationFrame(flowLoopRef.current);
-    };
+    return () => { if (flowLoopRef.current) cancelAnimationFrame(flowLoopRef.current); };
   }, [waterFlowActive, flowState]);
+
+  const copyCoords = async (c: HoverCoord) => {
+    const txt = `${c.lat.toFixed(6)}, ${c.lon.toFixed(6)}`;
+    try { await navigator.clipboard.writeText(txt); } catch { /* ignore */ }
+    setCopied(txt);
+    setTimeout(() => setCopied(null), 1600);
+  };
 
   if (!slug) return <Navigate to="/" replace />;
   if (!location) {
@@ -181,7 +201,6 @@ export default function LocationPage() {
 
   return (
     <div className="fixed inset-0 bg-background text-foreground">
-      {/* 3D scene */}
       <Canvas camera={{ position: [0, 8, 10], fov: 45, near: 0.1, far: 200 }} shadows={false}>
         <color attach="background" args={['#0d1117']} />
         <ambientLight intensity={0.6} />
@@ -211,6 +230,9 @@ export default function LocationPage() {
             {showWater && (
               <OsmWaterwaysLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} />
             )}
+            {showBuildings && (
+              <OsmBuildingsLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} />
+            )}
             {showPopulation && (
               <OsmPopulationLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} />
             )}
@@ -222,10 +244,13 @@ export default function LocationPage() {
                 renderKey={flowKey}
               />
             )}
-            <ClickCatcher
+            <InspectorPlane
               terrain={terrain}
-              enabled={waterFlowActive && !!flowState}
-              onPixel={(row, col) => {
+              bounds={location.bounds}
+              onHover={setHover}
+              onClick={copyCoords}
+              waterMode={waterFlowActive && !!flowState}
+              onWaterPixel={(row, col) => {
                 if (!flowState) return;
                 addWaterAt(flowState, row, col, 8, 4);
                 setFlowKey((k) => k + 1);
@@ -266,7 +291,6 @@ export default function LocationPage() {
 
       {/* Toolbar */}
       <div className="absolute top-3 right-3 flex items-center gap-2">
-        {/* Layers */}
         <DropdownMenu>
           <DropdownMenuTrigger className={btnBase}>
             <Layers className="w-3.5 h-3.5" /> Layers
@@ -275,6 +299,9 @@ export default function LocationPage() {
             <DropdownMenuLabel>Overlays</DropdownMenuLabel>
             <DropdownMenuCheckboxItem checked={showWater} onCheckedChange={(v) => setShowWater(!!v)}>
               OSM water
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem checked={showBuildings} onCheckedChange={(v) => setShowBuildings(!!v)}>
+              OSM buildings
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem
               checked={showPopulation}
@@ -299,18 +326,14 @@ export default function LocationPage() {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Contours quick toggle */}
         <button
           className={`${btnBase} ${terrainStyle === 'contours' ? 'text-primary border-primary/50' : ''}`}
-          onClick={() =>
-            setTerrainStyle((s) => (s === 'contours' ? 'none' : 'contours'))
-          }
+          onClick={() => setTerrainStyle((s) => (s === 'contours' ? 'none' : 'contours'))}
           title="Toggle contour lines"
         >
           <Mountain className="w-3.5 h-3.5" /> Contours
         </button>
 
-        {/* Water flow tool */}
         <button
           className={`${btnBase} ${waterFlowActive ? 'text-primary border-primary/50' : ''}`}
           onClick={() => setWaterFlowActive((a) => !a)}
@@ -320,7 +343,6 @@ export default function LocationPage() {
           {waterFlowActive ? 'Pouring…' : 'Water flow'}
         </button>
 
-        {/* Locate me */}
         <button
           className={btnBase}
           onClick={requestLocation}
@@ -332,14 +354,36 @@ export default function LocationPage() {
         </button>
       </div>
 
-      {/* Bottom controls */}
+      {/* Coordinate inspector */}
+      <div className="absolute bottom-3 right-3 px-3 py-2 rounded-md bg-background/80 backdrop-blur border border-border/60 text-xs font-mono min-w-[220px]">
+        <div className="flex items-center justify-between gap-3">
+          <span className="uppercase tracking-widest text-[10px] text-muted-foreground">Inspector</span>
+          {copied ? (
+            <span className="flex items-center gap-1 text-primary">
+              <Check className="w-3 h-3" /> copied
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 text-muted-foreground">
+              <Copy className="w-3 h-3" /> click to copy
+            </span>
+          )}
+        </div>
+        {hover ? (
+          <div className="mt-1 leading-tight">
+            <div>lat {hover.lat.toFixed(6)}</div>
+            <div>lon {hover.lon.toFixed(6)}</div>
+            <div className="text-muted-foreground">elev {hover.elev.toFixed(1)} m</div>
+          </div>
+        ) : (
+          <div className="mt-1 text-muted-foreground">hover terrain…</div>
+        )}
+      </div>
+
+      {/* Bottom vertical exag control */}
       <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-2 rounded-md bg-background/80 backdrop-blur border border-border/60 flex items-center gap-3 text-xs">
         <span className="text-muted-foreground font-mono">Vertical exag</span>
         <input
-          type="range"
-          min={1}
-          max={20}
-          step={1}
+          type="range" min={1} max={20} step={1}
           value={exaggeration}
           onChange={(e) => setExaggeration(parseInt(e.target.value, 10))}
           className="w-40"
@@ -348,6 +392,11 @@ export default function LocationPage() {
         {waterFlowActive && (
           <span className="ml-3 text-primary font-mono">click terrain to add water</span>
         )}
+      </div>
+
+      {/* Attribution */}
+      <div className="absolute bottom-1 left-2 text-[10px] font-mono text-muted-foreground/70 pointer-events-none">
+        Elevation: Mapterhorn · Imagery: Mapbox · Data © OpenStreetMap contributors
       </div>
     </div>
   );
