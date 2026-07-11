@@ -234,6 +234,14 @@ const TerrainStyleOverlay = ({
     );
   }
 
+  if (style === 'mesh' && meshGridGeometry) {
+    return (
+      <lineSegments geometry={meshGridGeometry} renderOrder={4}>
+        <lineBasicMaterial color="#111" transparent opacity={0.5} depthTest={false} />
+      </lineSegments>
+    );
+  }
+
   return null;
 };
 
