@@ -39,7 +39,10 @@ function loadImage(url: string): Promise<HTMLImageElement> {
   });
 }
 
-async function stitchAtZoom(bounds: GeoBounds, z: number) {
+async function stitchAtZoom(
+  bounds: GeoBounds, z: number,
+  onTile?: (loaded: number, total: number) => void,
+) {
   const fx0 = lon2tile(bounds.minLon, z);
   const fx1 = lon2tile(bounds.maxLon, z);
   const fy0 = lat2tile(bounds.maxLat, z);
@@ -51,12 +54,17 @@ async function stitchAtZoom(bounds: GeoBounds, z: number) {
   canvas.width = cols * TILE_SIZE;
   canvas.height = rows * TILE_SIZE;
   const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
+  const total = cols * rows;
+  let loaded = 0;
+  onTile?.(0, total);
   const tasks: Promise<void>[] = [];
   for (let ty = y0; ty <= y1; ty++) {
     for (let tx = x0; tx <= x1; tx++) {
       const url = `https://tiles.mapterhorn.com/${z}/${tx}/${ty}.webp`;
       tasks.push(loadImage(url).then((img) => {
         ctx.drawImage(img, (tx - x0) * TILE_SIZE, (ty - y0) * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        loaded += 1;
+        onTile?.(loaded, total);
       }));
     }
   }
@@ -72,7 +80,7 @@ async function stitchAtZoom(bounds: GeoBounds, z: number) {
 
 export async function loadMapterhornDEM(
   bounds: GeoBounds,
-  opts: { targetSize?: number } = {},
+  opts: { targetSize?: number; onProgress?: (loaded: number, total: number) => void } = {},
 ): Promise<TerrainData> {
   const target = opts.targetSize ?? 768;
   // Try highest available zoom; drop down on any tile 404.
@@ -81,7 +89,7 @@ export async function loadMapterhornDEM(
   let lastErr: Error | null = null;
   while (z >= 1 && !attempt) {
     try {
-      attempt = await stitchAtZoom(bounds, z);
+      attempt = await stitchAtZoom(bounds, z, opts.onProgress);
     } catch (e: any) {
       lastErr = e;
       z -= 1;

@@ -151,7 +151,7 @@ export default function LocationPage() {
   const slug = params.slug ?? routerLoc.pathname.replace(/^\//, '').split('/')[0];
   const location = slug ? findLocation(slug) : undefined;
   const { token } = useTerrainMode();
-  const { terrain, loading, error } = useMapterhornTerrain(location?.bounds ?? null, !!location);
+  const { terrain, loading, error, progress } = useMapterhornTerrain(location?.bounds ?? null, !!location);
 
   const [exaggeration, setExaggeration] = useState(location?.exaggeration ?? 50);
   const [showInspector, setShowInspector] = useState(false);
@@ -182,6 +182,8 @@ export default function LocationPage() {
   const [copied, setCopied] = useState<string | null>(null);
   const [selectedWater, setSelectedWater] = useState<import('@/components/location/OsmWaterwaysLayer').WaterFeature | null>(null);
   const [selectedInat, setSelectedInat] = useState<InatObservation | null>(null);
+  const [inatObs, setInatObs] = useState<InatObservation[]>([]);
+  const lastUserInteractRef = useRef<number>(Date.now());
   const flowLoopRef = useRef<number | null>(null);
   const orbitRef = useRef<any>(null);
 
@@ -204,6 +206,41 @@ export default function LocationPage() {
     flowLoopRef.current = requestAnimationFrame(loop);
     return () => { if (flowLoopRef.current) cancelAnimationFrame(flowLoopRef.current); };
   }, [waterFlowActive, flowState]);
+
+  // Wrap setSelectedInat so callers (points / auto-cycle) can indicate whether
+  // this was a manual user action.
+  const selectInat = (o: InatObservation | null, manual: boolean) => {
+    if (manual) lastUserInteractRef.current = Date.now();
+    setSelectedInat(o);
+  };
+
+  // Auto-cycle: after 5s of no manual interaction, pick a random observation
+  // and rotate every 2s until the user clicks something.
+  useEffect(() => {
+    if (inatObs.length === 0) return;
+    let cancelled = false;
+    let cycleTimer: number | null = null;
+
+    const pickRandom = () => {
+      if (cancelled || inatObs.length === 0) return;
+      const idle = Date.now() - lastUserInteractRef.current;
+      if (idle < 5000) return;
+      const next = inatObs[Math.floor(Math.random() * inatObs.length)];
+      setSelectedInat(next);
+    };
+
+    const check = () => {
+      if (cancelled) return;
+      const idle = Date.now() - lastUserInteractRef.current;
+      if (idle >= 5000) pickRandom();
+      cycleTimer = window.setTimeout(check, 2000);
+    };
+    cycleTimer = window.setTimeout(check, 5000);
+    return () => {
+      cancelled = true;
+      if (cycleTimer) clearTimeout(cycleTimer);
+    };
+  }, [inatObs]);
 
   const copyText = async (txt: string) => {
     try { await navigator.clipboard.writeText(txt); } catch { /* ignore */ }
@@ -321,7 +358,9 @@ export default function LocationPage() {
                 exaggeration={exaggeration}
                 bounds={location.bounds}
                 queryBounds={location.waterBounds ?? location.bounds}
-                onSelect={setSelectedInat}
+                selectedId={selectedInat?.id ?? null}
+                onSelect={(o) => selectInat(o, true)}
+                onObservationsLoaded={setInatObs}
               />
             )}
             {showPopulation && (
@@ -356,9 +395,17 @@ export default function LocationPage() {
           <div className="display-font text-3xl leading-none">{location.label}</div>
         </div>
         {loading && (
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-background/80 backdrop-blur border border-border/60 text-xs text-muted-foreground pointer-events-auto">
-            <Loader2 className="w-3 h-3 animate-spin" />
-            Loading terrain…
+          <div className="flex flex-col gap-1 px-2.5 py-1.5 rounded-md bg-background/80 backdrop-blur border border-border/60 text-xs text-muted-foreground pointer-events-auto min-w-[180px]">
+            <div className="flex items-center gap-1.5">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              <span className="tech-font">Loading terrain… {Math.round((progress ?? 0) * 100)}%</span>
+            </div>
+            <div className="h-1 w-full rounded-full bg-border/60 overflow-hidden">
+              <div
+                className="h-full bg-primary transition-[width] duration-200"
+                style={{ width: `${Math.round((progress ?? 0) * 100)}%` }}
+              />
+            </div>
           </div>
         )}
         {error && (
@@ -574,30 +621,41 @@ export default function LocationPage() {
                   }}
                 />
                 <button
-                  onClick={() => setSelectedInat(null)}
+                  onClick={() => selectInat(null, true)}
                   className="absolute top-2 right-2 p-1 rounded bg-background/60 backdrop-blur text-foreground hover:bg-background/90"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
             )}
-            <div className="pt-2 pl-1" style={{ textShadow: '0 1px 8px rgba(0,0,0,0.35)' }}>
-              <div className="uppercase tracking-[0.25em] text-[10px] text-primary tech-font">
+            <div
+              className="pt-2 pl-1"
+              style={{
+                textShadow:
+                  '0 0 2px rgba(255,255,255,0.9), 0 0 10px rgba(255,255,255,0.55), 0 0 22px rgba(255,220,140,0.35), 0 1px 12px rgba(0,0,0,0.55)',
+              }}
+            >
+              <div className="uppercase tracking-[0.25em] text-[10px] tech-font" style={{ color: '#ffe08a' }}>
                 iNat · {selectedInat.iconicTaxon ?? 'Life'} · #{selectedInat.id}
               </div>
               {selectedInat.commonName && (
-                <div className="display-font text-3xl leading-tight mt-1 text-foreground">{selectedInat.commonName}</div>
+                <div className="display-font text-3xl leading-tight mt-1" style={{ color: '#fffdf3' }}>
+                  {selectedInat.commonName}
+                </div>
               )}
               {selectedInat.species && (
-                <div className="tech-font text-[11px] italic text-muted-foreground">{selectedInat.species}</div>
+                <div className="tech-font text-[11px] italic" style={{ color: '#f2eee0' }}>
+                  {selectedInat.species}
+                </div>
               )}
-              <div className="mt-2 tech-font text-[10px] text-muted-foreground space-y-0.5">
+              <div className="mt-2 tech-font text-[10px] space-y-0.5" style={{ color: '#eae5d3' }}>
                 {selectedInat.observedOn && <div>observed {selectedInat.observedOn}</div>}
                 {selectedInat.user && <div>@{selectedInat.user}</div>}
                 <div>{selectedInat.lat.toFixed(5)}, {selectedInat.lon.toFixed(5)}</div>
               </div>
               <a
-                className="mt-2 inline-block text-primary hover:underline text-[11px] tech-font"
+                className="mt-2 inline-block hover:underline text-[11px] tech-font"
+                style={{ color: '#ffe08a' }}
                 href={selectedInat.url}
                 target="_blank" rel="noreferrer"
               >

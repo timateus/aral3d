@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { GeoBounds, TerrainData } from '@/lib/geotiff-loader';
+import { cacheGet, cacheSet } from '@/lib/browser-cache';
 
 export interface InatObservation {
   id: number;
@@ -21,15 +22,22 @@ interface Props {
   exaggeration: number;
   bounds: GeoBounds;
   queryBounds?: GeoBounds;
+  selectedId?: number | null;
   onSelect?: (o: InatObservation | null) => void;
+  onObservationsLoaded?: (obs: InatObservation[]) => void;
 }
 
-const cache = new Map<string, InatObservation[]>();
+const mem = new Map<string, InatObservation[]>();
 
 async function fetchObservations(b: GeoBounds): Promise<InatObservation[]> {
-  const key = `${b.minLat.toFixed(3)},${b.minLon.toFixed(3)},${b.maxLat.toFixed(3)},${b.maxLon.toFixed(3)}`;
-  const hit = cache.get(key);
+  const key = `inat|${b.minLat.toFixed(3)},${b.minLon.toFixed(3)},${b.maxLat.toFixed(3)},${b.maxLon.toFixed(3)}`;
+  const hit = mem.get(key);
   if (hit) return hit;
+  const cached = await cacheGet<InatObservation[]>(key);
+  if (cached && Array.isArray(cached)) {
+    mem.set(key, cached);
+    return cached;
+  }
 
   const out: InatObservation[] = [];
   for (let page = 1; page <= 3; page++) {
@@ -70,11 +78,11 @@ async function fetchObservations(b: GeoBounds): Promise<InatObservation[]> {
     }
     if ((json.results ?? []).length < 200) break;
   }
-  cache.set(key, out);
+  mem.set(key, out);
+  cacheSet(key, out);
   return out;
 }
 
-// muted, archival signal palette — no bright hues
 const TAXON_TINT: Record<string, [number, number, number]> = {
   Plantae:        [0.86, 0.94, 0.78],
   Fungi:          [0.98, 0.86, 0.68],
@@ -89,7 +97,6 @@ const TAXON_TINT: Record<string, [number, number, number]> = {
   Actinopterygii: [0.86, 0.92, 1.00],
 };
 
-// Tiny circular sprite w/ soft glow — evidence "signal"
 function makeDotTexture(): THREE.Texture {
   const s = 64;
   const c = document.createElement('canvas');
@@ -107,121 +114,27 @@ function makeDotTexture(): THREE.Texture {
   return t;
 }
 
-// Radial feather mask for photo fragments (archival scan look)
-function makeFeatherMask(): THREE.Texture {
-  const s = 256;
-  const c = document.createElement('canvas');
-  c.width = c.height = s;
-  const ctx = c.getContext('2d')!;
-  const g = ctx.createRadialGradient(s / 2, s / 2, s * 0.15, s / 2, s / 2, s * 0.52);
-  g.addColorStop(0, 'rgba(255,255,255,1)');
-  g.addColorStop(0.7, 'rgba(255,255,255,0.55)');
-  g.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, s, s);
-  // filmic grain
-  const img = ctx.getImageData(0, 0, s, s);
-  for (let i = 0; i < img.data.length; i += 4) {
-    const n = (Math.random() - 0.5) * 40;
-    img.data[i + 3] = Math.max(0, Math.min(255, img.data[i + 3] + n));
-  }
-  ctx.putImageData(img, 0, 0);
-  const t = new THREE.CanvasTexture(c);
-  t.needsUpdate = true;
-  return t;
-}
+// disable raycast on visual-only meshes
+const noRaycast: any = () => null;
 
-// Cache decoded photo textures + featherMask across renders
-const photoTextureCache = new Map<string, THREE.Texture>();
-
-function InatFragment({
-  photoUrl, position, tint, mask, onExpire,
-}: {
-  photoUrl: string;
-  position: THREE.Vector3;
-  tint: THREE.Color;
-  mask: THREE.Texture;
-  onExpire: () => void;
-}) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const matRef = useRef<THREE.MeshBasicMaterial>(null);
-  const bornRef = useRef(performance.now());
-  const [tex, setTex] = useState<THREE.Texture | null>(() => photoTextureCache.get(photoUrl) ?? null);
-  const { camera } = useThree();
-  const lastCamPos = useRef(new THREE.Vector3().copy(camera.position));
-
-  useEffect(() => {
-    if (tex) return;
-    const loader = new THREE.TextureLoader();
-    loader.setCrossOrigin('anonymous');
-    loader.load(photoUrl, (t) => {
-      t.colorSpace = THREE.SRGBColorSpace;
-      photoTextureCache.set(photoUrl, t);
-      setTex(t);
-    });
-  }, [photoUrl, tex]);
-
-  useFrame(() => {
-    if (!matRef.current) return;
-    const age = (performance.now() - bornRef.current) / 1000;
-    // camera-motion dissolve
-    const camMove = camera.position.distanceTo(lastCamPos.current);
-    lastCamPos.current.copy(camera.position);
-
-    let base = matRef.current.userData.baseOpacity ?? 0.85;
-    // slow fade-in first 0.4s, hold, fade-out after 8s
-    const fadeIn = Math.min(1, age / 0.4);
-    const fadeOut = age > 8 ? Math.max(0, 1 - (age - 8) / 2.5) : 1;
-    // extra dissolve from camera motion
-    const motionDissolve = Math.max(0.35, 1 - camMove * 5);
-    matRef.current.opacity = base * fadeIn * fadeOut * motionDissolve;
-    if (age > 11) onExpire();
-  });
-
-  if (!tex) return null;
-  // scale roughly ~0.9 units — lays like a scan fragment on terrain
-  const img = tex.image as { width?: number; height?: number } | undefined;
-  const aspect = (img?.width ?? 1) / (img?.height ?? 1);
-  const w = 0.9;
-  const h = w / (aspect || 1);
-  return (
-    <mesh
-      ref={meshRef}
-      position={[position.x, position.y + 0.006, position.z]}
-      rotation={[-Math.PI / 2, 0, (Math.random() - 0.5) * 0.4]}
-    >
-      <planeGeometry args={[w, h]} />
-      <meshBasicMaterial
-        ref={matRef}
-        map={tex}
-        alphaMap={mask}
-        transparent
-        depthWrite={false}
-        color={tint}
-        userData={{ baseOpacity: 0.9 }}
-        toneMapped={false}
-      />
-    </mesh>
-  );
-}
-
-const InaturalistLayer = ({ terrain, exaggeration, bounds, queryBounds, onSelect }: Props) => {
+const InaturalistLayer = ({
+  terrain, exaggeration, bounds, queryBounds,
+  selectedId, onSelect, onObservationsLoaded,
+}: Props) => {
   const [obs, setObs] = useState<InatObservation[] | null>(null);
   const q = queryBounds ?? bounds;
 
   const dotTex = useMemo(() => makeDotTexture(), []);
 
-
   useEffect(() => {
     let cancelled = false;
     setObs(null);
     fetchObservations(q)
-      .then((o) => { if (!cancelled) setObs(o); })
-      .catch(() => { if (!cancelled) setObs([]); });
+      .then((o) => { if (!cancelled) { setObs(o); onObservationsLoaded?.(o); } })
+      .catch(() => { if (!cancelled) { setObs([]); onObservationsLoaded?.([]); } });
     return () => { cancelled = true; };
   }, [q.minLat, q.minLon, q.maxLat, q.maxLon]);
 
-  // Precompute anchored world positions for every obs
   const anchored = useMemo(() => {
     if (!obs) return [] as Array<{ o: InatObservation; pos: THREE.Vector3; tint: THREE.Color }>;
     const meshW = 10;
@@ -248,7 +161,6 @@ const InaturalistLayer = ({ terrain, exaggeration, bounds, queryBounds, onSelect
     return out;
   }, [obs, terrain, exaggeration, bounds.minLat, bounds.minLon, bounds.maxLat, bounds.maxLon]);
 
-  // Signal points — tiny glowing dots
   const pointsGeom = useMemo(() => {
     const g = new THREE.BufferGeometry();
     const positions = new Float32Array(anchored.length * 3);
@@ -266,7 +178,6 @@ const InaturalistLayer = ({ terrain, exaggeration, bounds, queryBounds, onSelect
     return g;
   }, [anchored]);
 
-  // Scratch strokes — short segments oriented randomly on terrain plane
   const scratchGeom = useMemo(() => {
     if (anchored.length === 0) return null;
     const positions: number[] = [];
@@ -286,64 +197,100 @@ const InaturalistLayer = ({ terrain, exaggeration, bounds, queryBounds, onSelect
     return g;
   }, [anchored]);
 
-  const handlePointsClick = (e: any) => {
-    if (typeof e.index !== 'number') return;
-    const a = anchored[e.index];
-    if (!a) return;
-    e.stopPropagation();
-    onSelect?.(a.o);
-  };
+  // Precise hit-boxes: instanced tiny spheres (radius = HIT_R) — tight click area.
+  const HIT_R = 0.045;
+  const instRef = useRef<THREE.InstancedMesh>(null);
+  const tmpMat = useMemo(() => new THREE.Matrix4(), []);
+  useEffect(() => {
+    const mesh = instRef.current;
+    if (!mesh) return;
+    anchored.forEach((a, i) => {
+      tmpMat.makeTranslation(a.pos.x, a.pos.y + 0.02, a.pos.z);
+      mesh.setMatrixAt(i, tmpMat);
+    });
+    mesh.count = anchored.length;
+    mesh.instanceMatrix.needsUpdate = true;
+  }, [anchored, tmpMat]);
+
+  // Selected highlight ring pulse
+  const highlight = useMemo(() => {
+    if (selectedId == null) return null;
+    return anchored.find((a) => a.o.id === selectedId) ?? null;
+  }, [selectedId, anchored]);
+
+  const ringRef = useRef<THREE.Mesh>(null);
+  useFrame(({ clock }) => {
+    if (!ringRef.current) return;
+    const t = clock.getElapsedTime();
+    const s = 1 + Math.sin(t * 3) * 0.15;
+    ringRef.current.scale.setScalar(s);
+    (ringRef.current.material as THREE.MeshBasicMaterial).opacity =
+      0.55 + Math.sin(t * 3) * 0.25;
+  });
 
   if (anchored.length === 0) return null;
 
   return (
     <group>
-      {/* scratch strokes */}
       {scratchGeom && (
-        <lineSegments geometry={scratchGeom}>
+        <lineSegments geometry={scratchGeom} raycast={noRaycast}>
           <lineBasicMaterial
-            vertexColors
-            transparent
-            opacity={0.35}
-            depthWrite={false}
-            blending={THREE.AdditiveBlending}
-            toneMapped={false}
+            vertexColors transparent opacity={0.35} depthWrite={false}
+            blending={THREE.AdditiveBlending} toneMapped={false}
           />
         </lineSegments>
       )}
-      {/* soft translucent halo patches (bloom-ish) */}
-      <points geometry={pointsGeom} onPointerDown={handlePointsClick}
+      <points geometry={pointsGeom} raycast={noRaycast}>
+        <pointsMaterial
+          size={0.28} map={dotTex} vertexColors transparent depthWrite={false}
+          opacity={0.55} sizeAttenuation blending={THREE.AdditiveBlending}
+          alphaTest={0.01} toneMapped={false}
+        />
+      </points>
+      <points geometry={pointsGeom} raycast={noRaycast}>
+        <pointsMaterial
+          size={0.07} map={dotTex} vertexColors transparent depthWrite={false}
+          opacity={0.95} sizeAttenuation blending={THREE.AdditiveBlending}
+          alphaTest={0.01} toneMapped={false}
+        />
+      </points>
+
+      {/* Invisible instanced hit-spheres for precise clicks */}
+      <instancedMesh
+        ref={instRef}
+        args={[undefined as any, undefined as any, Math.max(1, anchored.length)]}
+        onPointerDown={(e) => {
+          if (typeof e.instanceId !== 'number') return;
+          const a = anchored[e.instanceId];
+          if (!a) return;
+          e.stopPropagation();
+          onSelect?.(a.o);
+        }}
         onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
         onPointerOut={() => { document.body.style.cursor = ''; }}
       >
-        <pointsMaterial
-          size={0.28}
-          map={dotTex}
-          vertexColors
-          transparent
-          depthWrite={false}
-          opacity={0.55}
-          sizeAttenuation
-          blending={THREE.AdditiveBlending}
-          alphaTest={0.01}
-          toneMapped={false}
-        />
-      </points>
-      {/* crisp signal cores */}
-      <points geometry={pointsGeom}>
-        <pointsMaterial
-          size={0.07}
-          map={dotTex}
-          vertexColors
-          transparent
-          depthWrite={false}
-          opacity={0.95}
-          sizeAttenuation
-          blending={THREE.AdditiveBlending}
-          alphaTest={0.01}
-          toneMapped={false}
-        />
-      </points>
+        <sphereGeometry args={[HIT_R, 8, 6]} />
+        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+      </instancedMesh>
+
+      {/* Highlight for selected observation */}
+      {highlight && (
+        <group position={[highlight.pos.x, highlight.pos.y + 0.03, highlight.pos.z]}>
+          {/* pulse ring on ground plane */}
+          <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]} raycast={noRaycast}>
+            <ringGeometry args={[0.12, 0.16, 48]} />
+            <meshBasicMaterial
+              color="#ffd166" transparent opacity={0.8} depthWrite={false}
+              side={THREE.DoubleSide} blending={THREE.AdditiveBlending} toneMapped={false}
+            />
+          </mesh>
+          {/* bright core marker */}
+          <mesh raycast={noRaycast}>
+            <sphereGeometry args={[0.03, 12, 10]} />
+            <meshBasicMaterial color="#ffe08a" toneMapped={false} />
+          </mesh>
+        </group>
+      )}
     </group>
   );
 };
