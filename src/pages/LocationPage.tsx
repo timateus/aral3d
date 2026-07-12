@@ -153,7 +153,8 @@ export default function LocationPage() {
   const { token } = useTerrainMode();
   const { terrain, loading, error } = useMapterhornTerrain(location?.bounds ?? null, !!location);
 
-  const [exaggeration, setExaggeration] = useState(location?.exaggeration ?? 30);
+  const [exaggeration, setExaggeration] = useState(location?.exaggeration ?? 50);
+  const [showInspector, setShowInspector] = useState(false);
   const [showTerrain, setShowTerrain] = useState(true);
   const [showWater, setShowWater] = useState(true);
   const [showPopulation, setShowPopulation] = useState(false);
