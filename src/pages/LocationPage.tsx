@@ -243,6 +243,25 @@ export default function LocationPage() {
     };
   }, [inatObs]);
 
+  // Preload observation images into the browser cache so cycling is instant.
+  useEffect(() => {
+    if (inatObs.length === 0) return;
+    const urls = inatObs.map((o) => o.photoUrl).filter(Boolean) as string[];
+    let i = 0;
+    const step = () => {
+      if (i >= urls.length) return;
+      const batch = urls.slice(i, i + 6);
+      i += 6;
+      Promise.all(batch.map((u) => new Promise<void>((res) => {
+        const img = new Image();
+        img.onload = img.onerror = () => res();
+        img.src = u;
+      }))).then(step);
+    };
+    step();
+  }, [inatObs]);
+
+
   const copyText = async (txt: string) => {
     try { await navigator.clipboard.writeText(txt); } catch { /* ignore */ }
     setCopied(txt);
