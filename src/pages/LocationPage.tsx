@@ -621,30 +621,41 @@ export default function LocationPage() {
                   }}
                 />
                 <button
-                  onClick={() => setSelectedInat(null)}
+                  onClick={() => selectInat(null, true)}
                   className="absolute top-2 right-2 p-1 rounded bg-background/60 backdrop-blur text-foreground hover:bg-background/90"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
             )}
-            <div className="pt-2 pl-1" style={{ textShadow: '0 1px 8px rgba(0,0,0,0.35)' }}>
-              <div className="uppercase tracking-[0.25em] text-[10px] text-primary tech-font">
+            <div
+              className="pt-2 pl-1"
+              style={{
+                textShadow:
+                  '0 0 2px rgba(255,255,255,0.9), 0 0 10px rgba(255,255,255,0.55), 0 0 22px rgba(255,220,140,0.35), 0 1px 12px rgba(0,0,0,0.55)',
+              }}
+            >
+              <div className="uppercase tracking-[0.25em] text-[10px] tech-font" style={{ color: '#ffe08a' }}>
                 iNat · {selectedInat.iconicTaxon ?? 'Life'} · #{selectedInat.id}
               </div>
               {selectedInat.commonName && (
-                <div className="display-font text-3xl leading-tight mt-1 text-foreground">{selectedInat.commonName}</div>
+                <div className="display-font text-3xl leading-tight mt-1" style={{ color: '#fffdf3' }}>
+                  {selectedInat.commonName}
+                </div>
               )}
               {selectedInat.species && (
-                <div className="tech-font text-[11px] italic text-muted-foreground">{selectedInat.species}</div>
+                <div className="tech-font text-[11px] italic" style={{ color: '#f2eee0' }}>
+                  {selectedInat.species}
+                </div>
               )}
-              <div className="mt-2 tech-font text-[10px] text-muted-foreground space-y-0.5">
+              <div className="mt-2 tech-font text-[10px] space-y-0.5" style={{ color: '#eae5d3' }}>
                 {selectedInat.observedOn && <div>observed {selectedInat.observedOn}</div>}
                 {selectedInat.user && <div>@{selectedInat.user}</div>}
                 <div>{selectedInat.lat.toFixed(5)}, {selectedInat.lon.toFixed(5)}</div>
               </div>
               <a
-                className="mt-2 inline-block text-primary hover:underline text-[11px] tech-font"
+                className="mt-2 inline-block hover:underline text-[11px] tech-font"
+                style={{ color: '#ffe08a' }}
                 href={selectedInat.url}
                 target="_blank" rel="noreferrer"
               >
