@@ -572,75 +572,68 @@ export default function LocationPage() {
 
 
       {/* Inspector */}
-      <div className="absolute bottom-3 right-3 px-3 py-2 rounded-md bg-background/80 backdrop-blur border border-border/60 text-xs font-mono min-w-[240px]">
-        <div className="flex items-center justify-between gap-3 mb-1">
-          <span className="uppercase tracking-widest text-[10px] text-muted-foreground">Inspector</span>
-          {copied ? (
-            <span className="flex items-center gap-1 text-primary">
-              <Check className="w-3 h-3" /> copied
-            </span>
+      {showInspector && (
+        <div className="absolute bottom-3 right-3 px-3 py-2 rounded-md bg-background/80 backdrop-blur border border-border/60 text-xs tech-font min-w-[240px]">
+          <div className="flex items-center justify-between gap-3 mb-1">
+            <span className="uppercase tracking-widest text-[10px] text-muted-foreground">Inspector</span>
+            {copied ? (
+              <span className="flex items-center gap-1 text-primary">
+                <Check className="w-3 h-3" /> copied
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 text-muted-foreground">
+                <Copy className="w-3 h-3" /> click to copy
+              </span>
+            )}
+          </div>
+
+          <div className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Cursor</div>
+          {hover ? (
+            <button
+              className="block w-full text-left hover:text-primary leading-tight"
+              onClick={() => copyCoords(hover)}
+              title="Copy lat, lon"
+            >
+              <div>lat {hover.lat.toFixed(6)}</div>
+              <div>lon {hover.lon.toFixed(6)}</div>
+              <div className="text-muted-foreground">elev {hover.elev.toFixed(1)} m</div>
+            </button>
           ) : (
-            <span className="flex items-center gap-1 text-muted-foreground">
-              <Copy className="w-3 h-3" /> click to copy
-            </span>
+            <div className="text-muted-foreground">hover terrain…</div>
+          )}
+
+          <div className="text-[10px] uppercase tracking-widest text-muted-foreground mt-2">Camera</div>
+          {camera ? (
+            <button
+              className="block w-full text-left hover:text-primary leading-tight"
+              onClick={() => copyText(
+                `pos ${camera.pos.map((n) => n.toFixed(3)).join(', ')}\n` +
+                `target ${camera.target.map((n) => n.toFixed(3)).join(', ')}\n` +
+                `distance ${camera.distance.toFixed(3)}\n` +
+                `heading ${camera.headingDeg.toFixed(1)}°\n` +
+                `tilt ${camera.tiltDeg.toFixed(1)}°\n` +
+                `fov ${camera.fov.toFixed(1)}°`
+              )}
+              title="Copy camera state"
+            >
+              <div>dist {camera.distance.toFixed(2)}</div>
+              <div>hdg {camera.headingDeg.toFixed(1)}° · tilt {camera.tiltDeg.toFixed(1)}°</div>
+              <div className="text-muted-foreground">fov {camera.fov.toFixed(0)}°</div>
+              <div className="text-muted-foreground">
+                pos {camera.pos.map((n) => n.toFixed(1)).join(',')}
+              </div>
+            </button>
+          ) : (
+            <div className="text-muted-foreground">—</div>
           )}
         </div>
+      )}
 
-        <div className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Cursor</div>
-        {hover ? (
-          <button
-            className="block w-full text-left hover:text-primary leading-tight"
-            onClick={() => copyCoords(hover)}
-            title="Copy lat, lon"
-          >
-            <div>lat {hover.lat.toFixed(6)}</div>
-            <div>lon {hover.lon.toFixed(6)}</div>
-            <div className="text-muted-foreground">elev {hover.elev.toFixed(1)} m</div>
-          </button>
-        ) : (
-          <div className="text-muted-foreground">hover terrain…</div>
-        )}
-
-        <div className="text-[10px] uppercase tracking-widest text-muted-foreground mt-2">Camera</div>
-        {camera ? (
-          <button
-            className="block w-full text-left hover:text-primary leading-tight"
-            onClick={() => copyText(
-              `pos ${camera.pos.map((n) => n.toFixed(3)).join(', ')}\n` +
-              `target ${camera.target.map((n) => n.toFixed(3)).join(', ')}\n` +
-              `distance ${camera.distance.toFixed(3)}\n` +
-              `heading ${camera.headingDeg.toFixed(1)}°\n` +
-              `tilt ${camera.tiltDeg.toFixed(1)}°\n` +
-              `fov ${camera.fov.toFixed(1)}°`
-            )}
-            title="Copy camera state"
-          >
-            <div>dist {camera.distance.toFixed(2)}</div>
-            <div>hdg {camera.headingDeg.toFixed(1)}° · tilt {camera.tiltDeg.toFixed(1)}°</div>
-            <div className="text-muted-foreground">fov {camera.fov.toFixed(0)}°</div>
-            <div className="text-muted-foreground">
-              pos {camera.pos.map((n) => n.toFixed(1)).join(',')}
-            </div>
-          </button>
-        ) : (
-          <div className="text-muted-foreground">—</div>
-        )}
-      </div>
-
-      {/* Bottom vertical exag control */}
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-2 rounded-md bg-background/80 backdrop-blur border border-border/60 flex items-center gap-3 text-xs">
-        <span className="text-muted-foreground font-mono">Vertical exag</span>
-        <input
-          type="range" min={0} max={100} step={1}
-          value={exaggeration}
-          onChange={(e) => setExaggeration(parseInt(e.target.value, 10))}
-          className="w-52"
-        />
-        <span className="font-mono w-8 text-right">{exaggeration}x</span>
-        {waterFlowActive && (
-          <span className="ml-3 text-primary font-mono">click terrain to add water</span>
-        )}
-      </div>
+      {waterFlowActive && (
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-md bg-background/80 backdrop-blur border border-primary/40 text-xs tech-font text-primary">
+          click terrain to add water
+        </div>
+      )}
 
       {/* Attribution */}
       <div className="absolute bottom-1 left-2 text-[10px] font-mono text-muted-foreground/70 pointer-events-none">
