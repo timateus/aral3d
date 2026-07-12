@@ -159,6 +159,7 @@ export default function LocationPage() {
   const [showPopulation, setShowPopulation] = useState(false);
   const [showOsmBuildings, setShowOsmBuildings] = useState(true);
   const [showOvertureBuildings, setShowOvertureBuildings] = useState(false);
+  const [showInat, setShowInat] = useState(true);
 
   // View mode & per-mode parameters
   const [terrainStyle, setTerrainStyle] = useState<TerrainStyle>('none');
