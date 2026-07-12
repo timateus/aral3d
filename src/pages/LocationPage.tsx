@@ -3,7 +3,7 @@ import { useParams, Navigate, Link, useLocation } from 'react-router-dom';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
-import { Loader2, Layers, Waves, Crosshair, Mountain, ArrowRight, Copy, Check, Sliders, Eye, X } from 'lucide-react';
+import { Loader2, Layers, Waves, Crosshair, Mountain, ArrowRight, Copy, Check, Sliders, Eye, X, Info } from 'lucide-react';
 import { findLocation, LOCATIONS } from '@/lib/locations';
 import { useMapterhornTerrain } from '@/hooks/useMapterhornTerrain';
 import { useTerrainMode } from '@/hooks/useTerrainMode';
@@ -153,7 +153,8 @@ export default function LocationPage() {
   const { token } = useTerrainMode();
   const { terrain, loading, error } = useMapterhornTerrain(location?.bounds ?? null, !!location);
 
-  const [exaggeration, setExaggeration] = useState(location?.exaggeration ?? 30);
+  const [exaggeration, setExaggeration] = useState(location?.exaggeration ?? 50);
+  const [showInspector, setShowInspector] = useState(false);
   const [showTerrain, setShowTerrain] = useState(true);
   const [showWater, setShowWater] = useState(true);
   const [showPopulation, setShowPopulation] = useState(false);
@@ -194,10 +195,10 @@ export default function LocationPage() {
 
   useEffect(() => {
     if (!waterFlowActive || !flowState) return;
-    let last = performance.now();
     const loop = () => {
-      const now = performance.now();
-      if (now - last > 60) { stepFlow(flowState); setFlowKey((k) => k + 1); last = now; }
+      // Run several sub-steps per frame for maximum flow speed
+      for (let i = 0; i < 6; i++) stepFlow(flowState);
+      setFlowKey((k) => k + 1);
       flowLoopRef.current = requestAnimationFrame(loop);
     };
     flowLoopRef.current = requestAnimationFrame(loop);
@@ -232,9 +233,10 @@ export default function LocationPage() {
   const dataBase = `/data/locations/${location.slug}`;
 
   return (
-    <div className="fixed inset-0 bg-background text-foreground" style={{ fontFamily: '"Space Grotesk", ui-sans-serif, system-ui, sans-serif' }}>
+    <div className="fixed inset-0 bg-background text-foreground" style={{ fontFamily: '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace' }}>
       <style>{`
-        .location-serif { font-family: "Instrument Serif", ui-serif, Georgia, serif; letter-spacing: 0.01em; }
+        .location-serif, .display-font { font-family: "Sora", ui-sans-serif, system-ui, sans-serif; font-weight: 800; letter-spacing: -0.02em; }
+        .tech-font { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; }
       `}</style>
       <Canvas camera={{ position: [-4.2, 4.2, -1.9], fov: 45, near: 0.1, far: 200 }} shadows={false}>
         <color attach="background" args={['#f3f0e7']} />
@@ -348,10 +350,10 @@ export default function LocationPage() {
       {/* Header */}
       <div className="absolute top-3 left-3 flex items-center gap-2 pointer-events-none">
         <div className="px-3 py-1.5 rounded-md bg-background/80 backdrop-blur border border-border/60 pointer-events-auto">
-          <div className="text-xs uppercase tracking-widest text-muted-foreground font-mono">
+          <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground tech-font">
             Location
           </div>
-          <div className="location-serif text-2xl leading-none tracking-tight">{location.label}</div>
+          <div className="display-font text-3xl leading-none">{location.label}</div>
         </div>
         {loading && (
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-background/80 backdrop-blur border border-border/60 text-xs text-muted-foreground pointer-events-auto">
@@ -480,6 +482,14 @@ export default function LocationPage() {
           {locating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Crosshair className="w-3.5 h-3.5" />}
           Locate me
         </button>
+
+        <button
+          className={`${btnBase} ${showInspector ? 'text-primary border-primary/50' : ''}`}
+          onClick={() => setShowInspector((v) => !v)}
+          title="Toggle inspector"
+        >
+          <Info className="w-3.5 h-3.5" /> Inspector
+        </button>
       </div>
 
       {/* Water feature info */}
@@ -518,119 +528,150 @@ export default function LocationPage() {
         </div>
       )}
 
-      {/* iNaturalist observation card */}
+      {/* iNaturalist observation card — no background, floats over map */}
       {selectedInat && (
-        <div className="absolute top-16 right-3 w-80 rounded-md bg-background/95 backdrop-blur border border-border/60 text-xs z-20 overflow-hidden shadow-xl">
-          {selectedInat.photoUrl && (
-            <img
-              src={selectedInat.photoUrl}
-              alt={selectedInat.commonName ?? selectedInat.species ?? 'iNaturalist observation'}
-              className="w-full h-44 object-cover"
-              loading="lazy"
-            />
-          )}
-          <div className="p-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="uppercase tracking-[0.2em] text-[10px] text-primary font-mono">
-                iNaturalist · {selectedInat.iconicTaxon ?? 'Life'}
-              </span>
-              <button onClick={() => setSelectedInat(null)} className="text-muted-foreground hover:text-foreground">
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-            {selectedInat.commonName && (
-              <div className="location-serif text-2xl leading-tight">{selectedInat.commonName}</div>
+        <div className="absolute top-16 right-3 w-80 text-xs z-20 pointer-events-none">
+          <div className="pointer-events-auto">
+            {selectedInat.photoUrl && (
+              <div className="relative w-full h-52 overflow-hidden">
+                {/* Bloom glow */}
+                <img
+                  src={selectedInat.photoUrl}
+                  alt=""
+                  aria-hidden
+                  className="absolute inset-0 w-full h-full object-cover scale-110"
+                  style={{ filter: 'blur(24px) saturate(1.6) brightness(1.4)', opacity: 0.9, mixBlendMode: 'screen' }}
+                />
+                {/* Main image, noisy + bloom + overlay */}
+                <img
+                  src={selectedInat.photoUrl}
+                  alt={selectedInat.commonName ?? selectedInat.species ?? 'iNaturalist observation'}
+                  className="relative w-full h-full object-cover"
+                  style={{
+                    filter: 'contrast(1.25) saturate(1.35) brightness(1.1)',
+                    mixBlendMode: 'lighten',
+                    maskImage: 'radial-gradient(ellipse at center, black 55%, transparent 95%)',
+                    WebkitMaskImage: 'radial-gradient(ellipse at center, black 55%, transparent 95%)',
+                  }}
+                  loading="lazy"
+                />
+                {/* SVG grain overlay */}
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    backgroundImage:
+                      "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")",
+                    mixBlendMode: 'overlay',
+                    opacity: 0.85,
+                  }}
+                />
+                {/* Bloom highlight overlay */}
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background: 'radial-gradient(ellipse at 40% 30%, rgba(255,240,200,0.35), transparent 60%)',
+                    mixBlendMode: 'screen',
+                  }}
+                />
+                <button
+                  onClick={() => setSelectedInat(null)}
+                  className="absolute top-2 right-2 p-1 rounded bg-background/60 backdrop-blur text-foreground hover:bg-background/90"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
             )}
-            {selectedInat.species && (
-              <div className="italic text-muted-foreground text-[12px]">{selectedInat.species}</div>
-            )}
-            <div className="mt-2 font-mono text-[10px] text-muted-foreground space-y-0.5">
-              {selectedInat.observedOn && <div>observed {selectedInat.observedOn}</div>}
-              {selectedInat.user && <div>@{selectedInat.user}</div>}
-              <div>{selectedInat.lat.toFixed(5)}, {selectedInat.lon.toFixed(5)}</div>
+            <div className="pt-2 pl-1" style={{ textShadow: '0 1px 8px rgba(0,0,0,0.35)' }}>
+              <div className="uppercase tracking-[0.25em] text-[10px] text-primary tech-font">
+                iNat · {selectedInat.iconicTaxon ?? 'Life'} · #{selectedInat.id}
+              </div>
+              {selectedInat.commonName && (
+                <div className="display-font text-3xl leading-tight mt-1 text-foreground">{selectedInat.commonName}</div>
+              )}
+              {selectedInat.species && (
+                <div className="tech-font text-[11px] italic text-muted-foreground">{selectedInat.species}</div>
+              )}
+              <div className="mt-2 tech-font text-[10px] text-muted-foreground space-y-0.5">
+                {selectedInat.observedOn && <div>observed {selectedInat.observedOn}</div>}
+                {selectedInat.user && <div>@{selectedInat.user}</div>}
+                <div>{selectedInat.lat.toFixed(5)}, {selectedInat.lon.toFixed(5)}</div>
+              </div>
+              <a
+                className="mt-2 inline-block text-primary hover:underline text-[11px] tech-font"
+                href={selectedInat.url}
+                target="_blank" rel="noreferrer"
+              >
+                open on iNaturalist →
+              </a>
             </div>
-            <a
-              className="mt-2 inline-block text-primary hover:underline text-[11px]"
-              href={selectedInat.url}
-              target="_blank" rel="noreferrer"
-            >
-              open on iNaturalist →
-            </a>
           </div>
         </div>
       )}
 
 
       {/* Inspector */}
-      <div className="absolute bottom-3 right-3 px-3 py-2 rounded-md bg-background/80 backdrop-blur border border-border/60 text-xs font-mono min-w-[240px]">
-        <div className="flex items-center justify-between gap-3 mb-1">
-          <span className="uppercase tracking-widest text-[10px] text-muted-foreground">Inspector</span>
-          {copied ? (
-            <span className="flex items-center gap-1 text-primary">
-              <Check className="w-3 h-3" /> copied
-            </span>
+      {showInspector && (
+        <div className="absolute bottom-3 right-3 px-3 py-2 rounded-md bg-background/80 backdrop-blur border border-border/60 text-xs tech-font min-w-[240px]">
+          <div className="flex items-center justify-between gap-3 mb-1">
+            <span className="uppercase tracking-widest text-[10px] text-muted-foreground">Inspector</span>
+            {copied ? (
+              <span className="flex items-center gap-1 text-primary">
+                <Check className="w-3 h-3" /> copied
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 text-muted-foreground">
+                <Copy className="w-3 h-3" /> click to copy
+              </span>
+            )}
+          </div>
+
+          <div className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Cursor</div>
+          {hover ? (
+            <button
+              className="block w-full text-left hover:text-primary leading-tight"
+              onClick={() => copyCoords(hover)}
+              title="Copy lat, lon"
+            >
+              <div>lat {hover.lat.toFixed(6)}</div>
+              <div>lon {hover.lon.toFixed(6)}</div>
+              <div className="text-muted-foreground">elev {hover.elev.toFixed(1)} m</div>
+            </button>
           ) : (
-            <span className="flex items-center gap-1 text-muted-foreground">
-              <Copy className="w-3 h-3" /> click to copy
-            </span>
+            <div className="text-muted-foreground">hover terrain…</div>
+          )}
+
+          <div className="text-[10px] uppercase tracking-widest text-muted-foreground mt-2">Camera</div>
+          {camera ? (
+            <button
+              className="block w-full text-left hover:text-primary leading-tight"
+              onClick={() => copyText(
+                `pos ${camera.pos.map((n) => n.toFixed(3)).join(', ')}\n` +
+                `target ${camera.target.map((n) => n.toFixed(3)).join(', ')}\n` +
+                `distance ${camera.distance.toFixed(3)}\n` +
+                `heading ${camera.headingDeg.toFixed(1)}°\n` +
+                `tilt ${camera.tiltDeg.toFixed(1)}°\n` +
+                `fov ${camera.fov.toFixed(1)}°`
+              )}
+              title="Copy camera state"
+            >
+              <div>dist {camera.distance.toFixed(2)}</div>
+              <div>hdg {camera.headingDeg.toFixed(1)}° · tilt {camera.tiltDeg.toFixed(1)}°</div>
+              <div className="text-muted-foreground">fov {camera.fov.toFixed(0)}°</div>
+              <div className="text-muted-foreground">
+                pos {camera.pos.map((n) => n.toFixed(1)).join(',')}
+              </div>
+            </button>
+          ) : (
+            <div className="text-muted-foreground">—</div>
           )}
         </div>
+      )}
 
-        <div className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Cursor</div>
-        {hover ? (
-          <button
-            className="block w-full text-left hover:text-primary leading-tight"
-            onClick={() => copyCoords(hover)}
-            title="Copy lat, lon"
-          >
-            <div>lat {hover.lat.toFixed(6)}</div>
-            <div>lon {hover.lon.toFixed(6)}</div>
-            <div className="text-muted-foreground">elev {hover.elev.toFixed(1)} m</div>
-          </button>
-        ) : (
-          <div className="text-muted-foreground">hover terrain…</div>
-        )}
-
-        <div className="text-[10px] uppercase tracking-widest text-muted-foreground mt-2">Camera</div>
-        {camera ? (
-          <button
-            className="block w-full text-left hover:text-primary leading-tight"
-            onClick={() => copyText(
-              `pos ${camera.pos.map((n) => n.toFixed(3)).join(', ')}\n` +
-              `target ${camera.target.map((n) => n.toFixed(3)).join(', ')}\n` +
-              `distance ${camera.distance.toFixed(3)}\n` +
-              `heading ${camera.headingDeg.toFixed(1)}°\n` +
-              `tilt ${camera.tiltDeg.toFixed(1)}°\n` +
-              `fov ${camera.fov.toFixed(1)}°`
-            )}
-            title="Copy camera state"
-          >
-            <div>dist {camera.distance.toFixed(2)}</div>
-            <div>hdg {camera.headingDeg.toFixed(1)}° · tilt {camera.tiltDeg.toFixed(1)}°</div>
-            <div className="text-muted-foreground">fov {camera.fov.toFixed(0)}°</div>
-            <div className="text-muted-foreground">
-              pos {camera.pos.map((n) => n.toFixed(1)).join(',')}
-            </div>
-          </button>
-        ) : (
-          <div className="text-muted-foreground">—</div>
-        )}
-      </div>
-
-      {/* Bottom vertical exag control */}
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-2 rounded-md bg-background/80 backdrop-blur border border-border/60 flex items-center gap-3 text-xs">
-        <span className="text-muted-foreground font-mono">Vertical exag</span>
-        <input
-          type="range" min={0} max={100} step={1}
-          value={exaggeration}
-          onChange={(e) => setExaggeration(parseInt(e.target.value, 10))}
-          className="w-52"
-        />
-        <span className="font-mono w-8 text-right">{exaggeration}x</span>
-        {waterFlowActive && (
-          <span className="ml-3 text-primary font-mono">click terrain to add water</span>
-        )}
-      </div>
+      {waterFlowActive && (
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-md bg-background/80 backdrop-blur border border-primary/40 text-xs tech-font text-primary">
+          click terrain to add water
+        </div>
+      )}
 
       {/* Attribution */}
       <div className="absolute bottom-1 left-2 text-[10px] font-mono text-muted-foreground/70 pointer-events-none">
