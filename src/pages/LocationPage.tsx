@@ -232,7 +232,10 @@ export default function LocationPage() {
   const dataBase = `/data/locations/${location.slug}`;
 
   return (
-    <div className="fixed inset-0 bg-background text-foreground">
+    <div className="fixed inset-0 bg-background text-foreground" style={{ fontFamily: '"Space Grotesk", ui-sans-serif, system-ui, sans-serif' }}>
+      <style>{`
+        .location-serif { font-family: "Instrument Serif", ui-serif, Georgia, serif; letter-spacing: 0.01em; }
+      `}</style>
       <Canvas camera={{ position: [-4.2, 4.2, -1.9], fov: 45, near: 0.1, far: 200 }} shadows={false}>
         <color attach="background" args={['#f3f0e7']} />
         <ambientLight intensity={0.9} />
