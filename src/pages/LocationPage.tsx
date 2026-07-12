@@ -358,7 +358,9 @@ export default function LocationPage() {
                 exaggeration={exaggeration}
                 bounds={location.bounds}
                 queryBounds={location.waterBounds ?? location.bounds}
-                onSelect={setSelectedInat}
+                selectedId={selectedInat?.id ?? null}
+                onSelect={(o) => selectInat(o, true)}
+                onObservationsLoaded={setInatObs}
               />
             )}
             {showPopulation && (
