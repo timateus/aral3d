@@ -13,6 +13,7 @@ import OsmWaterwaysLayer from '@/components/location/OsmWaterwaysLayer';
 import OsmPopulationLayer from '@/components/location/OsmPopulationLayer';
 import OvertureBuildingsLayer from '@/components/location/OvertureBuildingsLayer';
 import OsmBuildingsLayer from '@/components/location/OsmBuildingsLayer';
+import InaturalistLayer, { type InatObservation } from '@/components/location/InaturalistLayer';
 import WaterFlowOverlay from '@/components/WaterFlowOverlay';
 import { createFlowState, addWaterAt, stepFlow, type WaterFlowState } from '@/lib/water-flow-simulation';
 import { useUserLocation } from '@/hooks/useUserLocation';
@@ -158,6 +159,7 @@ export default function LocationPage() {
   const [showPopulation, setShowPopulation] = useState(false);
   const [showOsmBuildings, setShowOsmBuildings] = useState(true);
   const [showOvertureBuildings, setShowOvertureBuildings] = useState(false);
+  const [showInat, setShowInat] = useState(true);
 
   // View mode & per-mode parameters
   const [terrainStyle, setTerrainStyle] = useState<TerrainStyle>('none');
@@ -178,6 +180,7 @@ export default function LocationPage() {
   const [camera, setCamera] = useState<CameraInfo | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [selectedWater, setSelectedWater] = useState<import('@/components/location/OsmWaterwaysLayer').WaterFeature | null>(null);
+  const [selectedInat, setSelectedInat] = useState<InatObservation | null>(null);
   const flowLoopRef = useRef<number | null>(null);
   const orbitRef = useRef<any>(null);
 
@@ -229,7 +232,10 @@ export default function LocationPage() {
   const dataBase = `/data/locations/${location.slug}`;
 
   return (
-    <div className="fixed inset-0 bg-background text-foreground">
+    <div className="fixed inset-0 bg-background text-foreground" style={{ fontFamily: '"Space Grotesk", ui-sans-serif, system-ui, sans-serif' }}>
+      <style>{`
+        .location-serif { font-family: "Instrument Serif", ui-serif, Georgia, serif; letter-spacing: 0.01em; }
+      `}</style>
       <Canvas camera={{ position: [-4.2, 4.2, -1.9], fov: 45, near: 0.1, far: 200 }} shadows={false}>
         <color attach="background" args={['#f3f0e7']} />
         <ambientLight intensity={0.9} />
@@ -307,6 +313,15 @@ export default function LocationPage() {
             {showOvertureBuildings && (
               <OvertureBuildingsLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} />
             )}
+            {showInat && (
+              <InaturalistLayer
+                terrain={terrain}
+                exaggeration={exaggeration}
+                bounds={location.bounds}
+                queryBounds={location.waterBounds ?? location.bounds}
+                onSelect={setSelectedInat}
+              />
+            )}
             {showPopulation && (
               <OsmPopulationLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} dataUrl={`${dataBase}/population.json`} />
             )}
@@ -336,7 +351,7 @@ export default function LocationPage() {
           <div className="text-xs uppercase tracking-widest text-muted-foreground font-mono">
             Location
           </div>
-          <div className="text-sm font-semibold">{location.label}</div>
+          <div className="location-serif text-2xl leading-none tracking-tight">{location.label}</div>
         </div>
         {loading && (
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-background/80 backdrop-blur border border-border/60 text-xs text-muted-foreground pointer-events-auto">
@@ -370,6 +385,9 @@ export default function LocationPage() {
               Overture buildings
             </DropdownMenuCheckboxItem>
             <DropdownMenuSeparator />
+            <DropdownMenuCheckboxItem checked={showInat} onCheckedChange={(v) => setShowInat(!!v)}>
+              iNaturalist observations
+            </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem checked={showPopulation} onCheckedChange={(v) => setShowPopulation(!!v)}>
               Population density
             </DropdownMenuCheckboxItem>
@@ -500,6 +518,48 @@ export default function LocationPage() {
         </div>
       )}
 
+      {/* iNaturalist observation card */}
+      {selectedInat && (
+        <div className="absolute top-16 right-3 w-80 rounded-md bg-background/95 backdrop-blur border border-border/60 text-xs z-20 overflow-hidden shadow-xl">
+          {selectedInat.photoUrl && (
+            <img
+              src={selectedInat.photoUrl}
+              alt={selectedInat.commonName ?? selectedInat.species ?? 'iNaturalist observation'}
+              className="w-full h-44 object-cover"
+              loading="lazy"
+            />
+          )}
+          <div className="p-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="uppercase tracking-[0.2em] text-[10px] text-primary font-mono">
+                iNaturalist · {selectedInat.iconicTaxon ?? 'Life'}
+              </span>
+              <button onClick={() => setSelectedInat(null)} className="text-muted-foreground hover:text-foreground">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            {selectedInat.commonName && (
+              <div className="location-serif text-2xl leading-tight">{selectedInat.commonName}</div>
+            )}
+            {selectedInat.species && (
+              <div className="italic text-muted-foreground text-[12px]">{selectedInat.species}</div>
+            )}
+            <div className="mt-2 font-mono text-[10px] text-muted-foreground space-y-0.5">
+              {selectedInat.observedOn && <div>observed {selectedInat.observedOn}</div>}
+              {selectedInat.user && <div>@{selectedInat.user}</div>}
+              <div>{selectedInat.lat.toFixed(5)}, {selectedInat.lon.toFixed(5)}</div>
+            </div>
+            <a
+              className="mt-2 inline-block text-primary hover:underline text-[11px]"
+              href={selectedInat.url}
+              target="_blank" rel="noreferrer"
+            >
+              open on iNaturalist →
+            </a>
+          </div>
+        </div>
+      )}
+
 
       {/* Inspector */}
       <div className="absolute bottom-3 right-3 px-3 py-2 rounded-md bg-background/80 backdrop-blur border border-border/60 text-xs font-mono min-w-[240px]">
@@ -574,7 +634,7 @@ export default function LocationPage() {
 
       {/* Attribution */}
       <div className="absolute bottom-1 left-2 text-[10px] font-mono text-muted-foreground/70 pointer-events-none">
-        Elevation: Mapterhorn · Imagery: Satlas Super-Res 2023 (Allen Institute for AI) · Buildings: OSM / Overture Maps Foundation · Data © OpenStreetMap contributors
+        Elevation: Mapterhorn · Imagery: Satlas Super-Res 2023 (Allen Institute for AI) · Buildings: OSM / Overture Maps Foundation · Observations: iNaturalist · Data © OpenStreetMap contributors
       </div>
     </div>
   );

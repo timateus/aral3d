@@ -44,8 +44,8 @@ export const LOCATIONS: LocationDef[] = [
       maxLon: 79.09781,
     },
     waterBounds: {
-      minLat: 43.261, maxLat: 43.441,
-      minLon: 78.945, maxLon: 79.191,
+      minLat: 43.07, maxLat: 43.63,
+      minLon: 78.67, maxLon: 79.47,
     },
     exaggeration: 30,
   },
@@ -58,6 +58,10 @@ export const LOCATIONS: LocationDef[] = [
       maxLat: 43.256,
       minLon: 76.925,
       maxLon: 76.975,
+    },
+    waterBounds: {
+      minLat: 42.96, maxLat: 43.52,
+      minLon: 76.62, maxLon: 77.28,
     },
     exaggeration: 30,
   },
