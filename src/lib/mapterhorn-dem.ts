@@ -80,7 +80,7 @@ async function stitchAtZoom(
 
 export async function loadMapterhornDEM(
   bounds: GeoBounds,
-  opts: { targetSize?: number } = {},
+  opts: { targetSize?: number; onProgress?: (loaded: number, total: number) => void } = {},
 ): Promise<TerrainData> {
   const target = opts.targetSize ?? 768;
   // Try highest available zoom; drop down on any tile 404.
@@ -89,7 +89,7 @@ export async function loadMapterhornDEM(
   let lastErr: Error | null = null;
   while (z >= 1 && !attempt) {
     try {
-      attempt = await stitchAtZoom(bounds, z);
+      attempt = await stitchAtZoom(bounds, z, opts.onProgress);
     } catch (e: any) {
       lastErr = e;
       z -= 1;
