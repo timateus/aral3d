@@ -13,6 +13,7 @@ import OsmWaterwaysLayer from '@/components/location/OsmWaterwaysLayer';
 import OsmPopulationLayer from '@/components/location/OsmPopulationLayer';
 import OvertureBuildingsLayer from '@/components/location/OvertureBuildingsLayer';
 import OsmBuildingsLayer from '@/components/location/OsmBuildingsLayer';
+import InaturalistLayer, { type InatObservation } from '@/components/location/InaturalistLayer';
 import WaterFlowOverlay from '@/components/WaterFlowOverlay';
 import { createFlowState, addWaterAt, stepFlow, type WaterFlowState } from '@/lib/water-flow-simulation';
 import { useUserLocation } from '@/hooks/useUserLocation';
