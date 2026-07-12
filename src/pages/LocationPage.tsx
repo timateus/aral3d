@@ -528,41 +528,78 @@ export default function LocationPage() {
         </div>
       )}
 
-      {/* iNaturalist observation card */}
+      {/* iNaturalist observation card — no background, floats over map */}
       {selectedInat && (
-        <div className="absolute top-16 right-3 w-80 rounded-md bg-background/95 backdrop-blur border border-border/60 text-xs z-20 overflow-hidden shadow-xl">
-          {selectedInat.photoUrl && (
-            <img
-              src={selectedInat.photoUrl}
-              alt={selectedInat.commonName ?? selectedInat.species ?? 'iNaturalist observation'}
-              className="w-full h-44 object-cover"
-              loading="lazy"
-            />
-          )}
-          <div className="p-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="uppercase tracking-[0.2em] text-[10px] text-primary font-mono">
-                iNaturalist · {selectedInat.iconicTaxon ?? 'Life'}
-              </span>
-              <button onClick={() => setSelectedInat(null)} className="text-muted-foreground hover:text-foreground">
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-            {selectedInat.commonName && (
-              <div className="location-serif text-2xl leading-tight">{selectedInat.commonName}</div>
+        <div className="absolute top-16 right-3 w-80 text-xs z-20 pointer-events-none">
+          <div className="pointer-events-auto">
+            {selectedInat.photoUrl && (
+              <div className="relative w-full h-52 overflow-hidden">
+                {/* Bloom glow */}
+                <img
+                  src={selectedInat.photoUrl}
+                  alt=""
+                  aria-hidden
+                  className="absolute inset-0 w-full h-full object-cover scale-110"
+                  style={{ filter: 'blur(24px) saturate(1.6) brightness(1.4)', opacity: 0.9, mixBlendMode: 'screen' }}
+                />
+                {/* Main image, noisy + bloom + overlay */}
+                <img
+                  src={selectedInat.photoUrl}
+                  alt={selectedInat.commonName ?? selectedInat.species ?? 'iNaturalist observation'}
+                  className="relative w-full h-full object-cover"
+                  style={{
+                    filter: 'contrast(1.25) saturate(1.35) brightness(1.1)',
+                    mixBlendMode: 'lighten',
+                    maskImage: 'radial-gradient(ellipse at center, black 55%, transparent 95%)',
+                    WebkitMaskImage: 'radial-gradient(ellipse at center, black 55%, transparent 95%)',
+                  }}
+                  loading="lazy"
+                />
+                {/* SVG grain overlay */}
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    backgroundImage:
+                      "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")",
+                    mixBlendMode: 'overlay',
+                    opacity: 0.85,
+                  }}
+                />
+                {/* Bloom highlight overlay */}
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background: 'radial-gradient(ellipse at 40% 30%, rgba(255,240,200,0.35), transparent 60%)',
+                    mixBlendMode: 'screen',
+                  }}
+                />
+                <button
+                  onClick={() => setSelectedInat(null)}
+                  className="absolute top-2 right-2 p-1 rounded bg-background/60 backdrop-blur text-foreground hover:bg-background/90"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
             )}
-            {selectedInat.species && (
-              <div className="italic text-muted-foreground text-[12px]">{selectedInat.species}</div>
-            )}
-            <div className="mt-2 font-mono text-[10px] text-muted-foreground space-y-0.5">
-              {selectedInat.observedOn && <div>observed {selectedInat.observedOn}</div>}
-              {selectedInat.user && <div>@{selectedInat.user}</div>}
-              <div>{selectedInat.lat.toFixed(5)}, {selectedInat.lon.toFixed(5)}</div>
-            </div>
-            <a
-              className="mt-2 inline-block text-primary hover:underline text-[11px]"
-              href={selectedInat.url}
-              target="_blank" rel="noreferrer"
+            <div className="pt-2 pl-1" style={{ textShadow: '0 1px 8px rgba(0,0,0,0.35)' }}>
+              <div className="uppercase tracking-[0.25em] text-[10px] text-primary tech-font">
+                iNat · {selectedInat.iconicTaxon ?? 'Life'} · #{selectedInat.id}
+              </div>
+              {selectedInat.commonName && (
+                <div className="display-font text-3xl leading-tight mt-1 text-foreground">{selectedInat.commonName}</div>
+              )}
+              {selectedInat.species && (
+                <div className="tech-font text-[11px] italic text-muted-foreground">{selectedInat.species}</div>
+              )}
+              <div className="mt-2 tech-font text-[10px] text-muted-foreground space-y-0.5">
+                {selectedInat.observedOn && <div>observed {selectedInat.observedOn}</div>}
+                {selectedInat.user && <div>@{selectedInat.user}</div>}
+                <div>{selectedInat.lat.toFixed(5)}, {selectedInat.lon.toFixed(5)}</div>
+              </div>
+              <a
+                className="mt-2 inline-block text-primary hover:underline text-[11px] tech-font"
+                href={selectedInat.url}
+                target="_blank" rel="noreferrer"
             >
               open on iNaturalist →
             </a>
