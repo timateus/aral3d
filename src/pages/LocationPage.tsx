@@ -180,6 +180,7 @@ export default function LocationPage() {
   const [camera, setCamera] = useState<CameraInfo | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [selectedWater, setSelectedWater] = useState<import('@/components/location/OsmWaterwaysLayer').WaterFeature | null>(null);
+  const [selectedInat, setSelectedInat] = useState<InatObservation | null>(null);
   const flowLoopRef = useRef<number | null>(null);
   const orbitRef = useRef<any>(null);
 
