@@ -151,7 +151,7 @@ export default function LocationPage() {
   const slug = params.slug ?? routerLoc.pathname.replace(/^\//, '').split('/')[0];
   const location = slug ? findLocation(slug) : undefined;
   const { token } = useTerrainMode();
-  const { terrain, loading, error } = useMapterhornTerrain(location?.bounds ?? null, !!location);
+  const { terrain, loading, error, progress } = useMapterhornTerrain(location?.bounds ?? null, !!location);
 
   const [exaggeration, setExaggeration] = useState(location?.exaggeration ?? 50);
   const [showInspector, setShowInspector] = useState(false);
