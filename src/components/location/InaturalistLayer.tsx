@@ -287,36 +287,12 @@ const InaturalistLayer = ({ terrain, exaggeration, bounds, queryBounds, onSelect
     return g;
   }, [anchored]);
 
-  // Randomly project a couple of photo fragments periodically (never more than 3 alive)
-  useEffect(() => {
-    if (anchored.length === 0) return;
-    const withPhotos = anchored.filter((a) => a.o.photoUrl);
-    if (withPhotos.length === 0) return;
-    let alive = true;
-    const spawn = () => {
-      if (!alive) return;
-      setFragments((cur) => {
-        if (cur.length >= 3) return cur;
-        const pick = withPhotos[Math.floor(Math.random() * withPhotos.length)];
-        return [...cur, { key: `${pick.o.id}-${Date.now()}`, obs: pick.o, position: pick.pos }];
-      });
-    };
-    // initial delay + interval
-    const t0 = setTimeout(spawn, 1200);
-    const iv = setInterval(spawn, 4500);
-    return () => { alive = false; clearTimeout(t0); clearInterval(iv); };
-  }, [anchored]);
-
   const handlePointsClick = (e: any) => {
     if (typeof e.index !== 'number') return;
     const a = anchored[e.index];
     if (!a) return;
     e.stopPropagation();
     onSelect?.(a.o);
-    // also spawn a photo fragment on click if available
-    if (a.o.photoUrl) {
-      setFragments((cur) => [...cur, { key: `${a.o.id}-c-${Date.now()}`, obs: a.o, position: a.pos }]);
-    }
   };
 
   if (anchored.length === 0) return null;
