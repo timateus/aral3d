@@ -233,9 +233,10 @@ export default function LocationPage() {
       if (cancelled) return;
       const idle = Date.now() - lastUserInteractRef.current;
       if (idle >= 5000) pickRandom();
-      cycleTimer = window.setTimeout(check, 2000);
+      cycleTimer = window.setTimeout(check, 4000);
     };
     cycleTimer = window.setTimeout(check, 5000);
+
     return () => {
       cancelled = true;
       if (cycleTimer) clearTimeout(cycleTimer);
