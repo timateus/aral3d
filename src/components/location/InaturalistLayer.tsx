@@ -345,17 +345,6 @@ const InaturalistLayer = ({ terrain, exaggeration, bounds, queryBounds, onSelect
           toneMapped={false}
         />
       </points>
-      {/* projected photo fragments */}
-      {fragments.map((f) => (
-        <InatFragment
-          key={f.key}
-          photoUrl={f.obs.photoUrl!}
-          position={f.position}
-          tint={new THREE.Color(0.95, 0.94, 0.9)}
-          mask={featherMask}
-          onExpire={() => setFragments((cur) => cur.filter((x) => x.key !== f.key))}
-        />
-      ))}
     </group>
   );
 };
