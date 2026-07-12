@@ -75,9 +75,8 @@ const OsmWaterwaysLayer = ({ terrain, exaggeration, bounds, clipBounds, dataUrl,
     const meshH = 10 * (terrain.height / terrain.width);
     const elevRange = terrain.maxElevation - terrain.minElevation || 1;
     const maxHeight = 10 * (exaggeration / 100);
-    const lift = Math.max(0.05, maxHeight * 0.015);
-    const linearColor = new THREE.Color('#0ea5e9');
-    const areaColor = new THREE.Color('#1d4ed8');
+    const lift = Math.max(0.008, maxHeight * 0.004);
+    const waterColor = new THREE.Color('#6ea8c9');
 
     // Water features can extend beyond terrain — scale positions using terrain bounds
     // (so overlap is aligned) but keep them visible on a flat plane at min height.
