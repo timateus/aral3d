@@ -600,9 +600,10 @@ export default function LocationPage() {
                 className="mt-2 inline-block text-primary hover:underline text-[11px] tech-font"
                 href={selectedInat.url}
                 target="_blank" rel="noreferrer"
-            >
-              open on iNaturalist →
-            </a>
+              >
+                open on iNaturalist →
+              </a>
+            </div>
           </div>
         </div>
       )}
