@@ -233,9 +233,10 @@ export default function LocationPage() {
   const dataBase = `/data/locations/${location.slug}`;
 
   return (
-    <div className="fixed inset-0 bg-background text-foreground" style={{ fontFamily: '"Space Grotesk", ui-sans-serif, system-ui, sans-serif' }}>
+    <div className="fixed inset-0 bg-background text-foreground" style={{ fontFamily: '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace' }}>
       <style>{`
-        .location-serif { font-family: "Instrument Serif", ui-serif, Georgia, serif; letter-spacing: 0.01em; }
+        .location-serif, .display-font { font-family: "Sora", ui-sans-serif, system-ui, sans-serif; font-weight: 800; letter-spacing: -0.02em; }
+        .tech-font { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; }
       `}</style>
       <Canvas camera={{ position: [-4.2, 4.2, -1.9], fov: 45, near: 0.1, far: 200 }} shadows={false}>
         <color attach="background" args={['#f3f0e7']} />
