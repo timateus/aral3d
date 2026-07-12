@@ -207,6 +207,41 @@ export default function LocationPage() {
     return () => { if (flowLoopRef.current) cancelAnimationFrame(flowLoopRef.current); };
   }, [waterFlowActive, flowState]);
 
+  // Wrap setSelectedInat so callers (points / auto-cycle) can indicate whether
+  // this was a manual user action.
+  const selectInat = (o: InatObservation | null, manual: boolean) => {
+    if (manual) lastUserInteractRef.current = Date.now();
+    setSelectedInat(o);
+  };
+
+  // Auto-cycle: after 5s of no manual interaction, pick a random observation
+  // and rotate every 2s until the user clicks something.
+  useEffect(() => {
+    if (inatObs.length === 0) return;
+    let cancelled = false;
+    let cycleTimer: number | null = null;
+
+    const pickRandom = () => {
+      if (cancelled || inatObs.length === 0) return;
+      const idle = Date.now() - lastUserInteractRef.current;
+      if (idle < 5000) return;
+      const next = inatObs[Math.floor(Math.random() * inatObs.length)];
+      setSelectedInat(next);
+    };
+
+    const check = () => {
+      if (cancelled) return;
+      const idle = Date.now() - lastUserInteractRef.current;
+      if (idle >= 5000) pickRandom();
+      cycleTimer = window.setTimeout(check, 2000);
+    };
+    cycleTimer = window.setTimeout(check, 5000);
+    return () => {
+      cancelled = true;
+      if (cycleTimer) clearTimeout(cycleTimer);
+    };
+  }, [inatObs]);
+
   const copyText = async (txt: string) => {
     try { await navigator.clipboard.writeText(txt); } catch { /* ignore */ }
     setCopied(txt);
