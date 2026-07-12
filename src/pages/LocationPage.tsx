@@ -518,6 +518,48 @@ export default function LocationPage() {
         </div>
       )}
 
+      {/* iNaturalist observation card */}
+      {selectedInat && (
+        <div className="absolute top-16 right-3 w-80 rounded-md bg-background/95 backdrop-blur border border-border/60 text-xs z-20 overflow-hidden shadow-xl">
+          {selectedInat.photoUrl && (
+            <img
+              src={selectedInat.photoUrl}
+              alt={selectedInat.commonName ?? selectedInat.species ?? 'iNaturalist observation'}
+              className="w-full h-44 object-cover"
+              loading="lazy"
+            />
+          )}
+          <div className="p-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="uppercase tracking-[0.2em] text-[10px] text-primary font-mono">
+                iNaturalist · {selectedInat.iconicTaxon ?? 'Life'}
+              </span>
+              <button onClick={() => setSelectedInat(null)} className="text-muted-foreground hover:text-foreground">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            {selectedInat.commonName && (
+              <div className="location-serif text-2xl leading-tight">{selectedInat.commonName}</div>
+            )}
+            {selectedInat.species && (
+              <div className="italic text-muted-foreground text-[12px]">{selectedInat.species}</div>
+            )}
+            <div className="mt-2 font-mono text-[10px] text-muted-foreground space-y-0.5">
+              {selectedInat.observedOn && <div>observed {selectedInat.observedOn}</div>}
+              {selectedInat.user && <div>@{selectedInat.user}</div>}
+              <div>{selectedInat.lat.toFixed(5)}, {selectedInat.lon.toFixed(5)}</div>
+            </div>
+            <a
+              className="mt-2 inline-block text-primary hover:underline text-[11px]"
+              href={selectedInat.url}
+              target="_blank" rel="noreferrer"
+            >
+              open on iNaturalist →
+            </a>
+          </div>
+        </div>
+      )}
+
 
       {/* Inspector */}
       <div className="absolute bottom-3 right-3 px-3 py-2 rounded-md bg-background/80 backdrop-blur border border-border/60 text-xs font-mono min-w-[240px]">
