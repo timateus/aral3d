@@ -310,6 +310,15 @@ export default function LocationPage() {
             {showOvertureBuildings && (
               <OvertureBuildingsLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} />
             )}
+            {showInat && (
+              <InaturalistLayer
+                terrain={terrain}
+                exaggeration={exaggeration}
+                bounds={location.bounds}
+                queryBounds={location.waterBounds ?? location.bounds}
+                onSelect={setSelectedInat}
+              />
+            )}
             {showPopulation && (
               <OsmPopulationLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} dataUrl={`${dataBase}/population.json`} />
             )}
