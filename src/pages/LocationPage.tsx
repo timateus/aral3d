@@ -350,10 +350,10 @@ export default function LocationPage() {
       {/* Header */}
       <div className="absolute top-3 left-3 flex items-center gap-2 pointer-events-none">
         <div className="px-3 py-1.5 rounded-md bg-background/80 backdrop-blur border border-border/60 pointer-events-auto">
-          <div className="text-xs uppercase tracking-widest text-muted-foreground font-mono">
+          <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground tech-font">
             Location
           </div>
-          <div className="location-serif text-2xl leading-none tracking-tight">{location.label}</div>
+          <div className="display-font text-3xl leading-none">{location.label}</div>
         </div>
         {loading && (
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-background/80 backdrop-blur border border-border/60 text-xs text-muted-foreground pointer-events-auto">
