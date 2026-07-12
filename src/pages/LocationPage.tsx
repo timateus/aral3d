@@ -195,10 +195,10 @@ export default function LocationPage() {
 
   useEffect(() => {
     if (!waterFlowActive || !flowState) return;
-    let last = performance.now();
     const loop = () => {
-      const now = performance.now();
-      if (now - last > 60) { stepFlow(flowState); setFlowKey((k) => k + 1); last = now; }
+      // Run several sub-steps per frame for maximum flow speed
+      for (let i = 0; i < 6; i++) stepFlow(flowState);
+      setFlowKey((k) => k + 1);
       flowLoopRef.current = requestAnimationFrame(loop);
     };
     flowLoopRef.current = requestAnimationFrame(loop);
