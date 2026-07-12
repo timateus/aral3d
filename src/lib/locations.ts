@@ -65,7 +65,25 @@ export const LOCATIONS: LocationDef[] = [
     },
     exaggeration: 30,
   },
+  {
+    // Lake Balqash — shoreline at Balkhash city on the north shore.
+    slug: 'balqash',
+    label: 'Balqash',
+    center: { lat: 46.845, lon: 74.994 },
+    bounds: {
+      minLat: 46.820,
+      maxLat: 46.870,
+      minLon: 74.960,
+      maxLon: 75.030,
+    },
+    waterBounds: {
+      minLat: 46.55, maxLat: 47.10,
+      minLon: 74.55, maxLon: 75.40,
+    },
+    exaggeration: 30,
+  },
 ];
+
 
 export function findLocation(slug: string): LocationDef | undefined {
   return LOCATIONS.find((l) => l.slug === slug);
