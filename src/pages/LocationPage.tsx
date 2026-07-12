@@ -581,16 +581,20 @@ export default function LocationPage() {
         <div className="absolute top-16 right-3 w-80 text-xs z-20 pointer-events-none">
           <div className="pointer-events-auto">
             {selectedInat.photoUrl && (
-              <div className="relative w-full h-52 overflow-hidden">
+              <div
+                key={selectedInat.id}
+                className="relative w-full h-52 overflow-hidden animate-fade-in"
+                style={{ transition: 'opacity 600ms ease-out' }}
+              >
                 {/* Bloom glow */}
                 <img
                   src={selectedInat.photoUrl}
                   alt=""
                   aria-hidden
                   className="absolute inset-0 w-full h-full object-cover scale-110"
-                  style={{ filter: 'blur(24px) saturate(1.6) brightness(1.4)', opacity: 0.9, mixBlendMode: 'screen' }}
+                  style={{ filter: 'blur(24px) saturate(1.6) brightness(1.4)', opacity: 0.75, mixBlendMode: 'screen' }}
                 />
-                {/* Main image, noisy + bloom + overlay */}
+                {/* Main image, noisy + bloom + overlay, transparent */}
                 <img
                   src={selectedInat.photoUrl}
                   alt={selectedInat.commonName ?? selectedInat.species ?? 'iNaturalist observation'}
@@ -598,6 +602,7 @@ export default function LocationPage() {
                   style={{
                     filter: 'contrast(1.25) saturate(1.35) brightness(1.1)',
                     mixBlendMode: 'lighten',
+                    opacity: 0.78,
                     maskImage: 'radial-gradient(ellipse at center, black 55%, transparent 95%)',
                     WebkitMaskImage: 'radial-gradient(ellipse at center, black 55%, transparent 95%)',
                   }}
@@ -629,6 +634,7 @@ export default function LocationPage() {
                 </button>
               </div>
             )}
+
             <div
               className="pt-2 pl-1"
               style={{
