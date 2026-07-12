@@ -182,6 +182,8 @@ export default function LocationPage() {
   const [copied, setCopied] = useState<string | null>(null);
   const [selectedWater, setSelectedWater] = useState<import('@/components/location/OsmWaterwaysLayer').WaterFeature | null>(null);
   const [selectedInat, setSelectedInat] = useState<InatObservation | null>(null);
+  const [inatObs, setInatObs] = useState<InatObservation[]>([]);
+  const lastUserInteractRef = useRef<number>(Date.now());
   const flowLoopRef = useRef<number | null>(null);
   const orbitRef = useRef<any>(null);
 
