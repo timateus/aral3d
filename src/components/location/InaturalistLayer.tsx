@@ -208,10 +208,9 @@ function InatFragment({
 const InaturalistLayer = ({ terrain, exaggeration, bounds, queryBounds, onSelect }: Props) => {
   const [obs, setObs] = useState<InatObservation[] | null>(null);
   const q = queryBounds ?? bounds;
-  const [fragments, setFragments] = useState<Array<{ key: string; obs: InatObservation; position: THREE.Vector3 }>>([]);
 
   const dotTex = useMemo(() => makeDotTexture(), []);
-  const featherMask = useMemo(() => makeFeatherMask(), []);
+
 
   useEffect(() => {
     let cancelled = false;
