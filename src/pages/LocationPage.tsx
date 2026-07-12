@@ -385,6 +385,9 @@ export default function LocationPage() {
               Overture buildings
             </DropdownMenuCheckboxItem>
             <DropdownMenuSeparator />
+            <DropdownMenuCheckboxItem checked={showInat} onCheckedChange={(v) => setShowInat(!!v)}>
+              iNaturalist observations
+            </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem checked={showPopulation} onCheckedChange={(v) => setShowPopulation(!!v)}>
               Population density
             </DropdownMenuCheckboxItem>
