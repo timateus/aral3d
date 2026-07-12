@@ -395,9 +395,17 @@ export default function LocationPage() {
           <div className="display-font text-3xl leading-none">{location.label}</div>
         </div>
         {loading && (
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-background/80 backdrop-blur border border-border/60 text-xs text-muted-foreground pointer-events-auto">
-            <Loader2 className="w-3 h-3 animate-spin" />
-            Loading terrain…
+          <div className="flex flex-col gap-1 px-2.5 py-1.5 rounded-md bg-background/80 backdrop-blur border border-border/60 text-xs text-muted-foreground pointer-events-auto min-w-[180px]">
+            <div className="flex items-center gap-1.5">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              <span className="tech-font">Loading terrain… {Math.round((progress ?? 0) * 100)}%</span>
+            </div>
+            <div className="h-1 w-full rounded-full bg-border/60 overflow-hidden">
+              <div
+                className="h-full bg-primary transition-[width] duration-200"
+                style={{ width: `${Math.round((progress ?? 0) * 100)}%` }}
+              />
+            </div>
           </div>
         )}
         {error && (
