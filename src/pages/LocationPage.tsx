@@ -482,6 +482,14 @@ export default function LocationPage() {
           {locating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Crosshair className="w-3.5 h-3.5" />}
           Locate me
         </button>
+
+        <button
+          className={`${btnBase} ${showInspector ? 'text-primary border-primary/50' : ''}`}
+          onClick={() => setShowInspector((v) => !v)}
+          title="Toggle inspector"
+        >
+          <Info className="w-3.5 h-3.5" /> Inspector
+        </button>
       </div>
 
       {/* Water feature info */}
