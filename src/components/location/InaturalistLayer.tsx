@@ -212,21 +212,32 @@ const InaturalistLayer = ({
     mesh.instanceMatrix.needsUpdate = true;
   }, [anchored, tmpMat]);
 
-  // Selected highlight ring pulse
+  // Selected highlight — blue glowing point
   const highlight = useMemo(() => {
     if (selectedId == null) return null;
     return anchored.find((a) => a.o.id === selectedId) ?? null;
   }, [selectedId, anchored]);
 
-  const ringRef = useRef<THREE.Mesh>(null);
+  const glowRef = useRef<THREE.Points>(null);
   useFrame(({ clock }) => {
-    if (!ringRef.current) return;
+    if (!glowRef.current) return;
     const t = clock.getElapsedTime();
-    const s = 1 + Math.sin(t * 3) * 0.15;
-    ringRef.current.scale.setScalar(s);
-    (ringRef.current.material as THREE.MeshBasicMaterial).opacity =
-      0.55 + Math.sin(t * 3) * 0.25;
+    const mat = glowRef.current.material as THREE.PointsMaterial;
+    mat.opacity = 0.75 + Math.sin(t * 3) * 0.2;
   });
+
+  const highlightGeom = useMemo(() => {
+    if (!highlight) return null;
+    const g = new THREE.BufferGeometry();
+    g.setAttribute(
+      'position',
+      new THREE.Float32BufferAttribute(
+        [highlight.pos.x, highlight.pos.y + 0.02, highlight.pos.z],
+        3,
+      ),
+    );
+    return g;
+  }, [highlight]);
 
   if (anchored.length === 0) return null;
 
@@ -273,26 +284,35 @@ const InaturalistLayer = ({
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </instancedMesh>
 
-      {/* Highlight for selected observation */}
-      {highlight && (
-        <group position={[highlight.pos.x, highlight.pos.y + 0.03, highlight.pos.z]}>
-          {/* pulse ring on ground plane */}
-          <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]} raycast={noRaycast}>
-            <ringGeometry args={[0.12, 0.16, 48]} />
-            <meshBasicMaterial
-              color="#ffd166" transparent opacity={0.8} depthWrite={false}
-              side={THREE.DoubleSide} blending={THREE.AdditiveBlending} toneMapped={false}
+      {/* Selected point: blue glow (halo + core) */}
+      {highlightGeom && (
+        <>
+          <points geometry={highlightGeom} raycast={noRaycast}>
+            <pointsMaterial
+              size={0.9} map={dotTex} color="#3ba7ff" transparent depthWrite={false}
+              opacity={0.7} sizeAttenuation blending={THREE.AdditiveBlending}
+              alphaTest={0.01} toneMapped={false}
             />
-          </mesh>
-          {/* bright core marker */}
-          <mesh raycast={noRaycast}>
-            <sphereGeometry args={[0.03, 12, 10]} />
-            <meshBasicMaterial color="#ffe08a" toneMapped={false} />
-          </mesh>
-        </group>
+          </points>
+          <points ref={glowRef} geometry={highlightGeom} raycast={noRaycast}>
+            <pointsMaterial
+              size={0.35} map={dotTex} color="#7fd0ff" transparent depthWrite={false}
+              opacity={0.9} sizeAttenuation blending={THREE.AdditiveBlending}
+              alphaTest={0.01} toneMapped={false}
+            />
+          </points>
+          <points geometry={highlightGeom} raycast={noRaycast}>
+            <pointsMaterial
+              size={0.12} map={dotTex} color="#eaf6ff" transparent depthWrite={false}
+              opacity={1} sizeAttenuation blending={THREE.AdditiveBlending}
+              alphaTest={0.01} toneMapped={false}
+            />
+          </points>
+        </>
       )}
     </group>
   );
 };
+
 
 export default InaturalistLayer;
