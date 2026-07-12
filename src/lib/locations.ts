@@ -82,6 +82,36 @@ export const LOCATIONS: LocationDef[] = [
     },
     exaggeration: 30,
   },
+  {
+    // Entire Lake Balqash and surroundings (~600 km east-west).
+    slug: 'balqash-lake',
+    label: 'Lake Balqash',
+    center: { lat: 46.20, lon: 75.60 },
+    bounds: {
+      minLat: 44.80, maxLat: 47.40,
+      minLon: 72.80, maxLon: 79.20,
+    },
+    waterBounds: {
+      minLat: 44.60, maxLat: 47.60,
+      minLon: 72.40, maxLon: 79.60,
+    },
+    exaggeration: 30,
+  },
+  {
+    // Entire Lake Alakol and surroundings (NE Kazakhstan, near Chinese border).
+    slug: 'alakol',
+    label: 'Lake Alakol',
+    center: { lat: 46.10, lon: 81.75 },
+    bounds: {
+      minLat: 45.55, maxLat: 46.55,
+      minLon: 81.05, maxLon: 82.55,
+    },
+    waterBounds: {
+      minLat: 45.35, maxLat: 46.75,
+      minLon: 80.80, maxLon: 82.80,
+    },
+    exaggeration: 30,
+  },
 ];
 
 
