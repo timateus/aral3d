@@ -180,7 +180,8 @@ function InatFragment({
 
   if (!tex) return null;
   // scale roughly ~0.9 units — lays like a scan fragment on terrain
-  const aspect = (tex.image?.width ?? 1) / (tex.image?.height ?? 1);
+  const img = tex.image as { width?: number; height?: number } | undefined;
+  const aspect = (img?.width ?? 1) / (img?.height ?? 1);
   const w = 0.9;
   const h = w / (aspect || 1);
   return (
