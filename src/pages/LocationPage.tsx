@@ -11,6 +11,7 @@ import MapboxTerrainMesh from '@/components/MapboxTerrainMesh';
 import TerrainStyleOverlay, { type TerrainStyle } from '@/components/TerrainStyleOverlay';
 import OsmWaterwaysLayer from '@/components/location/OsmWaterwaysLayer';
 import OsmPopulationLayer from '@/components/location/OsmPopulationLayer';
+import OsmPlacesLayer from '@/components/location/OsmPlacesLayer';
 import OvertureBuildingsLayer from '@/components/location/OvertureBuildingsLayer';
 import OsmBuildingsLayer from '@/components/location/OsmBuildingsLayer';
 import InaturalistLayer, { type InatObservation } from '@/components/location/InaturalistLayer';
@@ -157,7 +158,8 @@ export default function LocationPage() {
   const [showInspector, setShowInspector] = useState(false);
   const [showTerrain, setShowTerrain] = useState(true);
   const [showWater, setShowWater] = useState(true);
-  const [showPopulation, setShowPopulation] = useState(false);
+  const [showPopulation, setShowPopulation] = useState(true);
+  const [showPlaces, setShowPlaces] = useState(true);
   const [showOsmBuildings, setShowOsmBuildings] = useState(true);
   const [showOvertureBuildings, setShowOvertureBuildings] = useState(false);
   const [showInat, setShowInat] = useState(true);
@@ -386,6 +388,9 @@ export default function LocationPage() {
             {showPopulation && (
               <OsmPopulationLayer terrain={terrain} exaggeration={exaggeration} bounds={location.waterBounds ?? location.bounds} fallbackUrl={`${dataBase}/population.json`} />
             )}
+            {showPlaces && (
+              <OsmPlacesLayer terrain={terrain} exaggeration={exaggeration} bounds={location.waterBounds ?? location.bounds} />
+            )}
 
             {flowState && (
               <WaterFlowOverlay
@@ -460,6 +465,9 @@ export default function LocationPage() {
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem checked={showPopulation} onCheckedChange={(v) => setShowPopulation(!!v)}>
               Population density
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem checked={showPlaces} onCheckedChange={(v) => setShowPlaces(!!v)}>
+              Towns & villages
             </DropdownMenuCheckboxItem>
           </DropdownMenuContent>
         </DropdownMenu>

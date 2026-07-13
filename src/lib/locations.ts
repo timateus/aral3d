@@ -112,6 +112,21 @@ export const LOCATIONS: LocationDef[] = [
     },
     exaggeration: 30,
   },
+  {
+    // Lake Seliger — glacial lake in Tver Oblast, Russia.
+    slug: 'seliger',
+    label: 'Lake Seliger',
+    center: { lat: 57.22, lon: 33.05 },
+    bounds: {
+      minLat: 56.90, maxLat: 57.55,
+      minLon: 32.60, maxLon: 33.55,
+    },
+    waterBounds: {
+      minLat: 56.75, maxLat: 57.70,
+      minLon: 32.35, maxLon: 33.80,
+    },
+    exaggeration: 30,
+  },
 ];
 
 

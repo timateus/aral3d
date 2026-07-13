@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import * as THREE from 'three';
 import type { GeoBounds, TerrainData } from '@/lib/geotiff-loader';
 import { cacheGet, cacheSet } from '@/lib/browser-cache';
+import { fetchOverpass } from '@/lib/overpass';
 
 interface Props {
   terrain: TerrainData;
@@ -53,11 +54,6 @@ async function fetchOsmPlaces(b: GeoBounds): Promise<Place[]> {
   const key = `osm-pop:${b.minLon.toFixed(4)},${b.minLat.toFixed(4)},${b.maxLon.toFixed(4)},${b.maxLat.toFixed(4)}`;
   const mem = _cache.get(key);
   if (mem) return mem;
-  const disk = await cacheGet<Place[]>(key);
-  if (disk && Array.isArray(disk) && disk.length) {
-    _cache.set(key, disk);
-    return disk;
-  }
   const bbox = `${b.minLat},${b.minLon},${b.maxLat},${b.maxLon}`;
   const q = `[out:json][timeout:45];
     (
@@ -65,24 +61,10 @@ async function fetchOsmPlaces(b: GeoBounds): Promise<Place[]> {
       node["place"~"city|town|village|hamlet|suburb|neighbourhood|isolated_dwelling|farm"](${bbox});
     );
     out center 2000;`;
-  const endpoints = [
-    'https://overpass-api.de/api/interpreter',
-    'https://overpass.kumi.systems/api/interpreter',
-  ];
-  let lastErr: unknown = null;
-  for (const url of endpoints) {
-    try {
-      const res = await fetch(url, { method: 'POST', body: new URLSearchParams({ data: q }) });
-      if (!res.ok) { lastErr = new Error(`Overpass ${res.status}`); continue; }
-      const places = parseElements(await res.json());
-      _cache.set(key, places);
-      cacheSet(key, places).catch(() => {});
-      return places;
-    } catch (e) {
-      lastErr = e;
-    }
-  }
-  throw lastErr ?? new Error('Overpass failed');
+  const json = await fetchOverpass<any>(q, key);
+  const places = parseElements(json);
+  _cache.set(key, places);
+  return places;
 }
 
 /**
