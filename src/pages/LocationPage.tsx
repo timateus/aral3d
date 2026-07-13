@@ -175,6 +175,13 @@ export default function LocationPage() {
   const [contrast, setContrast] = useState(0.8);
   const [saturation, setSaturation] = useState(0.6);
   const [gamma, setGamma] = useState(0.9);
+  const [tint, setTint] = useState('#ffffff');
+  const [tintStrength, setTintStrength] = useState(0);
+
+  // Population heatmap
+  const [popOpacity, setPopOpacity] = useState(0.75);
+  const [popRadius, setPopRadius] = useState(0.05);
+  const [popIntensity, setPopIntensity] = useState(1);
 
   const [waterFlowActive, setWaterFlowActive] = useState(false);
   const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
