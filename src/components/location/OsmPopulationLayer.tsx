@@ -50,33 +50,49 @@ async function fetchStatic(url: string): Promise<Place[]> {
 }
 
 async function fetchOsmPlaces(b: GeoBounds): Promise<Place[]> {
-  const key = `${b.minLon.toFixed(4)},${b.minLat.toFixed(4)},${b.maxLon.toFixed(4)},${b.maxLat.toFixed(4)}`;
-  const hit = _cache.get(key);
-  if (hit) return hit;
+  const key = `osm-pop:${b.minLon.toFixed(4)},${b.minLat.toFixed(4)},${b.maxLon.toFixed(4)},${b.maxLat.toFixed(4)}`;
+  const mem = _cache.get(key);
+  if (mem) return mem;
+  const disk = await cacheGet<Place[]>(key);
+  if (disk && Array.isArray(disk) && disk.length) {
+    _cache.set(key, disk);
+    return disk;
+  }
   const bbox = `${b.minLat},${b.minLon},${b.maxLat},${b.maxLon}`;
-  const q = `[out:json][timeout:30];
+  const q = `[out:json][timeout:45];
     (
       node["population"](${bbox});
       node["place"~"city|town|village|hamlet|suburb|neighbourhood|isolated_dwelling|farm"](${bbox});
     );
-    out center 500;`;
-  const res = await fetch('https://overpass-api.de/api/interpreter', {
-    method: 'POST',
-    body: new URLSearchParams({ data: q }),
-  });
-  if (!res.ok) throw new Error(`Overpass ${res.status}`);
-  const places = parseElements(await res.json());
-  _cache.set(key, places);
-  return places;
+    out center 2000;`;
+  const endpoints = [
+    'https://overpass-api.de/api/interpreter',
+    'https://overpass.kumi.systems/api/interpreter',
+  ];
+  let lastErr: unknown = null;
+  for (const url of endpoints) {
+    try {
+      const res = await fetch(url, { method: 'POST', body: new URLSearchParams({ data: q }) });
+      if (!res.ok) { lastErr = new Error(`Overpass ${res.status}`); continue; }
+      const places = parseElements(await res.json());
+      _cache.set(key, places);
+      cacheSet(key, places).catch(() => {});
+      return places;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr ?? new Error('Overpass failed');
 }
 
 /**
- * Population density visualization based on OSM tags. Works at any bbox by
- * fetching from Overpass. Renders extruded hex-like cylinders whose height
- * and color encode local population (log-scaled).
+ * Population density visualization based on OSM tags. Prefers a live Overpass
+ * query so any location works out of the box; falls back to a static JSON if
+ * the API is unavailable. Results are cached in IndexedDB per bbox.
  */
-const OsmPopulationLayer = ({ terrain, exaggeration, bounds, dataUrl }: Props) => {
+const OsmPopulationLayer = ({ terrain, exaggeration, bounds, dataUrl, fallbackUrl }: Props) => {
   const [places, setPlaces] = useState<Place[] | null>(null);
+
 
   useEffect(() => {
     let cancelled = false;
