@@ -353,6 +353,8 @@ export default function LocationPage() {
                   contrast={contrast}
                   saturation={saturation}
                   gamma={gamma}
+                  tint={tint}
+                  tintStrength={tintStrength}
                 />
               )}
             </group>
