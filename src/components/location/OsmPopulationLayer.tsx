@@ -1,13 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import * as THREE from 'three';
 import type { GeoBounds, TerrainData } from '@/lib/geotiff-loader';
+import { cacheGet, cacheSet } from '@/lib/browser-cache';
 
 interface Props {
   terrain: TerrainData;
   exaggeration: number;
   bounds: GeoBounds;
+  /** Optional static JSON URL (used as a fallback if Overpass fails). */
   dataUrl?: string;
+  /** Optional static JSON URL used only if Overpass API fails. */
+  fallbackUrl?: string;
 }
+
 
 interface Place { lon: number; lat: number; population: number; name: string | null }
 
