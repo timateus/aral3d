@@ -26,6 +26,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/voxel" element={<VoxelPage />} />
           <Route path="/share/:id" element={<SharePage />} />
+          <Route path="/data-sources" element={<DataSources />} />
           {LOCATIONS.map((l) => (
             <Route key={l.slug} path={`/${l.slug}`} element={<LocationPage />} />
           ))}
