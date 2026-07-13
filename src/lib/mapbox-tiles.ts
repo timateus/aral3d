@@ -1,4 +1,24 @@
 import * as THREE from 'three';
+import { cacheGet, cacheSet } from './browser-cache';
+
+function bboxKey(b: LonLatBounds, style: string) {
+  const r = (n: number) => n.toFixed(4);
+  return `basemap:${style}:${r(b.minLon)},${r(b.minLat)},${r(b.maxLon)},${r(b.maxLat)}`;
+}
+
+async function blobToCanvas(blob: Blob): Promise<HTMLCanvasElement> {
+  const bmp = await createImageBitmap(blob);
+  const c = document.createElement('canvas');
+  c.width = bmp.width; c.height = bmp.height;
+  c.getContext('2d')!.drawImage(bmp, 0, 0);
+  bmp.close?.();
+  return c;
+}
+
+function canvasToBlob(c: HTMLCanvasElement): Promise<Blob> {
+  return new Promise((resolve) => c.toBlob((b) => resolve(b!), 'image/jpeg', 0.9));
+}
+
 
 export interface MapboxTextures {
   satellite: THREE.Texture;
