@@ -189,6 +189,16 @@ export async function loadBaseStyleTexture(
   style: BaseStyle,
   token: string,
 ): Promise<THREE.Texture> {
+  // Try IndexedDB cache first (persists across sessions)
+  const key = bboxKey(bounds, style);
+  try {
+    const cached = await cacheGet<Blob>(key);
+    if (cached instanceof Blob) {
+      const c = await blobToCanvas(cached);
+      return canvasToTexture(c, true);
+    }
+  } catch { /* ignore */ }
+
   // Satlas covers up to z17 globally — go tighter for more detail.
   const target = style === 'satlas' ? 6 : 4;
   const z = pickZoom(bounds, target);
@@ -207,5 +217,7 @@ export async function loadBaseStyleTexture(
   }
   const stitched = await stitchTiles(bounds, z, urlFor);
   const cropped = cropCanvas(stitched.canvas, stitched.pixelBounds);
+  // Persist to IndexedDB (fire and forget)
+  canvasToBlob(cropped).then((b) => cacheSet(key, b)).catch(() => {});
   return canvasToTexture(cropped, true);
 }
