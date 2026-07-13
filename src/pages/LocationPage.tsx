@@ -384,8 +384,9 @@ export default function LocationPage() {
               />
             )}
             {showPopulation && (
-              <OsmPopulationLayer terrain={terrain} exaggeration={exaggeration} bounds={location.bounds} dataUrl={`${dataBase}/population.json`} />
+              <OsmPopulationLayer terrain={terrain} exaggeration={exaggeration} bounds={location.waterBounds ?? location.bounds} fallbackUrl={`${dataBase}/population.json`} />
             )}
+
             {flowState && (
               <WaterFlowOverlay
                 terrain={terrain}
