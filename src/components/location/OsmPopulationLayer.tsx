@@ -96,11 +96,25 @@ const OsmPopulationLayer = ({ terrain, exaggeration, bounds, dataUrl, fallbackUr
 
   useEffect(() => {
     let cancelled = false;
-    const p = dataUrl ? fetchStatic(dataUrl) : fetchOsmPlaces(bounds);
-    p.then((pl) => { if (!cancelled) setPlaces(pl); })
-     .catch((e) => { console.warn('OSM places fetch failed', e); if (!cancelled) setPlaces([]); });
+    const primary = dataUrl ? fetchStatic(dataUrl) : fetchOsmPlaces(bounds);
+    primary
+      .then((pl) => { if (!cancelled) setPlaces(pl); })
+      .catch(async (e) => {
+        console.warn('OSM places primary fetch failed', e);
+        if (fallbackUrl) {
+          try {
+            const pl = await fetchStatic(fallbackUrl);
+            if (!cancelled) setPlaces(pl);
+            return;
+          } catch (e2) {
+            console.warn('OSM places fallback failed', e2);
+          }
+        }
+        if (!cancelled) setPlaces([]);
+      });
     return () => { cancelled = true; };
-  }, [dataUrl, bounds.minLon, bounds.minLat, bounds.maxLon, bounds.maxLat]);
+  }, [dataUrl, fallbackUrl, bounds.minLon, bounds.minLat, bounds.maxLon, bounds.maxLat]);
+
 
   const mesh = useMemo(() => {
     if (!places || places.length === 0) return null;
