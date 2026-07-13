@@ -759,9 +759,11 @@ export default function LocationPage() {
       )}
 
       {/* Attribution */}
-      <div className="absolute bottom-1 left-2 text-[10px] font-mono text-muted-foreground/70 pointer-events-none">
-        Elevation: Mapterhorn · Imagery: Satlas Super-Res 2023 (Allen Institute for AI) · Buildings: OSM / Overture Maps Foundation · Observations: iNaturalist · Data © OpenStreetMap contributors
+      <div className="absolute bottom-1 left-2 text-[10px] font-mono text-muted-foreground/70">
+        <span className="pointer-events-none">Elevation: Mapterhorn · Imagery: Satlas Super-Res 2023 (Allen Institute for AI) · Buildings: OSM / Overture Maps Foundation · Observations: iNaturalist · Data © OpenStreetMap contributors · </span>
+        <a href="/data-sources" className="underline hover:text-primary">Data sources →</a>
       </div>
+
     </div>
   );
 }
