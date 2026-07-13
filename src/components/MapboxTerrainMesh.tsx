@@ -15,13 +15,18 @@ interface Props {
   contrast?: number;
   saturation?: number;
   gamma?: number;
+  /** Hex color multiplied onto the basemap (e.g. '#ffffff' = none). */
+  tint?: string;
+  /** 0..1 strength of tint blending. */
+  tintStrength?: number;
   /** Render terrain as wireframe overlay only (no satellite). */
   wireframe?: boolean;
 }
 
 const MapboxTerrainMesh = ({
   terrain, exaggeration, token, onError, baseStyleOverride,
-  brightness = 1, contrast = 1, saturation = 1, gamma = 1, wireframe = false,
+  brightness = 1, contrast = 1, saturation = 1, gamma = 1,
+  tint = '#ffffff', tintStrength = 0, wireframe = false,
 }: Props) => {
   const [satellite, setSatellite] = useState<THREE.Texture | null>(null);
   const [mode] = useVisualMode();
@@ -83,6 +88,8 @@ const MapboxTerrainMesh = ({
       uContrast: { value: contrast },
       uSaturation: { value: saturation },
       uGamma: { value: gamma },
+      uTint: { value: new THREE.Color(tint) },
+      uTintStrength: { value: tintStrength },
     },
     vertexShader: /* glsl */ `
       varying vec2 vUv;
@@ -99,18 +106,20 @@ const MapboxTerrainMesh = ({
       uniform float uContrast;
       uniform float uSaturation;
       uniform float uGamma;
+      uniform vec3 uTint;
+      uniform float uTintStrength;
       varying vec2 vUv;
       void main() {
         vec3 col = uHasTex > 0.5 ? texture2D(uSatellite, vUv).rgb : vec3(0.55, 0.57, 0.6);
-        // brightness
         col *= uBrightness;
-        // contrast around 0.5
         col = (col - 0.5) * uContrast + 0.5;
-        // saturation
         float gray = dot(col, vec3(0.299, 0.587, 0.114));
         col = mix(vec3(gray), col, uSaturation);
-        // gamma
         col = pow(max(col, 0.0), vec3(1.0 / max(uGamma, 0.0001)));
+        // Tint: multiply the luminance by the tint color, then blend by strength.
+        vec3 tinted = vec3(gray) * uTint * 2.0;
+        col = mix(col, col * uTint * 1.5, clamp(uTintStrength, 0.0, 1.0) * 0.6)
+            + (tinted - col) * clamp(uTintStrength - 0.6, 0.0, 1.0) * 0.5;
         col = clamp(col, 0.0, 1.0);
         if (uMirage > 0.5) {
           float g = dot(col, vec3(0.299, 0.587, 0.114));
@@ -128,6 +137,8 @@ const MapboxTerrainMesh = ({
   useEffect(() => { material.uniforms.uContrast.value = contrast; }, [contrast, material]);
   useEffect(() => { material.uniforms.uSaturation.value = saturation; }, [saturation, material]);
   useEffect(() => { material.uniforms.uGamma.value = gamma; }, [gamma, material]);
+  useEffect(() => { (material.uniforms.uTint.value as THREE.Color).set(tint); }, [tint, material]);
+  useEffect(() => { material.uniforms.uTintStrength.value = tintStrength; }, [tintStrength, material]);
   useEffect(() => {
     material.uniforms.uSatellite.value = satellite;
     material.uniforms.uHasTex.value = satellite ? 1 : 0;

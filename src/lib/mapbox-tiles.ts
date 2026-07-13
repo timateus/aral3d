@@ -1,4 +1,24 @@
 import * as THREE from 'three';
+import { cacheGet, cacheSet } from './browser-cache';
+
+function bboxKey(b: LonLatBounds, style: string) {
+  const r = (n: number) => n.toFixed(4);
+  return `basemap:${style}:${r(b.minLon)},${r(b.minLat)},${r(b.maxLon)},${r(b.maxLat)}`;
+}
+
+async function blobToCanvas(blob: Blob): Promise<HTMLCanvasElement> {
+  const bmp = await createImageBitmap(blob);
+  const c = document.createElement('canvas');
+  c.width = bmp.width; c.height = bmp.height;
+  c.getContext('2d')!.drawImage(bmp, 0, 0);
+  bmp.close?.();
+  return c;
+}
+
+function canvasToBlob(c: HTMLCanvasElement): Promise<Blob> {
+  return new Promise((resolve) => c.toBlob((b) => resolve(b!), 'image/jpeg', 0.9));
+}
+
 
 export interface MapboxTextures {
   satellite: THREE.Texture;
@@ -169,6 +189,16 @@ export async function loadBaseStyleTexture(
   style: BaseStyle,
   token: string,
 ): Promise<THREE.Texture> {
+  // Try IndexedDB cache first (persists across sessions)
+  const key = bboxKey(bounds, style);
+  try {
+    const cached = await cacheGet<Blob>(key);
+    if (cached instanceof Blob) {
+      const c = await blobToCanvas(cached);
+      return canvasToTexture(c, true);
+    }
+  } catch { /* ignore */ }
+
   // Satlas covers up to z17 globally — go tighter for more detail.
   const target = style === 'satlas' ? 6 : 4;
   const z = pickZoom(bounds, target);
@@ -187,5 +217,7 @@ export async function loadBaseStyleTexture(
   }
   const stitched = await stitchTiles(bounds, z, urlFor);
   const cropped = cropCanvas(stitched.canvas, stitched.pixelBounds);
+  // Persist to IndexedDB (fire and forget)
+  canvasToBlob(cropped).then((b) => cacheSet(key, b)).catch(() => {});
   return canvasToTexture(cropped, true);
 }

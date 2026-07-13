@@ -175,6 +175,13 @@ export default function LocationPage() {
   const [contrast, setContrast] = useState(0.8);
   const [saturation, setSaturation] = useState(0.6);
   const [gamma, setGamma] = useState(0.9);
+  const [tint, setTint] = useState('#ffffff');
+  const [tintStrength, setTintStrength] = useState(0);
+
+  // Population heatmap
+  const [popOpacity, setPopOpacity] = useState(0.75);
+  const [popRadius, setPopRadius] = useState(0.05);
+  const [popIntensity, setPopIntensity] = useState(1);
 
   const [waterFlowActive, setWaterFlowActive] = useState(false);
   const [flowState, setFlowState] = useState<WaterFlowState | null>(null);
@@ -346,6 +353,8 @@ export default function LocationPage() {
                   contrast={contrast}
                   saturation={saturation}
                   gamma={gamma}
+                  tint={tint}
+                  tintStrength={tintStrength}
                 />
               )}
             </group>
@@ -386,7 +395,15 @@ export default function LocationPage() {
               />
             )}
             {showPopulation && (
-              <OsmPopulationLayer terrain={terrain} exaggeration={exaggeration} bounds={location.waterBounds ?? location.bounds} fallbackUrl={`${dataBase}/population.json`} />
+              <OsmPopulationLayer
+                terrain={terrain}
+                exaggeration={exaggeration}
+                bounds={location.waterBounds ?? location.bounds}
+                fallbackUrl={`${dataBase}/population.json`}
+                opacity={popOpacity}
+                radius={popRadius}
+                intensity={popIntensity}
+              />
             )}
             {showPlaces && (
               <OsmPlacesLayer terrain={terrain} exaggeration={exaggeration} bounds={location.waterBounds ?? location.bounds} />
@@ -521,22 +538,45 @@ export default function LocationPage() {
           <PopoverTrigger className={btnBase}>
             <Sliders className="w-3.5 h-3.5" /> Image
           </PopoverTrigger>
-          <PopoverContent align="end" className="w-64 space-y-2">
-            <div className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground">Basemap</div>
-            <Slider label="Brightness" value={brightness} min={0.5} max={3} step={0.05}
+          <PopoverContent align="end" className="w-72 space-y-2 max-h-[80vh] overflow-y-auto">
+            <div className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground">Terrain</div>
+            <Slider label="Exaggeration" value={exaggeration} min={1} max={300} step={1}
+              onChange={setExaggeration} format={(v) => `${v}×`} />
+
+            <div className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground pt-2">Basemap</div>
+            <Slider label="Brightness" value={brightness} min={0.2} max={6} step={0.05}
               onChange={setBrightness} format={(v) => v.toFixed(2)} />
-            <Slider label="Contrast" value={contrast} min={0.5} max={2.5} step={0.05}
+            <Slider label="Contrast" value={contrast} min={0.2} max={5} step={0.05}
               onChange={setContrast} format={(v) => v.toFixed(2)} />
-            <Slider label="Saturation" value={saturation} min={0} max={2.5} step={0.05}
+            <Slider label="Saturation" value={saturation} min={0} max={5} step={0.05}
               onChange={setSaturation} format={(v) => v.toFixed(2)} />
-            <Slider label="Gamma" value={gamma} min={0.4} max={2.5} step={0.05}
+            <Slider label="Gamma" value={gamma} min={0.2} max={5} step={0.05}
               onChange={setGamma} format={(v) => v.toFixed(2)} />
+            <div className="flex items-center gap-2 text-[11px]">
+              <span className="text-muted-foreground w-20 shrink-0">Tint</span>
+              <input type="color" value={tint} onChange={(e) => setTint(e.target.value)}
+                className="h-6 w-8 rounded border border-border/60 bg-transparent p-0" />
+              <input type="range" min={0} max={1} step={0.01} value={tintStrength}
+                onChange={(e) => setTintStrength(parseFloat(e.target.value))} className="flex-1" />
+              <span className="font-mono w-10 text-right">{tintStrength.toFixed(2)}</span>
+            </div>
             <button
-              onClick={() => { setBrightness(1.75); setContrast(0.8); setSaturation(0.6); setGamma(0.9); }}
+              onClick={() => {
+                setBrightness(1.75); setContrast(0.8); setSaturation(0.6); setGamma(0.9);
+                setTint('#ffffff'); setTintStrength(0);
+              }}
               className="w-full mt-1 text-[11px] px-2 py-1 rounded border border-border/60 hover:bg-accent"
             >
-              Reset
+              Reset basemap
             </button>
+
+            <div className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground pt-2">Population heatmap</div>
+            <Slider label="Opacity" value={popOpacity} min={0} max={1} step={0.02}
+              onChange={setPopOpacity} format={(v) => v.toFixed(2)} />
+            <Slider label="Radius" value={popRadius} min={0.01} max={0.25} step={0.005}
+              onChange={setPopRadius} format={(v) => v.toFixed(3)} />
+            <Slider label="Intensity" value={popIntensity} min={0.1} max={4} step={0.05}
+              onChange={setPopIntensity} format={(v) => v.toFixed(2)} />
           </PopoverContent>
         </Popover>
 
