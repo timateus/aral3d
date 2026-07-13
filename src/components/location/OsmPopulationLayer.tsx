@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import * as THREE from 'three';
 import type { GeoBounds, TerrainData } from '@/lib/geotiff-loader';
 import { cacheGet, cacheSet } from '@/lib/browser-cache';
+import { fetchOverpass } from '@/lib/overpass';
 
 interface Props {
   terrain: TerrainData;
