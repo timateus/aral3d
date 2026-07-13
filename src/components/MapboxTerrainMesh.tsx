@@ -15,13 +15,18 @@ interface Props {
   contrast?: number;
   saturation?: number;
   gamma?: number;
+  /** Hex color multiplied onto the basemap (e.g. '#ffffff' = none). */
+  tint?: string;
+  /** 0..1 strength of tint blending. */
+  tintStrength?: number;
   /** Render terrain as wireframe overlay only (no satellite). */
   wireframe?: boolean;
 }
 
 const MapboxTerrainMesh = ({
   terrain, exaggeration, token, onError, baseStyleOverride,
-  brightness = 1, contrast = 1, saturation = 1, gamma = 1, wireframe = false,
+  brightness = 1, contrast = 1, saturation = 1, gamma = 1,
+  tint = '#ffffff', tintStrength = 0, wireframe = false,
 }: Props) => {
   const [satellite, setSatellite] = useState<THREE.Texture | null>(null);
   const [mode] = useVisualMode();
