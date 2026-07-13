@@ -157,7 +157,8 @@ export default function LocationPage() {
   const [showInspector, setShowInspector] = useState(false);
   const [showTerrain, setShowTerrain] = useState(true);
   const [showWater, setShowWater] = useState(true);
-  const [showPopulation, setShowPopulation] = useState(false);
+  const [showPopulation, setShowPopulation] = useState(true);
+  const [showPlaces, setShowPlaces] = useState(true);
   const [showOsmBuildings, setShowOsmBuildings] = useState(true);
   const [showOvertureBuildings, setShowOvertureBuildings] = useState(false);
   const [showInat, setShowInat] = useState(true);
